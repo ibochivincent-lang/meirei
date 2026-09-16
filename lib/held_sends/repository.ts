@@ -87,20 +87,15 @@ export async function listHoldingForUser(userId: string): Promise<HeldSend[]> {
 export async function markHeldSendOutcome({
   id,
   state,
-  circleTransactionId,
 }: {
   id: string;
   state: HeldSendState;
-  circleTransactionId?: string | null;
 }): Promise<void> {
   const supabase = getSupabaseAdmin();
 
   const { error } = await supabase
     .from("tella_held_send")
-    .update({
-      state,
-      ...(circleTransactionId ? { circle_transaction_id: circleTransactionId } : {}),
-    })
+    .update({ state })
     .eq("id", id);
 
   // Logged, not thrown: this runs after money has already moved, and failing

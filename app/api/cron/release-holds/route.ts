@@ -11,11 +11,7 @@ import { gateSpend } from "@/lib/users/wallet-gate";
 import { findUserById } from "@/lib/users/repository";
 import { notifyUser } from "@/lib/messaging/notify";
 import { offerBeneficiarySave } from "@/lib/beneficiaries/offer";
-import {
-  reserveSend,
-  releaseReservedSend,
-  attachCircleTransactionId,
-} from "@/lib/transactions/repository";
+import { reserveSend, releaseReservedSend } from "@/lib/transactions/repository";
 import { DAILY_WINDOW_HOURS } from "@/lib/sends/limits";
 import { raiseAlert } from "@/lib/observability/alerts";
 import type { HeldSend } from "@/lib/supabase/types";
@@ -107,6 +103,16 @@ async function releaseOne(hold: HeldSend): Promise<ReleaseOutcome> {
     ]);
     return "cancelled";
   }
+  const secretCiphertext = user.stellar_secret_ciphertext;
+  if (!secretCiphertext) {
+    await markHeldSendOutcome({ id: hold.id, state: "cancelled" });
+    await tell(user, [
+      `I didn't send the ${hold.payload.amount} USDC that was queued for ${recipientLabelFor(hold.payload)}.`,
+      "",
+      "Your wallet isn't ready to send right now, so nothing left it.",
+    ]);
+    return "cancelled";
+  }
 
   // The hold's own id is excluded from the reserved total: it is about to be
   // executed, so counting it as still-reserved would make it compete with
@@ -177,13 +183,14 @@ async function releaseOne(hold: HeldSend): Promise<ReleaseOutcome> {
   const transfer = await performTransfer({
     userId: user.id,
     sendId: claimed.id,
-    fromWalletId: gate.walletId,
+    fromAddress: gate.address,
+    secretCiphertext,
+    transactionRowId: reservation.transactionId,
     payload: claimed.payload,
-    tokenId: limits.usdc.tokenId,
   });
 
   if (!transfer.ok) {
-    // 'unknown' rows stay for a person to reconcile against Circle, exactly
+    // 'unknown' rows stay for a person to reconcile against Horizon, exactly
     // like a pending send with outcome = 'unknown'. performTransfer has
     // already raised the alert.
     //
@@ -210,15 +217,10 @@ async function releaseOne(hold: HeldSend): Promise<ReleaseOutcome> {
     return transfer.reason;
   }
 
-  await markHeldSendOutcome({
-    id: claimed.id,
-    state: "sent",
-    circleTransactionId: transfer.transactionId,
-  });
-
-  // The history row already exists — reserveSend created it before the
-  // transfer. This completes it rather than writing a second one.
-  await attachCircleTransactionId(reservation.transactionId, transfer.transactionId);
+  // The history row already exists and performTransfer already completed it
+  // (reserveSend created it before the transfer; Stellar's synchronous
+  // submit means there's no later webhook step to wait for).
+  await markHeldSendOutcome({ id: claimed.id, state: "sent" });
 
   await tell(user, [
     `✓ Sent ${claimed.payload.amount} USDC to ${recipientLabelFor(claimed.payload)}.`,

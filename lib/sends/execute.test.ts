@@ -15,6 +15,16 @@ import {
   formatSendResultForChat,
   sendFailureStatus,
 } from "./execute";
+import { TransactionFailedError } from "@stellar/stellar-sdk";
+
+/** A TransactionFailedError, without needing a real Horizon response object. */
+function transactionFailed(resultCode: string): TransactionFailedError {
+  const err = new TransactionFailedError("Transaction Failed", {
+    status: 400,
+    data: { extras: { result_codes: { transaction: resultCode }, envelope_xdr: "", result_xdr: "" } },
+  });
+  return err;
+}
 
 let passed = 0;
 const failures: string[] = [];
@@ -31,34 +41,31 @@ function check(name: string, actual: unknown, expected: unknown) {
 
 /* ---------- isAmbiguousFailure ---------- */
 
-// Definite rejections: Circle answered and said no. Nothing was submitted.
-check("400 is a definite rejection", isAmbiguousFailure({ status: 400 }), false);
-check("401 is a definite rejection", isAmbiguousFailure({ status: 401 }), false);
-check("403 is a definite rejection", isAmbiguousFailure({ status: 403 }), false);
-check("404 is a definite rejection", isAmbiguousFailure({ status: 404 }), false);
-check("422 is a definite rejection", isAmbiguousFailure({ status: 422 }), false);
-
-// Ambiguous: the request may have been accepted before things went wrong.
-check("500 is ambiguous", isAmbiguousFailure({ status: 500 }), true);
-check("502 is ambiguous", isAmbiguousFailure({ status: 502 }), true);
-check("503 is ambiguous", isAmbiguousFailure({ status: 503 }), true);
+// Definite rejections: Horizon relayed a real verdict from stellar-core.
 check(
-  "429 is ambiguous (a burst's first request may have landed)",
-  isAmbiguousFailure({ status: 429 }),
-  true,
+  "op_underfunded is a definite rejection",
+  isAmbiguousFailure(transactionFailed("tx_failed")),
+  false,
+);
+check(
+  "tx_bad_seq is a definite rejection",
+  isAmbiguousFailure(transactionFailed("tx_bad_seq")),
+  false,
+);
+check(
+  "tx_insufficient_fee is a definite rejection",
+  isAmbiguousFailure(transactionFailed("tx_insufficient_fee")),
+  false,
 );
 
-// No status at all — a timeout, a socket reset, a thrown TypeError. We
-// learned nothing about Circle's side, so it must not be called a failure.
-check("timeout with no status is ambiguous", isAmbiguousFailure(new Error("ETIMEDOUT")), true);
+// Ambiguous: no verdict ever arrived, so the transaction may still have
+// reached the network.
+check("a generic Horizon 5xx is ambiguous", isAmbiguousFailure({ response: { status: 500 } }), true);
+check("a rate limit is ambiguous", isAmbiguousFailure({ response: { status: 429 } }), true);
+check("timeout with no response is ambiguous", isAmbiguousFailure(new Error("ETIMEDOUT")), true);
 check("null error is ambiguous", isAmbiguousFailure(null), true);
 check("undefined error is ambiguous", isAmbiguousFailure(undefined), true);
 check("string error is ambiguous", isAmbiguousFailure("socket hang up"), true);
-check(
-  "non-numeric status is ambiguous",
-  isAmbiguousFailure({ status: "500" }),
-  true,
-);
 
 /* ---------- formatSendResultForChat ---------- */
 

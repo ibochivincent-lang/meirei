@@ -4,7 +4,8 @@ import {
   deletePendingSend,
   markPendingSendOutcome,
 } from "@/lib/pending_sends/repository";
-import { sendUsdc } from "@/lib/wallet/circle";
+import { buildSignedPayment, submitSignedPayment } from "@/lib/wallet/stellar";
+import { TransactionFailedError } from "@stellar/stellar-sdk";
 import { gateSpend } from "@/lib/users/wallet-gate";
 import { checkSendLimits, formatLimitFailure, type LimitFailure } from "./limits";
 import { tierFor } from "./tiers";
@@ -13,7 +14,8 @@ import { raiseAlert } from "@/lib/observability/alerts";
 import {
   reserveSend,
   releaseReservedSend,
-  attachCircleTransactionId,
+  attachStellarTxXdr,
+  completeStellarSend,
 } from "@/lib/transactions/repository";
 import { DAILY_WINDOW_HOURS } from "./limits";
 
@@ -87,6 +89,15 @@ export async function executePendingSend({
       // that from anyone reading the table afterwards.
       return { ok: false, reason: "frozen" };
     }
+    await deletePendingSend(pending.id);
+    return { ok: false, reason: "wallet_inactive" };
+  }
+  // Belt and braces: gateSpend only checks wallet_status and wallet_address.
+  // An 'active' wallet missing its signing key would be a data-integrity bug
+  // elsewhere, not a real scenario setWalletActive can produce, but a send
+  // must never proceed without something to sign it with.
+  const secretCiphertext = user.stellar_secret_ciphertext;
+  if (!secretCiphertext) {
     await deletePendingSend(pending.id);
     return { ok: false, reason: "wallet_inactive" };
   }
@@ -191,13 +202,13 @@ export async function executePendingSend({
   const transfer = await performTransfer({
     userId: user.id,
     sendId: claimed.id,
-    fromWalletId: gate.walletId,
+    fromAddress: gate.address,
+    secretCiphertext,
+    transactionRowId: reservation.transactionId,
     payload: p,
-    tokenId: limits.usdc.tokenId,
   });
 
   if (transfer.ok) {
-    await attachCircleTransactionId(reservation.transactionId, transfer.transactionId);
     // Marked, then deleted. That reads like a wasted write and is not: the
     // delete can fail, and the ordering decides what a surviving row says.
     // Marked-then-orphaned reads "this went through"; deleted-without-marking
@@ -236,8 +247,8 @@ export async function executePendingSend({
     return { ok: false, reason: "transfer_unknown" };
   }
 
-  // A definite rejection: isAmbiguousFailure established the request never
-  // reached Circle, so nothing moved and the reservation must not stand.
+  // A definite rejection: isAmbiguousFailure established Horizon told us so,
+  // so nothing moved and the reservation must not stand.
   await releaseReservedSend(reservation.transactionId);
   await markPendingSendOutcome(claimed.id, "failed");
   await deletePendingSend(claimed.id);
@@ -256,7 +267,7 @@ export type TransferOutcome =
   | { ok: false; reason: "failed" | "unknown" };
 
 /**
- * Hand one transfer to Circle and classify what came back.
+ * Hand one transfer to Stellar and classify what came back.
  *
  * Extracted so the hold-release job can reuse it rather than grow a second
  * copy. That matters more than the usual do-not-repeat-yourself argument:
@@ -265,44 +276,56 @@ export type TransferOutcome =
  * it is how a transfer whose fate is unknown gets reported to a user as
  * definitely failed.
  *
- * Deliberately owns NO row lifecycle. Pending sends and held sends record
- * their outcomes in different tables with different rules, so each caller
- * keeps its own bookkeeping and shares only the part that must not diverge.
+ * Deliberately owns NO row lifecycle beyond attaching the built XDR and
+ * completing the row on success — pending sends and held sends record their
+ * OUTCOME in different tables with different rules, so each caller keeps
+ * that bookkeeping and shares only the part that must not diverge.
  */
 export async function performTransfer({
   userId,
   sendId,
-  fromWalletId,
+  fromAddress,
+  secretCiphertext,
+  transactionRowId,
   payload,
-  tokenId,
 }: {
   userId: string;
-  /** Also the Circle idempotency key — must be stable across retries. */
   sendId: string;
-  fromWalletId: string;
+  fromAddress: string;
+  secretCiphertext: string;
+  /** The tella_transactions row reserveSend already created for this send. */
+  transactionRowId: string;
   payload: SendPayload;
-  tokenId: string;
 }): Promise<TransferOutcome> {
   try {
-    const result = await sendUsdc({
-      fromWalletId,
+    const xdr = await buildSignedPayment({
+      fromAddress,
+      secretCiphertext,
       toAddress: payload.recipientAddress,
       amount: payload.amount,
-      tokenId,
-      // Keyed on the send's own id, never random. A retry of THIS send is
-      // deduped by Circle instead of becoming a second transfer.
-      idempotencyKey: sendId,
     });
-    return { ok: true, transactionId: result.transactionId };
+
+    // Persisted BEFORE submitting. See attachStellarTxXdr's own comment:
+    // this is what lets a crash between building and submitting retry with
+    // the identical signed envelope instead of rebuilding one against a
+    // sequence number that may have already advanced.
+    await attachStellarTxXdr(transactionRowId, xdr);
+
+    const result = await submitSignedPayment(xdr);
+    await completeStellarSend(transactionRowId, {
+      txHash: result.txHash,
+      operationId: result.operationId,
+    });
+    return { ok: true, transactionId: result.txHash };
   } catch (err) {
     const ambiguous = isAmbiguousFailure(err);
     console.error("[send] transfer failed", { userId, sendId, ambiguous, err });
 
     if (ambiguous) {
-      // Needs a person: only Circle's dashboard can say whether this moved.
+      // Needs a person: only Horizon/stellar.expert can say whether this landed.
       raiseAlert({
         kind: "transfer_unknown",
-        message: `A transfer's outcome is unknown and needs reconciling against Circle. Send ${sendId}.`,
+        message: `A transfer's outcome is unknown and needs reconciling against Horizon. Send ${sendId}.`,
         context: { sendId, amount: payload.amount },
       });
       return { ok: false, reason: "unknown" };
@@ -313,22 +336,21 @@ export async function performTransfer({
 }
 
 /**
- * Did this failure happen before Circle accepted the request, or might the
- * transfer be in flight?
+ * Did Horizon give a definitive verdict on this transaction, or did we never
+ * hear back one way or the other?
  *
- * A 4xx with a real body is a definite rejection — nothing was submitted.
- * A timeout, a socket error, or a 5xx tells us nothing about what happened
- * on Circle's side, and guessing "it failed" is how a user gets told their
- * balance is unchanged while their money moves. Unknown is the honest
- * answer, so anything not clearly a rejection is treated as unknown.
+ * `TransactionFailedError` (HTTP 400, carrying `extras.result_codes`) is
+ * Horizon relaying a real answer from stellar-core: the transaction was
+ * evaluated and rejected, for a reason core can name (`op_underfunded`,
+ * `tx_bad_seq`, ...). That's a definite rejection — nothing is left in doubt.
+ *
+ * Everything else — Horizon's own 5xx, a 429, a timeout, a dropped
+ * connection — means no verdict ever arrived. The transaction may still have
+ * reached stellar-core and applied to a ledger; the caller just never heard
+ * back, so it must not be reported as a failure.
  */
 export function isAmbiguousFailure(err: unknown): boolean {
-  const status = (err as { status?: number } | null)?.status;
-  if (typeof status === "number") {
-    // 429 is ambiguous: Circle may have accepted the first of a burst.
-    return status >= 500 || status === 429;
-  }
-  return true;
+  return !(err instanceof TransactionFailedError);
 }
 
 /**

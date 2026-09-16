@@ -10,7 +10,7 @@ export async function recordTransaction({
   counterpartyLabel,
   counterpartyAddress,
   txHash = null,
-  circleTransactionId = null,
+  stellarOperationId = null,
   status,
 }: {
   userId: string;
@@ -21,7 +21,7 @@ export async function recordTransaction({
   counterpartyLabel: string | null;
   counterpartyAddress: string | null;
   txHash?: string | null;
-  circleTransactionId?: string | null;
+  stellarOperationId?: string | null;
   status: "submitted" | "complete";
 }): Promise<tellaTransaction> {
   const supabase = getSupabaseAdmin();
@@ -36,7 +36,7 @@ export async function recordTransaction({
       counterparty_label: counterpartyLabel,
       counterparty_address: counterpartyAddress,
       tx_hash: txHash,
-      circle_transaction_id: circleTransactionId,
+      stellar_operation_id: stellarOperationId,
       status,
     })
     .select()
@@ -196,28 +196,58 @@ export async function releaseReservedSend(transactionId: string): Promise<void> 
 }
 
 /**
- * Attach Circle's transaction id to a reservation once the transfer is away.
+ * Persists a built-and-signed payment's XDR onto its reservation row, BEFORE
+ * that payment is submitted.
  *
- * The id is not known until createTransaction returns, which is after the row
- * exists. markOutboundComplete matches the outbound webhook on this column;
- * if the webhook somehow arrives in the moment before this lands, it falls
- * through to that function's legacy "most recent submitted with no id" branch,
- * which resolves to this same row. So the race degrades correctly rather than
- * losing the hash.
+ * Stellar has no server-assigned idempotency key. Safety instead comes from
+ * the transaction's own sequence number (a signed envelope can only ever
+ * apply once) plus Horizon returning the ORIGINAL result if the exact same
+ * signed XDR is resubmitted. So this is what lets a crash between building
+ * and submitting retry safely: reload this row, resubmit the SAME xdr,
+ * rather than building a fresh one against a sequence number that may have
+ * already advanced — which would mint a genuinely new second payment.
  */
-export async function attachCircleTransactionId(
+export async function attachStellarTxXdr(
   transactionId: string,
-  circleTransactionId: string,
+  xdr: string,
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("tella_transactions")
-    .update({ circle_transaction_id: circleTransactionId })
+    .update({ stellar_tx_xdr: xdr })
+    .eq("id", transactionId);
+
+  if (error) {
+    throw new Error(`attachStellarTxXdr failed: ${error.message}`);
+  }
+}
+
+/**
+ * Completes a reservation once its payment has been submitted successfully.
+ *
+ * Unlike Circle's async model — submit now, learn the real outcome later via
+ * a webhook (attachCircleTransactionId, then markOutboundComplete once the
+ * hash arrived) — Stellar's submitTransaction is SYNCHRONOUS: the hash and
+ * the outcome are both known the moment this call is made. So there is no
+ * separate "mark complete" step to run later; this is that step, run inline.
+ */
+export async function completeStellarSend(
+  transactionId: string,
+  { txHash, operationId }: { txHash: string; operationId: string },
+): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("tella_transactions")
+    .update({
+      status: "complete",
+      tx_hash: txHash,
+      stellar_operation_id: operationId,
+    })
     .eq("id", transactionId);
 
   if (error) {
     // Bookkeeping, after the money has moved. Logged, never thrown.
-    console.error("[transactions] attaching circle transaction id failed", {
+    console.error("[transactions] completing stellar send failed", {
       transactionId,
       error: error.message,
     });
@@ -270,74 +300,3 @@ export async function sumSentUsdcSince(
   }, 0);
 }
 
-/**
- * Mark an outbound send complete and attach its on-chain hash.
- *
- * `circleTransactionId` is the notification's own `id`, which IS the
- * transaction id returned by createTransaction — we store that on the row at
- * submit time, so the two can be matched directly.
- *
- * This used to guess: it took the most recent still-`submitted` send for the
- * user. With one send in flight that's right; with two, the hash from the
- * second confirmation lands on whichever row was newer, so both rows end up
- * describing the wrong transaction. Two sends in five minutes is not an
- * exotic scenario — the app explicitly supports multiple concurrent pending
- * sends (migrations/0005), and the follow-up handler reminds users about
- * them.
- *
- * The "most recent submitted" behaviour is kept only as a fallback for rows
- * written before circle_transaction_id was populated, and logs when it fires
- * so it can be removed once no such rows remain.
- */
-export async function markOutboundComplete(
-  userId: string,
-  txHash: string,
-  circleTransactionId?: string | null,
-): Promise<void> {
-  const supabase = getSupabaseAdmin();
-
-  if (circleTransactionId) {
-    const { data, error } = await supabase
-      .from("tella_transactions")
-      .update({ status: "complete", tx_hash: txHash })
-      .eq("user_id", userId)
-      .eq("circle_transaction_id", circleTransactionId)
-      .select("id");
-
-    if (error) {
-      throw new Error(`markOutboundComplete update failed: ${error.message}`);
-    }
-    if ((data ?? []).length > 0) return;
-
-    console.warn("[transactions] no row matched circle transaction id", {
-      userId,
-      circleTransactionId,
-    });
-  }
-
-  // Legacy path. Correct only when a single send is in flight.
-  const { data: latest, error: findError } = await supabase
-    .from("tella_transactions")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("direction", "sent")
-    .eq("status", "submitted")
-    .is("circle_transaction_id", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (findError) throw new Error(`markOutboundComplete lookup failed: ${findError.message}`);
-  if (!latest) return;
-
-  console.warn("[transactions] falling back to most-recent-submitted match", {
-    userId,
-  });
-
-  const { error: updateError } = await supabase
-    .from("tella_transactions")
-    .update({ status: "complete", tx_hash: txHash })
-    .eq("id", (latest as { id: string }).id);
-
-  if (updateError) throw new Error(`markOutboundComplete update failed: ${updateError.message}`);
-}

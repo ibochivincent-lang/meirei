@@ -1,5 +1,5 @@
 import type { tellaUser } from "@/lib/supabase/types";
-import { resolveSpendableUsdc, type SpendableUsdc } from "@/lib/wallet/circle";
+import { resolveSpendableUsdc, type SpendableUsdc } from "@/lib/wallet/stellar";
 import { sumSentUsdcSince } from "@/lib/transactions/repository";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { sumHeldUsdc } from "@/lib/held_sends/repository";
@@ -224,7 +224,7 @@ export async function checkSendLimits({
     return { ok: false, failure: { kind: "check_failed" } };
   }
 
-  if (!user.circle_wallet_id) {
+  if (!user.wallet_address) {
     return { ok: false, failure: { kind: "no_usdc" } };
   }
 
@@ -239,7 +239,7 @@ export async function checkSendLimits({
     // this fetch instead of before it — one more query before an over-cap
     // send is rejected, and the same answer.
     [usdc, alreadySent, limits, held] = await Promise.all([
-      resolveSpendableUsdc(user.circle_wallet_id),
+      resolveSpendableUsdc(user.wallet_address),
       sumSentUsdcSince(user.id, DAILY_WINDOW_HOURS),
       resolveLimits(user.id),
       sumHeldUsdc(user.id, excludeHeldSendId),
