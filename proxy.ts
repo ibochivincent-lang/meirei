@@ -34,7 +34,7 @@ const TOKEN_ONLY = [
   "/api/confirm",
   "/api/security",
   "/api/panic",
-  "/api/circle-webhook",
+  "/api/internal",
   "/api/whatsapp",
   "/api/telegram",
   "/api/cron",

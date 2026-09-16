@@ -10,11 +10,12 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
  * user can hold several at a time, which means nothing downstream can tell a
  * duplicate from a deliberate second send.
  *
- * The same shape as lib/circle/processed-notifications.ts, which solved this
- * for Circle's webhooks and has been correct in production since. The two are
- * deliberately separate modules over separate tables rather than one generic
- * helper: the key formats differ, the retention differs, and fusing them
- * would couple the money path's idempotency to the chat path's.
+ * The same shape as lib/wallet/stellar-stream.ts's operation-claim helpers
+ * (formerly lib/circle/processed-notifications.ts, for Circle's webhooks),
+ * which has been correct in production since. The two are deliberately
+ * separate modules over separate tables rather than one generic helper: the
+ * key formats differ, the retention differs, and fusing them would couple
+ * the money path's idempotency to the chat path's.
  *
  * See migrations/0013_inbound_message_idempotency.sql.
  */
