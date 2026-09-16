@@ -166,23 +166,41 @@ export async function markWalletPending(userId: string): Promise<void> {
   if (error) throw new Error(`markWalletPending failed: ${error.message}`);
 }
 
+/**
+ * Persists a freshly generated keypair's address + encrypted secret WHILE
+ * STILL 'pending' — before funding or the trustline run, on purpose. If the
+ * process dies between this call and setWalletActive, a retry
+ * (provisionWalletForUser) finds these already written and resumes funding
+ * the SAME account instead of generating and funding an orphaned second one.
+ */
+export async function saveWalletKeys({
+  userId,
+  address,
+  secretCiphertext,
+}: {
+  userId: string;
+  address: string;
+  secretCiphertext: string;
+}): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("tella_users")
+    .update({ wallet_address: address, stellar_secret_ciphertext: secretCiphertext })
+    .eq("id", userId);
+  if (error) throw new Error(`saveWalletKeys failed: ${error.message}`);
+}
+
 export async function setWalletActive({
   userId,
-  walletId,
   address,
 }: {
   userId: string;
-  walletId: string;
   address: string;
 }): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("tella_users")
-    .update({
-      circle_wallet_id: walletId,
-      wallet_address: address,
-      wallet_status: "active",
-    })
+    .update({ wallet_address: address, wallet_status: "active" })
     .eq("id", userId);
   if (error) throw new Error(`setWalletActive failed: ${error.message}`);
 }
@@ -202,9 +220,8 @@ export async function markWalletFailed(userId: string): Promise<void> {
  * Both 'failed' and long-stuck 'pending' are returned. A 'pending' row older
  * than the grace period means the process died between markWalletPending and
  * setWalletActive — provision.ts's own comment says such users are
- * recoverable by re-running, and Circle's idempotencyKey (the user id) makes
- * the retry safe: it returns the existing wallet rather than creating a
- * second one.
+ * recoverable by re-running: it activates the existing wallet_address if one
+ * was already written rather than generating and funding a second keypair.
  */
 export async function listUsersNeedingWallet(
   stalePendingMinutes = 10,
@@ -253,28 +270,14 @@ export async function findUserByWhatsApp(
   return (data as tellaUser | null) ?? null;
 }
 
-export async function findUserByCircleWalletId(
-  circleWalletId: string,
-): Promise<tellaUser | null> {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("tella_users")
-    .select("*")
-    .eq("circle_wallet_id", circleWalletId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(`findUserByCircleWalletId failed: ${error.message}`);
-  }
-  return (data as tellaUser | null) ?? null;
-}
-
 /**
  * Resolves an on-chain wallet address back to the tella user who owns it,
  * so an inbound transfer from another tella user can be labeled with their
- * name instead of a shortened address. Case-insensitive because Circle's
- * `sourceAddress` and the checksum casing stored in `wallet_address` aren't
- * guaranteed to match byte-for-byte.
+ * name instead of a shortened address. Case-SENSITIVE: unlike EVM's
+ * checksum-casing (which was never guaranteed to match byte-for-byte, hence
+ * the old `ilike` here), a Stellar StrKey address is case-significant —
+ * lowercasing or otherwise re-casing it produces either an invalid address
+ * or a different one.
  */
 export async function findUserByWalletAddress(
   address: string,
@@ -283,7 +286,7 @@ export async function findUserByWalletAddress(
   const { data, error } = await supabase
     .from("tella_users")
     .select("*")
-    .ilike("wallet_address", address)
+    .eq("wallet_address", address)
     .maybeSingle();
 
   if (error) {

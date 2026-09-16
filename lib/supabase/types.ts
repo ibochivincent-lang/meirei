@@ -10,9 +10,17 @@ export interface tellaUser {
   whatsapp_channel: WhatsAppChannel;
   profile_name: string | null;
   onboarding_step: OnboardingStep;
+  /**
+   * @deprecated Arc-era Circle wallet id. No longer written; left as a
+   * historical marker of who was ever provisioned on Arc. See the Arc →
+   * Stellar migration section of migrations/README.md.
+   */
   circle_wallet_id: string | null;
+  /** A Stellar "G..." StrKey public key since the Arc → Stellar migration. */
   wallet_address: string | null;
   wallet_status: WalletStatus;
+  /** Envelope-encrypted Stellar secret key. See lib/wallet/secret-envelope.ts. */
+  stellar_secret_ciphertext: string | null;
   pin_hash: string | null;
   pin_salt: string | null;
   /**
@@ -221,6 +229,9 @@ export interface HeldSend {
   state: HeldSendState;
   cancelled_at: string | null;
   cancelled_by: string | null;
+  /** @deprecated Arc-era field, no longer written. Completion for a released
+   *  hold is recorded on its tella_transactions row instead (see
+   *  lib/transactions/repository.ts's completeStellarSend). */
   circle_transaction_id: string | null;
   created_at: string;
 }
@@ -295,7 +306,12 @@ export interface tellaTransaction {
   counterparty_label: string | null;
   counterparty_address: string | null;
   tx_hash: string | null;
+  /** @deprecated Arc-era field, no longer written. See stellar_operation_id. */
   circle_transaction_id: string | null;
+  /** Horizon operation id (dedup key — see migrations/0028). */
+  stellar_operation_id: string | null;
+  /** Signed payment XDR, persisted before submission (see migrations/0027). */
+  stellar_tx_xdr: string | null;
   status: TransactionStatus;
   created_at: string;
 }

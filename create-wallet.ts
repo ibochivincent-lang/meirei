@@ -1,171 +1,121 @@
 // create-wallet.ts
+//
+// Testnet onboarding/smoke-test script, whatever STELLAR_NETWORK says. It
+// generates two throwaway keypairs, funds them via Friendbot, establishes
+// USDC trustlines, and moves 5 USDC between them — on mainnet this would be
+// real money, so it refuses to run there. There is no "wallet set"/"entity
+// secret" concept to set up first the way Circle's onboarding needed:
+// self-custodial Stellar wallets are just keypairs.
 
-// Marks this file a module rather than a global script. Without it the
-// root-level helpers share one scope, and every script here declares a
-// top-level `main` — tsc reports that as a duplicate implementation across
-// files that never run together.
 export {};
 
-import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
-import readline from "node:readline";
-import { fileURLToPath } from "node:url";
 import {
-  registerEntitySecretCiphertext,
-  initiateDeveloperControlledWalletsClient,
-  type TokenBlockchain,
-} from "@circle-fin/developer-controlled-wallets";
+  Asset,
+  BASE_FEE,
+  Horizon,
+  Keypair,
+  Operation,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
+import { horizonUrl, isMainnet, networkPassphrase, usdcAsset, friendbotUrl } from "@/lib/wallet/network";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUTPUT_DIR = path.join(__dirname, "output");
-const WALLET_SET_NAME = "Circle Wallet Onboarding";
+async function fundWithFriendbot(publicKey: string): Promise<void> {
+  const res = await fetch(`${friendbotUrl()}?addr=${encodeURIComponent(publicKey)}`);
+  if (!res.ok) {
+    throw new Error(`Friendbot funding failed for ${publicKey}: HTTP ${res.status}`);
+  }
+}
+
+async function establishTrustline(server: Horizon.Server, keypair: Keypair): Promise<void> {
+  const account = await server.loadAccount(keypair.publicKey());
+  const { code, issuer } = usdcAsset();
+
+  const tx = new TransactionBuilder(account, {
+    fee: BASE_FEE,
+    networkPassphrase: networkPassphrase(),
+  })
+    .addOperation(Operation.changeTrust({ asset: new Asset(code, issuer) }))
+    .setTimeout(30)
+    .build();
+
+  tx.sign(keypair);
+  await server.submitTransaction(tx);
+}
+
+async function printBalances(server: Horizon.Server, publicKey: string, label: string): Promise<void> {
+  const account = await server.loadAccount(publicKey);
+  console.log(`\n${label} balances:`);
+  for (const b of account.balances) {
+    const symbol = b.asset_type === "native" ? "XLM" : (b as { asset_code: string }).asset_code;
+    console.log(`  ${symbol}: ${b.balance}`);
+  }
+}
 
 async function main() {
-  const apiKey = process.env.CIRCLE_API_KEY;
-  if (!apiKey) {
+  if (isMainnet()) {
     throw new Error(
-      "CIRCLE_API_KEY is required. Add it to .env or set it as an environment variable."
+      "create-wallet.ts is a testnet smoke test and refuses to run with STELLAR_NETWORK=PUBLIC.",
     );
   }
 
-  // Register entity secret
-  console.log("Registering entity secret...");
-  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-  const entitySecret = crypto.randomBytes(32).toString("hex");
-  await registerEntitySecretCiphertext({
-    apiKey,
-    entitySecret,
-    recoveryFileDownloadPath: OUTPUT_DIR,
-  });
-  const envPath = path.join(__dirname, ".env");
-  fs.appendFileSync(envPath, `\nCIRCLE_ENTITY_SECRET=${entitySecret}\n`, "utf-8");
-  console.log("Entity secret registered.");
-  // Create wallet set
-console.log("\nCreating wallet set...");
-const client = initiateDeveloperControlledWalletsClient({
-  apiKey,
-  entitySecret,
-});
-const walletSet = (await client.createWalletSet({ name: WALLET_SET_NAME })).data
-  ?.walletSet;
-if (!walletSet?.id) {
-  throw new Error("Wallet set creation failed: no ID returned");
-}
-console.log("Wallet set ID:", walletSet.id);
-// Create Wallet
-console.log("\nCreating Wallet on ARC-TESTNET...");
-const wallet = (
-  await client.createWallets({
-    walletSetId: walletSet.id,
-    blockchains: ["ARC-TESTNET"],
-    count: 1,
-    accountType: "EOA",
+  const { code, issuer } = usdcAsset();
+  const server = new Horizon.Server(horizonUrl());
+
+  console.log("Generating source wallet...");
+  const source = Keypair.random();
+  console.log("Address:", source.publicKey());
+
+  console.log("\nFunding via Friendbot...");
+  await fundWithFriendbot(source.publicKey());
+
+  console.log("\nEstablishing USDC trustline...");
+  await establishTrustline(server, source);
+
+  console.log(`\nBefore continuing, send test USDC from the faucet:`);
+  console.log("  1. Go to https://faucet.circle.com");
+  console.log('  2. Select "Stellar Testnet" network');
+  console.log(`  3. Paste your wallet address: ${source.publicKey()}`);
+  console.log('  4. Click "Send USDC"');
+
+  const readline = await import("node:readline");
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  await new Promise<void>((resolve) =>
+    rl.question("\nPress Enter once faucet tokens have been sent... ", () => {
+      rl.close();
+      resolve();
+    }),
+  );
+
+  console.log("\nGenerating destination wallet...");
+  const destination = Keypair.random();
+  console.log("Address:", destination.publicKey());
+  await fundWithFriendbot(destination.publicKey());
+  await establishTrustline(server, destination);
+
+  console.log("\nSending 5 USDC to destination wallet...");
+  const sourceAccount = await server.loadAccount(source.publicKey());
+  const tx = new TransactionBuilder(sourceAccount, {
+    fee: BASE_FEE,
+    networkPassphrase: networkPassphrase(),
   })
-).data?.wallets?.[0];
-if (!wallet) {
-  throw new Error("Wallet creation failed: no wallet returned");
-}
-console.log("Wallet ID:", wallet.id);
-console.log("Address:", wallet.address);
+    .addOperation(
+      Operation.payment({
+        destination: destination.publicKey(),
+        asset: new Asset(code, issuer),
+        amount: "5",
+      }),
+    )
+    .setTimeout(60)
+    .build();
+  tx.sign(source);
 
-fs.appendFileSync(
-  envPath,
-  `CIRCLE_WALLET_ADDRESS=${wallet.address}\n`,
-  "utf-8",
-);
-fs.appendFileSync(
-  envPath,
-  `CIRCLE_WALLET_BLOCKCHAIN=${wallet.blockchain}\n`,
-  "utf-8",
-);
-fs.writeFileSync(
-  path.join(OUTPUT_DIR, "wallet-info.json"),
-  JSON.stringify(wallet, null, 2),
-  "utf-8",
-);
-console.log("\nBefore continuing, request test USDC from the faucet:");
-console.log("  1. Go to https://faucet.circle.com");
-console.log('  2. Select "Arc Testnet" network');
-console.log(`  3. Paste your wallet address: ${wallet.address}`);
-console.log('  4. Click "Send USDC"');
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-await new Promise<void>((resolve) =>
-  rl.question("\nPress Enter once faucet tokens have been sent... ", () => {
-    rl.close();
-    resolve();
-  }),
-);
-// Create second wallet
-  console.log("\nCreating second wallet...");
-  const secondWallet = (
-    await client.createWallets({
-      walletSetId: walletSet.id,
-      blockchains: ["ARC-TESTNET"],
-      count: 1,
-      accountType: "EOA",
-    })
-  ).data?.wallets?.[0];
-  if (!secondWallet) {
-    throw new Error("Second wallet creation failed: no wallet returned");
-  }
-  console.log("Second wallet address:", secondWallet.address);
+  const result = await server.submitTransaction(tx);
+  console.log("Transaction hash:", result.hash);
+  console.log(`Explorer: https://stellar.expert/explorer/testnet/tx/${result.hash}`);
 
-  // Send USDC to second wallet (Arc Testnet USDC token address)
-  const ARC_TESTNET_USDC = "0x3600000000000000000000000000000000000000";
-  console.log("\nSending 5 USDC to second wallet...");
-  const txResponse = await client.createTransaction({
-    blockchain: wallet.blockchain as TokenBlockchain,
-    walletAddress: wallet.address,
-    destinationAddress: secondWallet.address,
-    amount: ["5"],
-    tokenAddress: ARC_TESTNET_USDC,
-    fee: { type: "level", config: { feeLevel: "MEDIUM" } },
-  });
-  const txId = txResponse.data?.id;
-  if (!txId) throw new Error("Transaction creation failed: no ID returned");
-  console.log("Transaction ID:", txId);
+  await printBalances(server, source.publicKey(), "Source wallet");
+  await printBalances(server, destination.publicKey(), "Destination wallet");
 
-  // Poll until transaction reaches a terminal state
-  const terminalStates = new Set([
-    "COMPLETE",
-    "FAILED",
-    "CANCELLED",
-    "DENIED",
-  ]);
-  let currentState: string | undefined = txResponse.data?.state;
-  while (!currentState || !terminalStates.has(currentState)) {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    const poll = await client.getTransaction({ id: txId });
-    const tx = poll.data?.transaction;
-    currentState = tx?.state;
-    console.log("Transaction state:", currentState);
-    if (currentState === "COMPLETE" && tx?.txHash) {
-      console.log(`Explorer: https://testnet.arcscan.app/tx/${tx.txHash}`);
-    }
-  }
-  if (currentState !== "COMPLETE") {
-    throw new Error(`Transaction ended in state: ${currentState}`);
-  }
-
-  // Verify both wallets' token balances
-  console.log("\nSource wallet balances:");
-  const srcBalances = (
-    await client.getWalletTokenBalance({ id: wallet.id })
-  ).data?.tokenBalances;
-  for (const b of srcBalances ?? []) {
-    console.log(`  ${b.token?.symbol ?? "Unknown"}: ${b.amount}`);
-  }
-  console.log("\nSecond wallet balances:");
-  const secondBalances = (
-    await client.getWalletTokenBalance({ id: secondWallet.id })
-  ).data?.tokenBalances;
-  for (const b of secondBalances ?? []) {
-    console.log(`  ${b.token?.symbol ?? "Unknown"}: ${b.amount}`);
-  }
   console.log("\nDone!");
 }
 

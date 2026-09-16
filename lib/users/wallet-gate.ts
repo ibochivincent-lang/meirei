@@ -33,18 +33,24 @@ export type WalletGateFailure =
   | "frozen";
 
 export type WalletGate =
-  | { ok: true; walletId: string; address: string | null }
+  | { ok: true; address: string }
   | { ok: false; reason: WalletGateFailure };
 
-/** Shared shape check, without any opinion about freezing. */
+/**
+ * Shared shape check, without any opinion about freezing.
+ *
+ * There is no external custody id on Stellar — the account IS the address —
+ * so this gates on `wallet_address` directly rather than on a walletId the
+ * way the Circle-era version did.
+ */
 function gateProvisioned(user: tellaUser): WalletGate {
   if (user.wallet_status === "pending") {
     return { ok: false, reason: "provisioning" };
   }
-  if (user.wallet_status !== "active" || !user.circle_wallet_id) {
+  if (user.wallet_status !== "active" || !user.wallet_address) {
     return { ok: false, reason: "not_provisioned" };
   }
-  return { ok: true, walletId: user.circle_wallet_id, address: user.wallet_address };
+  return { ok: true, address: user.wallet_address };
 }
 
 /**
