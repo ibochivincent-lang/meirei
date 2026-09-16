@@ -8,17 +8,23 @@ import type { DecodedIntent } from "@/lib/sendam-ai/client";
 
 const base: DecodedIntent = { intent: "SEND", amount: null, asset: null, recipient: null, confidence: 0.9 };
 
+const VALID_ADDRESS = "GDJBUPILZLX6VWTSG7SCUT4EDUW4OYQ54W2PRWSL2HJKRAKDIQ3LIXAS";
+// One character flipped near the end — StrKey's checksum makes this invalid
+// without it "looking" obviously wrong, unlike a random string.
+const BAD_CHECKSUM_ADDRESS = "GDJBUPILZLX6VWTSG7SCUT4EDUW4OYQ54W2PRWSL2HJKRAKDIQ3LIXAA";
+
 const CASES: Array<[DecodedIntent, unknown]> = [
   [
-    { ...base, amount: "5", recipient: "0x1111111111111111111111111111111111111111" },
-    { amount: "5", token: "USDC", recipient: { kind: "address", address: "0x1111111111111111111111111111111111111111" } },
+    { ...base, amount: "5", recipient: VALID_ADDRESS },
+    { amount: "5", token: "USDC", recipient: { kind: "address", address: VALID_ADDRESS } },
   ],
   [
-    // isEvmAddress requires a lowercase "0x" prefix (existing behavior in
-    // lib/utils/phone.ts, unrelated to this mapping) — an uppercase "0X"
-    // falls through to the label branch rather than being recognized.
-    { ...base, amount: "5", recipient: "0X1111111111111111111111111111111111111111" },
-    { amount: "5", token: "USDC", recipient: { kind: "label", label: "0X1111111111111111111111111111111111111111" } },
+    // isStellarAddress validates StrKey's CRC16 checksum (existing behavior
+    // in lib/utils/phone.ts, unrelated to this mapping) — a string that is
+    // the right SHAPE but fails that checksum falls through to the label
+    // branch rather than being recognized as an address.
+    { ...base, amount: "5", recipient: BAD_CHECKSUM_ADDRESS },
+    { amount: "5", token: "USDC", recipient: { kind: "label", label: BAD_CHECKSUM_ADDRESS } },
   ],
   [
     { ...base, amount: "5", recipient: "+2348012345678" },

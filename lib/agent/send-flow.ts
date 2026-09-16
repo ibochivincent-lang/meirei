@@ -51,19 +51,21 @@ export function isSendFlowPayload(
  * The amount, parsed the strict way.
  *
  * Anchored at both ends and consuming the whole message, so "5" and "5 usdc"
- * are amounts and "about 5" and "5 to chidi" are not. Six decimal places
- * because that is USDC's real precision — more digits are invented, and
- * lib/wallet/circle.ts truncates them back off anyway.
+ * are amounts and "about 5" and "5 to chidi" are not. Seven decimal places
+ * because that is Stellar's own on-chain precision — every classic asset
+ * (USDC included) is scaled to 7 decimal places at the ledger level, so more
+ * digits than that are invented and fewer would silently truncate a real
+ * fraction of what the user typed.
  *
  * Returns the ORIGINAL digits rather than a Number. Everything downstream
- * carries the amount as a string, all the way to Circle's `amount: [amount]`,
- * and a round trip through a float is how 0.1 + 0.2 arithmetic gets into a
- * transfer.
+ * carries the amount as a string, all the way to the payment operation's
+ * `amount`, and a round trip through a float is how 0.1 + 0.2 arithmetic
+ * gets into a transfer.
  *
  * Rejects anything it is not certain of. A rejected amount costs one more
  * message; a misread one costs the difference.
  */
-const AMOUNT_PATTERN = /^\s*(?:usdc\s+)?(\d+(?:\.\d{1,6})?)\s*(?:usdc)?\s*$/i;
+const AMOUNT_PATTERN = /^\s*(?:usdc\s+)?(\d+(?:\.\d{1,7})?)\s*(?:usdc)?\s*$/i;
 
 export function parseSendAmount(text: string): string | null {
   const match = AMOUNT_PATTERN.exec(text.trim());
@@ -107,7 +109,7 @@ export interface SendReplySlots {
  * about the user's address book: the caller checks saved labels against the
  * whole reply first, and a saved name always wins over any splitting.
  */
-const AMOUNT = String.raw`\d+(?:\.\d{1,6})?`;
+const AMOUNT = String.raw`\d+(?:\.\d{1,7})?`;
 
 const AMOUNT_ONLY = new RegExp(`^(?:usdc\\s+)?(${AMOUNT})\\s*(?:usdc)?$`, "i");
 const AMOUNT_THEN_RECIPIENT = new RegExp(
@@ -172,12 +174,12 @@ export function recipientPrompt(hasSaved: boolean): string {
     ? [
         "Who are you sending to?",
         "",
-        "Tap a saved name below, or send me a phone number or a 0x wallet address.",
+        "Tap a saved name below, or send me a phone number or a wallet address starting with G.",
       ].join("\n")
     : [
         "Who are you sending to?",
         "",
-        "Send me their phone number with the country code, like +234 801 234 5678 — or a 0x wallet address.",
+        "Send me their phone number with the country code, like +234 801 234 5678 — or a wallet address starting with G.",
         "",
         "Once you've paid someone I'll offer to save them, so next time it's one tap.",
       ].join("\n");
@@ -189,8 +191,8 @@ export function recipientPromptWithAmount(amount: string, hasSaved: boolean): st
     `${amount} USDC to who?`,
     "",
     hasSaved
-      ? "Tap a saved name below, or send me a phone number or a 0x wallet address."
-      : "Send me their phone number with the country code, or a 0x wallet address.",
+      ? "Tap a saved name below, or send me a phone number or a wallet address starting with G."
+      : "Send me their phone number with the country code, or a wallet address starting with G.",
   ].join("\n");
 }
 

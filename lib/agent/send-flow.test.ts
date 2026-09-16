@@ -38,7 +38,7 @@ const ACCEPTED: Array<[string, string]> = [
   ["5", "5"],
   ["  5  ", "5"],
   ["12.50", "12.50"],
-  ["0.000001", "0.000001"],
+  ["0.0000001", "0.0000001"],
   ["5 usdc", "5"],
   ["5USDC", "5"],
   ["usdc 5", "5"],
@@ -58,9 +58,10 @@ const REJECTED: string[] = [
   // Zero and negatives. Number() accepts both and every downstream check is
   // a `>` comparison, so a zero would sail through as a valid transfer.
   "0", "0.0", "-5", "-0.5",
-  // More precision than USDC has. Truncating silently would move a different
-  // amount than the one on screen.
-  "1.1234567",
+  // More precision than Stellar's ledger has (7 decimal places for every
+  // classic asset). Truncating silently would move a different amount than
+  // the one on screen.
+  "1.12345678",
   // Shapes that Number() forgives and a wallet must not.
   "1e3", "0x5", "Infinity", "NaN", "5.", ".5", "1,000", "５",
   // Currency the flow does not deal in.
@@ -116,9 +117,9 @@ const SLOTS: Array<[string, string | null, string | null]> = [
   ["5 to +234 801 234 5678", "5", "+234 801 234 5678"],
   // An address is never split either.
   [
-    "0x1111111111111111111111111111111111111111",
+    "GDJBUPILZLX6VWTSG7SCUT4EDUW4OYQ54W2PRWSL2HJKRAKDIQ3LIXAS",
     null,
-    "0x1111111111111111111111111111111111111111",
+    "GDJBUPILZLX6VWTSG7SCUT4EDUW4OYQ54W2PRWSL2HJKRAKDIQ3LIXAS",
   ],
   // Empty.
   ["", null, null],
@@ -170,7 +171,7 @@ function beneficiary(label: string, id = "b1"): Beneficiary {
     user_id: "u1",
     label,
     recipient_user_id: null,
-    recipient_address: "0x0000000000000000000000000000000000000000",
+    recipient_address: "GBGOHIMW63HB2MOV2DY6WLES27ZDADXQEC3BR4RUC64GNSQDCRIPEYRE",
     recipient_whatsapp_number: null,
     created_at: new Date().toISOString(),
   };

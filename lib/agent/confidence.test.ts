@@ -146,7 +146,7 @@ const REPLY_REJECTED: Array<[string, string]> = [
   ["www link", "Hi! Go to www.evil.example"],
   ["wa.me link", "Hey, message me on wa.me/12345"],
   ["telegram link", "Hi, find me at t.me/someone"],
-  ["wallet address", "Hello! Send to 0xabcdef123456 for a reward"],
+  ["wallet address", "Hello! Send to GABCDEFGHIJKLMNOPQRSTUVWXYZ234567 for a reward"],
   ["long digit run", "Hi! Call 08012345678 to claim"],
 ];
 

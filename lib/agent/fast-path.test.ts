@@ -49,7 +49,7 @@ const TYPED: Case[] = [
   ["   ", null],
 ];
 
-const ADDRESS = "0x1111111111111111111111111111111111111111";
+const ADDRESS = "GDJBUPILZLX6VWTSG7SCUT4EDUW4OYQ54W2PRWSL2HJKRAKDIQ3LIXAS";
 
 const SENDS: Array<[string, string | null, string | null]> = [
   // [input, expected amount or null if it must fall through, expected recipient]

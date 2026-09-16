@@ -144,8 +144,11 @@ export function sanitizeModelReply(reply: string | null | undefined): string | n
   if (/\b(wa\.me|t\.me|bit\.ly|tinyurl)\b/i.test(trimmed)) return null;
   if (/\bwww\.\S/i.test(trimmed)) return null;
 
-  // A wallet address in a greeting is either a mistake or an attempt.
-  if (/0x[a-fA-F0-9]{6,}/.test(trimmed)) return null;
+  // A wallet address in a greeting is either a mistake or an attempt. Loose
+  // on purpose (a run of Stellar StrKey's base32 alphabet, not a strict
+  // checksum validation) — this is a phishing guard, not an address parser,
+  // and generous matching costs one greeting falling back to the template.
+  if (/\bG[A-Z2-7]{20,}\b/.test(trimmed)) return null;
 
   // Long digit runs: phone numbers, account numbers, codes.
   if (/\d[\d\s-]{7,}/.test(trimmed)) return null;

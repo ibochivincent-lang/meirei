@@ -697,7 +697,7 @@ function SecurityNote() {
 /* ---------- small presentational helpers ---------- */
 
 function Avatar({ label }: { label: string }) {
-  const isAddress = label.startsWith("0x") || label.includes("…");
+  const isAddress = label.startsWith("G") || label.includes("…");
   if (isAddress) return <WalletIcon className="h-4 w-4" />;
   const ch = label.trim().charAt(0).toUpperCase();
   return <span>{ch || "·"}</span>;

@@ -1,4 +1,4 @@
-import { isEvmAddress, normalizePhone } from "@/lib/utils/phone";
+import { isStellarAddress, normalizePhone } from "@/lib/utils/phone";
 
 // Structured-send shape produced by mapDecodedSend() (lib/agent/map-decoded-send.ts)
 // from a sendam-ai /decode result, and now also by the guided send flow
@@ -48,8 +48,11 @@ function looksLikePhone(value: string): boolean {
 export function classifyRecipient(raw: string): ParsedSendIntent["recipient"] {
   const trimmed = raw.trim();
 
-  if (isEvmAddress(trimmed)) {
-    return { kind: "address", address: trimmed.toLowerCase() };
+  // No case normalization here, unlike the EVM-hex era: Stellar's StrKey
+  // encoding is case-SIGNIFICANT base32, so lowercasing (or any re-casing)
+  // would corrupt a valid address into an invalid or a different one.
+  if (isStellarAddress(trimmed)) {
+    return { kind: "address", address: trimmed };
   }
 
   const normalized = normalizePhone(trimmed);

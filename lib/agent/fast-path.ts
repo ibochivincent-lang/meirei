@@ -1,5 +1,5 @@
 import type { DecodedIntent } from "@/lib/sendam-ai/client";
-import { isEvmAddress, normalizePhone } from "@/lib/utils/phone";
+import { isStellarAddress, normalizePhone } from "@/lib/utils/phone";
 import { ALL_CHOICES } from "@/lib/agent/menus";
 
 /**
@@ -170,7 +170,7 @@ function canonicalSend(text: string): DecodedIntent | null {
 
   // An address or a phone number is unambiguous: it either parses or it does
   // not, and there is no interpretation in between.
-  if (isEvmAddress(recipient) || normalizePhone(recipient)) {
+  if (isStellarAddress(recipient) || normalizePhone(recipient)) {
     return intent("SEND", { amount: rawAmount, asset: "USDC", recipient });
   }
 

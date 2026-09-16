@@ -31,7 +31,7 @@ function check(name: string, actual: unknown, expected: unknown) {
 const USER = { id: "user-1" } as tellaUser;
 
 const RECIPIENT = {
-  address: "0x1111111111111111111111111111111111111111",
+  address: "GDJBUPILZLX6VWTSG7SCUT4EDUW4OYQ54W2PRWSL2HJKRAKDIQ3LIXAS",
   userId: null,
   whatsappNumber: null,
   label: "Chidi",

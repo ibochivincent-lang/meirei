@@ -29,10 +29,10 @@ function check(label: string, condition: boolean): void {
 const PAYLOAD: BeneficiaryPendingPayload = {
   action: "save_beneficiary",
   step: "confirm",
-  recipientAddress: "0x1111111111111111111111111111111111111111",
+  recipientAddress: "GDJBUPILZLX6VWTSG7SCUT4EDUW4OYQ54W2PRWSL2HJKRAKDIQ3LIXAS",
   recipientUserId: null,
   recipientWhatsappNumber: null,
-  suggestedLabel: "0x1111…1111",
+  suggestedLabel: "GDJBUP…IXAS",
 };
 
 const PROPOSED: BeneficiaryPendingPayload = { ...PAYLOAD, proposedLabel: "Chidi" };
@@ -174,7 +174,7 @@ for (const t of [
   "Mum-",
   "Mum!",
   "@chidi",
-  "0x1111111111111111111111111111111111111111",
+  "GDJBUPILZLX6VWTSG7SCUT4EDUW4OYQ54W2PRWSL2HJKRAKDIQ3LIXAS",
 ]) {
   check(`invalid label: ${JSON.stringify(t.slice(0, 24))}`, !isValidBeneficiaryLabel(t));
 }
