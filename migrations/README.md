@@ -467,4 +467,61 @@ TELLA_AUTH_LOCKOUT_SECONDS=900         # optional
 `http://localhost:3000`. That fallback silently bound passkeys to rpID
 `localhost`, which registers fine and then never authenticates.
 
+## Arc → Stellar migration (`0024`–`0028`)
+
+tella moved from Circle's "Arc" chain to Stellar. Wallets are now
+self-custodial rather than Circle-custodied, and inbound payments are
+detected via a Horizon payments stream instead of a Circle webhook. See
+`lib/wallet/stellar.ts`, `lib/wallet/secret-envelope.ts`,
+`lib/wallet/stellar-stream.ts`, and `workers/stellar-stream-worker.ts`.
+
+Apply `0024` through `0028` in order, all BEFORE deploying the Stellar
+wallet code — each is documented individually in its own file header.
+
+### One-off: resetting existing users to re-provision on Stellar
+
+The deployment this migrated ran testnet-only (see `0020`'s comment: "the
+behaviour is real and the money is not"), so there was nothing worth
+migrating out of Arc wallet data. Rather than writing conversion logic for
+`circle_wallet_id`/Arc addresses that have no Stellar equivalent, existing
+users are reset to re-provision fresh through the normal
+not-provisioned → `pending` → `active` path
+(`lib/users/wallet-gate.ts`, `lib/wallet/provision.ts`,
+`app/api/cron/retry-wallets`):
+
+```sql
+update public.tella_users
+   set wallet_status = 'none',
+       wallet_address = null,
+       stellar_secret_ciphertext = null
+ where wallet_status <> 'none';
+```
+
+Run this ONCE, after `0024` is applied and before the Stellar-wallet code is
+live traffic. `circle_wallet_id` is deliberately left untouched — it stays a
+historical marker of who was ever provisioned on Arc. Existing
+`tella_transactions` / `tella_beneficiaries` rows referencing old `0x...`
+addresses are also left as-is: a harmless historical record, not something
+this reset touches.
+
+If this deployment ever held real mainnet balances, do not run this as
+written — that data-destructive reset is only correct because the Arc
+wallets it clears never held real money.
+
+### Environment added alongside 0024–0028
+
+```
+STELLAR_NETWORK=TESTNET                # TESTNET or PUBLIC; anything else fails loudly
+STELLAR_HORIZON_URL=                   # optional override; defaults per network
+STELLAR_USDC_ISSUER=                   # Circle's USDC issuer account id for STELLAR_NETWORK — see .env.example
+STELLAR_USDC_CODE=USDC                 # optional, defaults to USDC
+STELLAR_WALLET_MASTER_KEY_V1=          # 32 random bytes, base64 — encrypts stored wallet secret keys
+STELLAR_EXPLORER_TX_URL=               # optional override; defaults to stellar.expert
+STELLAR_FRIENDBOT_URL=                 # optional override; testnet only
+STELLAR_STREAM_WORKER_SECRET=          # bearer token shared with workers/stellar-stream-worker.ts
+```
+
+`CIRCLE_*` and `ARC_*` env vars are no longer read anywhere and can be
+removed once the migration is deployed.
+
 See `.env.example` for the full list.

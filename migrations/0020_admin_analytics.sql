@@ -19,8 +19,8 @@
 -- privilege to regret.
 --
 -- Every figure is denominated in testnet USDC. The whole application runs on
--- ARC-TESTNET, so the behaviour is real and the money is not; the dashboard
--- labels it rather than leaving a reader to assume.
+-- Stellar Testnet (STELLAR_NETWORK), so the behaviour is real and the money
+-- is not; the dashboard labels it rather than leaving a reader to assume.
 --
 -- Apply via Supabase SQL editor or
 -- `psql $SUPABASE_DB_URL -f migrations/0020_admin_analytics.sql`.
