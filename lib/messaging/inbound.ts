@@ -222,7 +222,7 @@ async function provisionWallet(
           "",
           `Address: \`${address}\``,
           "",
-          "Send USDC to this address on Arc to fund your account, then tap below to get started.",
+          "Send USDC to this address on Stellar to fund your account, then tap below to get started.",
         ].join("\n"),
         choices: QUICK_CHOICES,
       },

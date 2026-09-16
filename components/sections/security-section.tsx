@@ -22,9 +22,9 @@ const PILLARS = [
   },
   {
     id: "custody",
-    title: "Institutional custody",
+    title: "Encrypted key custody",
     body:
-      "Wallet keys are managed by Circle - the issuer of USDC. The same infrastructure trusted by banks and global fintechs secures your account.",
+      "Your wallet's signing key never leaves our servers in the clear - it's encrypted at rest and only ever decrypted, briefly, to sign a transfer you approved.",
     illustration: <CustodyGlyph />,
   },
 ];

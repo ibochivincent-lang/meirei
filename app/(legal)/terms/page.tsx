@@ -96,8 +96,8 @@ export default function TermsPage() {
         <p>
           Tella is an <strong>interface</strong>. WhatsApp carries the
           conversation; Tella&rsquo;s own platform does the work, settling on
-          the Arc network through our wallet and messaging infrastructure. We do
-          not control blockchains, and once a blockchain
+          the Stellar network through our wallet and messaging infrastructure.
+          We do not control blockchains, and once a blockchain
           transaction is broadcast it is generally <strong>irreversible</strong>
           .
         </p>
@@ -213,11 +213,12 @@ export default function TermsPage() {
       <Section title="9. Third-party services">
         <p>
           Tella relies on third parties, including (without limitation) Meta /
-          WhatsApp for messaging, Circle for wallet and USDC infrastructure,
-          Twilio for messaging delivery, and our identity-verification
-          providers. Their terms and privacy practices govern your interaction
-          with them. We are not responsible for outages, errors, or actions of
-          third parties, except as required by law.
+          WhatsApp for messaging, Circle as the issuer of USDC, the Stellar
+          network for settlement, Twilio for messaging delivery, and our
+          identity-verification providers. Their terms and privacy practices
+          govern your interaction with them. We are not responsible for
+          outages, errors, or actions of third parties, except as required by
+          law.
         </p>
       </Section>
 

@@ -27,7 +27,7 @@ export const FAQS: FaqItem[] = [
     id: "how-it-works",
     question: "How does it work?",
     answer:
-      "Tell tella what you want to do in plain language. You see a clear summary before anything happens, you confirm, and tella's platform settles the transaction on Arc - usually within seconds. WhatsApp or Telegram carries the conversation; the platform does the work behind the scenes.",
+      "Tell tella what you want to do in plain language. You see a clear summary before anything happens, you confirm, and tella's platform settles the transaction on Stellar - usually within seconds. WhatsApp or Telegram carries the conversation; the platform does the work behind the scenes.",
   },
   {
     id: "fees",
@@ -39,7 +39,7 @@ export const FAQS: FaqItem[] = [
     id: "settlement",
     question: "How fast is it?",
     answer:
-      "Usually within seconds. tella settles on Arc - the stablecoin network built by Circle for near-instant finality. Most transactions complete before you can put your phone down.",
+      "Usually within seconds. tella settles on Stellar - a network built for near-instant finality, using USDC issued by Circle. Most transactions complete before you can put your phone down.",
   },
   {
     id: "getting-started",

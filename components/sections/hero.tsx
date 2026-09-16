@@ -69,7 +69,7 @@ export function Hero() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
             </span>
-            Live on WhatsApp and Telegram, settles on Arc in ~1s
+            Live on WhatsApp and Telegram, settles on Stellar in ~5s
           </motion.div>
 
           <MaskReveal
@@ -262,10 +262,10 @@ function HeroPhone() {
         style={{ animationDelay: "-3s" }}
       >
         <p className="font-sans text-3xl font-semibold leading-none tabular-nums">
-          ~1s
+          ~5s
         </p>
         <p className="mt-2 text-[11px] leading-tight text-surface-50/60">
-          Average settlement on Arc
+          Average settlement on Stellar
         </p>
       </motion.div>
 

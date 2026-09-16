@@ -15,9 +15,9 @@ export const SECURITY_CARDS: SecurityCard[] = [
   },
   {
     id: "certified",
-    title: "Settled on Arc, encrypted, verifiable",
+    title: "Settled on Stellar, encrypted, verifiable",
     body:
-      "Your payments settle on Arc — a network with near-zero second finality and independently verifiable transactions. The WhatsApp layer uses the same end-to-end encryption that secures every other message you send.",
+      "Your payments settle on Stellar — a network with near-zero second finality and independently verifiable transactions. The WhatsApp layer uses the same end-to-end encryption that secures every other message you send.",
     illustration: "certified",
   },
   {

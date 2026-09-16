@@ -105,9 +105,9 @@ export default function PrivacyPage() {
 
         <p>
           <strong>From third parties:</strong> we receive verification
-          outcomes from our KYC provider, settlement data from the Arc network,
-          and messaging metadata (e.g. delivery state) from Meta / WhatsApp
-          and Twilio.
+          outcomes from our KYC provider, settlement data from the Stellar
+          network, and messaging metadata (e.g. delivery state) from Meta /
+          WhatsApp and Twilio.
         </p>
       </Section>
 
@@ -177,8 +177,12 @@ export default function PrivacyPage() {
                 <strong>Twilio</strong> — messaging infrastructure.
               </li>
               <li>
-                <strong>Circle</strong> — wallet creation, USDC custody, and
-                blockchain settlement.
+                <strong>Circle</strong> — issuer of the USDC stablecoin.
+              </li>
+              <li>
+                <strong>Stellar network</strong> — blockchain settlement.
+                Wallets are created and held by Tella&rsquo;s own
+                infrastructure rather than a third-party custodian.
               </li>
               <li>
                 <strong>Supabase</strong> — application database and

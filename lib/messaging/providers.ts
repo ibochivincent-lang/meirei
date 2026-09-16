@@ -50,7 +50,7 @@ import {
  * THE ONE ASYMMETRY, and it is not a preference: `selfEnrolling`.
  *
  * A tella account is phone-rooted. tella_users.whatsapp_number is the
- * unique key, the Circle wallet provisions against it, recovery links
+ * unique key, the Stellar wallet provisions against it, recovery links
  * deliver to it, and sends resolve recipients through it. An inbound
  * WhatsApp message therefore carries enough to create an account; a
  * Telegram chat id does not, because there is no phone number inside one.
