@@ -27,13 +27,8 @@ import {
   listBeneficiaries,
 } from "@/lib/beneficiaries/repository";
 import { listRecentTransactions } from "@/lib/transactions/repository";
-import {
-  getWalletBalances,
-  requestFaucetTokens,
-  FaucetForbiddenError,
-  FaucetRateLimitedError,
-  type FaucetAsset,
-} from "@/lib/wallet/circle";
+import { getWalletBalances } from "@/lib/wallet/stellar";
+import { isMainnet } from "@/lib/wallet/network";
 import { getUsdToNgnRate, usdToNgn } from "@/lib/fx/naira";
 import { checkSendLimits, formatLimitFailure } from "@/lib/sends/limits";
 import { isResetRequest } from "@/lib/agent/detect-reset-request";
@@ -51,21 +46,10 @@ import {
 import { recordAuthAttempt, formatRetryAfter } from "@/lib/auth/rate-limit";
 import { classifyRecipient, type ParsedSendIntent } from "@/lib/agent/parse-send";
 import { mapDecodedSend } from "@/lib/agent/map-decoded-send";
-import { normalizeFaucetAsset } from "@/lib/agent/normalize-faucet-asset";
-import {
-  decode,
-  decodeFollowUp,
-  flowStart,
-  SendamUnavailableError,
-  type FollowUpSlots,
-} from "@/lib/sendam-ai/client";
+import { decode, decodeFollowUp, SendamUnavailableError } from "@/lib/sendam-ai/client";
 import { fastPathDecode, stripCommandPrefix } from "@/lib/agent/fast-path";
 import { checkConfidence, sanitizeModelReply } from "@/lib/agent/confidence";
-import {
-  FAUCET_ASSET_FLOW,
-  FAUCET_ASSET_AWAITING,
-  nextQuestionFor,
-} from "@/lib/sendam-ai/flows";
+import { nextQuestionFor } from "@/lib/sendam-ai/flows";
 import { REPLIES, pickReply } from "@/lib/agent/replies";
 import { PROVIDERS } from "@/lib/messaging/providers";
 import type { MessageProvider } from "@/lib/messaging/processed-messages";
@@ -384,10 +368,6 @@ async function handleFlowPendingResponse({
     return { reply: nextQuestionFor(result.flow, result.slots) ?? "Sorry, could you say that again?" };
   }
 
-  if (flow === FAUCET_ASSET_FLOW) {
-    return completeFaucetAssetFlow({ user, pending, slots: result.slots });
-  }
-
   await deletePending(pending.id);
   return { reply: pickReply(REPLIES.unknown, { name }), choices: QUICK_CHOICES };
 }
@@ -621,125 +601,31 @@ async function askForAnotherName({
   await advanceBeneficiaryStep({ user, payload, step: "name" });
   return { reply: replyPrefix };
 }
-async function completeFaucetAssetFlow({
-  user,
-  pending,
-  slots,
-}: {
-  user: tellaUser;
-  pending: PendingAction;
-  slots: FollowUpSlots;
-}): Promise<HandlerResult> {
-  await deletePending(pending.id);
-
-  const asset = normalizeFaucetAsset(typeof slots["asset"] === "string" ? slots["asset"] : null);
-  if (!asset) {
-    return reissueFaucetAssetPrompt({
-      user,
-      replyPrefix: pickReply(REPLIES.faucetInvalidAsset, { name: firstName(user) }),
-    });
-  }
-
-  return sendFaucetTokens({ user, asset });
-}
-
 /**
- * Starts (or restarts) the "which testnet asset?" flow. A sendam-ai
- * outage/misconfiguration here must not cost the user their message —
- * same principle as decode()'s try/catch in handleOnboardedUser — so a
- * failed flowStart() falls back to a plain reply instead of throwing all
- * the way up to the webhook route, which for the Meta channel has no
- * fallback-message safety net of its own (unlike the Twilio route).
- *
- * `priorSlots` is deliberately NOT forwarded on a re-ask (see call sites):
- * an old, unrecognized "asset" value would otherwise look already-resolved
- * to sendam-ai and never get asked again.
+ * tella never calls a faucet API on Stellar the way it did on Arc — Circle's
+ * Stellar Testnet faucet has no equivalent automated drip endpoint tella's
+ * account can reach (see migrations/README.md's Arc → Stellar section). So
+ * this always points the user at the web faucet directly; there is no
+ * asset-selection step left to ask about.
  */
-async function startFaucetAssetFlow(user: tellaUser): Promise<{ ok: boolean; reply: string }> {
-  try {
-    const { token } = await flowStart(FAUCET_ASSET_FLOW, {}, FAUCET_ASSET_AWAITING);
-    await createPendingFlow({ userId: user.id, flow: FAUCET_ASSET_FLOW, token });
-    return {
-      ok: true,
-      reply: nextQuestionFor(FAUCET_ASSET_FLOW, {}) ?? "Which testnet asset would you like — native, USDC, or EURC?",
-    };
-  } catch (err) {
-    console.error("[faucet] flowStart failed", { userId: user.id, err });
-    return { ok: false, reply: pickReply(REPLIES.faucetError, { name: firstName(user) }) };
-  }
-}
-
-/**
- * The original token is already COMPLETE/consumed at this point — mints a
- * fresh single-slot token for just the asset rather than trying to continue
- * a finished flow.
- */
-async function reissueFaucetAssetPrompt({
-  user,
-  replyPrefix,
-}: {
-  user: tellaUser;
-  replyPrefix: string;
-}): Promise<HandlerResult> {
-  const result = await startFaucetAssetFlow(user);
-  if (!result.ok) return { reply: result.reply };
-  return { reply: `${replyPrefix}\n\n${result.reply}` };
-}
-
-async function handleFaucetIntent({
-  user,
-  asset,
-}: {
-  user: tellaUser;
-  asset: string | null;
-}): Promise<HandlerResult> {
+async function handleFaucetIntent({ user }: { user: tellaUser }): Promise<HandlerResult> {
   const name = firstName(user);
 
-  // A faucet drip is a write against the wallet, so it follows the same
-  // gate as a send rather than the read gate.
+  if (isMainnet()) {
+    return { reply: pickReply(REPLIES.faucetUnavailable, { name }), choices: QUICK_CHOICES };
+  }
+
   const gate = gateSpend(user);
   if (!gate.ok || !user.wallet_address) {
     if (gate.ok === false && gate.reason === "frozen") return frozenReply(name);
     return { reply: pickReply(REPLIES.walletNotReady, { name }) };
   }
 
-  const normalized = normalizeFaucetAsset(asset);
-  if (!normalized) {
-    const result = await startFaucetAssetFlow(user);
-    return { reply: result.reply };
-  }
-
-  return sendFaucetTokens({ user, asset: normalized });
-}
-
-async function sendFaucetTokens({
-  user,
-  asset,
-}: {
-  user: tellaUser;
-  asset: FaucetAsset;
-}): Promise<HandlerResult> {
-  const name = firstName(user);
-
-  try {
-    await requestFaucetTokens({ address: user.wallet_address as string, asset });
-    return { reply: pickReply(REPLIES.faucetSuccess, { name }) };
-  } catch (err) {
-    if (err instanceof FaucetRateLimitedError) {
-      return { reply: pickReply(REPLIES.faucetRateLimited, { name }) };
-    }
-    if (err instanceof FaucetForbiddenError) {
-      // Circle's drip API is gated behind a mainnet-upgraded account — the
-      // web faucet isn't. Point the user there, with their address in its
-      // own bubble so a long-press → Copy grabs exactly the address.
-      return {
-        reply: pickReply(REPLIES.faucetWebFallback, { name }),
-        followUp: user.wallet_address as string,
-      };
-    }
-    console.error("[faucet] request failed", { userId: user.id, asset, err });
-    return { reply: pickReply(REPLIES.faucetError, { name }) };
-  }
+  return {
+    reply: pickReply(REPLIES.faucetWebFallback, { name }),
+    // Its own bubble so a long-press → Copy grabs exactly the address.
+    followUp: user.wallet_address,
+  };
 }
 
 /** A confirm-send prompt + the link that opens the confirm page. */
@@ -890,7 +776,10 @@ async function handleOnboardedUser({
       };
     case "HELP":
       // Fuller menu with descriptions.
-      return { reply: pickReply(REPLIES.help, { name }), choices: MENU_CHOICES };
+      return {
+        reply: pickReply(isMainnet() ? REPLIES.helpMainnet : REPLIES.help, { name }),
+        choices: MENU_CHOICES,
+      };
     case "ABOUT":
       return { reply: pickReply(REPLIES.about, { name }), choices: QUICK_CHOICES };
     case "HOW_IT_WORKS":
@@ -900,7 +789,7 @@ async function handleOnboardedUser({
     case "SECURITY":
       return { reply: pickReply(REPLIES.security, { name }), choices: QUICK_CHOICES };
     case "FAUCET":
-      return handleFaucetIntent({ user, asset: decoded.asset });
+      return handleFaucetIntent({ user });
     case "THANKS":
       return { reply: pickReply(REPLIES.thanks, { name }), choices: QUICK_CHOICES };
     case "GOODBYE":
@@ -1931,7 +1820,7 @@ async function getBalanceReply(
 
   let balances;
   try {
-    balances = await getWalletBalances(gate.walletId);
+    balances = await getWalletBalances(gate.address);
   } catch (err) {
     console.error("[balance] fetch failed", { userId: user.id, err });
     return { reply: pickReply(REPLIES.balanceError, { name }) };

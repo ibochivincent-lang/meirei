@@ -38,6 +38,15 @@ export const REPLIES = {
     "Here's the menu, {name} 📋\n\n• Balance → see your funds\n• Address → receive USDC\n• Send → \"send 5 usdc to +234…\"\n• Faucet → \"faucet usdc\" for testnet tokens\n\nWhat would you like?",
   ],
 
+  // Mainnet has no faucet, so its menu can't offer one. Chosen in handler.ts
+  // by isMainnet().
+  helpMainnet: [
+    "Here's what I can do, {name} 👇\n\n• *Balance* — \"what's my balance?\"\n• *Address* — \"what's my address?\"\n• *Send* — \"send 5 usdc to +234…\"\n• *Send to a wallet* — \"send 5 usdc to 0x…\"",
+    "Happy to help, {name}! These all work:\n\n• \"balance\"\n• \"my address\"\n• \"send 5 usdc to +234…\"\n• \"send 5 usdc to 0x…\"",
+    "No problem {name} — here are your options:\n\n💰 Check balance\n📥 Get your address\n💸 Send USDC to a number or 0x address\n\nJust type what you want to do.",
+    "Here's the menu, {name} 📋\n\n• Balance → see your funds\n• Address → receive USDC\n• Send → \"send 5 usdc to +234…\"\n\nWhat would you like?",
+  ],
+
   about: [
     "I'm *tella*, your money companion right here in your chats 💚\n\nI hold a USDC wallet for you so you can send and receive money just by texting — no app to download, no seed phrases.",
     "Great question, {name}! *tella* lets you send and receive *USDC* by chat.\n\nYou get a real wallet, but you talk to it in plain language — like \"send 5 to +234…\".",
@@ -48,16 +57,16 @@ export const REPLIES = {
 
   howItWorks: [
     "Here's the gist, {name} ✨\n\n1️⃣ You get a USDC wallet (already set up)\n2️⃣ Fund it by sending USDC to your address\n3️⃣ Send to anyone with \"send 5 usdc to +234…\"\n4️⃣ Approve each send with your PIN — done!",
-    "Simple flow 👇\n\n• Tell me to send → I prepare it\n• You tap the link and confirm with your PIN\n• I move the USDC on Arc and send you the receipt\n\nYou approve every single send. Always.",
-    "It works like texting money, {name}:\n\n📥 Receive at your address\n💸 Send by number or 0x address\n🔐 Confirm with your PIN\n\nThat's it — no apps, no seed phrases.",
-    "Behind the scenes I run a real USDC wallet for you on Arc. You just chat.\n\nEvery send needs your PIN confirmation, so nothing moves without you.",
+    "Simple flow 👇\n\n• Tell me to send → I prepare it\n• You tap the link and confirm with your PIN\n• I move the USDC on Stellar and send you the receipt\n\nYou approve every single send. Always.",
+    "It works like texting money, {name}:\n\n📥 Receive at your address\n💸 Send by number or wallet address\n🔐 Confirm with your PIN\n\nThat's it — no apps, no seed phrases.",
+    "Behind the scenes I run a real USDC wallet for you on Stellar. You just chat.\n\nEvery send needs your PIN confirmation, so nothing moves without you.",
   ],
 
   fees: [
-    "tella doesn't charge you to chat or hold USDC, {name} 🙌\n\nSends pay a small network fee on Arc, and I handle that automatically — no surprises.",
-    "No subscription, no hidden charges 💚\n\nThe only cost is the tiny Arc network fee on a send, which is taken care of for you.",
+    "tella doesn't charge you to chat or hold USDC, {name} 🙌\n\nSends pay a small network fee on Stellar, and I handle that automatically — no surprises.",
+    "No subscription, no hidden charges 💚\n\nThe only cost is the tiny Stellar network fee on a send, which is taken care of for you.",
     "Good news — using tella is free. Sending USDC has a small blockchain network fee, but it's handled behind the scenes.",
-    "I don't add fees on top, {name}. Network fees on Arc are minimal and managed for you when you send.",
+    "I don't add fees on top, {name}. Network fees on Stellar are minimal and managed for you when you send.",
   ],
 
   security: [
@@ -124,10 +133,10 @@ export const REPLIES = {
   // handler.ts's `followUp` field) — nothing else in that bubble, so a
   // long-press → Copy grabs exactly the address and nothing else.
   address: [
-    "Here's your tella wallet address, {name} 📥 Tap and hold the message below to copy it.\n\nSend USDC here on Arc to top up.",
-    "Your address for receiving USDC — tap and hold the next message to copy it.\n\nAnything sent here on Arc lands in your wallet, {name}.",
+    "Here's your tella wallet address, {name} 📥 Tap and hold the message below to copy it.\n\nSend USDC here on Stellar to top up.",
+    "Your address for receiving USDC — tap and hold the next message to copy it.\n\nAnything sent here on Stellar lands in your wallet, {name}.",
     "Got it 👇 Tap and hold the message below to copy your address.\n\nShare it freely to get paid.",
-    "Your wallet address is coming up next, {name} — tap and hold it to copy.\n\nFund up by sending USDC to it on Arc.",
+    "Your wallet address is coming up next, {name} — tap and hold it to copy.\n\nFund up by sending USDC to it on Stellar.",
   ],
 
   walletPending: [
@@ -165,33 +174,19 @@ export const REPLIES = {
     "Something went wrong getting your balance, {name}. One more try in a sec?",
   ],
 
-  faucetSuccess: [
-    "✓ Sent, {name}! Testnet tokens are on the way to your wallet — check your *balance* in a moment.",
-    "Done! 🚿 That should land in your wallet shortly, {name}. Try *balance* in a bit to see it.",
-    "Requested! Give the network a moment, then check your *balance*, {name}.",
+  faucetUnavailable: [
+    "There's no faucet here, {name} — tella runs on Stellar mainnet, so balances are real USDC. To add funds, send USDC on Stellar to your *address*.",
+    "Free test tokens were a testnet thing, {name}. On mainnet you fund your wallet by sending real USDC on Stellar to your *address*.",
   ],
 
-  faucetInvalidAsset: [
-    "I can only send *native gas*, *USDC*, or *EURC* from the testnet faucet, {name}. Which one would you like?",
-    "That's not one the faucet offers, {name} — pick *native*, *USDC*, or *EURC*.",
-    "Not a faucet option, {name}. Try *native* (gas), *USDC*, or *EURC*.",
-  ],
-
-  faucetRateLimited: [
-    "Looks like you've already tapped the faucet recently, {name} — try again later.",
-    "The faucet's on cooldown for your wallet right now. Give it a while and try again.",
-    "Already claimed recently, {name}! The faucet resets after a bit — try again later.",
-  ],
-
-  faucetError: [
-    "The faucet didn't come through just now, {name}. Try again in a moment?",
-    "Hmm, that faucet request failed — give it another try shortly.",
-    "Something went wrong requesting testnet tokens, {name}. One more try in a sec?",
-  ],
-
+  // tella never calls a faucet API on your behalf on Stellar — Circle's
+  // testnet faucet has no such automated path the way Arc's did (see
+  // lib/wallet/stream-auth.ts's neighbour, lib/wallet/provision.ts, for the
+  // funding tella DOES automate: XLM via Friendbot). This is always the
+  // reply to a faucet request on testnet.
   faucetWebFallback: [
-    "I can't tap the faucet for you directly, {name} — but you can grab testnet tokens yourself 🚿\n\n1. Open https://faucet.circle.com\n2. Pick *Arc Testnet*\n3. Paste your address (next message — tap and hold to copy)",
-    "The faucet isn't answering me, {name}, but it'll answer *you*: head to https://faucet.circle.com, choose *Arc Testnet*, and paste in your address — I'll send it right after this so you can copy it.",
-    "No luck from here, {name} — use Circle's faucet page instead: https://faucet.circle.com\n\nSelect *Arc Testnet* and drop in your wallet address (coming up next, tap and hold to copy).",
+    "Grab testnet USDC yourself 🚿\n\n1. Open https://faucet.circle.com\n2. Pick *Stellar Testnet*\n3. Paste your address (next message — tap and hold to copy)",
+    "Head to https://faucet.circle.com, choose *Stellar Testnet*, and paste in your address — I'll send it right after this so you can copy it.",
+    "Use Circle's faucet page: https://faucet.circle.com\n\nSelect *Stellar Testnet* and drop in your wallet address (coming up next, tap and hold to copy).",
   ],
 } as const;
