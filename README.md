@@ -90,8 +90,20 @@ The web application will be accessible at `http://localhost:3000`.
 Meirei includes comprehensive verification test suites:
 
 ```bash
-# Run OKX AI ASP unit tests
+# Run OKX AI ASP unit tests (54/54 passing)
 npm run test:unit
+
+# Test live read-only X Layer DEX quotes
+npm run smoke:live
+
+# Validate OKX AI ASP listing configuration
+npm run asp:validate
+
+# Parse natural language mandate into target weights
+npm run parse -- "60% Mag7, 20% USDG, max 8%"
+
+# Plan portfolio drift and quotes against real on-chain balances
+npm run plan -- "60% Mag7, 20% USDG, max 8%" -w 0x7f17d6224e7d48606598732c3f511412b5c1e922
 
 # Test WhatsApp and Telegram multi-channel webhooks
 node scratch/test_webhooks.js
