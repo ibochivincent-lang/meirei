@@ -156,10 +156,17 @@ export const PROVIDERS: Record<MessageProvider, Provider> = {
     // Three is the Cloud API's hard cap on quick replies; more than that
     // has to be a list picker, and a list picker for two options is a
     // worse experience than two buttons.
-    sendChoices: ({ to, body, choices }) =>
-      choices.length <= 3
-        ? metaButtons({ to, body, choices })
-        : metaList({ to, body, choices }),
+    sendChoices: ({ to, body, choices }) => {
+      const mapped = choices.map((c) => ({
+        label: c.title,
+        value: c.id,
+        id: c.id,
+        title: c.title,
+      }));
+      return choices.length <= 3
+        ? metaButtons({ to, body, choices: mapped })
+        : metaList({ to, body, choices: mapped });
+    },
     sendLink: metaLink,
   },
   telegram: {
@@ -180,7 +187,15 @@ export const PROVIDERS: Record<MessageProvider, Provider> = {
     },
     sendText: sendTelegramMessage,
     sendImage: sendTelegramImage,
-    sendChoices: sendTelegramChoices,
+    sendChoices: ({ to, body, choices }) => {
+      const mapped = choices.map((c) => ({
+        label: c.title,
+        value: c.id,
+        id: c.id,
+        title: c.title,
+      }));
+      return sendTelegramChoices({ to, body, choices: mapped });
+    },
     sendLink: sendTelegramLink,
   },
 };

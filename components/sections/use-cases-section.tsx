@@ -329,7 +329,7 @@ function PersonaPhoto({ photo, index }: { photo: PhotoCard; index: number }) {
           sizes="(min-width: 1024px) 307px, (min-width: 768px) 246px, 120px"
           className={cn("object-cover", photo.objectPosition)}
         />
-        <div className="absolute inset-x-4 bottom-4 hidden rounded-lg bg-white/80 dark:bg-surface-100/90 p-3 backdrop-blur-sm md:block">
+        <div className="absolute inset-x-4 bottom-4 hidden rounded-lg bg-white dark:bg-[#11141D] border border-ink-200 dark:border-zinc-800 p-3 shadow-md md:block">
           <p className="text-sm font-medium leading-5 text-black dark:text-ink-50">{photo.title}</p>
           <p className="text-xs leading-4 text-ink-500 dark:text-ink-400">{photo.subtitle}</p>
         </div>

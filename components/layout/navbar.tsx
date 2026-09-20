@@ -60,25 +60,34 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="sticky inset-x-0 top-0 z-50 backdrop-blur-md border-b border-surface-200/80 bg-surface-50/85 transition-colors px-[10px] sm:px-[72px]">
+    <header className="sticky inset-x-0 top-0 z-50 border-b border-surface-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#0B0E14] transition-colors px-[10px] sm:px-[72px]">
       <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5">
         <Link href="/" aria-label="meirei - home" data-cursor="grow">
           <BrandMark />
         </Link>
 
         <nav aria-label="Primary" className="hidden md:block">
-          <ul className="flex items-center gap-10 font-medium text-base text-ink-700">
+          <ul className="flex items-center gap-10 font-medium text-base text-ink-700 dark:text-ink-300">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
                 <a
                   href={link.href}
-                  className="group relative transition-colors hover:text-ink-900"
+                  className="group relative transition-colors hover:text-ink-900 dark:hover:text-white"
                 >
                   {link.label}
-                  <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-ink-900 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100" />
+                  <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-ink-900 dark:bg-white transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100" />
                 </a>
               </li>
             ))}
+            <li>
+              <Link
+                href="/cookies"
+                className="group relative transition-colors hover:text-ink-900 dark:hover:text-white"
+              >
+                Cookies
+                <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-ink-900 dark:bg-white transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100" />
+              </Link>
+            </li>
           </ul>
         </nav>
 
@@ -88,7 +97,7 @@ export function Navbar() {
             onClick={toggleTheme}
             aria-label={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
             title={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
-            className="grid h-9 w-9 place-items-center rounded-full text-ink-900 transition-colors hover:bg-surface-200 cursor-pointer"
+            className="grid h-9 w-9 place-items-center rounded-full text-ink-900 dark:text-ink-100 transition-colors hover:bg-surface-200 dark:hover:bg-surface-100 cursor-pointer"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z" />
@@ -97,7 +106,7 @@ export function Navbar() {
 
           <Link
             href="/app"
-            className="inline-flex items-center gap-1.5 rounded-full border border-ink-900 dark:border-ink-200 bg-transparent px-4 py-1.5 text-sm font-medium text-ink-900 dark:text-ink-50 transition-all hover:bg-ink-900 hover:text-white dark:hover:bg-white dark:hover:text-ink-950 cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-ink-900 dark:border-zinc-700 bg-surface-0 dark:bg-[#161B26] px-4 py-1.5 text-sm font-semibold text-ink-900 dark:text-white transition-all hover:bg-ink-900 hover:text-white dark:hover:bg-white dark:hover:text-ink-950 cursor-pointer"
           >
             <span>Launch app</span>
             <span className="text-xs font-bold leading-none">↗</span>
@@ -110,7 +119,7 @@ export function Navbar() {
             onClick={toggleTheme}
             aria-label={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
             title={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
-            className="grid h-9 w-9 place-items-center rounded-full text-ink-900 transition-colors hover:bg-surface-200 cursor-pointer"
+            className="grid h-9 w-9 place-items-center rounded-full text-ink-900 dark:text-ink-100 transition-colors hover:bg-surface-200 dark:hover:bg-surface-100 cursor-pointer"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z" />
@@ -123,7 +132,7 @@ export function Navbar() {
             aria-expanded={open}
             aria-controls="mobile-nav"
             onClick={() => setOpen((v) => !v)}
-            className="relative grid h-10 w-10 place-items-center rounded-md text-ink-900 transition-colors hover:bg-ink-900/5 cursor-pointer"
+            className="relative grid h-10 w-10 place-items-center rounded-md text-ink-900 dark:text-ink-100 transition-colors hover:bg-ink-900/5 dark:hover:bg-white/10 cursor-pointer"
           >
             <span className="sr-only">Menu</span>
             <span aria-hidden="true" className="relative block h-4 w-5">
@@ -159,20 +168,29 @@ export function Navbar() {
           >
             <nav
               aria-label="Mobile"
-              className="border-t border-surface-200 bg-surface-50/95 backdrop-blur-md"
+              className="border-t border-surface-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#0B0E14]"
             >
-              <ul className="flex flex-col gap-1 px-6 py-4 font-semibold text-base text-ink-700">
+              <ul className="flex flex-col gap-1 px-6 py-4 font-semibold text-base text-ink-700 dark:text-ink-300">
                 {NAV_LINKS.map((link) => (
                   <li key={link.href}>
                     <a
                       href={link.href}
                       onClick={() => setOpen(false)}
-                      className="block rounded-md py-3 transition-colors hover:text-ink-900"
+                      className="block rounded-md py-3 transition-colors hover:text-ink-900 dark:hover:text-white"
                     >
                       {link.label}
                     </a>
                   </li>
                 ))}
+                <li>
+                  <Link
+                    href="/cookies"
+                    onClick={() => setOpen(false)}
+                    className="block rounded-md py-3 transition-colors hover:text-ink-900 dark:hover:text-white"
+                  >
+                    Cookies &amp; Privacy
+                  </Link>
+                </li>
                 <li className="pt-3">
                   <MagneticCta
                     href="/app"

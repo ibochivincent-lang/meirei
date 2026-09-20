@@ -31,7 +31,7 @@ export function ResearchSpotlight() {
             </Link>
             <Link
               href="/docs"
-              className="inline-flex items-center gap-2 rounded-full border border-ink-300 dark:border-surface-200 bg-white/80 dark:bg-surface-100 px-6 py-3 text-sm font-semibold text-ink-900 dark:text-ink-50 backdrop-blur-sm transition-all hover:bg-white dark:hover:bg-surface-200 hover:border-ink-500"
+              className="inline-flex items-center gap-2 rounded-full border border-ink-300 dark:border-zinc-700 bg-white dark:bg-[#161B26] px-6 py-3 text-sm font-semibold text-ink-900 dark:text-white shadow-xs transition-all hover:bg-surface-100 dark:hover:bg-[#202736] hover:border-ink-500"
             >
               <span>Explore Docs</span>
             </Link>

@@ -65,9 +65,26 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${spaceGroteskWorks.variable}`}
+      className={`dark ${dmSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${spaceGroteskWorks.variable}`}
+      suppressHydrationWarning
     >
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function() {
+              try {
+                var stored = localStorage.getItem('meirei_theme');
+                if (stored === 'light') {
+                  document.documentElement.classList.remove('dark');
+                } else {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {
+                document.documentElement.classList.add('dark');
+              }
+            })();`,
+          }}
+        />
         <meta
           name="facebook-domain-verification"
           content="a29vfcnfljyix4jzf8nj06d2ulnh8m"

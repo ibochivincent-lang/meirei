@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { BrandMark } from "@/components/ui/brand-mark";
@@ -6,6 +8,12 @@ import whatsappIcon from "@/public/icons/whatsapp.svg";
 import telegramIcon from "@/public/icons/telegram.svg";
 
 export function Footer() {
+  const openCookiePreferences = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("meirei:open-cookies"));
+    }
+  };
+
   return (
     <footer className="bg-ink-900 py-16 text-surface-50">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-12 px-6 lg:flex-row lg:items-end lg:justify-between">
@@ -115,6 +123,11 @@ export function Footer() {
                   Terms
                 </Link>
               </li>
+              <li>
+                <Link href="/cookies" className="transition-colors hover:text-white">
+                  Cookie Policy
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -148,6 +161,15 @@ export function Footer() {
                 <Link href={SITE.dataDeletionUrl} className="transition-colors hover:text-white">
                   Data Deletion
                 </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={openCookiePreferences}
+                  className="text-left transition-colors hover:text-white cursor-pointer"
+                >
+                  Cookie Preferences
+                </button>
               </li>
               {SITE.twitterUrl && (
                 <li>

@@ -67,7 +67,7 @@ export default function WhitepaperPage() {
         {/* Paper Body */}
         <article className="mx-auto max-w-4xl px-6 py-16 sm:px-12 leading-relaxed font-serif text-ink-800 dark:text-ink-200 text-base sm:text-lg">
           {/* Abstract */}
-          <section className="mb-14 rounded-2xl border border-ink-200 dark:border-surface-200 bg-white/70 dark:bg-surface-50/80 p-6 sm:p-8 backdrop-blur-xs font-sans">
+          <section className="mb-14 rounded-2xl border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-6 sm:p-8 font-sans shadow-xs">
             <h2 className="font-display text-xs font-bold uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-3">
               Abstract
             </h2>

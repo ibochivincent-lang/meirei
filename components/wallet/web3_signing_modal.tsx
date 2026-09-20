@@ -154,13 +154,13 @@ export function Web3SigningModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 text-ink-900 dark:text-ink-50 shadow-2xl p-6"
+          className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] text-ink-900 dark:text-ink-50 shadow-2xl p-6"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-ink-100 dark:border-ink-900">

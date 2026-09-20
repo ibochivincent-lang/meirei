@@ -19,7 +19,11 @@
     "asp:precheck": "tsx src/cli.ts asp precheck",
     "asp:validate": "node -e \"const { spawnSync } = require('child_process'); const services = [{ serviceName: 'Mandate Portfolio Execution', serviceDescription: 'Executes natural-language investment mandates into rebalanced tokenized equities on OKX X Layer.\\nUser provides mandate text with target allocations and budget in USDG.\\nDelivers parsed target weights, diff rebalance legs, and X Layer swap executions.', serviceType: 'A2A', fee: '0.1' }]; spawnSync('onchainos', ['agent', 'validate-listing', '--role', 'asp', '--name', 'Meirei Mandates', '--description', 'Autonomous AI investment mandate execution agent for tokenized equities on OKX X Layer. Converts natural-language portfolio instructions into guardrailed X Layer rebalance swaps.', '--service', JSON.stringify(services)], { stdio: 'inherit' });\"",
     "asp:register": "tsx src/cli.ts asp create --picture https://static.okx.com/cdn/web3/wallet/marketplace/headimages/agent/avatar/397e3f94-9dd8-4b96-8217-0d5c3f42e79c.jpg",
-    "asp:list": "tsx src/cli.ts asp list"
+    "asp:list": "tsx src/cli.ts asp list",
+    "bot:chat": "tsx src/cli/bot_chat.ts",
+    "bot:poll": "tsx src/cli/telegram_poller.ts",
+    "bot:webhook": "tsx src/cli/set_webhook.ts",
+    "test:webhooks": "node scratch/test_webhooks.js"
   },
   "dependencies": {
     "@simplewebauthn/browser": "^13.3.0",

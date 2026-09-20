@@ -175,6 +175,146 @@ async function runTests() {
     failed++;
   }
 
+  // Test 8: Telegram POST /stocks command
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "/stocks",
+        },
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.method === "sendMessage" && data.text.includes("LIVE EQUITIES") && data.text.includes("NVDAx")) {
+      console.log("PASS: Telegram POST /stocks command");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram POST /stocks:", res.status, data);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 8:", err.message);
+    failed++;
+  }
+
+  // Test 9: Telegram POST /freeze and /unfreeze
+  try {
+    const freezeRes = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "/freeze",
+        },
+      }),
+    });
+    const freezeData = await freezeRes.json();
+    const codeMatch = freezeData.text?.match(/\/unfreeze\s+(\d{6})/);
+    if (freezeRes.ok && freezeData.text?.includes("CIRCUIT BREAKER ACTIVATED") && codeMatch) {
+      const code = codeMatch[1];
+      console.log("PASS: Telegram POST /freeze -> code:", code);
+      passed++;
+
+      // Now test unfreeze
+      const unfreezeRes = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: {
+            chat: { id: 987654321 },
+            from: { id: 987654321, username: "alex_trader" },
+            text: `/unfreeze ${code}`,
+          },
+        }),
+      });
+      const unfreezeData = await unfreezeRes.json();
+      if (unfreezeRes.ok && unfreezeData.text?.includes("CIRCUIT BREAKER LIFTED")) {
+        console.log("PASS: Telegram POST /unfreeze with OTP code");
+        passed++;
+      } else {
+        console.error("FAIL: Telegram POST /unfreeze:", unfreezeRes.status, unfreezeData);
+        failed++;
+      }
+    } else {
+      console.error("FAIL: Telegram POST /freeze:", freezeRes.status, freezeData);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 9:", err.message);
+    failed++;
+  }
+
+  // Test 10: WhatsApp POST stocks
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "stocks",
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok && data.reply.includes("LIVE EQUITIES") && data.reply.includes("NVDAx")) {
+      console.log("PASS: WhatsApp POST stocks listing");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp POST stocks:", res.status, data);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 10:", err.message);
+    failed++;
+  }
+
+  // Test 11: WhatsApp POST freeze & unfreeze
+  try {
+    const freezeRes = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "freeze",
+      }),
+    });
+    const freezeData = await freezeRes.json();
+    const codeMatch = freezeData.reply?.match(/unfreeze\s+(\d{6})/);
+    if (freezeRes.ok && freezeData.reply?.includes("CIRCUIT BREAKER ACTIVATED") && codeMatch) {
+      const code = codeMatch[1];
+      console.log("PASS: WhatsApp POST freeze -> code:", code);
+      passed++;
+
+      const unfreezeRes = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "+1 (555) 392 1084",
+          message: `unfreeze ${code}`,
+        }),
+      });
+      const unfreezeData = await unfreezeRes.json();
+      if (unfreezeRes.ok && unfreezeData.reply?.includes("CIRCUIT BREAKER LIFTED")) {
+        console.log("PASS: WhatsApp POST unfreeze with OTP code");
+        passed++;
+      } else {
+        console.error("FAIL: WhatsApp POST unfreeze:", unfreezeRes.status, unfreezeData);
+        failed++;
+      }
+    } else {
+      console.error("FAIL: WhatsApp POST freeze:", freezeRes.status, freezeData);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 11:", err.message);
+    failed++;
+  }
+
   console.log(`\n================================`);
   console.log(`TOTAL PASSED: ${passed}`);
   console.log(`TOTAL FAILED: ${failed}`);

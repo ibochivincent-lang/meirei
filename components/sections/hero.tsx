@@ -63,7 +63,7 @@ export function Hero() {
         >
           <motion.div
             variants={fadeUp(0)}
-            className="mb-5 inline-flex items-center gap-2 rounded-full border border-ink-900/10 dark:border-surface-200 bg-white/60 dark:bg-surface-100/80 px-3.5 py-1.5 text-xs font-medium text-ink-700 dark:text-ink-200 backdrop-blur-sm md:text-sm"
+            className="mb-5 inline-flex items-center gap-2 rounded-full border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#161B26] px-3.5 py-1.5 text-xs font-medium text-ink-700 dark:text-zinc-200 shadow-xs md:text-sm"
            >
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
