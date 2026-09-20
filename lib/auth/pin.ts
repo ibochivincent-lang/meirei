@@ -24,7 +24,7 @@ const SALT_BYTES = 16;
 // Real security here is rate-limiting + lockout on the confirm flow,
 // since the keyspace is only 10,000. scrypt is defense-in-depth.
 //
-// N=2^14 → ~16 MB working memory. We override maxmem because OpenSSL's
+// N=2^14  ~16 MB working memory. We override maxmem because OpenSSL's
 // default 32 MB ceiling has been observed to reject this on some Node
 // builds (Vercel runtime among them) due to internal overhead.
 const SCRYPT_PARAMS = {
@@ -98,7 +98,7 @@ export async function setPinForUser({
   const pin_hash = await hashPin(pin);
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     // Stamped on every write, including a reset. Unfreezing requires a factor
     // that predates the freeze, and without this a PIN chosen by whoever is
     // holding the phone right now would be indistinguishable from one the

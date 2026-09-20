@@ -12,7 +12,7 @@
  * the kind of branch that regresses silently because the symptom IS silence.
  */
 import { offerBeneficiarySave, type BeneficiaryOfferDeps } from "./offer";
-import type { Beneficiary, tellaUser } from "@/lib/supabase/types";
+import type { Beneficiary, meireiUser } from "@/lib/supabase/types";
 
 const failures: string[] = [];
 let passed = 0;
@@ -23,12 +23,12 @@ function check(name: string, actual: unknown, expected: unknown) {
   if (JSON.stringify(actual) === JSON.stringify(expected)) passed++;
   else {
     failures.push(
-      `  ✗ ${name}\n      got:      ${JSON.stringify(actual)}\n      expected: ${JSON.stringify(expected)}`,
+      `   ${name}\n      got:      ${JSON.stringify(actual)}\n      expected: ${JSON.stringify(expected)}`,
     );
   }
 }
 
-const USER = { id: "user-1" } as tellaUser;
+const USER = { id: "user-1" } as meireiUser;
 
 const RECIPIENT = {
   address: "GDJBUPILZLX6VWTSG7SCUT4EDUW4OYQ54W2PRWSL2HJKRAKDIQ3LIXAS",

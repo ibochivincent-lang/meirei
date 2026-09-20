@@ -4,7 +4,7 @@ import type { Beneficiary } from "@/lib/supabase/types";
 export async function listBeneficiaries(userId: string): Promise<Beneficiary[]> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_beneficiaries")
+    .from("meirei_beneficiaries")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
@@ -20,7 +20,7 @@ export async function findBeneficiaryByLabel(
 ): Promise<Beneficiary | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_beneficiaries")
+    .from("meirei_beneficiaries")
     .select("*")
     .eq("user_id", userId)
     .ilike("label", label.trim())
@@ -47,7 +47,7 @@ export async function findBeneficiaryByAddress(
 ): Promise<Beneficiary | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_beneficiaries")
+    .from("meirei_beneficiaries")
     .select("*")
     .eq("user_id", userId)
     .ilike("recipient_address", recipientAddress)
@@ -77,7 +77,7 @@ export async function createBeneficiary({
 }): Promise<CreateBeneficiaryResult> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_beneficiaries")
+    .from("meirei_beneficiaries")
     .insert({
       user_id: userId,
       label: label.trim(),

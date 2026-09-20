@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { ChatHeader, AnimatedBubble, ReceiptCard, type Channel } from "@/components/ui/chat-mockup";
+import { cn } from "@/lib/utils/cn";
 
 type Turn =
   | { kind: "bubble"; side: "in" | "out"; text: string; time: string }
@@ -25,7 +26,7 @@ type Turn =
 const SCRIPTS: Record<Channel, { turn: Turn; displayMs: number }[]> = {
   whatsapp: [
     {
-      turn: { kind: "bubble", side: "out", text: "cash out 50k to gtbank", time: "9:14" },
+      turn: { kind: "bubble", side: "out", text: "buy 500 USDG of AAPLx", time: "9:14" },
       displayMs: 1400,
     },
     { turn: { kind: "typing", side: "in" }, displayMs: 900 },
@@ -33,7 +34,7 @@ const SCRIPTS: Record<Channel, { turn: Turn; displayMs: number }[]> = {
       turn: {
         kind: "bubble",
         side: "in",
-        text: "Cash out ₦ 50,000 to GTBank ••4521 at ₦ 1,650/USDC? Reply yes to confirm.",
+        text: "You want to buy 500 USDG of AAPLx on X Layer. The current price is ~223.50 USDG. Reply yes to confirm.",
         time: "9:14",
       },
       displayMs: 2400,
@@ -46,10 +47,10 @@ const SCRIPTS: Record<Channel, { turn: Turn; displayMs: number }[]> = {
     {
       turn: {
         kind: "receipt",
-        status: "Cashed out",
+        status: "Trade Executed",
         statusTone: "confirmed",
-        amount: "₦ 50,000",
-        detail: "to GTBank ••4521",
+        amount: "+ 2.23 AAPLx",
+        detail: "Swapped 500 USDG",
         reference: "tx_8K2L9F",
         time: "9:14",
       },
@@ -60,10 +61,10 @@ const SCRIPTS: Record<Channel, { turn: Turn; displayMs: number }[]> = {
     {
       turn: {
         kind: "receipt",
-        status: "Received",
+        status: "Trade Executed",
         statusTone: "new",
-        amount: "₦ 75,000",
-        detail: "from Ngozi A.",
+        amount: "+ 10.00 NVDAx",
+        detail: "Swapped 1,200 USDG",
         reference: "tx_3M9XQP",
         time: "16:20",
       },
@@ -74,8 +75,36 @@ const SCRIPTS: Record<Channel, { turn: Turn; displayMs: number }[]> = {
       turn: {
         kind: "bubble",
         side: "in",
-        text: "Payment received. Your balance is now ₦ 310,000 and ready to spend.",
+        text: "Your trade is complete. Your portfolio is now $3,450.20 and is actively managed by Meirei.",
         time: "16:20",
+      },
+      displayMs: 3500,
+    },
+  ],
+  instagram: [
+    {
+      turn: { kind: "bubble", side: "out", text: "Price of NVDAx", time: "14:40" },
+      displayMs: 1400,
+    },
+    { turn: { kind: "typing", side: "in" }, displayMs: 700 },
+    {
+      turn: {
+        kind: "bubble",
+        side: "in",
+        text: "1 NVDAx = $213.90 USDG on X Layer (chain 196). Live execution via OKX DEX Aggregator.",
+        time: "14:40",
+      },
+      displayMs: 3000,
+    },
+    {
+      turn: {
+        kind: "receipt",
+        status: "Live Quote Ready",
+        statusTone: "confirmed",
+        amount: "$213.90 USDG",
+        detail: "1 NVDAx on X Layer",
+        reference: "tx_NVDA21",
+        time: "14:40",
       },
       displayMs: 3500,
     },
@@ -87,19 +116,8 @@ const LOOP_GAP_MS = 1200; // pause after the last turn before switching channels
 /**
  * LiveChatThread
  *
- * Auto-plays a scripted conversation on a loop, alternating between the
- * WhatsApp and Telegram scripts each time around — the header, wallpaper
- * and bubble styling switch with it (see `Channel` in chat-mockup.tsx) so
- * the hero phone visibly demonstrates both channels, not just one restyled
- * as the other.
- *
- * Drives turn-by-turn progression with a single setTimeout chain rather
- * than a heavyweight timeline library — the interaction is linear and
- * short, so a state machine of arrays beats anything more abstract.
- *
- * AnimatePresence handles the enter/exit animation per turn so messages
- * slide up into view rather than just appearing. The scrollable container
- * auto-scrolls to bottom whenever a new turn is appended.
+ * Auto-plays a scripted conversation on a loop, alternating between
+ * WhatsApp, Telegram, and Instagram scripts each time around.
  */
 export function LiveChatThread() {
   const [channel, setChannel] = useState<Channel>("whatsapp");
@@ -121,8 +139,6 @@ export function LiveChatThread() {
         const t = setTimeout(() => {
           if (cancelled) return;
           setVisibleTurns((prev) => {
-            // Replace trailing typing indicator from same side with the
-            // incoming bubble — feels more natural than two stacked.
             const last = prev[prev.length - 1];
             if (
               last?.kind === "typing" &&
@@ -139,11 +155,15 @@ export function LiveChatThread() {
             }
             return [...prev, turn];
           });
-          // Schedule the next loop iteration — switching channels — after
-          // the last turn finishes.
+
           if (idx === script.length - 1) {
             const restart = setTimeout(() => {
-              activeChannel = activeChannel === "whatsapp" ? "telegram" : "whatsapp";
+              activeChannel =
+                activeChannel === "whatsapp"
+                  ? "telegram"
+                  : activeChannel === "telegram"
+                  ? "instagram"
+                  : "whatsapp";
               runScript();
             }, displayMs + LOOP_GAP_MS);
             timeouts.push(restart);
@@ -174,19 +194,12 @@ export function LiveChatThread() {
 
       {/* Messages */}
       <div
-        className={`flex flex-1 flex-col justify-end gap-2 overflow-hidden bg-cover bg-center p-3 ${
-          isTelegram ? "" : "bg-[url('/whatsapp-bg.png')]"
-        }`}
-        style={
-          isTelegram
-            ? {
-                backgroundColor: "#DCEAF5",
-                backgroundImage:
-                  "radial-gradient(rgba(51,144,236,0.14) 1px, transparent 1px)",
-                backgroundSize: "14px 14px",
-              }
-            : undefined
-        }
+        className={cn(
+          "flex flex-1 flex-col justify-end gap-2 overflow-hidden bg-cover bg-center p-3",
+          channel === "whatsapp" && "bg-[url('/whatsapp-bg.png')] dark:bg-none dark:bg-[#0b141a]",
+          channel === "instagram" && "bg-[#FAFAFA] dark:bg-black",
+          channel === "telegram" && "bg-[#DCEAF5] dark:bg-[#0e1621] [background-image:radial-gradient(rgba(51,144,236,0.14)_1px,transparent_1px)] dark:[background-image:radial-gradient(rgba(51,144,236,0.18)_1px,transparent_1px)] [background-size:14px_14px]",
+        )}
       >
         <AnimatePresence initial={false}>
           {visibleTurns.map((turn, idx) => (
@@ -212,11 +225,11 @@ function TurnView({ turn, channel }: { turn: Turn; channel: Channel }) {
         transition={{ duration: 0.25 }}
         className={`flex ${turn.side === "out" ? "justify-end" : "justify-start"}`}
       >
-        <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white px-3 py-2.5 shadow-sm">
+        <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white dark:bg-[#1f2c34] px-3 py-2.5 shadow-sm">
           {[0, 150, 300].map((delay) => (
             <span
               key={delay}
-              className="inline-block h-1.5 w-1.5 rounded-full bg-ink-400"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-ink-400 dark:bg-ink-300"
               style={{
                 animation: `typing-dots 1.2s infinite ${delay}ms ease-in-out`,
               }}

@@ -121,7 +121,7 @@ export async function POST(request: Request) {
     await notifyUser({
       user: ctx.user,
       body: [
-        "🔐 Your tella PIN was just changed.",
+        " Your meirei PIN was just changed.",
         ...(removedPasskeys > 0
           ? [`Face ID / fingerprint was also removed from ${removedPasskeys} device${removedPasskeys === 1 ? "" : "s"}.`]
           : []),

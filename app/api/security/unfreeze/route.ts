@@ -127,7 +127,7 @@ export async function POST(request: Request) {
     notifyUser({
       user: ctx.user,
       body: [
-        "✅ Your account has been unfrozen. You can send money again.",
+        " Your account has been unfrozen. You can send money again.",
         "",
         "If this wasn't you, reply *freeze* immediately.",
       ].join("\n"),
@@ -136,11 +136,11 @@ export async function POST(request: Request) {
       ? sendSecurityEmail({
           to: link.google_email,
           kind: "account_unfrozen",
-          subject: "Your tella account was unfrozen",
+          subject: "Your meirei account was unfrozen",
           lines: [
-            "The freeze on your tella wallet has been lifted, and it can send money again.",
+            "The freeze on your meirei wallet has been lifted, and it can send money again.",
             "",
-            "If this wasn't you, message tella immediately and say freeze — any channel works.",
+            "If this wasn't you, message meirei immediately and say freeze — any channel works.",
           ],
         })
       : Promise.resolve(false),

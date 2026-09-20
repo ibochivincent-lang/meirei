@@ -9,12 +9,15 @@ import { UseCasesSection } from "@/components/sections/use-cases-section";
 import { FaqSection } from "@/components/sections/faq-section";
 import { ClosingCta } from "@/components/sections/closing-cta";
 import { HowItWorksWrapper } from "@/components/sections/how-it-works-wrapper";
+import { LiveAgentFeature } from "@/components/interactive/live_agent_feature";
+import { StockSelectorGrid } from "@/components/interactive/stock_selector_grid";
 import {
-  SendIllustration,
   BalanceIllustration,
   ReceiveIllustration,
   ContextIllustration,
 } from "@/components/illustrations/feature-illustrations";
+
+import { ResearchSpotlight } from "@/components/sections/research_spotlight";
 
 export default function HomePage() {
   return (
@@ -22,53 +25,51 @@ export default function HomePage() {
       <Navbar />
       <main>
         <Hero />
+        <ResearchSpotlight />
 
         <HowItWorksWrapper>
           {/* Sticky header — pins below the navbar while the feature cards stack underneath */}
-          <div className="relative z-10 bg-[#E6EEFF] md:sticky md:top-[72px]">
+          <div id="how-it-works" className="relative z-10 bg-[#FFF5F2] dark:bg-surface-50 md:sticky md:top-[72px]">
             <div className="mx-auto max-w-[1440px] px-3 pb-6 pt-5 md:px-[72px] md:pt-10">
               <MaskReveal
                 as="h2"
                 text="How it works"
-                className="max-w-[760px] font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-black"
+                className="max-w-[760px] font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-black dark:text-ink-50"
               />
               <Reveal delay={0.15}>
-                <p className="mt-4 max-w-[680px] text-base leading-relaxed text-ink-700 md:text-xl">
-                  From message to money in seconds. Send, receive, and track
-                  stablecoins directly from WhatsApp or Telegram using simple
-                  natural language.
+                <p className="mt-4 max-w-[680px] text-base leading-relaxed text-ink-700 dark:text-ink-300 md:text-xl">
+                  From mandate to portfolio in seconds. Buy, sell, and rebalance
+                  xStocks directly from WhatsApp, Telegram, and Instagram using simple natural language.
                 </p>
               </Reveal>
             </div>
           </div>
 
-          <FeatureSection
-            id="features"
-            index='1'
-            heading='Send money like a message'
-            description="Just type what you want to do. Tella understands, confirms, and moves your money no forms, no addresses."
-            visual={<SendIllustration />}
-          />
+          <LiveAgentFeature />
 
           <FeatureSection
             index='2'
-            heading='Your balance, one message away'
-            description="Ask for your balance in WhatsApp and get instant updates no apps, dashboards, or complicated interfaces."
+            heading='Your portfolio, one message away'
+            description="Ask for your holdings in Instagram, Telegram, or WhatsApp and get instant updates with your combined asset cluster."
             visual={<BalanceIllustration />}
             reverse
           />
 
           <FeatureSection
             index='3'
-            heading='Payments that arrive like messages'
-            description="Receive instant USDC payments directly in WhatsApp with sender details, transaction updates, and balance confirmations in one conversation."
+            heading='Rebalance with a single sentence'
+            description="Say 'allocate 20% each into mag7 and usdg' and Meirei will calculate the diff and execute the necessary swaps instantly."
             visual={<ReceiveIllustration />}
-          />
+          >
+            <div className="mt-2 w-full">
+              <StockSelectorGrid />
+            </div>
+          </FeatureSection>
 
           <FeatureSection
             index='4'
-            heading='Talk naturally. Tella understands'
-            description="Send money the way you naturally speak. Tella understands context, remembers past transactions, and confirms before anything moves."
+            heading='Talk naturally. Meirei understands'
+            description="Connect in one tap and talk naturally. Ask live stock prices, check balances, or execute rebalance mandates with zero crypto friction."
             visual={<ContextIllustration />}
             reverse
           />

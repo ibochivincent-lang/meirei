@@ -37,7 +37,7 @@ export function PhoneFrame({ children, className }: PhoneFrameProps) {
   return (
     <div
       className={cn(
-        "relative mx-auto aspect-[77.6/158] w-[300px] rounded-[3.2rem] p-[3px]",
+        "relative mx-auto aspect-[77.6/158] w-[300px] max-w-full rounded-[3.2rem] p-[3px]",
         // Titanium brushed-metal gradient
         "[background:linear-gradient(135deg,#2e2e30_0%,#5d5d60_18%,#9c9c9f_38%,#cdcdd0_50%,#9c9c9f_62%,#5d5d60_82%,#2e2e30_100%)]",
         // Polished edge highlights + drop shadow + metallic aura halo
@@ -60,7 +60,7 @@ export function PhoneFrame({ children, className }: PhoneFrameProps) {
       {/* Black bezel between titanium frame and display */}
       <div className="relative h-full w-full rounded-[3rem] bg-ink-900 p-[6px] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.8)]">
         {/* Display */}
-        <div className="relative h-full w-full overflow-hidden rounded-[2.5rem] bg-surface-100">
+        <div className="relative h-full w-full overflow-hidden rounded-[2.5rem] bg-surface-100 dark:bg-black">
           {/* Dynamic Island */}
           <div className="pointer-events-none absolute left-1/2 top-2 z-30 h-6 w-16 -translate-x-1/2 rounded-full bg-ink-900">
             <span className="absolute right-2.5 top-1/2 block h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-ink-700" />

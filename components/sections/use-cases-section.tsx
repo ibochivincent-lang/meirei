@@ -40,75 +40,38 @@ interface Message {
 
 const USE_CASES: UseCase[] = [
   {
-    id: "freelance",
-    label: "Freelancers",
-    amount: "₦ 1,200,000",
-    sentLabel: "invoice paid",
+    id: "students",
+    label: "Students",
+    amount: "$150",
+    sentLabel: "monthly DCA",
     photos: [
       {
-        title: "Client call",
-        subtitle: "Remote work",
+        title: "Campus life",
+        subtitle: "Starting early",
         src: "/Images/Freelancer 1.png",
         placement: "left-0 top-[330px] h-[250px] w-[246px] lg:left-[5%] lg:top-[330px] lg:h-[321px] lg:w-[307px]",
         objectPosition: "object-center",
       },
       {
-        title: "Studio desk",
-        subtitle: "Paid today",
+        title: "Study desk",
+        subtitle: "Auto invest active",
         src: "/Images/Freelancer 2.png",
         placement: "right-2 top-20 h-[230px] w-[220px] lg:right-[7%] lg:top-0 lg:h-[321px] lg:w-[307px]",
         objectPosition: "object-center",
       },
     ],
     messages: [
-      { side: "out", text: "Invoice Nova Studio for ₦ 1,200,000", time: "10:14" },
-      { side: "in", text: "Invoice ready. Send payment link to Nova Studio?", time: "10:14" },
+      { side: "out", text: "Put $50 into AAPLx every month", time: "10:14" },
+      { side: "in", text: "Recurring DCA configured: $50 USDG into AAPLx on X Layer on the 1st of each month. Start now?", time: "10:14" },
       { side: "out", text: "yes", time: "10:15" },
       {
         side: "in",
-        text: "Payment received.",
-        time: "10:42",
+        text: "First trade executed via OKX DEX.",
+        time: "10:15",
         receipt: {
-          status: "Paid",
-          amount: "₦ 1,200,000",
-          detail: "from Nova Studio",
-        },
-      },
-    ],
-  },
-  {
-    id: "night-out",
-    label: "Night Out",
-    amount: "₦ 32,000",
-    sentLabel: "split settled",
-    photos: [
-      {
-        title: "Dinner table",
-        subtitle: "Five friends",
-        src: "/Images/nightout.jpg",
-        placement: "right-0 top-[330px] h-[250px] w-[246px] lg:right-[4%] lg:top-[342px] lg:h-[321px] lg:w-[307px]",
-        objectPosition: "object-center",
-      },
-      {
-        title: "Late receipt",
-        subtitle: "Share paid",
-        src: "/Images/nightout 1.jpg",
-        placement: "left-2 top-16 h-[230px] w-[220px] lg:left-[8%] lg:top-4 lg:h-[300px] lg:w-[286px]",
-        objectPosition: "object-center",
-      },
-    ],
-    messages: [
-      { side: "out", text: "Split dinner with Tobi, Ada, and Kunle", time: "21:08" },
-      { side: "in", text: "Total bill is ₦ 128,000. Everyone pays ₦ 32,000.", time: "21:08" },
-      { side: "out", text: "send my share now", time: "21:09" },
-      {
-        side: "in",
-        text: "Your share is settled.",
-        time: "21:09",
-        receipt: {
-          status: "Sent",
-          amount: "₦ 32,000",
-          detail: "to dinner split",
+          status: "DCA Executed",
+          amount: "+ 0.151 AAPLx",
+          detail: "Swapped $50.00 USDG",
         },
       },
     ],
@@ -116,73 +79,110 @@ const USE_CASES: UseCase[] = [
   {
     id: "families",
     label: "Families",
-    amount: "₦ 300,000",
-    sentLabel: "family support",
+    amount: "$3,200",
+    sentLabel: "savings protected",
     photos: [
       {
-        title: "Home errand",
-        subtitle: "Sent to sibling",
+        title: "Family home",
+        subtitle: "Dollar savings",
         src: "/Images/families 1.jpg",
         placement: "left-3 top-20 h-[240px] w-[228px] lg:left-[12%] lg:top-[52px] lg:h-[321px] lg:w-[307px]",
         objectPosition: "object-center",
       },
       {
-        title: "Weekend visit",
-        subtitle: "Balance clear",
+        title: "Weekend plan",
+        subtitle: "Portfolio balanced",
         src: "/Images/families 2.jpg",
         placement: "right-0 top-[380px] h-[240px] w-[228px] lg:right-[8%] lg:top-[332px] lg:h-[310px] lg:w-[300px]",
         objectPosition: "object-center",
       },
     ],
     messages: [
-      { side: "out", text: "Send ₦ 300,000 to Amara for school fees", time: "08:31" },
-      { side: "in", text: "Sending ₦ 300,000 to Amara Okeke. Confirm?", time: "08:31" },
+      { side: "out", text: "Save $1,200 in USDG and split rest between Apple and Nvidia", time: "08:31" },
+      { side: "in", text: "Mandate: $1,200 into USDG cash reserve, $1,000 AAPLx, $1,000 NVDAx. Confirm allocation?", time: "08:31" },
       { side: "out", text: "confirm", time: "08:32" },
       {
         side: "in",
-        text: "Transfer complete.",
+        text: "Portfolio updated on X Layer.",
         time: "08:32",
         receipt: {
-          status: "Sent",
-          amount: "₦ 300,000",
-          detail: "to Amara Okeke",
+          status: "Mandate Settled",
+          amount: "$3,200.00 USDG",
+          detail: "Reserve + AAPLx & NVDAx",
         },
       },
     ],
   },
   {
-    id: "small-business",
-    label: "Small business Owners",
-    amount: "₦ 450,000",
-    sentLabel: "vendor paid",
+    id: "investors",
+    label: "Investors",
+    amount: "$650",
+    sentLabel: "fractional shares",
     photos: [
       {
-        title: "Shop counter",
-        subtitle: "Vendor day",
+        title: "Coffee shop",
+        subtitle: "Zero minimums",
         src: "/Images/small business owner 1.jpg",
         placement: "right-4 top-12 h-[240px] w-[230px] lg:right-[13%] lg:top-[18px] lg:h-[321px] lg:w-[307px]",
         objectPosition: "object-center",
       },
       {
-        title: "Stock run",
-        subtitle: "Receipt logged",
+        title: "Workspace",
+        subtitle: "Global equities",
         src: "/Images/small business owner 2.jpg",
         placement: "left-0 top-[392px] h-[240px] w-[230px] lg:left-[6%] lg:top-[360px] lg:h-[310px] lg:w-[300px]",
         objectPosition: "object-center",
       },
     ],
     messages: [
-      { side: "out", text: "Pay ₦ 450,000 to Ayo Supplies", time: "15:26" },
-      { side: "in", text: "Ayo Supplies is in your saved vendors. Send ₦ 450,000?", time: "15:26" },
-      { side: "out", text: "yes and save receipt", time: "15:27" },
+      { side: "out", text: "Buy $200 of Tesla and $200 of Microsoft", time: "15:26" },
+      { side: "in", text: "Buying 0.484 TSLAx and 0.390 MSFTx with $400 USDG. Price impact: 0.12%. Execute?", time: "15:26" },
+      { side: "out", text: "yes execute", time: "15:27" },
       {
         side: "in",
-        text: "Vendor paid and receipt saved.",
+        text: "Swaps confirmed on X Layer.",
         time: "15:27",
         receipt: {
-          status: "Paid",
-          amount: "₦ 450,000",
-          detail: "to Ayo Supplies",
+          status: "Trade Executed",
+          amount: "+ TSLAx & MSFTx",
+          detail: "Swapped $400.00 USDG",
+        },
+      },
+    ],
+  },
+  {
+    id: "traders",
+    label: "Traders",
+    amount: "$15,000",
+    sentLabel: "rebalance mandate",
+    photos: [
+      {
+        title: "Market desk",
+        subtitle: "Algorithmic rules",
+        src: "/Images/nightout.jpg",
+        placement: "right-0 top-[330px] h-[250px] w-[246px] lg:right-[4%] lg:top-[342px] lg:h-[321px] lg:w-[307px]",
+        objectPosition: "object-center",
+      },
+      {
+        title: "Terminal setup",
+        subtitle: "Sub second execution",
+        src: "/Images/nightout 1.jpg",
+        placement: "left-2 top-16 h-[230px] w-[220px] lg:left-[8%] lg:top-4 lg:h-[300px] lg:w-[286px]",
+        objectPosition: "object-center",
+      },
+    ],
+    messages: [
+      { side: "out", text: "60% mag7, 20% USDG, max single 8%", time: "21:08" },
+      { side: "in", text: "Calculated 7 swap legs to rebalance drift. Max single bounded at 8%, excess absorbed by USDG cash sleeve. Proceed?", time: "21:08" },
+      { side: "out", text: "confirm and execute", time: "21:09" },
+      {
+        side: "in",
+        text: "All 7 legs executed via OKX DEX Aggregator on X Layer.",
+        time: "21:09",
+        receipt: {
+          status: "Mandate Completed",
+          amount: "$15,000.00 USDG",
+          detail: "7 xStock legs executed",
         },
       },
     ],
@@ -202,7 +202,7 @@ export function UseCasesSection() {
   }, [activeIndex]);
 
   return (
-    <section id="use-cases" className="relative overflow-hidden bg-white px-3 py-16 sm:px-[72px] md:py-24">
+    <section id="use-cases" className="relative overflow-hidden bg-white dark:bg-surface-0 px-3 py-16 sm:px-[72px] md:py-24">
       <div className="mx-auto max-w-[1296px]">
         <div className="flex flex-col items-center gap-6 text-center">
           <div className="flex flex-col items-center">
@@ -210,18 +210,26 @@ export function UseCasesSection() {
               as="h2"
               text="Move money directly from chat"
               accent="from chat"
-              className="justify-center font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-black"
+              className="justify-center font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-black dark:text-ink-50"
             />
             <Reveal delay={0.15}>
-              <p className="mt-4 text-base leading-relaxed text-ink-700 md:text-xl">
-                How tella becomes part of everyday life
+              <p className="mt-4 text-base leading-relaxed text-ink-700 dark:text-ink-300 md:text-xl">
+                How Meirei becomes part of everyday life
               </p>
+            </Reveal>
+            <Reveal delay={0.2}>
+              <p className="mt-2 max-w-xl text-sm text-ink-500 dark:text-ink-400 md:text-base">
+                For students, families, investors, and traders. Check your investments and manage portfolios on WhatsApp, Telegram, and Instagram.
+              </p>
+              <div className="mt-4 max-w-2xl rounded-2xl border border-accent-500/20 dark:border-accent-700/40 bg-accent-50/60 dark:bg-accent-950/30 p-4 text-xs leading-relaxed text-ink-800 dark:text-accent-200 md:text-sm shadow-xs">
+                Meirei is built to include everyone. Whether you are an advanced trader, a well known investor, or have zero prior knowledge of stocks and crypto, Meirei is here for you. With our AI agent, you can place and manage stocks on the market using simple conversational chat. Be part of the journey and check it out now.
+              </div>
             </Reveal>
           </div>
 
-          <Reveal delay={0.2}>
+          <Reveal delay={0.25}>
             <div
-              className="flex w-full max-w-full flex-wrap content-start items-start gap-1.5 rounded-2xl bg-[#F5F5F5] p-2 md:w-auto md:flex-nowrap md:overflow-x-auto"
+              className="flex w-full max-w-full flex-wrap content-start items-start gap-1.5 rounded-2xl bg-[#F5F5F5] dark:bg-surface-100 p-2 md:w-auto md:flex-nowrap md:overflow-x-auto"
               role="tablist"
               aria-label="Use case examples"
             >
@@ -236,15 +244,15 @@ export function UseCasesSection() {
                     aria-selected={isActive}
                     aria-controls={`use-case-panel-${useCase.id}`}
                     className={cn(
-                      "relative shrink-0 rounded-xl px-4 py-2.5 text-sm leading-5 transition-colors md:px-5 md:py-3 md:text-lg",
-                      isActive ? "text-black" : "text-ink-500 hover:text-black",
+                      "relative shrink-0 rounded-xl px-4 py-2.5 text-sm leading-5 transition-colors md:px-5 md:py-3 md:text-lg font-medium",
+                      isActive ? "text-black dark:text-ink-50" : "text-ink-500 hover:text-black dark:text-ink-400 dark:hover:text-ink-50",
                     )}
                     onClick={() => setActiveIndex(index)}
                   >
                     {isActive && (
                       <motion.span
                         layoutId="usecase-tab"
-                        className="absolute inset-0 -z-10 rounded-xl bg-white shadow-soft"
+                        className="absolute inset-0 -z-10 rounded-xl bg-white dark:bg-surface-200 shadow-soft"
                         transition={{ type: "spring", stiffness: 380, damping: 32 }}
                       />
                     )}
@@ -280,7 +288,7 @@ export function UseCasesSection() {
                 ))}
 
                 <div className="relative z-10">
-                  <PhoneFrame className="!w-[303px] lg:!w-[330px]">
+                  <PhoneFrame className="!w-[280px] sm:!w-[303px] lg:!w-[330px] max-w-full">
                     <ChatSurface useCase={activeCase} />
                   </PhoneFrame>
                 </div>
@@ -296,24 +304,24 @@ export function UseCasesSection() {
 function PersonaPhoto({ photo, index }: { photo: PhotoCard; index: number }) {
   const mobilePlacement =
     index === 0
-      ? "left-[-8px] top-[630px] h-[126px] w-[120px]"
-      : "left-[253px] top-[-13px] h-[124px] w-[118px]";
+      ? "left-2 bottom-4 h-[110px] w-[105px] sm:left-4 sm:bottom-6 sm:h-[126px] sm:w-[120px]"
+      : "right-2 top-2 h-[110px] w-[105px] sm:right-4 sm:top-4 sm:h-[124px] sm:w-[118px]";
   const desktopPlacement =
     index === 0
-      ? "lg:left-[14px] lg:top-[383px] lg:h-[321px] lg:w-[307px]"
-      : "lg:left-[959px] lg:top-0 lg:h-[321px] lg:w-[307px]";
+      ? "lg:left-[14px] lg:top-[383px] lg:bottom-auto lg:h-[321px] lg:w-[307px]"
+      : "lg:left-[959px] lg:right-auto lg:top-0 lg:h-[321px] lg:w-[307px]";
 
   return (
     <div
       className={cn(
-        "absolute z-20 rounded-[6px] bg-[#F5F5F5] p-[3px] shadow-soft transition-all duration-700 md:z-0 md:rounded-2xl md:p-2",
+        "absolute z-20 rounded-[6px] bg-[#F5F5F5] dark:bg-surface-100 p-[3px] shadow-soft transition-all duration-700 md:z-0 md:rounded-2xl md:p-2",
         mobilePlacement,
         desktopPlacement,
       )}
       aria-label={`${photo.title}: ${photo.subtitle}`}
       role="img"
     >
-      <div className="relative h-full w-full overflow-hidden rounded-[5px] bg-[#F5F5F5] md:rounded-xl">
+      <div className="relative h-full w-full overflow-hidden rounded-[5px] bg-[#F5F5F5] dark:bg-surface-200 md:rounded-xl">
         <Image
           src={photo.src}
           alt={`${photo.title} - ${photo.subtitle}`}
@@ -321,9 +329,9 @@ function PersonaPhoto({ photo, index }: { photo: PhotoCard; index: number }) {
           sizes="(min-width: 1024px) 307px, (min-width: 768px) 246px, 120px"
           className={cn("object-cover", photo.objectPosition)}
         />
-        <div className="absolute inset-x-4 bottom-4 hidden rounded-lg bg-white/80 p-3 backdrop-blur-sm md:block">
-          <p className="text-sm font-medium leading-5 text-black">{photo.title}</p>
-          <p className="text-xs leading-4 text-ink-500">{photo.subtitle}</p>
+        <div className="absolute inset-x-4 bottom-4 hidden rounded-lg bg-white/80 dark:bg-surface-100/90 p-3 backdrop-blur-sm md:block">
+          <p className="text-sm font-medium leading-5 text-black dark:text-ink-50">{photo.title}</p>
+          <p className="text-xs leading-4 text-ink-500 dark:text-ink-400">{photo.subtitle}</p>
         </div>
       </div>
     </div>
@@ -345,19 +353,19 @@ function ChatMessage({ message }: { message: Message }) {
     <StaticBubble side={message.side === "out" ? "out" : "in"} time={message.time}>
       <p>{message.text}</p>
       {message.receipt && (
-        <div className="mt-2 rounded-xl bg-[#F5F5F5] p-2 text-ink-900">
+        <div className="mt-2 rounded-xl bg-[#F5F5F5] dark:bg-[#182533] p-2.5 text-ink-900 dark:text-white">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[9px] font-medium uppercase tracking-wider text-ink-500">
+            <span className="text-[9px] font-medium uppercase tracking-wider text-ink-500 dark:text-ink-300">
               {message.receipt.status}
             </span>
-            <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[8px] font-medium text-emerald-700">
+            <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 text-[8px] font-medium text-emerald-700 dark:text-emerald-300">
               Confirmed
             </span>
           </div>
-          <p className="mt-1 font-sans text-xl font-semibold leading-none tabular-nums text-black">
+          <p className="mt-1 font-sans text-xl font-semibold leading-none tabular-nums text-black dark:text-white">
             {message.receipt.amount}
           </p>
-          <p className="mt-1 text-[10px] text-ink-500">
+          <p className="mt-1 text-[10px] text-ink-500 dark:text-ink-300">
             {message.receipt.detail}
           </p>
         </div>

@@ -48,7 +48,7 @@ export async function sendSecurityEmail({
   const key = process.env.EMAIL_API_KEY;
   const from = process.env.EMAIL_FROM;
 
-  const body = [...lines, "", "— tella"].join("\n");
+  const body = [...lines, "", "— meirei"].join("\n");
 
   if (!url || !key || !from) {
     // Structured so a log drain can alert on it, same reasoning as alerts.ts.

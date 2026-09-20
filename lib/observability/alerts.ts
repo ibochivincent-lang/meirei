@@ -79,7 +79,7 @@ export function raiseAlert(payload: AlertPayload): void {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      text: `🚨 tella · ${payload.kind}\n${payload.message}`,
+      text: ` meirei · ${payload.kind}\n${payload.message}`,
       context: payload.context,
     }),
   }).catch((err) => {

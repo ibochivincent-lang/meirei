@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Surface — warm near-whites */
   --color-surface-0: #ffffff;
@@ -16,19 +18,19 @@
   --color-ink-300: #b8b8b8;
   --color-ink-200: #dcdcdc;
 
-  /* Accent — electric blue. The single bold color in the system. */
-  --color-accent-50: #eef2ff;
-  --color-accent-100: #dbe3ff;
-  --color-accent-300: #8fa6ff;
-  --color-accent-500: #0047ff;
-  --color-accent-600: #0038cc;
-  --color-accent-700: #002a99;
+  /* Accent — Meirei Brand Color */
+  --color-accent-50: #fff0ed;
+  --color-accent-100: #ffdcd6;
+  --color-accent-300: #ffa594;
+  --color-accent-500: #FF5B3E;
+  --color-accent-600: #e64124;
+  --color-accent-700: #cc3014;
 
   /* Fonts */
-  --font-display: "Instrument Serif", "Times New Roman", ui-serif, serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Instrument Serif", ui-serif, serif;
+  --font-sans: "DM Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-works: "Newsreader", "Suisse Works", ui-serif, serif;
+  --font-works: "Space Grotesk", "Newsreader", ui-serif, serif;
 
   /* Radii — restrained */
   --radius-sm: 0.375rem;
@@ -49,6 +51,30 @@ html {
   /* Framer Motion's page-level useScroll measures against this element;
      it must be non-static for that measurement to be reliable. */
   position: relative;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* Dark Theme Tokens & Overrides */
+html.dark {
+  --color-surface-0: #121215;
+  --color-surface-50: #0a0a0c;
+  --color-surface-100: #18181d;
+  --color-surface-200: #26262e;
+  --color-surface-300: #3c3c46;
+
+  --color-ink-900: #f4f4f6;
+  --color-ink-700: #d4d4d8;
+  --color-ink-600: #a1a1aa;
+  --color-ink-500: #82828e;
+  --color-ink-400: #71717a;
+  --color-ink-300: #52525b;
+  --color-ink-200: #27272a;
+  --color-ink-100: #1a1a20;
+
+  --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.5), 0 4px 12px rgb(0 0 0 / 0.5);
+  --shadow-card: 0 4px 12px rgb(0 0 0 / 0.6), 0 16px 40px rgb(0 0 0 / 0.7);
+
+  color-scheme: dark;
 }
 
 body {
@@ -57,6 +83,91 @@ body {
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+html.dark body {
+  background: var(--color-surface-50);
+  color: var(--color-ink-900);
+}
+
+html.dark .dark\:bg-white {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+}
+
+html.dark .bg-surface-50 {
+  background-color: var(--color-surface-50) !important;
+}
+
+html.dark .bg-surface-100 {
+  background-color: var(--color-surface-100) !important;
+}
+
+html.dark #research-spotlight,
+html.dark .research-spotlight,
+html.dark .bg-\[\#F6F5EE\] {
+  background-color: var(--color-surface-50) !important;
+}
+
+html.dark #how-it-works,
+html.dark #features,
+html.dark .bg-\[\#FFF5F2\] {
+  background-color: var(--color-surface-50) !important;
+}
+
+html.dark .bg-\[\#F5F5F5\] {
+  background-color: var(--color-surface-100) !important;
+}
+
+html.dark .bg-\[\#FAFAF8\] {
+  background-color: var(--color-surface-50) !important;
+}
+
+html.dark .bg-\[\#FAFAFA\] {
+  background-color: #000000 !important;
+}
+
+html.dark .bg-\[\#FFFBF2\] {
+  background-color: var(--color-surface-100) !important;
+}
+
+html.dark .bg-\[\#FCFCFA\] {
+  background-color: var(--color-surface-100) !important;
+}
+
+html.dark .bg-\[\#E6EEFF\] {
+  background-color: var(--color-surface-100) !important;
+}
+
+html.dark .bg-\[\#DCEAF5\] {
+  background-color: #0e1621 !important;
+}
+
+/* Mobile device background overrides for dark mode */
+html.dark .bg-\[url\(\'\/whatsapp-bg\.png\'\)\],
+html.dark .bg-\[url\(\"\/whatsapp-bg\.png\"\)\],
+html.dark [style*="whatsapp-bg"] {
+  background-image: none !important;
+  background-color: #0b141a !important;
+}
+
+html.dark .border-ink-300,
+html.dark .border-ink-200,
+html.dark .border-ink-200\/80,
+html.dark .border-ink-200\/70,
+html.dark .border-ink-200\/60,
+html.dark .border-ink-100,
+html.dark .border-\[\#D2D2D2\] {
+  border-color: var(--color-surface-200) !important;
+}
+
+html.dark .text-black {
+  color: var(--color-ink-900) !important;
+}
+
+html.dark .text-ink-950 {
+  color: var(--color-ink-900) !important;
 }
 
 h1, h2, h3 {

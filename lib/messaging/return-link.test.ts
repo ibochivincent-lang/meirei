@@ -3,39 +3,39 @@
  *
  * The bug this guards is specific and was live: a user who started a send in
  * Telegram, tapped through to the confirm page and succeeded was redirected
- * into WhatsApp — a different app, possibly with no tella conversation in
+ * into WhatsApp — a different app, possibly with no meirei conversation in
  * it, and not the one their receipt was about to land in.
  */
 import { returnTarget, asProvider } from "./return-link";
-import type { tellaUser } from "@/lib/supabase/types";
+import type { meireiUser } from "@/lib/supabase/types";
 
-process.env.TELEGRAM_BOT_USERNAME = "@cashtellaBot";
+process.env.TELEGRAM_BOT_USERNAME = "@cashmeireiBot";
 process.env.META_WHATSAPP_DISPLAY_NUMBER = "+234 904 358 0863";
 process.env.TWILIO_WHATSAPP_FROM = "whatsapp:+14155238886";
 
-const user = { whatsapp_channel: "meta" } as tellaUser;
+const user = { whatsapp_channel: "meta" } as meireiUser;
 
 const failures: string[] = [];
 let passed = 0;
 function check(label: string, ok: boolean, detail?: string) {
   if (ok) passed++;
-  else failures.push(`  ✗ ${label}${detail ? ` — got ${detail}` : ""}`);
+  else failures.push(`   ${label}${detail ? ` — got ${detail}` : ""}`);
 }
 
 // The whole point: origin wins over the user's WhatsApp column.
 {
   const t = returnTarget(user, "telegram");
-  check("telegram origin returns to telegram", t.url === "https://t.me/cashtellaBot", String(t.url));
+  check("telegram origin returns to telegram", t.url === "https://t.me/cashmeireiBot", String(t.url));
   check("telegram label", t.label === "Telegram", t.label);
 }
 
 // The @ in the env var is the trap: https://t.me/@name is a dead link.
 {
-  process.env.TELEGRAM_BOT_USERNAME = "cashtellaBot";
-  check("bare username works too", returnTarget(user, "telegram").url === "https://t.me/cashtellaBot");
-  process.env.TELEGRAM_BOT_USERNAME = "https://t.me/cashtellaBot";
-  check("a pasted URL is tolerated", returnTarget(user, "telegram").url === "https://t.me/cashtellaBot");
-  process.env.TELEGRAM_BOT_USERNAME = "@cashtellaBot";
+  process.env.TELEGRAM_BOT_USERNAME = "cashmeireiBot";
+  check("bare username works too", returnTarget(user, "telegram").url === "https://t.me/cashmeireiBot");
+  process.env.TELEGRAM_BOT_USERNAME = "https://t.me/cashmeireiBot";
+  check("a pasted URL is tolerated", returnTarget(user, "telegram").url === "https://t.me/cashmeireiBot");
+  process.env.TELEGRAM_BOT_USERNAME = "@cashmeireiBot";
 }
 
 {
@@ -54,7 +54,7 @@ function check(label: string, ok: boolean, detail?: string) {
 {
   const t = returnTarget(user, null);
   check("null origin falls back to the user row", t.url === "https://wa.me/2349043580863", String(t.url));
-  const twilioUser = { whatsapp_channel: "twilio" } as tellaUser;
+  const twilioUser = { whatsapp_channel: "twilio" } as meireiUser;
   check(
     "fallback follows the user's own channel",
     returnTarget(twilioUser, undefined).url === "https://wa.me/14155238886",

@@ -33,7 +33,7 @@ export async function createPending({
   const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
-    .from("tella_pending_action")
+    .from("meirei_pending_action")
     .upsert(
       { user_id: userId, kind, payload, expires_at: expiresAt },
       { onConflict: "user_id" },
@@ -88,7 +88,7 @@ export function createPendingSaveBeneficiary({
 export async function getActivePending(userId: string): Promise<PendingAction | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_pending_action")
+    .from("meirei_pending_action")
     .select("*")
     .eq("user_id", userId)
     .gt("expires_at", new Date().toISOString())
@@ -101,7 +101,7 @@ export async function getActivePending(userId: string): Promise<PendingAction | 
 export async function deletePending(actionId: string): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_pending_action")
+    .from("meirei_pending_action")
     .delete()
     .eq("id", actionId);
   if (error) throw new Error(`deletePending failed: ${error.message}`);

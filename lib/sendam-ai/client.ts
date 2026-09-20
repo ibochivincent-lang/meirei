@@ -2,7 +2,7 @@ import { createHmac } from "node:crypto";
 
 // HTTP client for sendam-ai — a separate, already-deployed service that
 // turns free-form chat text into a structured, closed-world intent. This
-// service never knows which chain tella runs on; it only ever proposes
+// service never knows which chain meirei runs on; it only ever proposes
 // structure and phrasing. See its docs/INTEGRATION.md for the full
 // contract this client implements.
 const BASE_URL = process.env.SENDAM_AI_BASE_URL;
@@ -262,7 +262,7 @@ export function decodeFollowUp(text: string, token: string): Promise<FollowUpRes
   return post<FollowUpResult>("/decode", { text, token });
 }
 
-/** Mints a signed continuation token for a flow tella itself is starting
+/** Mints a signed continuation token for a flow meirei itself is starting
  *  (e.g. "save this recipient as a beneficiary?"), before the user has
  *  replied anything. Pure signing on sendam-ai's side — no model call. */
 export function flowStart(

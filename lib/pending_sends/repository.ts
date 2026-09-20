@@ -19,7 +19,7 @@ export async function createPendingSend({
   const expiresAt = new Date(Date.now() + TTL_MINUTES * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
-    .from("tella_pending_send")
+    .from("meirei_pending_send")
     .insert({ user_id: userId, payload, expires_at: expiresAt })
     .select()
     .single();
@@ -31,7 +31,7 @@ export async function createPendingSend({
 export async function listActivePendingSends(userId: string): Promise<PendingSend[]> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_pending_send")
+    .from("meirei_pending_send")
     .select("*")
     .eq("user_id", userId)
     .gt("expires_at", new Date().toISOString())
@@ -48,7 +48,7 @@ export async function listActivePendingSends(userId: string): Promise<PendingSen
 export async function getPendingSendById(id: string): Promise<PendingSend | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_pending_send")
+    .from("meirei_pending_send")
     .select("*")
     .eq("id", id)
     .gt("expires_at", new Date().toISOString())
@@ -72,7 +72,7 @@ export async function getPendingSendById(id: string): Promise<PendingSend | null
 export async function claimPendingSend(id: string): Promise<PendingSend | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_pending_send")
+    .from("meirei_pending_send")
     .update({ claimed_at: new Date().toISOString() })
     .eq("id", id)
     .is("claimed_at", null)
@@ -94,7 +94,7 @@ export async function markPendingSendOutcome(
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_pending_send")
+    .from("meirei_pending_send")
     .update({ outcome })
     .eq("id", id);
 
@@ -107,6 +107,6 @@ export async function markPendingSendOutcome(
 
 export async function deletePendingSend(id: string): Promise<void> {
   const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("tella_pending_send").delete().eq("id", id);
+  const { error } = await supabase.from("meirei_pending_send").delete().eq("id", id);
   if (error) throw new Error(`deletePendingSend failed: ${error.message}`);
 }

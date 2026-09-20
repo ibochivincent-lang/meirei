@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import type { tellaTransaction, TransactionDirection } from "@/lib/supabase/types";
+import type { meireiTransaction, TransactionDirection } from "@/lib/supabase/types";
 
 export async function recordTransaction({
   userId,
@@ -10,7 +10,7 @@ export async function recordTransaction({
   counterpartyLabel,
   counterpartyAddress,
   txHash = null,
-  stellarOperationId = null,
+  smeireirOperationId = null,
   status,
 }: {
   userId: string;
@@ -21,12 +21,12 @@ export async function recordTransaction({
   counterpartyLabel: string | null;
   counterpartyAddress: string | null;
   txHash?: string | null;
-  stellarOperationId?: string | null;
+  smeireirOperationId?: string | null;
   status: "submitted" | "complete";
-}): Promise<tellaTransaction> {
+}): Promise<meireiTransaction> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_transactions")
+    .from("meirei_transactions")
     .insert({
       user_id: userId,
       direction,
@@ -36,14 +36,14 @@ export async function recordTransaction({
       counterparty_label: counterpartyLabel,
       counterparty_address: counterpartyAddress,
       tx_hash: txHash,
-      stellar_operation_id: stellarOperationId,
+      smeireir_operation_id: smeireirOperationId,
       status,
     })
     .select()
     .single();
 
   if (error) throw new Error(`recordTransaction failed: ${error.message}`);
-  return data as tellaTransaction;
+  return data as meireiTransaction;
 }
 
 /**
@@ -57,7 +57,7 @@ export async function recordTransaction({
  * the check and the write are the same statement — see
  * migrations/0022_spend_reservation.sql.
  *
- * Returns the id of the tella_transactions row it created, which the caller
+ * Returns the id of the meirei_transactions row it created, which the caller
  * must then either complete (attachCircleTransactionId) or, if the transfer
  * definitely failed, remove (releaseReservedSend).
  *
@@ -143,7 +143,7 @@ export async function reserveSend({
 }): Promise<SpendReservation> {
   const supabase = getSupabaseAdmin();
 
-  const { data, error } = await supabase.rpc("tella_reserve_daily_spend", {
+  const { data, error } = await supabase.rpc("meirei_reserve_daily_spend", {
     p_user_id: userId,
     p_amount_usdc: amountUsdc,
     p_amount_ngn: amountNgn,
@@ -180,7 +180,7 @@ export async function reserveSend({
 export async function releaseReservedSend(transactionId: string): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_transactions")
+    .from("meirei_transactions")
     .delete()
     .eq("id", transactionId);
 
@@ -199,7 +199,7 @@ export async function releaseReservedSend(transactionId: string): Promise<void> 
  * Persists a built-and-signed payment's XDR onto its reservation row, BEFORE
  * that payment is submitted.
  *
- * Stellar has no server-assigned idempotency key. Safety instead comes from
+ * Smeireir has no server-assigned idempotency key. Safety instead comes from
  * the transaction's own sequence number (a signed envelope can only ever
  * apply once) plus Horizon returning the ORIGINAL result if the exact same
  * signed XDR is resubmitted. So this is what lets a crash between building
@@ -207,18 +207,18 @@ export async function releaseReservedSend(transactionId: string): Promise<void> 
  * rather than building a fresh one against a sequence number that may have
  * already advanced — which would mint a genuinely new second payment.
  */
-export async function attachStellarTxXdr(
+export async function attachSmeireirTxXdr(
   transactionId: string,
   xdr: string,
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_transactions")
-    .update({ stellar_tx_xdr: xdr })
+    .from("meirei_transactions")
+    .update({ smeireir_tx_xdr: xdr })
     .eq("id", transactionId);
 
   if (error) {
-    throw new Error(`attachStellarTxXdr failed: ${error.message}`);
+    throw new Error(`attachSmeireirTxXdr failed: ${error.message}`);
   }
 }
 
@@ -227,27 +227,27 @@ export async function attachStellarTxXdr(
  *
  * Unlike Circle's async model — submit now, learn the real outcome later via
  * a webhook (attachCircleTransactionId, then markOutboundComplete once the
- * hash arrived) — Stellar's submitTransaction is SYNCHRONOUS: the hash and
+ * hash arrived) — Smeireir's submitTransaction is SYNCHRONOUS: the hash and
  * the outcome are both known the moment this call is made. So there is no
  * separate "mark complete" step to run later; this is that step, run inline.
  */
-export async function completeStellarSend(
+export async function completeSmeireirSend(
   transactionId: string,
   { txHash, operationId }: { txHash: string; operationId: string },
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_transactions")
+    .from("meirei_transactions")
     .update({
       status: "complete",
       tx_hash: txHash,
-      stellar_operation_id: operationId,
+      smeireir_operation_id: operationId,
     })
     .eq("id", transactionId);
 
   if (error) {
     // Bookkeeping, after the money has moved. Logged, never thrown.
-    console.error("[transactions] completing stellar send failed", {
+    console.error("[transactions] completing smeireir send failed", {
       transactionId,
       error: error.message,
     });
@@ -257,17 +257,17 @@ export async function completeStellarSend(
 export async function listRecentTransactions(
   userId: string,
   limit = 10,
-): Promise<tellaTransaction[]> {
+): Promise<meireiTransaction[]> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_transactions")
+    .from("meirei_transactions")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) throw new Error(`listRecentTransactions failed: ${error.message}`);
-  return (data as tellaTransaction[]) ?? [];
+  return (data as meireiTransaction[]) ?? [];
 }
 
 /**
@@ -286,7 +286,7 @@ export async function sumSentUsdcSince(
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
-    .from("tella_transactions")
+    .from("meirei_transactions")
     .select("amount_usdc")
     .eq("user_id", userId)
     .eq("direction", "sent")

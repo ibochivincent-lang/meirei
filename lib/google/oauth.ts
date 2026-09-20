@@ -219,11 +219,11 @@ export interface GoogleLink {
   last_verified_at: string | null;
 }
 
-/** Resolve a Google subject to a tella account. Never matches on email. */
+/** Resolve a Google subject to a meirei account. Never matches on email. */
 export async function findUserByGoogleSub(sub: string): Promise<GoogleLink | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_google_identity")
+    .from("meirei_google_identity")
     .select("*")
     .eq("google_sub", sub)
     .maybeSingle();
@@ -235,7 +235,7 @@ export async function findUserByGoogleSub(sub: string): Promise<GoogleLink | nul
 export async function getGoogleLink(userId: string): Promise<GoogleLink | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_google_identity")
+    .from("meirei_google_identity")
     .select("*")
     .eq("user_id", userId)
     .maybeSingle();
@@ -252,7 +252,7 @@ export async function linkGoogleIdentity({
   identity: GoogleIdentity;
 }): Promise<void> {
   const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("tella_google_identity").upsert(
+  const { error } = await supabase.from("meirei_google_identity").upsert(
     {
       user_id: userId,
       google_sub: identity.sub,

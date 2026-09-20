@@ -4,7 +4,7 @@ export type OnboardingStep = "awaiting_name" | "completed";
 export type WalletStatus = "none" | "pending" | "active" | "failed";
 export type WhatsAppChannel = "twilio" | "meta";
 
-export interface tellaUser {
+export interface meireiUser {
   id: string;
   whatsapp_number: string;
   whatsapp_channel: WhatsAppChannel;
@@ -12,15 +12,15 @@ export interface tellaUser {
   onboarding_step: OnboardingStep;
   /**
    * @deprecated Arc-era Circle wallet id. No longer written; left as a
-   * historical marker of who was ever provisioned on Arc. See the Arc →
-   * Stellar migration section of migrations/README.md.
+   * historical marker of who was ever provisioned on Arc. See the Arc 
+   * Smeireir migration section of migrations/README.md.
    */
   circle_wallet_id: string | null;
-  /** A Stellar "G..." StrKey public key since the Arc → Stellar migration. */
+  /** A Smeireir "G..." StrKey public key since the Arc  Smeireir migration. */
   wallet_address: string | null;
   wallet_status: WalletStatus;
-  /** Envelope-encrypted Stellar secret key. See lib/wallet/secret-envelope.ts. */
-  stellar_secret_ciphertext: string | null;
+  /** Envelope-encrypted Smeireir secret key. See lib/wallet/secret-envelope.ts. */
+  smeireir_secret_ciphertext: string | null;
   pin_hash: string | null;
   pin_salt: string | null;
   /**
@@ -230,8 +230,8 @@ export interface HeldSend {
   cancelled_at: string | null;
   cancelled_by: string | null;
   /** @deprecated Arc-era field, no longer written. Completion for a released
-   *  hold is recorded on its tella_transactions row instead (see
-   *  lib/transactions/repository.ts's completeStellarSend). */
+   *  hold is recorded on its meirei_transactions row instead (see
+   *  lib/transactions/repository.ts's completeSmeireirSend). */
   circle_transaction_id: string | null;
   created_at: string;
 }
@@ -239,11 +239,6 @@ export interface HeldSend {
 export interface SendPayload {
   /** The USDC amount the user typed and what's transferred on-chain. */
   amount: string;
-  /**
-   * Naira equivalent at pending-creation time, computed for internal
-   * record-keeping only — not shown in any user-facing message.
-   */
-  amountNgn: string;
   token: "USDC";
   recipientUserId: string | null;
   recipientName: string | null;
@@ -255,7 +250,7 @@ export interface SendPayload {
    * Recorded so the confirm page can return the user to the chat they came
    * from. Without it the page falls back to `user.whatsapp_channel`, which
    * is where a Telegram sender used to be thrown — into an app that may hold
-   * no tella conversation at all, with the receipt sitting somewhere else.
+   * no meirei conversation at all, with the receipt sitting somewhere else.
    *
    * Optional because rows created before this existed do not have it, and
    * a five-minute TTL means "before this existed" stops mattering quickly.
@@ -296,22 +291,152 @@ export interface Beneficiary {
 export type TransactionDirection = "sent" | "received";
 export type TransactionStatus = "submitted" | "complete";
 
-export interface tellaTransaction {
+export interface meireiTransaction {
   id: string;
   user_id: string;
   direction: TransactionDirection;
   amount_usdc: string;
-  amount_ngn: string;
   token: string;
   counterparty_label: string | null;
   counterparty_address: string | null;
   tx_hash: string | null;
-  /** @deprecated Arc-era field, no longer written. See stellar_operation_id. */
+  /** @deprecated Arc-era field, no longer written. See smeireir_operation_id. */
   circle_transaction_id: string | null;
   /** Horizon operation id (dedup key — see migrations/0028). */
-  stellar_operation_id: string | null;
+  smeireir_operation_id: string | null;
   /** Signed payment XDR, persisted before submission (see migrations/0027). */
-  stellar_tx_xdr: string | null;
+  smeireir_tx_xdr: string | null;
   status: TransactionStatus;
   created_at: string;
 }
+
+// -------------------------------------------------------------------------
+// Meirei X Layer (Chain 196) Types (from 0029_meirei_xlayer_core.sql)
+// -------------------------------------------------------------------------
+
+export interface MeireiXLayerUser {
+  id: string;
+  wallet_address: string;
+  platform: string;
+  handle: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type MandateStatus = "active" | "paused" | "completed" | "cancelled";
+
+export interface MeireiMandateRecord {
+  id: string;
+  user_id: string | null;
+  wallet_address: string;
+  rule_text: string;
+  targets: Array<{ symbol: string; weight: number }>;
+  cash_symbol: "USDG" | "USDC";
+  rebalance_band: number;
+  frequency: string;
+  status: MandateStatus;
+  last_rebalanced_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ExecutionStatus = "preview" | "success" | "failed";
+
+export interface MeireiExecutionRecord {
+  id: string;
+  mandate_id: string | null;
+  wallet_address: string;
+  legs: unknown[];
+  tx_hashes: string[];
+  total_notional_usd: number;
+  fee_amount: number;
+  fee_asset: string;
+  status: ExecutionStatus;
+  error_message: string | null;
+  executed_at: string;
+}
+
+export interface MeireiPortfolioSnapshot {
+  id: string;
+  wallet_address: string;
+  total_usd: number;
+  holdings: Array<{ symbol: string; amount: number; valueUsd: number }>;
+  captured_at: string;
+}
+
+export type KycTier = "tier_0_basic" | "tier_1_verified" | "tier_2_accredited" | "tier_3_institutional";
+export type AmlStatus = "clean" | "flagged" | "under_review";
+export type TwoFactorMethod = "email" | "passkey" | "both";
+export type UserPrimaryChannel = "whatsapp" | "telegram" | "instagram" | "web" | "okx_wallet";
+
+/**
+ * System-specific non-custodial user profile.
+ * STRICT SECURITY PRINCIPLE: Private keys are NEVER stored in the database.
+ * The primary universal identity signature across devices is the user's verified email,
+ * cryptographically linked to their non-custodial OKX Layer wallet and WebAuthn Passkeys.
+ */
+export interface MeireiIdentityUser {
+  id: string;
+  email: string;
+  is_email_verified: boolean;
+  wallet_address: string;
+  primary_channel: UserPrimaryChannel;
+  whatsapp_number: string | null;
+  telegram_id: string | null;
+  instagram_handle: string | null;
+  is_bot_active: boolean;
+  two_factor_method: TwoFactorMethod;
+  passkey_credential_id: string | null;
+  passkey_public_key: string | null;
+  kyc_tier: KycTier;
+  aml_status: AmlStatus;
+  is_sanction_screened: boolean;
+  daily_spending_cap_usd: number;
+  created_at: string;
+  updated_at: string;
+  last_login_at: string;
+}
+
+export interface MeireiUserDevice {
+  id: string;
+  user_id: string;
+  channel: "whatsapp" | "telegram" | "instagram" | "web" | "mobile_browser";
+  device_fingerprint: string;
+  user_agent: string | null;
+  ip_address: string | null;
+  is_trusted: boolean;
+  last_active_at: string;
+  created_at: string;
+}
+
+export interface MeireiAuthChallengeRecord {
+  id: string;
+  user_id: string | null;
+  email: string;
+  challenge_type: "email_otp" | "passkey" | "bot_pairing";
+  code_hash: string;
+  purpose: "login" | "device_recovery" | "trade_authorization" | "bot_activation";
+  is_used: boolean;
+  attempts: number;
+  max_attempts: number;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface MeireiComplianceLog {
+  id: string;
+  user_id: string | null;
+  wallet_address: string;
+  event_type:
+    | "kyc_verification"
+    | "sanction_screen_cleared"
+    | "sanction_screen_flagged"
+    | "otp_auth_success"
+    | "otp_auth_failed"
+    | "passkey_registered"
+    | "spending_cap_exceeded"
+    | "bot_channel_linked";
+  metadata: Record<string, unknown>;
+  recorded_at: string;
+}
+

@@ -11,4 +11,4 @@
  * that a cookie exists, and is deliberately not allowed to verify it. That
  * decision belongs in the route, where the secret is.
  */
-export const ADMIN_COOKIE_NAME = "tella_admin";
+export const ADMIN_COOKIE_NAME = "meirei_admin";

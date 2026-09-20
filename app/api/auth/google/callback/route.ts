@@ -22,11 +22,11 @@ export const dynamic = "force-dynamic";
  *
  * Where the asymmetry that defines this whole feature is enforced.
  *
- *   FREEZE   → Google alone is enough. The person who most needs this button
+ *   FREEZE    Google alone is enough. The person who most needs this button
  *              has no phone to prove anything else with, and the worst an
  *              attacker achieves by pressing it is inconveniencing someone.
  *
- *   UNFREEZE → Google is necessary and NOT sufficient. It mints a short-lived
+ *   UNFREEZE  Google is necessary and NOT sufficient. It mints a short-lived
  *              token and hands off to a page that also demands a factor which
  *              existed before the freeze. Once Google is accepted as a
  *              recovery factor, a compromised Google account would otherwise
@@ -34,7 +34,7 @@ export const dynamic = "force-dynamic";
  *              phone-based, so it is not as independent of the SIM as it
  *              looks.
  *
- *   LINK     → authorized by a token minted on an already-authenticated
+ *   LINK      authorized by a token minted on an already-authenticated
  *              channel, so identity is already established; Google is being
  *              attached, not trusted.
  *
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
   }
 
   if (state.purpose === "admin") {
-    // Checked against the allowlist, not against a tella account. An admin
+    // Checked against the allowlist, not against a meirei account. An admin
     // need not be a wallet user, and a wallet user is emphatically not an
     // admin — these are separate questions and conflating them is how a
     // dashboard ends up reachable by anyone who linked Google.
@@ -97,7 +97,7 @@ export async function GET(request: Request) {
   if (!link) {
     return fail(
       origin,
-      "That Google account isn't connected to a tella wallet. Ask tella on WhatsApp to link it first.",
+      "That Google account isn't connected to a meirei wallet. Ask meirei on WhatsApp to link it first.",
     );
   }
 
@@ -119,7 +119,7 @@ export async function GET(request: Request) {
       notifyUser({
         user,
         body: [
-          "🔒 Your account was frozen from the web using your Google account.",
+          " Your account was frozen from the web using your Google account.",
           "",
           "Nothing can leave your wallet. You can still receive money.",
           "",
@@ -129,13 +129,13 @@ export async function GET(request: Request) {
       sendSecurityEmail({
         to: link.google_email,
         kind: "account_frozen",
-        subject: "Your tella account was frozen",
+        subject: "Your meirei account was frozen",
         lines: [
-          "Your tella wallet was just frozen. Nothing can leave it.",
+          "Your meirei wallet was just frozen. Nothing can leave it.",
           "",
           "You can still receive money, and your balance is untouched.",
           "",
-          "If this wasn't you, message tella on WhatsApp immediately.",
+          "If this wasn't you, message meirei on WhatsApp immediately.",
         ],
       }),
     ]);
@@ -154,7 +154,7 @@ export async function GET(request: Request) {
     // here is the honest answer: this needs a person, not a second click.
     return fail(
       origin,
-      "This account has no PIN or passkey set, so I can't safely unfreeze it from here. Message tella on WhatsApp and we'll sort it out.",
+      "This account has no PIN or passkey set, so I can't safely unfreeze it from here. Message meirei on WhatsApp and we'll sort it out.",
     );
   }
 
@@ -168,13 +168,13 @@ async function handleLink(
   identity: Awaited<ReturnType<typeof exchangeCode>>,
 ) {
   const ctx = await loadResetContext(token, "link_google");
-  if (!ctx) return fail(origin, "That link expired. Ask tella on WhatsApp for a new one.");
+  if (!ctx) return fail(origin, "That link expired. Ask meirei on WhatsApp for a new one.");
 
   const existing = await findUserByGoogleSub(identity.sub);
   if (existing && existing.user_id !== ctx.user.id) {
     // One Google account, one wallet. Otherwise a single Google compromise
     // reaches several accounts and the freeze door becomes a skeleton key.
-    return fail(origin, "That Google account is already connected to another tella wallet.");
+    return fail(origin, "That Google account is already connected to another meirei wallet.");
   }
 
   const consumed = await consumeResetToken(ctx.token.id);
@@ -188,7 +188,7 @@ async function handleLink(
     notifyUser({
       user: ctx.user,
       body: [
-        `🔗 ${identity.email} was just connected to your tella wallet.`,
+        ` ${identity.email} was just connected to your meirei wallet.`,
         "",
         "You can now freeze your account from the web even without your phone.",
         "",
@@ -198,9 +198,9 @@ async function handleLink(
     sendSecurityEmail({
       to: identity.email,
       kind: "google_linked",
-      subject: "This email is now connected to a tella wallet",
+      subject: "This email is now connected to a meirei wallet",
       lines: [
-        "This Google account was just connected to a tella wallet.",
+        "This Google account was just connected to a meirei wallet.",
         "",
         "You'll get security notices here, and you can freeze the wallet from the web if the phone is ever lost.",
         "",

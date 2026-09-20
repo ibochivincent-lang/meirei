@@ -74,7 +74,7 @@ configured this" must never mean "anyone can call it":
 
 - **Cron routes** (`app/api/cron/*`) require `CRON_SECRET` as a bearer
   token (`lib/cron/auth.ts`).
-- **The Stellar payment-streaming worker → app** channel requires
+- **The Stellar payment-streaming worker  app** channel requires
   `STELLAR_STREAM_WORKER_SECRET` (`lib/wallet/stream-auth.ts`).
 - **The admin dashboard** (`/admin`) requires Google sign-in against an
   explicit allowlist of Google subject IDs (`ADMIN_GOOGLE_SUBS`) — an

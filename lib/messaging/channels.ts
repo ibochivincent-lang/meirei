@@ -36,7 +36,7 @@ export async function findChannel(
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
-    .from("tella_user_channel")
+    .from("meirei_user_channel")
     .select("*")
     .eq("provider", provider)
     .eq("external_id", externalId)
@@ -51,7 +51,7 @@ export async function listChannels(userId: string): Promise<UserChannel[]> {
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
-    .from("tella_user_channel")
+    .from("meirei_user_channel")
     .select("*")
     .eq("user_id", userId)
     .order("is_primary", { ascending: false })
@@ -70,7 +70,7 @@ export async function listChannels(userId: string): Promise<UserChannel[]> {
  */
 export class ChannelOwnedByAnotherUserError extends Error {
   constructor(provider: MessageProvider, externalId: string) {
-    super(`${provider} channel ${externalId} belongs to another tella account`);
+    super(`${provider} channel ${externalId} belongs to another meirei account`);
     this.name = "ChannelOwnedByAnotherUserError";
   }
 }
@@ -121,7 +121,7 @@ export async function upsertChannel({
   }
 
   const { data, error } = await supabase
-    .from("tella_user_channel")
+    .from("meirei_user_channel")
     .upsert(
       {
         user_id: userId,
@@ -153,7 +153,7 @@ export async function upsertChannel({
 export async function markChannelUnverified(id: string): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_user_channel")
+    .from("meirei_user_channel")
     .update({ verified_at: null })
     .eq("id", id);
 
@@ -175,7 +175,7 @@ export async function unlinkChannel({
 
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_user_channel")
+    .from("meirei_user_channel")
     .delete()
     .eq("id", id)
     .eq("user_id", userId);

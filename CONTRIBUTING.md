@@ -76,7 +76,7 @@ how to apply database migrations.
   is unavailable, fail loudly or surface an explicit error state — never
   silently substitute a placeholder. This is the single most
   expensive mistake this codebase has made in the past (see
-  `migrations/README.md`'s notes on the Arc → Stellar migration for what
+  `migrations/README.md`'s notes on the Arc  Stellar migration for what
   it cost when a demo ran on mock data elsewhere in this ecosystem).
 
 ### Money-moving code specifically

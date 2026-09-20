@@ -12,7 +12,7 @@ import {
   formatSendResultForChat,
   sendFailureStatus,
 } from "@/lib/sends/execute";
-import { sendReceiptAndFollowUp } from "@/lib/sends/follow-up";
+import { sendReceiptAndFollowUp } from "@/lib/sends/follow_up";
 
 export const dynamic = "force-dynamic";
 

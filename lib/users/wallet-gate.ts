@@ -1,4 +1,4 @@
-import type { tellaUser } from "@/lib/supabase/types";
+import type { meireiUser } from "@/lib/supabase/types";
 
 /**
  * The two questions the codebase asks about a wallet before doing anything
@@ -39,11 +39,11 @@ export type WalletGate =
 /**
  * Shared shape check, without any opinion about freezing.
  *
- * There is no external custody id on Stellar — the account IS the address —
+ * There is no external custody id on Smeireir — the account IS the address —
  * so this gates on `wallet_address` directly rather than on a walletId the
  * way the Circle-era version did.
  */
-function gateProvisioned(user: tellaUser): WalletGate {
+function gateProvisioned(user: meireiUser): WalletGate {
   if (user.wallet_status === "pending") {
     return { ok: false, reason: "provisioning" };
   }
@@ -61,7 +61,7 @@ function gateProvisioned(user: tellaUser): WalletGate {
  * everything earlier is there so the user gets a useful message instead of a
  * link that dies when they tap it.
  */
-export function gateSpend(user: tellaUser): WalletGate {
+export function gateSpend(user: meireiUser): WalletGate {
   if (isFrozen(user)) return { ok: false, reason: "frozen" };
   return gateProvisioned(user);
 }
@@ -72,11 +72,11 @@ export function gateSpend(user: tellaUser): WalletGate {
  * Use for balance, receiving address, history, and for checking a
  * RECIPIENT's wallet. Deliberately indifferent to freezing.
  */
-export function gateWalletReady(user: tellaUser): WalletGate {
+export function gateWalletReady(user: meireiUser): WalletGate {
   return gateProvisioned(user);
 }
 
 /** The single definition of frozen, so no call site invents its own. */
-export function isFrozen(user: tellaUser): boolean {
+export function isFrozen(user: meireiUser): boolean {
   return user.frozen_at !== null && user.frozen_at !== undefined;
 }

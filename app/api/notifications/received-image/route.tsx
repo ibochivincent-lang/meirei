@@ -72,11 +72,11 @@ export async function GET(request: Request) {
           }}
         >
           <div style={{ display: "flex", fontSize: 40, fontWeight: 700, color: "#5EEAD4" }}>
-            tella
+            meirei
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", marginTop: 100 }}>
-            <div style={{ display: "flex", fontSize: 56, color: "#FFFFFF" }}>💰 Received</div>
+            <div style={{ display: "flex", fontSize: 56, color: "#FFFFFF" }}> Received</div>
             <div style={{ display: "flex", fontSize: 88, fontWeight: 700, color: "#FFFFFF", marginTop: 12 }}>
               {amount} {token}
             </div>

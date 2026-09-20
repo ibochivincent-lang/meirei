@@ -32,7 +32,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   `@circle-fin/developer-controlled-wallets` SDK has no Stellar support at
   all (no entry in its blockchain enum, no Stellar account model), so this
   was a full custody-layer rewrite rather than a config change. See
-  `migrations/README.md`'s "Arc → Stellar migration" section for the full
+  `migrations/README.md`'s "Arc  Stellar migration" section for the full
   rationale and the schema changes involved.
 - Address recognition switched from a hand-rolled `0x` + 40-hex-char regex
   (`isEvmAddress`) to the Stellar SDK's own `StrKey.isValidEd25519PublicKey`

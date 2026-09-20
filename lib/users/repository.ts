@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { upsertChannel } from "@/lib/messaging/channels";
-import type { tellaUser, WhatsAppChannel } from "@/lib/supabase/types";
+import type { meireiUser, WhatsAppChannel } from "@/lib/supabase/types";
 
 /**
  * Looks up (or creates) the user for an inbound WhatsApp message.
@@ -8,7 +8,7 @@ import type { tellaUser, WhatsAppChannel } from "@/lib/supabase/types";
  * `channel` records which provider (Twilio vs Meta Cloud API) this message
  * arrived through. It's kept current on every inbound message — not just
  * set at creation — so a user who moves between channels (e.g. during the
- * Twilio→Meta migration) always gets outbound notifications (payment
+ * TwilioMeta migration) always gets outbound notifications (payment
  * received, send receipts) routed through whichever API they're actually
  * reachable on. Same underlying `whatsapp_number` matches either way, since
  * both webhooks normalize to Twilio-style `whatsapp:+E164`.
@@ -20,7 +20,7 @@ import type { tellaUser, WhatsAppChannel } from "@/lib/supabase/types";
  * whenever a message arrived on a different provider, which recorded "the
  * channel last used" rather than "the channels available" and silently
  * repointed every outbound notification at whichever provider happened to
- * deliver last. tella_user_channel is the record now; this column survives
+ * deliver last. meirei_user_channel is the record now; this column survives
  * only because half a dozen call sites still read it, and is kept in step as
  * the user's PRIMARY channel rather than as a running log of the last one.
  */
@@ -33,11 +33,11 @@ export async function findOrCreateUser({
   channel?: WhatsAppChannel;
   /** The provider's display name for this sender. Stored on the channel row. */
   profileName?: string | null;
-}): Promise<{ user: tellaUser; isNew: boolean }> {
+}): Promise<{ user: meireiUser; isNew: boolean }> {
   const supabase = getSupabaseAdmin();
 
   const { data: existing, error: findError } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .select("*")
     .eq("whatsapp_number", whatsappNumber)
     .maybeSingle();
@@ -49,7 +49,7 @@ export async function findOrCreateUser({
   }
 
   if (existing) {
-    const existingUser = existing as tellaUser;
+    const existingUser = existing as meireiUser;
 
     // Dual-write while the legacy columns are still read elsewhere. The
     // channel row is the authority; this keeps the column usable until the
@@ -58,7 +58,7 @@ export async function findOrCreateUser({
 
     if (existingUser.whatsapp_channel !== channel) {
       const { data: updated, error: updateError } = await supabase
-        .from("tella_users")
+        .from("meirei_users")
         .update({ whatsapp_channel: channel })
         .eq("id", existingUser.id)
         .select()
@@ -70,13 +70,13 @@ export async function findOrCreateUser({
           { cause: updateError },
         );
       }
-      return { user: updated as tellaUser, isNew: false };
+      return { user: updated as meireiUser, isNew: false };
     }
     return { user: existingUser, isNew: false };
   }
 
   const { data: created, error: createError } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .insert({
       whatsapp_number: whatsappNumber,
       whatsapp_channel: channel,
@@ -91,14 +91,14 @@ export async function findOrCreateUser({
     });
   }
 
-  const createdUser = created as tellaUser;
+  const createdUser = created as meireiUser;
   await recordChannel(createdUser.id, channel, whatsappNumber, true, profileName);
 
   return { user: createdUser, isNew: true };
 }
 
 /**
- * Mirror an inbound WhatsApp identifier into tella_user_channel.
+ * Mirror an inbound WhatsApp identifier into meirei_user_channel.
  *
  * Best-effort and deliberately non-fatal: the legacy columns are still
  * written and still read, so a failure here degrades the fan-out for one
@@ -140,10 +140,10 @@ export async function completeOnboarding({
 }: {
   userId: string;
   name: string;
-}): Promise<tellaUser> {
+}): Promise<meireiUser> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .update({
       profile_name: name,
       onboarding_step: "completed",
@@ -153,14 +153,14 @@ export async function completeOnboarding({
     .single();
 
   if (error) throw new Error(`completeOnboarding failed: ${error.message}`);
-  return data as tellaUser;
+  return data as meireiUser;
 }
 
 
 export async function markWalletPending(userId: string): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .update({ wallet_status: "pending" })
     .eq("id", userId);
   if (error) throw new Error(`markWalletPending failed: ${error.message}`);
@@ -184,8 +184,8 @@ export async function saveWalletKeys({
 }): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_users")
-    .update({ wallet_address: address, stellar_secret_ciphertext: secretCiphertext })
+    .from("meirei_users")
+    .update({ wallet_address: address, smeireir_secret_ciphertext: secretCiphertext })
     .eq("id", userId);
   if (error) throw new Error(`saveWalletKeys failed: ${error.message}`);
 }
@@ -199,7 +199,7 @@ export async function setWalletActive({
 }): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .update({ wallet_address: address, wallet_status: "active" })
     .eq("id", userId);
   if (error) throw new Error(`setWalletActive failed: ${error.message}`);
@@ -208,7 +208,7 @@ export async function setWalletActive({
 export async function markWalletFailed(userId: string): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .update({ wallet_status: "failed" })
     .eq("id", userId);
   if (error) throw new Error(`markWalletFailed failed: ${error.message}`);
@@ -226,65 +226,65 @@ export async function markWalletFailed(userId: string): Promise<void> {
 export async function listUsersNeedingWallet(
   stalePendingMinutes = 10,
   limit = 50,
-): Promise<tellaUser[]> {
+): Promise<meireiUser[]> {
   const supabase = getSupabaseAdmin();
   const staleBefore = new Date(
     Date.now() - stalePendingMinutes * 60 * 1000,
   ).toISOString();
 
   const { data, error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .select("*")
     .or(`wallet_status.eq.failed,and(wallet_status.eq.pending,updated_at.lt.${staleBefore})`)
     .order("updated_at", { ascending: true })
     .limit(limit);
 
   if (error) throw new Error(`listUsersNeedingWallet failed: ${error.message}`);
-  return (data as tellaUser[]) ?? [];
+  return (data as meireiUser[]) ?? [];
 }
 
 /** By primary key. Used by jobs that hold a user_id rather than a channel id. */
-export async function findUserById(userId: string): Promise<tellaUser | null> {
+export async function findUserById(userId: string): Promise<meireiUser | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .select("*")
     .eq("id", userId)
     .maybeSingle();
 
   if (error) throw new Error(`findUserById failed: ${error.message}`);
-  return (data as tellaUser | null) ?? null;
+  return (data as meireiUser | null) ?? null;
 }
 
 export async function findUserByWhatsApp(
   whatsappNumber: string,
-): Promise<tellaUser | null> {
+): Promise<meireiUser | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .select("*")
     .eq("whatsapp_number", whatsappNumber)
     .maybeSingle();
 
   if (error) throw new Error(`findUserByWhatsApp failed: ${error.message}`);
-  return (data as tellaUser | null) ?? null;
+  return (data as meireiUser | null) ?? null;
 }
 
 /**
- * Resolves an on-chain wallet address back to the tella user who owns it,
- * so an inbound transfer from another tella user can be labeled with their
+ * Resolves an on-chain wallet address back to the meirei user who owns it,
+ * so an inbound transfer from another meirei user can be labeled with their
  * name instead of a shortened address. Case-SENSITIVE: unlike EVM's
  * checksum-casing (which was never guaranteed to match byte-for-byte, hence
- * the old `ilike` here), a Stellar StrKey address is case-significant —
+ * the old `ilike` here), a Smeireir StrKey address is case-significant —
  * lowercasing or otherwise re-casing it produces either an invalid address
  * or a different one.
  */
 export async function findUserByWalletAddress(
   address: string,
-): Promise<tellaUser | null> {
+): Promise<meireiUser | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .select("*")
     .eq("wallet_address", address)
     .maybeSingle();
@@ -292,5 +292,52 @@ export async function findUserByWalletAddress(
   if (error) {
     throw new Error(`findUserByWalletAddress failed: ${error.message}`);
   }
-  return (data as tellaUser | null) ?? null;
+  return (data as meireiUser | null) ?? null;
+}
+
+/**
+ * Resolves or creates an X Layer (chain 196) EVM user row in meirei_users.
+ */
+export async function findOrCreateXLayerUser({
+  walletAddress,
+  platform = "web",
+  handle,
+}: {
+  walletAddress: string;
+  platform?: string;
+  handle?: string | null;
+}): Promise<{ id: string; walletAddress: string }> {
+  const supabase = getSupabaseAdmin();
+  const normalizedAddress = walletAddress.toLowerCase();
+
+  const { data: existing, error: findError } = await supabase
+    .from("meirei_users")
+    .select("id, wallet_address")
+    .ilike("wallet_address", normalizedAddress)
+    .maybeSingle();
+
+  if (findError) {
+    console.warn("[users] X Layer user lookup notice:", findError.message);
+  }
+
+  if (existing) {
+    return { id: existing.id, walletAddress: existing.wallet_address || walletAddress };
+  }
+
+  const { data: created, error: createError } = await supabase
+    .from("meirei_users")
+    .insert({
+      wallet_address: walletAddress,
+      wallet_status: "active",
+      onboarding_step: "completed",
+    })
+    .select("id, wallet_address")
+    .single();
+
+  if (createError) {
+    console.warn("[users] X Layer user insert notice:", createError.message);
+    return { id: `local_${Date.now()}`, walletAddress };
+  }
+
+  return { id: created.id, walletAddress: created.wallet_address };
 }

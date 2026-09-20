@@ -1,29 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif, JetBrains_Mono, Newsreader } from "next/font/google";
+import { DM_Sans, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import "@/app/globals.css";
 import { SmoothScroll } from "@/components/interactive/smooth-scroll";
+import { CookieConsentBanner } from "@/components/ui/cookie_consent_banner";
 
-/**
- * Inter — body text. Variable weight so we don't need to load multiple
- * weights as separate files. Modern, neutral, and trusted in fintech.
- */
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
 });
 
-/**
- * Instrument Serif — display headings only. Single weight, italic optional.
- * Pairs the serif's editorial weight with Inter's clean body text — a
- * combination Mercury, Stripe, and Linear have all leaned on.
- */
-const instrumentSerif = Instrument_Serif({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
   variable: "--font-display",
+  display: "swap",
+});
+
+const spaceGroteskWorks = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-works",
   display: "swap",
 });
 
@@ -37,17 +33,10 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-// Newsreader — closest free match to Suisse Works.
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  variable: "--font-works",
-  display: "swap",
-});
 
-const title = "Tella - Stablecoin payments, by message";
+const title = "Meirei · AI Native Investment Mandate Agent";
 const description =
-  "A messaging-based payment interface. Send and manage USDC straight from WhatsApp or Telegram - no app to install, no menus to learn. Just write.";
+  "Turn one sentence investment mandates into live tokenized stock (xStocks) & USDG portfolios on X Layer via OKX DEX Aggregator.";
 
 export const metadata: Metadata = {
   metadataBase: process.env.APP_BASE_URL
@@ -59,7 +48,7 @@ export const metadata: Metadata = {
     title,
     description,
     type: "website",
-    siteName: "tella",
+    siteName: "meirei",
   },
   twitter: {
     card: "summary",
@@ -76,7 +65,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} ${newsreader.variable}`}
+      className={`${dmSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${spaceGroteskWorks.variable}`}
     >
       <head>
         <meta
@@ -90,6 +79,7 @@ export default function RootLayout({
           <SmoothScroll>
             {children}
           </SmoothScroll>
+          <CookieConsentBanner />
         </MotionConfig>
       </body>
     </html>

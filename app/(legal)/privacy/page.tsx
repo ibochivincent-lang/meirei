@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import { SITE } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy · Tella",
+  title: "Privacy Policy · meirei",
   description:
-    "How Tella collects, uses, and protects your information when you send and receive money through WhatsApp.",
+    "How meirei collects, uses, and protects your information when you send and receive money through WhatsApp.",
 };
 
-const LAST_UPDATED = "May 14, 2026";
+const LAST_UPDATED = "September 17, 2026";
 
 export default function PrivacyPage() {
   return (
     <div className="legal-prose">
       <header className="mb-12 border-b border-ink-200 pb-8">
-        <p className="font-mono text-xs uppercase tracking-widest text-ink-500">
-          Legal
+        <p className="font-mono text-xs uppercase tracking-widest text-[#C4820A]">
+          Legal & Compliance
         </p>
         <h1 className="mt-2 font-display text-5xl text-ink-900">
           Privacy Policy
@@ -24,25 +24,23 @@ export default function PrivacyPage() {
         </p>
       </header>
 
-      <Section title="1. Overview">
+      <Section title="1. Overview & Business Identity">
         <p>
-          This Privacy Policy explains how{" "}
-          <Placeholder>[Legal Entity Name]</Placeholder> (&ldquo;Tella,&rdquo;
-          &ldquo;tella,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;) collects,
+          This Privacy Policy explains how <strong>{SITE.legalName}</strong> (&ldquo;Meirei,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;) collects,
           uses, shares, and protects personal information when you use our
-          WhatsApp-based money interface and our website at{" "}
-          <Placeholder>[tella.app]</Placeholder> (the &ldquo;Service&rdquo;).
+          AI-native investment mandate terminal and web service at{" "}
+          <a href="https://meirei.app" className="legal-link">https://meirei.app</a> (the &ldquo;Service&rdquo;).
           It applies in addition to our{" "}
           <a href="/terms" className="legal-link">
             Terms of Service
-          </a>
-          .
+          </a>{" "}
+          and{" "}
+          <a href="/cookies" className="legal-link">
+            Cookie Policy
+          </a>.
         </p>
         <p>
-          We follow the Nigeria Data Protection Act 2023 (NDPA) and, where
-          applicable, the GDPR, in our role as a data controller. If you
-          interact with us through WhatsApp, Meta also processes your messages
-          under its own policy.
+          We strictly respect global privacy frameworks including the Nigeria Data Protection Act 2023 (NDPA) and the General Data Protection Regulation (GDPR) in our role as a data controller. We operate a non-custodial interface; your private keys remain exclusively under your control.
         </p>
       </Section>
 
@@ -92,12 +90,12 @@ export default function PrivacyPage() {
             and OS, timestamps, and pages visited.
           </li>
           <li>
-            <strong>Transaction metadata:</strong> on-chain transaction hashes,
+            <strong>Transaction metadata:</strong> onchain transaction hashes,
             block timestamps, balances, and counterparty addresses (public
             blockchain data).
           </li>
           <li>
-            <strong>Cookies & similar:</strong> strictly-necessary cookies on
+            <strong>Cookies & similar:</strong> strictly necessary cookies on
             the confirmation flow to secure your session; we do not use
             advertising cookies.
           </li>
@@ -105,8 +103,8 @@ export default function PrivacyPage() {
 
         <p>
           <strong>From third parties:</strong> we receive verification
-          outcomes from our KYC provider, settlement data from the Stellar
-          network, and messaging metadata (e.g. delivery state) from Meta /
+          outcomes from our KYC provider, settlement data from the OKX X Layer
+          network (Chain ID 196), and messaging metadata (e.g. delivery state) from Meta /
           WhatsApp and Twilio.
         </p>
       </Section>
@@ -180,17 +178,16 @@ export default function PrivacyPage() {
                 <strong>Circle</strong> — issuer of the USDC stablecoin.
               </li>
               <li>
-                <strong>Stellar network</strong> — blockchain settlement.
-                Wallets are created and held by Tella&rsquo;s own
-                infrastructure rather than a third-party custodian.
+                <strong>OKX X Layer network (Chain ID 196)</strong> — blockchain settlement.
+                User operations and tokenized equity swaps settle non-custodially onchain.
               </li>
               <li>
                 <strong>Supabase</strong> — application database and
                 authentication infrastructure.
               </li>
               <li>
-                <Placeholder>[KYC provider, analytics]</Placeholder>
-                .
+                <strong>SumSub &amp; Chainalysis</strong> — identity verification,
+                AML sanctions screening, and compliance monitoring.
               </li>
             </ul>
           </li>
@@ -232,7 +229,7 @@ export default function PrivacyPage() {
           needed to defend legal claims or comply with regulators.
         </p>
         <p>
-          On-chain data we have submitted (transaction hashes, addresses,
+          Onchain data we have submitted (transaction hashes, addresses,
           amounts) cannot be deleted by us — that is a property of public
           blockchains, not a choice we make.
         </p>
@@ -242,7 +239,7 @@ export default function PrivacyPage() {
         <p>
           We use encryption in transit (TLS), encryption at rest for sensitive
           fields, hashed PINs, scoped database access, audit logging, and
-          short-lived confirmation tokens to reduce the risk of unauthorised
+          short lived confirmation tokens to reduce the risk of unauthorised
           access. No system is perfectly secure — keep your WhatsApp account
           and device protected, and never share your PIN or confirmation link
           with anyone.
@@ -270,45 +267,60 @@ export default function PrivacyPage() {
         </ul>
         <p>
           To exercise these rights, message us in chat or email{" "}
-          <a href={`mailto:${SITE.privacyEmail}`} className="legal-link">
-            <Placeholder>[privacy@yourdomain.com]</Placeholder>
+          <a href="mailto:privacy@meirei.app" className="legal-link">
+            privacy@meirei.app
           </a>
           . For a deletion request specifically, see our{" "}
           <a href="/data-deletion" className="legal-link">
             Data Deletion page
           </a>
-          . You can also lodge a complaint with the{" "}
-          <strong>Nigeria Data Protection Commission (NDPC)</strong>.
+          . You can also lodge a complaint with your supervisory authority.
         </p>
       </Section>
 
-      <Section title="9. Children">
+      <Section title="9. Age Consent & Protection of Children (Strictly 18+)">
         <p>
-          Tella is not intended for anyone under 18. We do not knowingly
-          collect personal information from children. If you believe a child
-          has given us personal information, contact us and we will delete it.
+          Meirei is strictly restricted to individuals who are at least 18 years of age and possess full legal capacity to enter into binding financial agreements. We do not knowingly solicit, collect, or process personal data from children or minors under 18.
+        </p>
+        <p>
+          If we discover or have reason to suspect that an individual under 18 has accessed the platform, created a wallet profile, or submitted mandates, all associated session data, identity mappings, and chat history will be permanently deleted immediately. Parents or guardians who believe a child has accessed the service may notify us at <a href="mailto:privacy@meirei.app" className="legal-link">privacy@meirei.app</a> for prompt removal.
         </p>
       </Section>
 
-      <Section title="10. Changes to this Policy">
+      <Section title="10. Communication Controls & Unsubscribe Mechanisms">
         <p>
-          We may update this Policy from time to time. If a change is
-          material, we will notify you in-chat or by another reasonable means
-          before it takes effect. The &ldquo;Last updated&rdquo; date at the
-          top of this page always reflects the current version.
+          We respect your communication preferences. You can opt out of non-critical automated status messages at any time:
+        </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Chat Platforms (WhatsApp / Telegram):</strong> Reply &ldquo;STOP&rdquo;, &ldquo;UNSUBSCRIBE&rdquo;, or &ldquo;PAUSE&rdquo; in the chat thread to instantly halt proactive notifications and price alerts.</li>
+          <li><strong>Email Notifications:</strong> Every automated email dispatch contains a one-click &ldquo;Unsubscribe&rdquo; link in the footer. Alternatively, email <a href="mailto:privacy@meirei.app" className="legal-link">privacy@meirei.app</a> with the subject &ldquo;Unsubscribe&rdquo;.</li>
+        </ul>
+      </Section>
+
+      <Section title="11. Third-Party SDK Audit & Zero Dark Patterns">
+        <p>
+          We conduct continuous operational security audits on all third-party software development kits (SDKs) and RPC dependencies:
+        </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>OKX Onchain OS & DEX Aggregator:</strong> Sourcing decentralized liquidity across X Layer without custodial custody.</li>
+          <li><strong>Supabase / PostgreSQL:</strong> Self-contained relational database enforcing Row Level Security (RLS) on all user tables.</li>
+        </ul>
+        <p>
+          We strictly reject dark patterns: there are zero hidden recurring charges, zero artificial countdown timers, and no pre-checked consent checkboxes. All trade legs and fees are explicitly previewed prior to 2FA challenge authorization.
         </p>
       </Section>
 
-      <Section title="11. Contact">
+      <Section title="12. Corporate Contact Details">
         <p>
-          For privacy questions or to exercise your rights, contact our Data
-          Protection Officer at{" "}
-          <a href={`mailto:${SITE.privacyEmail}`} className="legal-link">
-            <Placeholder>[privacy@yourdomain.com]</Placeholder>
-          </a>
-          , or by post at{" "}
-          <Placeholder>[Registered office address]</Placeholder>.
+          For privacy questions, GDPR/NDPA inquiries, or to contact our Data Protection Officer:
         </p>
+        <div className="rounded-xl border border-ink-200 bg-surface-100 p-4 font-mono text-xs text-ink-800 space-y-1">
+          <p className="font-bold text-ink-950">{SITE.legalName}</p>
+          <p>Entity: Meirei Core Protocol Ltd.</p>
+          <p>Data Protection Email: privacy@meirei.app</p>
+          <p>Legal & Compliance: legal@meirei.app</p>
+          <p>Registered Office: Meirei Global Operations, Victoria Island, Lagos & Decentralized Protocol Infrastructure</p>
+        </div>
       </Section>
     </div>
   );
@@ -329,10 +341,3 @@ function Section({
   );
 }
 
-function Placeholder({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded bg-accent-50 px-1.5 py-0.5 font-mono text-[0.8em] text-accent-700">
-      {children}
-    </span>
-  );
-}

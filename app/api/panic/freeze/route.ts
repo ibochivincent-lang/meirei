@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     await notifyUser({
       user,
       body: [
-        "🔒 Your account was frozen using your panic code.",
+        " Your account was frozen using your panic code.",
         "",
         "Nothing can leave your wallet. You can still receive money.",
         "",

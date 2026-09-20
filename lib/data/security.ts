@@ -15,16 +15,16 @@ export const SECURITY_CARDS: SecurityCard[] = [
   },
   {
     id: "certified",
-    title: "Settled on Stellar, encrypted, verifiable",
+    title: "Settled on OKX X Layer, encrypted, verifiable",
     body:
-      "Your payments settle on Stellar — a network with near-zero second finality and independently verifiable transactions. The WhatsApp layer uses the same end-to-end encryption that secures every other message you send.",
+      "Your portfolio rebalancing and swaps settle on OKX X Layer (Chain ID 196) with near-zero second finality, sub-cent gas fees, and verifiable zero-knowledge rollups. The WhatsApp and Telegram layers use the same end-to-end encryption that secures every other message you send.",
     illustration: "certified",
   },
   {
     id: "biometric",
     title: "Biometric lock on the chat itself",
     body:
-      "Hide your tella thread inside WhatsApp's locked chats folder — face or fingerprint required to even open it. Security down to the conversation level, not just the transaction.",
+      "Hide your meirei thread inside WhatsApp's locked chats folder — face or fingerprint required to even open it. Security down to the conversation level, not just the transaction.",
     illustration: "biometric",
   },
 ];

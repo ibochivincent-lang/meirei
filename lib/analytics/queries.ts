@@ -14,7 +14,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
  * browsable list of phone numbers is both unnecessary and a much worse thing
  * to leak if the admin cookie ever escapes.
  *
- * Everything is denominated in USDC on whichever network STELLAR_NETWORK
+ * Everything is denominated in USDC on whichever network SmeireiR_NETWORK
  * names. On TESTNET the numbers are real user behaviour and unreal money, and
  * the UI says which network it is rather than leaving a reader to assume.
  * The tables are not split by network, so switching a deployment to
@@ -89,12 +89,12 @@ export async function loadDashboard(): Promise<DashboardData> {
 
   const [users, transactions, senders, channels, security, daily] =
     await Promise.all([
-      supabase.rpc("tella_admin_user_counts"),
-      supabase.rpc("tella_admin_transaction_totals"),
-      supabase.rpc("tella_admin_sender_counts"),
-      supabase.rpc("tella_admin_channel_mix"),
-      supabase.rpc("tella_admin_security_posture"),
-      supabase.rpc("tella_admin_daily_activity"),
+      supabase.rpc("meirei_admin_user_counts"),
+      supabase.rpc("meirei_admin_transaction_totals"),
+      supabase.rpc("meirei_admin_sender_counts"),
+      supabase.rpc("meirei_admin_channel_mix"),
+      supabase.rpc("meirei_admin_security_posture"),
+      supabase.rpc("meirei_admin_daily_activity"),
     ]);
 
   for (const [name, res] of Object.entries({

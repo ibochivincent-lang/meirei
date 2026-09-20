@@ -7,7 +7,7 @@ import { Dashboard } from "./dashboard";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "tella admin",
+  title: "meirei admin",
   robots: { index: false, follow: false, nocache: true },
   other: { referrer: "no-referrer" },
 };

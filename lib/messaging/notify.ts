@@ -1,4 +1,4 @@
-import type { tellaUser } from "@/lib/supabase/types";
+import type { meireiUser } from "@/lib/supabase/types";
 import { TelegramBlockedError } from "@/lib/telegram/client";
 import { listChannels, markChannelUnverified, type UserChannel } from "./channels";
 import { PROVIDERS } from "./providers";
@@ -14,8 +14,8 @@ import { PROVIDERS } from "./providers";
  *
  * THE FAN-OUT POLICY, which is the actual decision in this file:
  *
- *   notifyUser        → EVERY verified channel.
- *   notifyUserPrimary → the primary channel only.
+ *   notifyUser         EVERY verified channel.
+ *   notifyUserPrimary  the primary channel only.
  *
  * Security notices, receipts and inbound-payment alerts go everywhere,
  * because the whole point of a second channel is that the first one may be in
@@ -39,7 +39,7 @@ import { PROVIDERS } from "./providers";
  * written, so falling back to them is correct rather than merely defensive.
  */
 async function resolveTargets(
-  user: tellaUser,
+  user: meireiUser,
   scope: "all" | "primary",
 ): Promise<UserChannel[]> {
   let channels: UserChannel[] = [];
@@ -66,7 +66,7 @@ async function resolveTargets(
 }
 
 /** The pre-channel-table shape, synthesised so callers need no special case. */
-function legacyChannel(user: tellaUser): UserChannel {
+function legacyChannel(user: meireiUser): UserChannel {
   return {
     id: "legacy",
     user_id: user.id,
@@ -96,7 +96,7 @@ export async function notifyUser({
   user,
   body,
 }: {
-  user: tellaUser;
+  user: meireiUser;
   body: string;
 }): Promise<number> {
   const targets = await resolveTargets(user, "all");
@@ -115,7 +115,7 @@ export async function notifyUserPrimary({
   user,
   body,
 }: {
-  user: tellaUser;
+  user: meireiUser;
   body: string;
 }): Promise<number> {
   const targets = await resolveTargets(user, "primary");
@@ -134,7 +134,7 @@ export async function notifyUserWithImage({
   imageUrl,
   caption,
 }: {
-  user: tellaUser;
+  user: meireiUser;
   imageUrl: string;
   caption?: string;
 }): Promise<number> {
@@ -150,7 +150,7 @@ export async function notifyUserWithImage({
 }
 
 function countDelivered(
-  user: tellaUser,
+  user: meireiUser,
   targets: UserChannel[],
   results: PromiseSettledResult<string>[],
   kind: string,

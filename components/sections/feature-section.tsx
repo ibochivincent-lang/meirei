@@ -14,6 +14,7 @@ interface FeatureSectionProps {
   visual: ReactNode;
   reverse?: boolean;
   toneClassName?: string;
+  children?: ReactNode;
 }
 
 export function FeatureSection({
@@ -24,6 +25,7 @@ export function FeatureSection({
   visual,
   reverse = false,
   toneClassName,
+  children,
 }: FeatureSectionProps) {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const isInView = useInView(cardRef, {
@@ -92,7 +94,7 @@ export function FeatureSection({
       <section
         id={id}
         className={cn(
-          "relative flex items-center overflow-visible bg-[#E6EEFF] px-3 pb-6 md:sticky md:top-0 md:h-screen md:min-h-screen md:overflow-hidden md:px-[72px] md:py-10",
+          "relative flex items-center overflow-visible bg-[#FFF5F2] dark:bg-surface-50 px-3 pb-6 md:sticky md:top-0 md:h-screen md:min-h-screen md:overflow-hidden md:px-[72px] md:py-10",
           toneClassName,
         )}
       >
@@ -102,12 +104,12 @@ export function FeatureSection({
           animate={animateState}
           variants={cardVariants}
           style={{ opacity: exitOpacity, scale: exitScale }}
-          className="mx-auto w-full max-w-[1296px] origin-top rounded-[19px] bg-white p-3 md:p-4"
+          className="mx-auto w-full max-w-[1296px] origin-top rounded-[19px] bg-white dark:bg-surface-0 dark:border dark:border-surface-200 p-3 md:p-4"
         >
           <div className="grid gap-6 lg:grid-cols-2">
             <motion.div
               variants={visualVariants}
-              className="relative order-2 flex min-h-[614px] items-center justify-center overflow-hidden rounded-[24px] bg-[#F5F5F5] px-4 py-5 md:order-1 md:min-h-[420px] md:py-8 lg:min-h-[614px] lg:px-6"
+              className="relative order-2 flex min-h-[360px] sm:min-h-[420px] lg:min-h-[614px] items-center justify-center overflow-hidden rounded-[24px] bg-[#F5F5F5] dark:bg-surface-100 px-4 py-5 md:order-1 md:py-8 lg:px-6"
             >
               {visual}
             </motion.div>
@@ -116,20 +118,22 @@ export function FeatureSection({
               variants={textVariants}
               className="order-1 flex flex-col items-start md:order-2"
             >
-              <div className="w-full border-b border-[#D2D2D2] py-5 md:py-6">
+              <div className="w-full border-b border-[#D2D2D2] dark:border-surface-200 py-5 md:py-6">
                 <div className="flex w-full items-center gap-3 md:gap-4">
-                  <span className="flex min-h-[34px] min-w-[44px] items-center justify-center rounded-full bg-[#0057FF] px-4 py-1.5 text-sm leading-5 text-white md:text-base">
+                  <span className="flex min-h-[34px] min-w-[44px] items-center justify-center rounded-full bg-accent-500 px-4 py-1.5 text-sm leading-5 text-white md:text-base font-semibold">
                     {index}
                   </span>
-                  <h3 className="min-w-0 flex-1 text-xl font-medium leading-7 tracking-[-0.01em] text-[#00256B] md:text-2xl md:leading-9 lg:text-[30px] lg:leading-[1.15]">
+                  <h3 className="min-w-0 flex-1 text-xl font-medium leading-7 tracking-[-0.01em] text-ink-900 dark:text-ink-50 md:text-2xl md:leading-9 lg:text-[30px] lg:leading-[1.15]">
                     {heading}
                   </h3>
                 </div>
 
-                <p className="mt-4 text-sm leading-relaxed text-ink-700 md:text-lg">
+                <p className="mt-4 text-sm leading-relaxed text-ink-700 dark:text-ink-300 md:text-lg">
                   {description}
                 </p>
               </div>
+
+              {children && <div className="w-full mt-4">{children}</div>}
             </motion.div>
           </div>
         </motion.div>

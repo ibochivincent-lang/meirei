@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { SITE } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "Data Deletion · Tella",
+  title: "Data Deletion · meirei",
   description:
-    "How to request deletion of your personal data from Tella, what gets removed, and what we are required to keep.",
+    "How to request deletion of your personal data from meirei, what gets removed, and what we are required to keep.",
 };
 
 const LAST_UPDATED = "May 14, 2026";
@@ -43,7 +43,7 @@ export default function DataDeletionPage() {
         <p>Pick whichever is easier — both reach the same team.</p>
         <ol className="list-decimal pl-5 space-y-4">
           <li>
-            <strong>From WhatsApp.</strong> Open your Tella chat and send the
+            <strong>From WhatsApp.</strong> Open your meirei chat and send the
             message:
             <div className="mt-2 rounded-md bg-ink-900 px-4 py-3 font-mono text-sm text-surface-50">
               delete my data
@@ -59,11 +59,11 @@ export default function DataDeletionPage() {
               href={`mailto:${SITE.privacyEmail}`}
               className="legal-link"
             >
-              <Placeholder>[privacy@yourdomain.com]</Placeholder>
+              {SITE.privacyEmail}
             </a>{" "}
             from the email address linked to your account, or — if you only
             ever used WhatsApp — include the phone number registered with
-            Tella so we can verify it&rsquo;s really you. Use the subject
+            meirei so we can verify it&rsquo;s really you. Use the subject
             line <em>&ldquo;Data deletion request&rdquo;</em>.
           </li>
         </ol>
@@ -102,7 +102,7 @@ export default function DataDeletionPage() {
         <p>What stays, in a restricted-access archive:</p>
         <ul>
           <li>
-            transaction records — amounts, timestamps, on-chain hashes,
+            transaction records — amounts, timestamps, onchain hashes,
             counterparty wallet addresses, payout rates, and fees;
           </li>
           <li>
@@ -115,7 +115,7 @@ export default function DataDeletionPage() {
           </li>
         </ul>
         <p>
-          We also <strong>cannot delete on-chain data</strong>. Transactions
+          We also <strong>cannot delete onchain data</strong>. Transactions
           your wallet has signed are recorded on a public blockchain and are
           outside our control. We do not delete or alter the public ledger
           for anyone.
@@ -131,9 +131,9 @@ export default function DataDeletionPage() {
         </p>
       </Section>
 
-      <Section title="If you used Tella through WhatsApp">
+      <Section title="If you used meirei through WhatsApp">
         <p>
-          Tella receives your messages through the WhatsApp Business Platform
+          meirei receives your messages through the WhatsApp Business Platform
           operated by Meta. Deleting your data with us does not delete your
           WhatsApp message history on your own device, nor does it remove
           anything from Meta&rsquo;s systems. To manage your data on
@@ -141,7 +141,7 @@ export default function DataDeletionPage() {
         </p>
         <ul>
           <li>
-            Delete the Tella chat from your WhatsApp app; and
+            Delete the meirei chat from your WhatsApp app; and
           </li>
           <li>
             Visit{" "}
@@ -171,7 +171,7 @@ export default function DataDeletionPage() {
           For anything about this process, contact our Data Protection
           Officer at{" "}
           <a href={`mailto:${SITE.privacyEmail}`} className="legal-link">
-            <Placeholder>[privacy@yourdomain.com]</Placeholder>
+            {SITE.privacyEmail}
           </a>
           . You also have the right to lodge a complaint with the{" "}
           <strong>Nigeria Data Protection Commission (NDPC)</strong> if
@@ -194,13 +194,5 @@ function Section({
       <h2 className="font-display text-2xl text-ink-900">{title}</h2>
       <div className="mt-3 space-y-4 text-ink-700">{children}</div>
     </section>
-  );
-}
-
-function Placeholder({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded bg-accent-50 px-1.5 py-0.5 font-mono text-[0.8em] text-accent-700">
-      {children}
-    </span>
   );
 }

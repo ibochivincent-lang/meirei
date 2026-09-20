@@ -5,7 +5,7 @@ import { HOLD_HOURS } from "@/lib/sends/tiers";
 /**
  * Held sends: authorized, embargoed, executed later.
  *
- * Separate from tella_pending_send on purpose — see
+ * Separate from meirei_pending_send on purpose — see
  * migrations/0015_held_sends.sql for why extending that table's 5-minute TTL
  * would have been a mistake.
  */
@@ -21,7 +21,7 @@ export async function createHeldSend({
   const releaseAt = new Date(Date.now() + HOLD_HOURS * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
-    .from("tella_held_send")
+    .from("meirei_held_send")
     .insert({ user_id: userId, payload, release_at: releaseAt })
     .select()
     .single();
@@ -42,7 +42,7 @@ export async function claimHeldSend(id: string): Promise<HeldSend | null> {
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
-    .from("tella_held_send")
+    .from("meirei_held_send")
     .update({ state: "executing" })
     .eq("id", id)
     .eq("state", "holding")
@@ -58,7 +58,7 @@ export async function listDueHeldSends(limit: number): Promise<HeldSend[]> {
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
-    .from("tella_held_send")
+    .from("meirei_held_send")
     .select("*")
     .eq("state", "holding")
     .lte("release_at", new Date().toISOString())
@@ -74,7 +74,7 @@ export async function listHoldingForUser(userId: string): Promise<HeldSend[]> {
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
-    .from("tella_held_send")
+    .from("meirei_held_send")
     .select("*")
     .eq("user_id", userId)
     .eq("state", "holding")
@@ -94,7 +94,7 @@ export async function markHeldSendOutcome({
   const supabase = getSupabaseAdmin();
 
   const { error } = await supabase
-    .from("tella_held_send")
+    .from("meirei_held_send")
     .update({ state })
     .eq("id", id);
 
@@ -123,7 +123,7 @@ export async function cancelHeldSend({
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
-    .from("tella_held_send")
+    .from("meirei_held_send")
     .update({
       state: "cancelled",
       cancelled_at: new Date().toISOString(),
@@ -154,7 +154,7 @@ export async function cancelAllHeldSends({
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
-    .from("tella_held_send")
+    .from("meirei_held_send")
     .update({
       state: "cancelled",
       cancelled_at: new Date().toISOString(),
@@ -171,7 +171,7 @@ export async function cancelAllHeldSends({
 /**
  * USDC this user has queued but not yet sent.
  *
- * The reserved-amount problem. sumSentUsdcSince counts tella_transactions
+ * The reserved-amount problem. sumSentUsdcSince counts meirei_transactions
  * rows, and a held send has none until it executes, so without this a hold
  * consumes no daily allowance and no balance. Two large holds could each pass
  * their own check at authorization time and then both fail a day later with
@@ -203,7 +203,7 @@ export async function sumHeldUsdc(
   const supabase = getSupabaseAdmin();
 
   let query = supabase
-    .from("tella_held_send")
+    .from("meirei_held_send")
     .select("payload")
     .eq("user_id", userId)
     .in("state", ["holding", "executing"]);

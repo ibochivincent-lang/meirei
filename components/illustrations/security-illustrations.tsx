@@ -12,7 +12,7 @@
  */
 export function PasscodeIllustration() {
   return (
-    <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-tella-100 to-cream-100">
+    <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-meirei-100 to-cream-100">
       {/* Soft light blob */}
       <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-accent-300/40 blur-3xl" />
 
@@ -22,14 +22,14 @@ export function PasscodeIllustration() {
           {[0, 1, 2, 3].map((i) => (
             <span
               key={i}
-              className="h-3 w-3 rounded-full bg-tella-700"
+              className="h-3 w-3 rounded-full bg-meirei-700"
               style={{ opacity: i < 3 ? 1 : 0.2 }}
             />
           ))}
         </div>
         {/* Keypad */}
         <div className="mt-4 grid grid-cols-3 gap-2 text-sm font-medium text-ink-900">
-          {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].map(
+          {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", ""].map(
             (key, i) => (
               <div
                 key={i}
@@ -52,7 +52,7 @@ export function PasscodeIllustration() {
  */
 export function CertifiedIllustration() {
   return (
-    <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-tella-800 to-tella-950">
+    <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-meirei-800 to-meirei-950">
       {/* Concentric rings */}
       <svg
         viewBox="0 0 200 200"
@@ -79,13 +79,13 @@ export function CertifiedIllustration() {
           {/* Shield */}
           <path
             d="M16 2 4 6v9c0 7 5 13 12 15 7-2 12-8 12-15V6L16 2Z"
-            className="fill-tella-100 stroke-tella-800"
+            className="fill-meirei-100 stroke-meirei-800"
             strokeWidth="1.5"
           />
           {/* Check */}
           <path
             d="m10 16 4 4 8-9"
-            className="stroke-tella-800"
+            className="stroke-meirei-800"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -110,8 +110,8 @@ export function CertifiedIllustration() {
  */
 export function BiometricIllustration() {
   return (
-    <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-cream-100 to-tella-100">
-      <div className="absolute -left-10 -bottom-10 h-44 w-44 rounded-full bg-tella-300/40 blur-3xl" />
+    <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-cream-100 to-meirei-100">
+      <div className="absolute -left-10 -bottom-10 h-44 w-44 rounded-full bg-meirei-300/40 blur-3xl" />
 
       {/* Fingerprint */}
       <svg viewBox="0 0 64 64" className="relative z-10 h-32 w-32">
@@ -120,7 +120,7 @@ export function BiometricIllustration() {
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
-          className="text-tella-800"
+          className="text-meirei-800"
         >
           {/* Outer arc */}
           <path d="M14 34c0-10 8-18 18-18s18 8 18 18" />
@@ -136,7 +136,7 @@ export function BiometricIllustration() {
       </svg>
 
       {/* Lock chip */}
-      <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-tella-800 px-3 py-1.5 text-[10px] font-medium text-cream-50">
+      <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-meirei-800 px-3 py-1.5 text-[10px] font-medium text-cream-50">
         <svg viewBox="0 0 16 16" className="h-3 w-3">
           <path
             d="M5 7V5a3 3 0 1 1 6 0v2m-7 0h8v6H4V7Z"

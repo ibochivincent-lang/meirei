@@ -1,4 +1,4 @@
-import type { tellaUser } from "@/lib/supabase/types";
+import type { meireiUser } from "@/lib/supabase/types";
 import { earliestCredentialAt, userHasCredential } from "@/lib/webauthn/repository";
 
 /**
@@ -22,7 +22,7 @@ export interface FactorSet {
   totp: boolean;
 }
 
-export async function listFactors(user: tellaUser): Promise<FactorSet> {
+export async function listFactors(user: meireiUser): Promise<FactorSet> {
   return {
     pin: Boolean(user.pin_hash),
     passkey: await userHasCredential(user.id),
@@ -30,7 +30,7 @@ export async function listFactors(user: tellaUser): Promise<FactorSet> {
   };
 }
 
-export async function factorCount(user: tellaUser): Promise<number> {
+export async function factorCount(user: meireiUser): Promise<number> {
   const factors = await listFactors(user);
   return Number(factors.pin) + Number(factors.passkey) + Number(factors.totp);
 }
@@ -50,7 +50,7 @@ export async function factorCount(user: tellaUser): Promise<number> {
  * cannot authorize anything, so an account holding one and nothing else is
  * still an account with no factors.
  */
-export async function canEnrollFromConfirmLink(user: tellaUser): Promise<boolean> {
+export async function canEnrollFromConfirmLink(user: meireiUser): Promise<boolean> {
   return (await factorCount(user)) === 0;
 }
 
@@ -67,7 +67,7 @@ export async function canEnrollFromConfirmLink(user: tellaUser): Promise<boolean
  * before that they carried nothing, which is exactly how this gap existed.
  */
 export async function factorsPredating(
-  user: tellaUser,
+  user: meireiUser,
   since: string,
 ): Promise<{ pin: boolean; passkey: boolean; any: boolean }> {
   const cutoff = new Date(since).getTime();

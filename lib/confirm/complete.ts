@@ -5,7 +5,7 @@ import {
   formatSendResultForChat,
   sendFailureStatus,
 } from "@/lib/sends/execute";
-import { sendReceiptAndFollowUp } from "@/lib/sends/follow-up";
+import { sendReceiptAndFollowUp } from "@/lib/sends/follow_up";
 
 /**
  * Run a send that's just been authorized (biometric assertion or fresh

@@ -3,8 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 /**
  * Persistence for WebAuthn passkeys and in-flight ceremony challenges.
  *
- * Credentials live in `tella_webauthn_credentials` (public_key as base64url
- * text). Challenges live in `tella_webauthn_challenges` — Vercel Functions
+ * Credentials live in `meirei_webauthn_credentials` (public_key as base64url
+ * text). Challenges live in `meirei_webauthn_challenges` — Vercel Functions
  * are stateless between the options and verify calls, so the challenge can't
  * be held in memory and is persisted for the brief window between them.
  */
@@ -25,7 +25,7 @@ export async function listCredentials(
 ): Promise<StoredCredential[]> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_webauthn_credentials")
+    .from("meirei_webauthn_credentials")
     .select("credential_id, public_key, counter, transports")
     .eq("user_id", userId);
 
@@ -44,7 +44,7 @@ export async function listCredentials(
 export async function earliestCredentialAt(userId: string): Promise<string | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_webauthn_credentials")
+    .from("meirei_webauthn_credentials")
     .select("created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: true })
@@ -58,7 +58,7 @@ export async function earliestCredentialAt(userId: string): Promise<string | nul
 export async function userHasCredential(userId: string): Promise<boolean> {
   const supabase = getSupabaseAdmin();
   const { count, error } = await supabase
-    .from("tella_webauthn_credentials")
+    .from("meirei_webauthn_credentials")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId);
 
@@ -80,7 +80,7 @@ export async function deleteCredentialsForUser(
 ): Promise<number> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_webauthn_credentials")
+    .from("meirei_webauthn_credentials")
     .delete()
     .eq("user_id", userId)
     .select("id");
@@ -98,7 +98,7 @@ export async function saveCredential(args: {
   deviceLabel: string | null;
 }): Promise<void> {
   const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("tella_webauthn_credentials").insert({
+  const { error } = await supabase.from("meirei_webauthn_credentials").insert({
     user_id: args.userId,
     credential_id: args.credentialId,
     public_key: args.publicKey,
@@ -116,7 +116,7 @@ export async function updateCredentialCounter(
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
-    .from("tella_webauthn_credentials")
+    .from("meirei_webauthn_credentials")
     .update({ counter, last_used_at: new Date().toISOString() })
     .eq("credential_id", credentialId);
 
@@ -135,7 +135,7 @@ export async function saveChallenge(
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
   await supabase
-    .from("tella_webauthn_challenges")
+    .from("meirei_webauthn_challenges")
     .delete()
     .eq("user_id", userId)
     .eq("kind", kind);
@@ -144,7 +144,7 @@ export async function saveChallenge(
     Date.now() + CHALLENGE_TTL_SECONDS * 1000,
   ).toISOString();
 
-  const { error } = await supabase.from("tella_webauthn_challenges").insert({
+  const { error } = await supabase.from("meirei_webauthn_challenges").insert({
     user_id: userId,
     kind,
     challenge,
@@ -165,7 +165,7 @@ export async function consumeChallenge(
 ): Promise<string | null> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("tella_webauthn_challenges")
+    .from("meirei_webauthn_challenges")
     .select("id, challenge, expires_at")
     .eq("user_id", userId)
     .eq("kind", kind)
@@ -177,7 +177,7 @@ export async function consumeChallenge(
   if (!data) return null;
 
   const row = data as { id: string; challenge: string; expires_at: string };
-  await supabase.from("tella_webauthn_challenges").delete().eq("id", row.id);
+  await supabase.from("meirei_webauthn_challenges").delete().eq("id", row.id);
 
   if (new Date(row.expires_at).getTime() < Date.now()) return null;
   return row.challenge;

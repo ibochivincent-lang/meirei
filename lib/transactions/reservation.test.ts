@@ -10,7 +10,7 @@
  * wrong "yes" moves money with nothing reserved against the daily cap and
  * nothing to complete or roll back afterwards.
  *
- * The second thing pinned is the Infinity → null conversion. Caps are off by
+ * The second thing pinned is the Infinity  null conversion. Caps are off by
  * default (lib/sends/limits.ts), which means "no cap" is the COMMON path, not
  * an edge case — and sending Infinity to Postgres as a numeric is a runtime
  * error that would refuse every send on a deployment with no caps set.
@@ -22,7 +22,7 @@ const failures: string[] = [];
 
 function check(label: string, ok: boolean, detail = ""): void {
   if (ok) passed++;
-  else failures.push(`  ✗ ${label}${detail ? ` — ${detail}` : ""}`);
+  else failures.push(`   ${label}${detail ? ` — ${detail}` : ""}`);
 }
 
 /* ---------- capParam ---------- */

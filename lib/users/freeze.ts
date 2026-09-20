@@ -42,7 +42,7 @@ export async function freezeAccount({
   // command and a panic code seconds apart, say) resolve to one winner and
   // one set of side effects, the same way claimPendingSend does it.
   const { data, error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .update({
       frozen_at: new Date().toISOString(),
       frozen_source: source,
@@ -81,7 +81,7 @@ export async function freezeAccount({
     console.error("[freeze] cancelling held sends failed", { userId, err });
     raiseAlert({
       kind: "account_frozen",
-      message: "Account frozen but queued transfers could not be cancelled. Check tella_held_send.",
+      message: "Account frozen but queued transfers could not be cancelled. Check meirei_held_send.",
       context: { source },
       force: true,
     });
@@ -109,7 +109,7 @@ export async function freezeAccount({
     raiseAlert({
       kind: "account_frozen",
       message:
-        "Account frozen but outstanding security tokens could not be revoked. Check tella_security_token.",
+        "Account frozen but outstanding security tokens could not be revoked. Check meirei_security_token.",
       context: { source },
       force: true,
     });
@@ -158,7 +158,7 @@ async function cancelUnclaimedSends(userId: string): Promise<number> {
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
-    .from("tella_pending_send")
+    .from("meirei_pending_send")
     .delete()
     .eq("user_id", userId)
     .is("claimed_at", null)
@@ -192,7 +192,7 @@ export async function unfreezeAccount({
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
-    .from("tella_users")
+    .from("meirei_users")
     .update({ frozen_at: null, frozen_reason: null, frozen_source: null })
     .eq("id", userId)
     .not("frozen_at", "is", null)

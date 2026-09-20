@@ -57,7 +57,7 @@ let passed = 0;
 
 function check(label: string, ok: boolean, detail?: string) {
   if (ok) passed++;
-  else failures.push(`  ✗ ${label}${detail ? ` — ${detail}` : ""}`);
+  else failures.push(`   ${label}${detail ? ` — ${detail}` : ""}`);
 }
 
 async function main() {

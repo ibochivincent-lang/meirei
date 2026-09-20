@@ -97,7 +97,7 @@ deliveries) plus a unique index on
 
 Circle's webhooks are at-least-once. Before this, every redelivery of a
 `transactions.inbound` COMPLETE re-ran the whole handler — a second
-"💰 Received" WhatsApp message and a second `tella_transactions` row for one
+" Received" WhatsApp message and a second `tella_transactions` row for one
 transfer, so 10 USDC received read as 20 in "history".
 
 > **Order matters.** `claimNotification` fails closed: with the table absent
@@ -307,7 +307,7 @@ restriction and could never have fixed it.
 The script always sends the list explicitly. That is the whole point of it.
 
 
-**Then register the command list — this step is not optional.** Telegram's ☰
+**Then register the command list — this step is not optional.** Telegram's 
 Menu button is bound to whatever `setMyCommands` last registered, and until it
 is called that list is empty: the button opens, spins, and closes with nothing
 in it. Users read that as a broken bot, and the linking message points them
@@ -467,7 +467,7 @@ TELLA_AUTH_LOCKOUT_SECONDS=900         # optional
 `http://localhost:3000`. That fallback silently bound passkeys to rpID
 `localhost`, which registers fine and then never authenticates.
 
-## Arc → Stellar migration (`0024`–`0028`)
+## Arc  Stellar migration (`0024`–`0028`)
 
 tella moved from Circle's "Arc" chain to Stellar. Wallets are now
 self-custodial rather than Circle-custodied, and inbound payments are
@@ -485,7 +485,7 @@ behaviour is real and the money is not"), so there was nothing worth
 migrating out of Arc wallet data. Rather than writing conversion logic for
 `circle_wallet_id`/Arc addresses that have no Stellar equivalent, existing
 users are reset to re-provision fresh through the normal
-not-provisioned → `pending` → `active` path
+not-provisioned  `pending`  `active` path
 (`lib/users/wallet-gate.ts`, `lib/wallet/provision.ts`,
 `app/api/cron/retry-wallets`):
 
@@ -525,3 +525,14 @@ STELLAR_STREAM_WORKER_SECRET=          # bearer token shared with workers/stella
 removed once the migration is deployed.
 
 See `.env.example` for the full list.
+
+---
+
+### `0029_meirei_xlayer_core.sql`
+
+Adds the core schema for Project Meirei's AI-native investment mandate agent on X Layer (chain 196):
+
+- `meirei_users`: EVM wallet addresses, platform, and handles.
+- `meirei_mandates`: Portfolio rebalancing mandates with targets, rebalance bands, and scheduling frequencies.
+- `meirei_executions`: On-chain swap execution records, transaction hashes on X Layer, and fee collection receipts.
+- `meirei_portfolio_snapshots`: Historical portfolio balances across allowlisted xStocks and USDG/USDC.

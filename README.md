@@ -15,7 +15,7 @@ cancel, and a panic code freezes the account from any device if your phone
 is ever lost.
 
 <p align="center">
-  <em>Live at → <a href="https://www.tella.cash">tella.cash</a></em>
+  <em>Live at  <a href="https://www.tella.cash">tella.cash</a></em>
 </p>
 
 ---
@@ -163,7 +163,7 @@ documented inline in [`.env.example`](.env.example).
 | --- | --- |
 | [SECURITY.md](SECURITY.md) | Key custody model, PIN/WebAuthn, freeze & panic code, responsible disclosure. |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Dev workflow, code standards, commit convention, PR checklist. |
-| [migrations/README.md](migrations/README.md) | Every schema migration, in order, with the bug or feature it exists for — including the full Arc → Stellar migration notes. |
+| [migrations/README.md](migrations/README.md) | Every schema migration, in order, with the bug or feature it exists for — including the full Arc  Stellar migration notes. |
 | [CHANGELOG.md](CHANGELOG.md) | Notable changes, newest first. |
 
 There is no separate architecture doc yet — the codebase's own comments

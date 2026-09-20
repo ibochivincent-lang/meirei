@@ -23,7 +23,7 @@ import {
 } from "@/lib/telegram/client";
 
 /**
- * Every channel tella can be reached on, described the same way.
+ * Every channel meirei can be reached on, described the same way.
  *
  * WHAT THIS FILE REPLACED, because the shape of the old code explains the
  * shape of this one.
@@ -31,7 +31,7 @@ import {
  * The agent used to return `interactive: "buttons" | "list"` and
  * `confirm: { token }` — two fields naming Meta widget types and a Meta
  * template variable. Every inbound route then re-implemented the same
- * claim → resolve → handle → render → side-effect pipeline against those
+ * claim  resolve  handle  render  side-effect pipeline against those
  * names. Telegram, which has neither widget, got a hand-written 200-line
  * command allowlist instead of the product, and it drifted from the real
  * handlers within weeks.
@@ -49,8 +49,8 @@ import {
  *
  * THE ONE ASYMMETRY, and it is not a preference: `selfEnrolling`.
  *
- * A tella account is phone-rooted. tella_users.whatsapp_number is the
- * unique key, the Stellar wallet provisions against it, recovery links
+ * A meirei account is phone-rooted. meirei_users.whatsapp_number is the
+ * unique key, the Smeireir wallet provisions against it, recovery links
  * deliver to it, and sends resolve recipients through it. An inbound
  * WhatsApp message therefore carries enough to create an account; a
  * Telegram chat id does not, because there is no phone number inside one.
@@ -88,7 +88,7 @@ export interface Provider {
   /** Can an inbound message from an unrecognised id create an account? */
   selfEnrolling: boolean;
   /**
-   * What tella_users.frozen_source records for a freeze that came in here.
+   * What meirei_users.frozen_source records for a freeze that came in here.
    *
    * The agent is channel-blind by design, but "which channel did this freeze
    * arrive on" is audit data, not behaviour — and it is the first question
@@ -96,7 +96,7 @@ export interface Provider {
    * itself honestly instead of inheriting whatever the last one said.
    */
   freezeSource: FreezeSource;
-  /** Wire identifier → the form stored in tella_user_channel.external_id. */
+  /** Wire identifier  the form stored in meirei_user_channel.external_id. */
   normalizeId(raw: string): string;
   /**
    * Deep link back into this channel's chat with the bot.
@@ -104,7 +104,7 @@ export interface Provider {
    * Used by the confirm and recovery pages to return someone to where they
    * started. Getting this wrong is not cosmetic: a Telegram user who taps
    * "confirm" and is then thrown into WhatsApp has been sent to an app that
-   * may hold no tella conversation at all, and their receipt is not there.
+   * may hold no meirei conversation at all, and their receipt is not there.
    *
    * Returns null when the channel has nothing configured to link to, and
    * the page then simply omits the button rather than guessing.
@@ -170,7 +170,7 @@ export const PROVIDERS: Record<MessageProvider, Provider> = {
     normalizeId: (raw) => raw,
     returnUrl: () => {
       // Same normalisation as the link deep-link in handler.ts: env tends to
-      // hold "@cashtellaBot" because that is what Telegram shows, but
+      // hold "@cashmeireiBot" because that is what Telegram shows, but
       // https://t.me/@name is a dead link.
       const name = (process.env.TELEGRAM_BOT_USERNAME ?? "")
         .trim()

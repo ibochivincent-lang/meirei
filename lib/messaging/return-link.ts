@@ -1,4 +1,4 @@
-import type { tellaUser } from "@/lib/supabase/types";
+import type { meireiUser } from "@/lib/supabase/types";
 import { PROVIDERS } from "./providers";
 import type { MessageProvider } from "./processed-messages";
 
@@ -13,7 +13,7 @@ import type { MessageProvider } from "./processed-messages";
  *
  * That is a real dead end rather than a cosmetic one. Someone who started a
  * send in Telegram, tapped through to the confirm page and succeeded was
- * then pushed into WhatsApp: a different app, possibly holding no tella
+ * then pushed into WhatsApp: a different app, possibly holding no meirei
  * conversation at all, and definitely not the one their receipt was about to
  * arrive in. The chat they were already in was one tap away and we sent them
  * somewhere else.
@@ -32,7 +32,7 @@ export interface ReturnTarget {
 }
 
 export function returnTarget(
-  user: tellaUser,
+  user: meireiUser,
   origin: MessageProvider | null | undefined,
 ): ReturnTarget {
   // Guarded the same way, and for the same reason: `user.whatsapp_channel`

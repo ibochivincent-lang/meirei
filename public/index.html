@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meirei — AI-Native Investment Mandate Agent (X Layer)</title>
+  <meta name="description" content="Turn one-sentence investment mandates into live tokenized stock (xStocks) & USDG portfolios on X Layer (chain 196) via OKX DEX Aggregator.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Top Navigation Bar -->
+    <header class="top-nav" id="top-nav">
+      <div class="brand-group">
+        <div class="logo-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">Meirei</span>
+          <span class="brand-tagline">AI Investment Mandate Agent · OKX AI</span>
+        </div>
+      </div>
+
+      <div class="nav-status-group">
+        <div class="network-badge" id="network-badge">
+          <span class="pulse-dot"></span>
+          <span class="net-name">X Layer (Chain 196)</span>
+          <span class="gas-tag">Zero-Gas</span>
+        </div>
+
+        <div class="wallet-bar">
+          <label for="wallet-input" class="visually-hidden">Wallet Address</label>
+          <input type="text" id="wallet-input" class="wallet-input" placeholder="0x... (X Layer Wallet)" value="0x7f17d6224e7d48606598732c3f511412b5c1e922" spellcheck="false">
+          <button id="refresh-wallet-btn" class="btn btn-secondary btn-sm" title="Refresh Live Balance">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+            <span>Sync</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="main-layout" id="main-layout">
+      <!-- Left Column: Conversational AI Agent -->
+      <section class="panel chat-panel" id="chat-panel" aria-label="AI Mandate Assistant">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <div class="agent-avatar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"></path>
+                <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
+                <circle cx="12" cy="7" r="1"></circle>
+              </svg>
+            </div>
+            <div>
+              <h2 class="panel-title" style="text-align: center;">Meirei AI Broker</h2>
+              <span class="panel-subtitle" style="text-align: center;">Interactive Agent: Link wallet, execute smart investment mandates, harvest stocks, and analyze OKX AI parametrics.</span>
+            </div>
+          </div>
+          <button id="clear-chat-btn" class="btn-icon" title="Clear Chat">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+
+        <!-- Chat History -->
+        <div class="chat-messages" id="chat-messages"></div>
+
+        <!-- Quick Prompts (Clean minimalist tags without emojis) -->
+        <div class="quick-prompts" id="quick-prompts">
+          <button class="quick-chip" data-prompt="What stocks can I trade on X Layer?">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+            <span>Tradable Stocks</span>
+          </button>
+          <button class="quick-chip" data-prompt="Harvest my stocks to OKX exchange">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+            <span>Harvest Stocks</span>
+          </button>
+          <button class="quick-chip" data-prompt="Suggestions for top stocks">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>Top Stocks</span>
+          </button>
+          <button class="quick-chip" data-prompt="Check latest news and parametrics">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>News / OKX AI</span>
+          </button>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="chat-form" class="chat-input-form">
+          <input type="text" id="chat-input" class="chat-input" placeholder="Type an investment mandate or ask anything..." autocomplete="off">
+          <button type="submit" id="chat-send-btn" class="btn btn-primary btn-icon-send" aria-label="Send message">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </form>
+      </section>
+
+      <!-- Right Column: Studio, Live Stocks, Portfolio, Quotes -->
+      <section class="panel-stack" id="studio-panel-stack">
+        <!-- Live Tradable Assets Grid -->
+        <div class="panel stocks-panel" id="stocks-panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Verified Tradable Assets (Chain 196)</h2>
+              <span class="panel-subtitle">Tokenized 24/7 xStocks &amp; Settlement Stablecoins with Live Market Feed</span>
+            </div>
+            <span class="live-badge"><span class="pulse-green"></span> Live OKX Feed</span>
+          </div>
+          <div class="stocks-grid" id="stocks-grid">
+            <div class="loading-placeholder">Loading live asset prices from X Layer...</div>
+          </div>
+        </div>
+
+        <!-- Mandate Studio & Planning -->
+        <div class="panel studio-panel" id="studio-panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">Mandate Studio</h2>
+              <span class="panel-subtitle">Configure targets, verify weights, and calculate rebalance drift</span>
+            </div>
+            <div class="template-pills">
+              <span class="template-label">Presets:</span>
+              <button class="template-pill" data-template="topstocks">Top Stocks</button>
+              <button class="template-pill" data-template="tech">Tech</button>
+              <button class="template-pill" data-template="balanced">Balanced</button>
+              <button class="template-pill" data-template="conservative">Conservative</button>
+            </div>
+          </div>
+
+          <div class="mandate-input-row">
+            <input type="text" id="mandate-string-input" class="mandate-input" placeholder="e.g. 40% NVDAx, 30% AAPLx, rest USDG" value="40% NVDAx, 30% AAPLx, rest USDG">
+            <button id="plan-btn" class="btn btn-primary">
+              <span class="btn-text">Generate Plan &amp; Quotes</span>
+            </button>
+          </div>
+
+          <!-- Allocation Visualization -->
+          <div class="allocation-section" id="allocation-section" style="display: none;">
+            <div class="alloc-header">
+              <span class="alloc-title">Target Asset Allocation</span>
+              <span class="alloc-cash-note" id="alloc-cash-note">Cash absorbs residual</span>
+            </div>
+            <div class="alloc-bar" id="alloc-bar"></div>
+            <div class="alloc-legend" id="alloc-legend"></div>
+          </div>
+
+          <!-- Holdings & Drift Table -->
+          <div class="portfolio-drift-box" id="portfolio-drift-box">
+            <div class="portfolio-meta">
+              <div class="meta-item">
+                <span class="meta-label">Current Portfolio Value</span>
+                <span class="meta-val" id="total-portfolio-val">$0.00</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Cash Reserve (USDG)</span>
+                <span class="meta-val" id="cash-portfolio-val">$0.00</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Growth (24h Benchmark)</span>
+                <span class="meta-val" id="portfolio-growth-val" style="color:#34d399;">+3.42%</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Rebalance Tolerance</span>
+                <span class="meta-val" id="rebalance-band-val">3.0%</span>
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="data-table" id="drift-table">
+                <thead>
+                  <tr>
+                    <th>Asset</th>
+                    <th>Target Weight</th>
+                    <th>Current Value</th>
+                    <th>Current Weight</th>
+                    <th>Drift</th>
+                    <th>Proposed Action</th>
+                  </tr>
+                </thead>
+                <tbody id="drift-table-body">
+                  <tr><td colspan="6" class="empty-state">Generate a plan to preview target weights and rebalancing drift.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- DEX Routing & Swap Quotes -->
+        <div class="panel quotes-panel" id="quotes-panel">
+          <div class="panel-header">
+            <div>
+              <h2 class="panel-title">OKX DEX Aggregator Swap Quotes</h2>
+              <span class="panel-subtitle">Live multi-hop routing over Uniswap V3/V4 &amp; xStocks wrap V2</span>
+            </div>
+            <span class="badge badge-info" id="quotes-count-badge">0 Trades</span>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table" id="quotes-table">
+              <thead>
+                <tr>
+                  <th>Leg</th>
+                  <th>Trade Direction</th>
+                  <th>Notional (USD)</th>
+                  <th>Routing Path</th>
+                  <th>Price Impact</th>
+                  <th>Est. Output</th>
+                </tr>
+              </thead>
+              <tbody id="quotes-table-body">
+                <tr><td colspan="6" class="empty-state">No active swap quotes. Plan a mandate to request live quotes.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="quotes-action-bar">
+            <div class="quotes-status-text" id="quotes-status-text">
+              Preview mode — verification and confirmation required before on-chain execution.
+            </div>
+            <button id="open-execute-modal-btn" class="btn btn-success" disabled>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <span>Review &amp; Execute Swaps</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Execution Confirmation Modal with Security Layer -->
+    <div class="modal-overlay" id="execute-modal" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-icon-shield">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </span>
+            <div>
+              <h3 class="modal-title">Confirm X Layer Execution</h3>
+              <p class="modal-subtitle">Security layer verification before on-chain broadcast</p>
+            </div>
+          </div>
+          <button id="close-modal-btn" class="btn-icon" aria-label="Close modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="callout callout-warning">
+            <strong>Mandate Execution Policy:</strong>
+            All legs are routed through OKX DEX aggregation on X Layer (chain 196) and signed through your authenticated Agentic Wallet.
+          </div>
+
+          <div class="modal-summary-box">
+            <div class="summary-row">
+              <span>Execution Wallet:</span>
+              <strong id="modal-wallet-addr" class="monospace">0x...</strong>
+            </div>
+            <div class="summary-row">
+              <span>Mandate:</span>
+              <strong id="modal-mandate-text">...</strong>
+            </div>
+            <div class="summary-row">
+              <span>Total Swap Legs:</span>
+              <strong id="modal-legs-count">0</strong>
+            </div>
+            <div class="summary-row">
+              <span>Max Slippage:</span>
+              <span>
+                <select id="slippage-select" class="form-select">
+                  <option value="0.5" selected>0.5% (Recommended)</option>
+                  <option value="1.0">1.0%</option>
+                  <option value="2.0">2.0%</option>
+                </select>
+              </span>
+            </div>
+          </div>
+
+          <!-- Security Layer: Passkey Verification Box -->
+          <div class="security-layer-box" id="security-layer-box">
+            <div class="security-header">
+              <div class="security-badge-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </div>
+              <div class="security-title-group">
+                <span class="security-title">Security Layer: Passkey Verification</span>
+                <span class="security-subtitle">Hardware TEE Signature / Biometric Key Requirement</span>
+              </div>
+              <span class="security-tag pending" id="passkey-status-tag">Pending Auth</span>
+            </div>
+
+            <div class="passkey-action-row" id="passkey-action-row">
+              <p class="passkey-desc">Authenticate with your device passkey (Touch ID, Windows Hello, or WebAuthn) to sign this execution mandate.</p>
+              <button type="button" id="verify-passkey-btn" class="btn btn-secondary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 0 0 8 11a4 4 0 1 1 8 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0 0 15.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 0 0 4.07 9.87"></path></svg>
+                <span>Authorize with Passkey</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="execution-progress-area" style="display: none;" class="execution-progress">
+            <div class="spinner"></div>
+            <span id="execution-status-msg">Broadcasting transactions to X Layer...</span>
+          </div>
+
+          <div id="execution-results-area" style="display: none;" class="execution-results"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="cancel-execute-btn" class="btn btn-secondary">Cancel</button>
+          <button id="confirm-broadcast-btn" class="btn btn-danger" disabled title="Authenticate with Passkey to enable broadcast">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            <span>Confirm &amp; Broadcast Trades</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

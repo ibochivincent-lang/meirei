@@ -15,7 +15,7 @@ export function Footer() {
             Money, by message. Built for the way people already talk.
           </p>
           <p className="text-base text-surface-50/50">
-            Tella is a service operated by {SITE.legalName}.
+            meirei is a service operated by {SITE.legalName}.
           </p>
 
           <div className="flex flex-col gap-3 pt-2 text-base text-surface-50/70">
@@ -43,51 +43,126 @@ export function Footer() {
                 Telegram
               </a>
             )}
+            {SITE.instagramLink && (
+              <a
+                href={SITE.instagramLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 transition-colors hover:text-surface-50"
+              >
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-tr from-[#FFDC80] via-[#FD1D1D] to-[#833AB4]">
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-white stroke-2">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" />
+                  </svg>
+                </span>
+                Instagram
+              </a>
+            )}
           </div>
         </div>
 
-        <nav aria-label="Footer">
-          <ul className="grid grid-cols-2 gap-x-12 gap-y-4 text-base sm:grid-cols-3">
-            <li>
-              <Link
-                href={SITE.termsUrl}
-                className="text-surface-50/60 transition-colors hover:text-surface-50"
-              >
-                Terms
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={SITE.privacyUrl}
-                className="text-surface-50/60 transition-colors hover:text-surface-50"
-              >
-                Privacy
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={SITE.dataDeletionUrl}
-                className="text-surface-50/60 transition-colors hover:text-surface-50"
-              >
-                Data Deletion
-              </Link>
-            </li>
-            {/* Rendered only when there's a real profile to point at. This
-                used to link to "https://x.com/" — the bare site, labelled
-                Twitter — which reads worse than having no link at all. */}
-            {SITE.twitterUrl && (
+        <nav aria-label="Footer" className="flex flex-wrap gap-12 sm:gap-20">
+          {/* LEARN Column matching Image 1 */}
+          <div className="space-y-4">
+            <p className="font-mono text-xs font-semibold uppercase tracking-widest text-surface-50/50">
+              LEARN
+            </p>
+            <ul className="flex flex-col space-y-3 text-base text-surface-50/70">
+              <li>
+                <Link href="/docs" className="transition-colors hover:text-white">
+                  Docs
+                </Link>
+              </li>
+              <li>
+                <Link href="/whitepaper" className="transition-colors hover:text-white">
+                  Whitepaper
+                </Link>
+              </li>
+              <li>
+                <Link href="/docs/internals" className="transition-colors hover:text-white">
+                  Internals
+                </Link>
+              </li>
+              <li>
+                <Link href="/research" className="transition-colors hover:text-white">
+                  Research
+                </Link>
+              </li>
+              <li>
+                <Link href="/ecosystem" className="transition-colors hover:text-white">
+                  Ecosystem
+                </Link>
+              </li>
+              <li>
+                <Link href="/brand" className="transition-colors hover:text-white">
+                  Brand
+                </Link>
+              </li>
+              <li>
+                <Link href="/compliance" className="transition-colors hover:text-white">
+                  Compliance
+                </Link>
+              </li>
+              <li>
+                <Link href={SITE.privacyUrl} className="transition-colors hover:text-white">
+                  Privacy
+                </Link>
+              </li>
+              <li>
+                <Link href={SITE.termsUrl} className="transition-colors hover:text-white">
+                  Terms
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* PLATFORM Column */}
+          <div className="space-y-4">
+            <p className="font-mono text-xs font-semibold uppercase tracking-widest text-surface-50/50">
+              PLATFORM
+            </p>
+            <ul className="flex flex-col space-y-3 text-base text-surface-50/70">
+              <li>
+                <Link href="/app" className="font-medium text-surface-50 transition-colors hover:text-white">
+                  Simple Mode Terminal
+                </Link>
+              </li>
+              <li>
+                <Link href="/app" className="transition-colors hover:text-white">
+                  Advanced Mode (Advisor & Catalysts)
+                </Link>
+              </li>
               <li>
                 <a
-                  href={SITE.twitterUrl}
+                  href="https://www.okx.com/web3/explorer/xlayer"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-surface-50/60 transition-colors hover:text-surface-50"
+                  className="transition-colors hover:text-white"
                 >
-                  Twitter
+                  X Layer Explorer ↗
                 </a>
               </li>
-            )}
-          </ul>
+              <li>
+                <Link href={SITE.dataDeletionUrl} className="transition-colors hover:text-white">
+                  Data Deletion
+                </Link>
+              </li>
+              {SITE.twitterUrl && (
+                <li>
+                  <a
+                    href={SITE.twitterUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="transition-colors hover:text-white"
+                  >
+                    Twitter / X
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
         </nav>
       </div>
 

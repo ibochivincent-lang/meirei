@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils/cn";
 
 interface SparkProps {
   className?: string;
-  /** Color preset — most uses are tella-700 or accent-500. */
+  /** Color preset — most uses are meirei-700 or accent-500. */
   tone?: "primary" | "accent" | "ink";
 }
 
@@ -18,7 +18,7 @@ interface SparkProps {
 export function Spark({ className, tone = "primary" }: SparkProps) {
   const fill =
     tone === "primary"
-      ? "fill-tella-700"
+      ? "fill-meirei-700"
       : tone === "accent"
         ? "fill-accent-500"
         : "fill-ink-900";

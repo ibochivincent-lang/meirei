@@ -51,39 +51,29 @@ export function Dashboard({
             <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-ink-400">
               Internal dashboard
             </div>
-            <h1 className="mt-2 font-display text-3xl text-ink-900">tella</h1>
+            <h1 className="mt-2 font-display text-3xl text-ink-900">meirei</h1>
           </div>
           <div className="text-right text-xs text-ink-400">
             <div>{email}</div>
             <div className="mt-0.5">
-              {new Date(data.generatedAt).toLocaleString("en-NG", {
-                timeZone: "Africa/Lagos",
+              {new Date(data.generatedAt).toLocaleString("en-US", {
+                timeZone: "UTC",
                 dateStyle: "medium",
                 timeStyle: "short",
-              })}
+              })} UTC
             </div>
           </div>
         </header>
 
-        {/* Stated once, at the top, rather than annotated on every figure.
-            On testnet the behaviour is real and the money is not, and a
-            reader should not have to infer that from context. */}
         <p className="rounded-2xl border border-ink-200/70 bg-surface-0 px-4 py-3 text-sm text-ink-500">
-          {isMainnet() ? (
-            <>All amounts are <strong className="text-ink-900">Stellar mainnet USDC</strong>.</>
-          ) : (
-            <>
-              All amounts are <strong className="text-ink-900">Stellar testnet USDC</strong>.
-              Transaction counts and user behaviour are real; the balances are not.
-            </>
-          )}
+          All volume and settlements are on <strong className="text-ink-900">X Layer Mainnet (Chain ID 196)</strong> denominated in <strong className="text-ink-900">USDG & USDC</strong> via OKX Onchain OS.
         </p>
 
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Users" value={headline.users} sub={`+${headline.newThisWeek} this week`} />
           <Stat label="Wallets active" value={headline.withWallet} sub={pct(headline.withWallet, headline.users)} />
-          <Stat label="Have sent" value={headline.sendersAllTime} sub={`${headline.repeatSenders} more than once`} />
-          <Stat label="Sends" value={headline.txCount} sub={`${fmt(headline.volumeUsdc)} USDC`} />
+          <Stat label="Mandates active" value={headline.sendersAllTime} sub={`${headline.repeatSenders} recurring`} />
+          <Stat label="Executions" value={headline.txCount} sub={`${fmt(headline.volumeUsdc)} USDG`} />
         </section>
 
         <Card title="Activity" subtitle="Last 30 days, by day">

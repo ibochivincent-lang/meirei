@@ -10,7 +10,7 @@ import {
   type VerifiedAuthenticationResponse,
 } from "@simplewebauthn/server";
 import { isoBase64URL } from "@simplewebauthn/server/helpers";
-import type { tellaUser } from "@/lib/supabase/types";
+import type { meireiUser } from "@/lib/supabase/types";
 import { getRpConfig } from "./config";
 import { listCredentials, type StoredCredential } from "./repository";
 
@@ -46,7 +46,7 @@ function toTransports(
  * offers cross-device (QR-to-phone) and security keys, not just the local
  * platform authenticator.
  */
-export async function buildRegistrationOptions(user: tellaUser) {
+export async function buildRegistrationOptions(user: meireiUser) {
   const { rpName, rpID } = getRpConfig();
   const existing = await listCredentials(user.id);
 
@@ -55,7 +55,7 @@ export async function buildRegistrationOptions(user: tellaUser) {
     rpID,
     userID: textEncoder.encode(user.id),
     userName: user.whatsapp_number,
-    userDisplayName: user.profile_name ?? "tella",
+    userDisplayName: user.profile_name ?? "meirei",
     attestationType: "none",
     excludeCredentials: existing.map((c) => ({
       id: c.credential_id,
@@ -82,7 +82,7 @@ export async function verifyRegistration(
   });
 }
 
-export async function buildAuthenticationOptions(user: tellaUser) {
+export async function buildAuthenticationOptions(user: meireiUser) {
   const { rpID } = getRpConfig();
   const creds = await listCredentials(user.id);
 

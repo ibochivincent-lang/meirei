@@ -28,8 +28,8 @@ export function getRpConfig(): RpConfig {
   }
   const url = new URL(base);
   return {
-    rpName: "tella",
-    rpID: url.hostname, // e.g. "www.tella.cash" or "localhost"
-    origin: url.origin, // e.g. "https://www.tella.cash"
+    rpName: "meirei",
+    rpID: url.hostname, // e.g. "www.meirei.cash" or "localhost"
+    origin: url.origin, // e.g. "https://www.meirei.cash"
   };
 }

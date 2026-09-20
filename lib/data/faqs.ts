@@ -6,57 +6,57 @@ export interface FaqItem {
 
 export const FAQS: FaqItem[] = [
   {
+    id: "what-is-meirei",
+    question: "What exactly is Meirei (命令)?",
+    answer:
+      "Meirei (命令) is an AI native investment mandate agent built on OKX Onchain OS and executing on X Layer (chain 196). It translates simple conversational messages into live tokenized stock (xStocks) and USDG stablecoin portfolios right inside WhatsApp, Telegram, and Instagram.",
+  },
+  {
+    id: "what-can-i-trade",
+    question: "What stocks and assets can I trade?",
+    answer:
+      "You can trade allowlisted tokenized stocks on X Layer including AAPLx (Apple), NVDAx (NVIDIA), MSFTx (Microsoft), GOOGLx (Alphabet), AMZNx (Amazon), METAx (Meta), and TSLAx (Tesla), settled in USDG and USDC. Unlisted tokens and memecoins are strictly blocked for your safety.",
+  },
+  {
     id: "channels",
-    question: "Do I need WhatsApp or Telegram?",
+    question: "Which chat apps are supported?",
     answer:
-      "Either one works. tella runs the same way on both, so use whichever you already have open. Your balance and history stay in sync no matter which one you send a message from.",
+      "WhatsApp, Telegram, and Instagram. You can also interact with Meirei directly on this website. Your wallet balance and mandate history remain completely synchronized across all channels.",
   },
   {
-    id: "what-is-tella",
-    question: "What exactly is tella?",
+    id: "login-passkey",
+    question: "How do I access my personalized account without a passkey?",
     answer:
-      "tella is a messaging-based payment interface that lives inside WhatsApp and Telegram. You hold, send, and receive USDC - a dollar-pegged stablecoin - right from a chat. No separate app, no dashboard, no learning curve. Just send a message and confirm.",
-  },
-  {
-    id: "what-is-usdc",
-    question: "What is USDC?",
-    answer:
-      "USDC is a stablecoin pegged to the US dollar - one USDC is always worth one dollar. tella lets you hold, send, and receive it as easily as sending a chat message.",
+      "Zero passkeys, zero codes, and zero seed phrases. Your verified chat identity on WhatsApp, Telegram, or Instagram automatically maps to your personalized OKX Onchain OS smart account on X Layer (chain 196).",
   },
   {
     id: "how-it-works",
-    question: "How does it work?",
+    question: "How does mandate trading work?",
     answer:
-      "Tell tella what you want to do in plain language. You see a clear summary before anything happens, you confirm, and tella's platform settles the transaction on Stellar - usually within seconds. WhatsApp or Telegram carries the conversation; the platform does the work behind the scenes.",
+      "Simply state your intent (for example: 'buy 500 USDG of AAPLx' or '60% mag7, 20% USDG, max 8%'). Meirei calculates the portfolio drift, fetches live quotes from the OKX DEX Aggregator on X Layer, and always requires your explicit confirmation before any trade is broadcast.",
+  },
+  {
+    id: "settlement",
+    question: "How fast is settlement on X Layer?",
+    answer:
+      "Settlement on X Layer is sub second, typically confirming within ~3 to 5 seconds. All trades settle directly onchain with verifiable transaction hashes on OKX Web3 Explorer.",
   },
   {
     id: "fees",
     question: "Are there any fees?",
     answer:
-      "tella shows any applicable fee before you confirm - no hidden charges, no surprises. The amount you see when you confirm is the amount that applies. You can ask tella about fees any time before you commit.",
-  },
-  {
-    id: "settlement",
-    question: "How fast is it?",
-    answer:
-      "Usually within seconds. tella settles on Stellar - a network built for near-instant finality, using USDC issued by Circle. Most transactions complete before you can put your phone down.",
-  },
-  {
-    id: "getting-started",
-    question: "How do I get started?",
-    answer:
-      "Tap any \"Chat on WhatsApp\" or \"Chat on Telegram\" button on this page. tella walks you through a quick setup, and you're ready to send and receive in minutes.",
+      "Meirei operates transparently. Any service fee is quoted up front and settled via OKX A2A payment links or native contract execution. No hidden charges or unexpected spreads.",
   },
   {
     id: "no-app",
-    question: "Do I need to download an app?",
+    question: "Do I need to download a new app?",
     answer:
-      "No. tella runs entirely inside WhatsApp or Telegram - apps you already use every day. Nothing new to install, no extra password to remember, and no dashboard to learn.",
+      "No. Meirei works directly in the messaging apps you already have installed on your phone. No separate dashboard, no app store downloads, and no complex DEX interfaces.",
   },
   {
     id: "lost-phone",
-    question: "What if I lose my phone?",
+    question: "What if I lose my device?",
     answer:
-      "Sign in from any other device and freeze your tella account in two taps - all activity pauses immediately. You can also use the \"Block account\" link in the footer of this page from a browser. Recovery is guided and requires identity verification.",
+      "You can access the security portal from any web browser to freeze your account in two taps. All automated mandates and trading activity pause immediately until you complete identity recovery.",
   },
 ];

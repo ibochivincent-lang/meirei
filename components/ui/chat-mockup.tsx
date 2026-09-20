@@ -16,13 +16,13 @@ import logo from "@/public/logo.svg";
  *  green sent-bubble tint, or Telegram's light header and blue gradient
  *  bubble. Everything else (bezel, status bar, receipt card) is shared
  *  chrome, since that's the phone, not the app. */
-export type Channel = "whatsapp" | "telegram";
+export type Channel = "whatsapp" | "telegram" | "instagram";
 
 interface ChatHeaderProps {
   /** "full" shows back-arrow + video/voice buttons (hero, feature illustrations).
    *  "compact" shows just avatar + name + status (use-cases phone). */
   variant?: "full" | "compact";
-  /** Subtitle under "Tella" — defaults to "Online", but use-cases swaps in
+  /** Subtitle under "meirei" — defaults to "Online", but use-cases swaps in
    *  the active persona label (e.g. "Freelancers"). */
   subtitle?: string;
   channel?: Channel;
@@ -30,13 +30,16 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ variant = "full", subtitle = "Online", channel = "whatsapp" }: ChatHeaderProps) {
   const isTelegram = channel === "telegram";
+  const isInstagram = channel === "instagram";
 
   return (
     <div
       className={cn(
         "flex items-center gap-2 px-2.5 pb-2.5 pt-12",
-        isTelegram
-          ? "border-b border-ink-200/60 bg-white text-ink-900"
+        isInstagram
+          ? "border-b border-ink-100 dark:border-ink-800 bg-white dark:bg-[#121212] text-ink-900 dark:text-white"
+          : isTelegram
+          ? "border-b border-ink-200/60 dark:border-ink-800 bg-white dark:bg-[#17212b] text-ink-900 dark:text-white"
           : "bg-[#1F2C34] text-white",
       )}
     >
@@ -63,15 +66,16 @@ export function ChatHeader({ variant = "full", subtitle = "Online", channel = "w
       <div
         className={cn(
           "grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full bg-white",
-          isTelegram && "ring-1 ring-ink-200",
+          isTelegram && "ring-1 ring-ink-200 dark:ring-ink-700",
         )}
       >
-        <Image src={logo} alt="Tella" width={20} height={20} />
+        <Image src={logo} alt="meirei" width={20} height={20} />
       </div>
 
       <div className="min-w-0 flex-1 leading-tight">
-        <div className="flex items-center gap-1">
-          <p className="text-[14px] font-semibold">Tella</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-[14px] font-semibold">meirei</p>
+          <span className="rounded bg-accent-500/20 px-1 py-0.5 text-[9px] font-medium text-accent-300">命令</span>
           {variant === "full" && !isTelegram && (
             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0">
               <circle cx="12" cy="12" r="10" fill="#22C55E" />
@@ -156,25 +160,18 @@ export function ChatScreen({
   align = "start",
 }: ChatScreenProps) {
   const isTelegram = channel === "telegram";
+  const isInstagram = channel === "instagram";
   return (
     <div className="flex h-full flex-col">
       <ChatHeader variant={variant} subtitle={subtitle} channel={channel} />
       <div
         className={cn(
           "flex flex-1 flex-col gap-2 overflow-hidden bg-cover bg-center p-3",
-          !isTelegram && "bg-[url('/whatsapp-bg.png')]",
+          !isTelegram && !isInstagram && "bg-[url('/whatsapp-bg.png')] dark:bg-none dark:bg-[#0b141a]",
+          isInstagram && "bg-[#FAFAFA] dark:bg-black",
+          isTelegram && "bg-[#DCEAF5] dark:bg-[#0e1621] [background-image:radial-gradient(rgba(51,144,236,0.14)_1px,transparent_1px)] dark:[background-image:radial-gradient(rgba(51,144,236,0.18)_1px,transparent_1px)] [background-size:14px_14px]",
           align === "end" && "justify-end",
         )}
-        style={
-          isTelegram
-            ? {
-                backgroundColor: "#DCEAF5",
-                backgroundImage:
-                  "radial-gradient(rgba(51,144,236,0.14) 1px, transparent 1px)",
-                backgroundSize: "14px 14px",
-              }
-            : undefined
-        }
       >
         {children}
       </div>
@@ -193,6 +190,7 @@ interface BubbleProps {
 export function StaticBubble({ side, time, channel = "whatsapp", children }: BubbleProps) {
   const isOut = side === "out";
   const isTelegram = channel === "telegram";
+  const isInstagram = channel === "instagram";
   return (
     <div className={`flex ${isOut ? "justify-end" : "justify-start"}`}>
       <div
@@ -201,19 +199,29 @@ export function StaticBubble({ side, time, channel = "whatsapp", children }: Bub
           isOut
             ? cn(
                 "rounded-br-md text-white",
-                isTelegram ? "bg-gradient-to-br from-[#5cb2f3] to-[#2AABEE]" : "bg-accent-500",
+                isInstagram
+                  ? "bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F56040]"
+                  : isTelegram
+                  ? "bg-gradient-to-br from-[#5cb2f3] to-[#2AABEE]"
+                  : "bg-accent-500",
               )
-            : "rounded-bl-md bg-white text-ink-900",
+            : cn(
+                "rounded-bl-md",
+                isInstagram
+                  ? "bg-[#EFEFEF] dark:bg-[#262626] text-ink-900 dark:text-white"
+                  : isTelegram
+                  ? "bg-white dark:bg-[#182533] text-ink-900 dark:text-white"
+                  : "bg-white dark:bg-[#1f2c34] text-ink-900 dark:text-white",
+              ),
         )}
       >
         <div>{children}</div>
         <div
           className={`mt-0.5 text-right text-[9px] ${
-            isOut ? "text-white/60" : "text-ink-400"
+            isOut ? "text-white/60" : "text-ink-400 dark:text-ink-300"
           }`}
         >
           {time}
-          {isOut && <span className="ml-1">✓✓</span>}
         </div>
       </div>
     </div>
@@ -235,6 +243,7 @@ export function AnimatedBubble({
 }: BubbleProps & HTMLMotionProps<"div">) {
   const isOut = side === "out";
   const isTelegram = channel === "telegram";
+  const isInstagram = channel === "instagram";
   return (
     <motion.div
       {...motionProps}
@@ -246,19 +255,29 @@ export function AnimatedBubble({
           isOut
             ? cn(
                 "rounded-br-md text-white",
-                isTelegram ? "bg-gradient-to-br from-[#5cb2f3] to-[#2AABEE]" : "bg-accent-500",
+                isInstagram
+                  ? "bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F56040]"
+                  : isTelegram
+                  ? "bg-gradient-to-br from-[#5cb2f3] to-[#2AABEE]"
+                  : "bg-accent-500",
               )
-            : "rounded-bl-md bg-white text-ink-900",
+            : cn(
+                "rounded-bl-md",
+                isInstagram
+                  ? "bg-[#EFEFEF] dark:bg-[#262626] text-ink-900 dark:text-white"
+                  : isTelegram
+                  ? "bg-white dark:bg-[#182533] text-ink-900 dark:text-white"
+                  : "bg-white dark:bg-[#1f2c34] text-ink-900 dark:text-white",
+              ),
         )}
       >
         <div>{children}</div>
         <div
           className={`mt-0.5 text-right text-[9px] ${
-            isOut ? "text-white/60" : "text-ink-400"
+            isOut ? "text-white/60" : "text-ink-400 dark:text-ink-300"
           }`}
         >
           {time}
-          {isOut && <span className="ml-1">✓✓</span>}
         </div>
       </div>
     </motion.div>
@@ -269,9 +288,9 @@ interface ReceiptCardProps {
   /** Eyebrow label, e.g. "Cashed out", "Received", "Paid". */
   status: string;
   statusTone: "confirmed" | "received" | "new";
-  /** Full amount string including the currency symbol, e.g. "₦ 25,000". */
+  /** Full amount string including the currency symbol, e.g. "$250 USDG". */
   amount: string;
-  /** Secondary line, e.g. "to Access Bank ••1183" or "from Zara Designs". */
+  /** Secondary line, e.g. "Swapped 250 USDG on X Layer" or "AAPLx yield". */
   detail: string;
   reference?: string;
   time?: string;
@@ -279,17 +298,14 @@ interface ReceiptCardProps {
 }
 
 const STATUS_BADGE: Record<ReceiptCardProps["statusTone"], { label: string; className: string }> = {
-  confirmed: { label: "✓ Confirmed", className: "bg-emerald-50 text-emerald-700" },
-  received: { label: "Confirmed", className: "bg-emerald-50 text-emerald-700" },
-  new: { label: "↓ New", className: "bg-accent-50 text-accent-600" },
+  confirmed: { label: " Confirmed", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" },
+  received: { label: "Confirmed", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" },
+  new: { label: " New", className: "bg-accent-50 text-accent-600 dark:bg-accent-950/60 dark:text-accent-300" },
 };
 
 /**
  * The single source of truth for every "receipt" card shown inside a chat
- * mockup. Amount ALWAYS renders as `font-sans font-semibold tabular-nums` —
- * never `font-display` (Instrument Serif) — because that display serif's
- * `₦` glyph draws a stroke across the whole numeral that reads as a
- * strikethrough. Fixing it here means it can't regress in any one mockup.
+ * mockup. Amount ALWAYS renders as `font-sans font-semibold tabular-nums`.
  */
 export function ReceiptCard({
   status,
@@ -301,12 +317,12 @@ export function ReceiptCard({
   className,
 }: ReceiptCardProps) {
   const badge = STATUS_BADGE[statusTone];
-  const statusColor = statusTone === "new" ? "text-accent-600" : "text-ink-500";
+  const statusColor = statusTone === "new" ? "text-accent-600 dark:text-accent-400" : "text-ink-500 dark:text-ink-300";
 
   return (
     <div
       className={cn(
-        "w-[82%] rounded-2xl rounded-bl-md bg-white p-3 shadow-sm ring-1 ring-ink-200/40",
+        "w-[82%] rounded-2xl rounded-bl-md bg-white dark:bg-[#1f2c34] p-3 shadow-sm ring-1 ring-ink-200/40 dark:ring-ink-700/60",
         className,
       )}
     >
@@ -318,12 +334,12 @@ export function ReceiptCard({
           {badge.label}
         </span>
       </div>
-      <p className="mt-1.5 font-sans text-2xl font-semibold leading-none tabular-nums text-ink-900">
+      <p className="mt-1.5 font-sans text-2xl font-semibold leading-none tabular-nums text-ink-900 dark:text-white">
         {amount}
       </p>
-      <p className="mt-1 text-[11px] text-ink-500">{detail}</p>
+      <p className="mt-1 text-[11px] text-ink-500 dark:text-ink-300">{detail}</p>
       {(reference || time) && (
-        <p className="mt-2 font-mono text-[9px] text-ink-300">
+        <p className="mt-2 font-mono text-[9px] text-ink-300 dark:text-ink-400">
           {reference}
           {reference && time ? " · " : ""}
           {time}

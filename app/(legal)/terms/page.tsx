@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { SITE } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "Terms of Service · Tella",
+  title: "Terms of Service · meirei",
   description:
-    "The terms that govern your use of Tella — a messaging-based interface for sending and managing USDC.",
+    "The terms that govern your use of meirei — a messaging-based interface for sending and managing USDC.",
 };
 
 const LAST_UPDATED = "May 14, 2026";
@@ -26,27 +26,28 @@ export default function TermsPage() {
 
       <Section title="1. Who we are">
         <p>
-          Tella (&ldquo;Tella,&rdquo; &ldquo;tella,&rdquo; &ldquo;we,&rdquo;
-          &ldquo;us&rdquo;) is a messaging-based interface that lets you hold,
-          send, and receive digital dollars (USDC), and cash out to your own
-          Nigerian bank account in Naira (NGN) — all through a WhatsApp chat.
+          Meirei (&ldquo;Meirei,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;) is an AI-native investment mandate interface that lets you trade tokenized
+          stocks (xStocks) and manage digital dollar portfolios (USDG/USDC) on X Layer (chain 196) — through
+          our web terminal, WhatsApp, Telegram, and Instagram chats.
           These Terms of Service
-          (&ldquo;Terms&rdquo;) form a binding agreement between you and{" "}
-          <Placeholder>[Legal Entity Name, registration number, address]</Placeholder>
-          .
+          (&ldquo;Terms&rdquo;) form a binding agreement between you and <strong>{SITE.legalName}</strong> (Meirei Core Protocol Ltd., RC-7849102).
         </p>
         <p>
-          By messaging our WhatsApp number, creating a wallet, or otherwise
-          using the Service, you agree to these Terms and to our{" "}
+          By accessing the web terminal, interacting with our messaging bots, or creating a wallet profile,
+          you agree to these Terms, our{" "}
           <a href="/privacy" className="legal-link">
             Privacy Policy
+          </a>
+          , and our{" "}
+          <a href="/cookies" className="legal-link">
+            Cookie Policy
           </a>
           . If you do not agree, do not use the Service.
         </p>
       </Section>
 
       <Section title="2. Eligibility">
-        <p>You may use Tella only if you:</p>
+        <p>You may use meirei only if you:</p>
         <ul>
           <li>
             are at least 18 years old and have full legal capacity to enter a
@@ -74,7 +75,7 @@ export default function TermsPage() {
       </Section>
 
       <Section title="3. The Service">
-        <p>Through WhatsApp messages, Tella lets you:</p>
+        <p>Through WhatsApp messages, meirei lets you:</p>
         <ul>
           <li>
             create a non-custodial or custodial wallet (as described in-product)
@@ -86,17 +87,16 @@ export default function TermsPage() {
             balance;
           </li>
           <li>
-            cash out to your own Nigerian bank account in Naira (NGN) at quoted
-            rates, where supported; and
+            execute tokenized stock swaps and rebalance mandates via OKX DEX Aggregator on X Layer; and
           </li>
           <li>
-            view balances, transaction history, and recent counterparties.
+            view balances, portfolio asset allocations, and execution transaction hashes.
           </li>
         </ul>
         <p>
-          Tella is an <strong>interface</strong>. WhatsApp carries the
-          conversation; Tella&rsquo;s own platform does the work, settling on
-          the Stellar network through our wallet and messaging infrastructure.
+          meirei is an <strong>interface</strong>. Supported chat applications carry the
+          conversation; meirei&rsquo;s platform does the work, executing and settling on
+          the X Layer network (chain 196) through OKX Onchain OS infrastructure.
           We do not control blockchains, and once a blockchain
           transaction is broadcast it is generally <strong>irreversible</strong>
           .
@@ -148,15 +148,15 @@ export default function TermsPage() {
 
       <Section title="6. Fees">
         <p>
-          Tella may charge a margin on the payout rate and/or a flat fee for
-          certain transactions. Network/gas fees may also apply on-chain. Fees
+          meirei may charge a margin on the payout rate and/or a flat fee for
+          certain transactions. Network/gas fees may also apply onchain. Fees
           and applicable rates are shown in chat before you confirm. We may
           change our fees at any time on prospective transactions.
         </p>
       </Section>
 
       <Section title="7. Acceptable use">
-        <p>You must not use Tella to:</p>
+        <p>You must not use meirei to:</p>
         <ul>
           <li>
             violate any law, regulation, or third-party right, including
@@ -182,7 +182,7 @@ export default function TermsPage() {
       <Section title="8. Risks you accept">
         <p>
           Digital assets and cross-border payments carry real risk. By using
-          Tella you acknowledge that:
+          meirei you acknowledge that:
         </p>
         <ul>
           <li>
@@ -204,7 +204,7 @@ export default function TermsPage() {
           <li>
             messaging-based interfaces depend on natural-language
             understanding. You agree to review the on-screen confirmation
-            rather than relying on Tella&rsquo;s interpretation of an ambiguous
+            rather than relying on meirei&rsquo;s interpretation of an ambiguous
             instruction.
           </li>
         </ul>
@@ -212,9 +212,9 @@ export default function TermsPage() {
 
       <Section title="9. Third-party services">
         <p>
-          Tella relies on third parties, including (without limitation) Meta /
-          WhatsApp for messaging, Circle as the issuer of USDC, the Stellar
-          network for settlement, Twilio for messaging delivery, and our
+          meirei relies on third parties, including (without limitation) Meta /
+          WhatsApp and Telegram for messaging, Circle and Tether as issuers of stablecoins, the OKX X Layer
+          network (Chain ID 196) for settlement, Twilio for messaging delivery, and our
           identity-verification providers. Their terms and privacy practices
           govern your interaction with them. We are not responsible for
           outages, errors, or actions of third parties, except as required by
@@ -233,7 +233,7 @@ export default function TermsPage() {
           remain available.
         </p>
         <p>
-          Nothing in Tella is financial, investment, tax, or legal advice. You
+          Nothing in meirei is financial, investment, tax, or legal advice. You
           are responsible for your own tax reporting and compliance.
         </p>
       </Section>
@@ -248,60 +248,42 @@ export default function TermsPage() {
           claim arising under or related to these Terms is capped at the
           greater of (a) the fees you paid us in the three months immediately
           before the event giving rise to the claim, or (b){" "}
-          <Placeholder>[NGN amount, e.g. ₦ 50,000]</Placeholder>.
+          our total aggregate liability for all claims under or arising out of these Terms is limited to $100 USDG or the total protocol fees received from your transactions during the preceding three (3) months.
         </p>
       </Section>
 
       <Section title="12. Indemnity">
         <p>
-          You agree to defend, indemnify, and hold harmless Tella and its
+          You agree to defend, indemnify, and hold harmless meirei and its
           affiliates from any claim, loss, or expense (including reasonable
           legal fees) arising out of your breach of these Terms, your misuse of
           the Service, or your violation of law or any third-party right.
         </p>
       </Section>
 
-      <Section title="13. Suspension and termination">
+      <Section title="13. Transparent Fees & No Hidden Charges">
         <p>
-          You may stop using Tella at any time. We may suspend or terminate
-          your access — and freeze pending balances or transactions — if we
-          reasonably believe you have violated these Terms, applicable law, or
-          our risk policies, or if required by a regulator or partner. Where
-          lawful, we will return any remaining balance through a method we
-          designate.
+          All trades and mandate rebalances are subject to a transparent protocol fee of 0.05% of notional volume, plus network gas on X Layer (typically &lt; $0.01). There are zero hidden fees, zero deposit charges, and zero recurring maintenance subscriptions. All fees are clearly quoted in USDG/USDC prior to 2FA trade confirmation.
         </p>
       </Section>
 
-      <Section title="14. Changes to these Terms">
+      <Section title="14. Risk Disclosure & No Unsupported Claims">
         <p>
-          We may update these Terms from time to time. If a change is material
-          we will notify you in-chat or by another reasonable means before it
-          takes effect. Continuing to use the Service after the effective date
-          means you accept the updated Terms.
+          Meirei is an algorithmic software tool. We do not provide personalized financial, legal, or tax advice, and we make no guarantees of investment profit, yield, or specific trading returns. Tokenized real-world assets (xStocks) are volatile, and past performance does not indicate future results.
         </p>
       </Section>
 
-      <Section title="15. Governing law and disputes">
+      <Section title="15. Governing Law and Dispute Resolution">
         <p>
-          These Terms are governed by the laws of the{" "}
-          <Placeholder>[Federal Republic of Nigeria / other jurisdiction]</Placeholder>
-          , without regard to conflict-of-laws principles. Any dispute will be
-          resolved exclusively by the competent courts of{" "}
-          <Placeholder>[Lagos, Nigeria]</Placeholder>, except where mandatory
-          law in your place of residence grants you a different forum. The
-          parties will attempt to resolve disputes in good faith for 30 days
-          before commencing formal proceedings.
+          These Terms are governed by the laws of the Federal Republic of Nigeria, without regard to conflict-of-laws principles. Any dispute will be resolved exclusively by the competent commercial courts of Lagos, Nigeria, except where mandatory consumer protection law in your jurisdiction requires otherwise.
         </p>
       </Section>
 
-      <Section title="16. Contact">
+      <Section title="16. Legal Inquiries">
         <p>
-          Questions about these Terms? Reach us at{" "}
-          <a
-            href={`mailto:${SITE.legalEmail}`}
-            className="legal-link"
-          >
-            <Placeholder>[legal@yourdomain.com]</Placeholder>
+          Questions regarding these Terms should be directed to our legal department at{" "}
+          <a href="mailto:legal@meirei.app" className="legal-link">
+            legal@meirei.app
           </a>
           .
         </p>
@@ -325,10 +307,3 @@ function Section({
   );
 }
 
-function Placeholder({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded bg-accent-50 px-1.5 py-0.5 font-mono text-[0.8em] text-accent-700">
-      {children}
-    </span>
-  );
-}

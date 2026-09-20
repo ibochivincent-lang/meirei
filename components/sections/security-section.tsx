@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Reveal } from "@/components/interactive/reveal";
 import { MaskReveal } from "@/components/interactive/mask-reveal";
@@ -10,7 +10,7 @@ const PILLARS = [
     id: "encryption",
     title: "End-to-end encrypted",
     body:
-      "Every message between you and tella rides your app's own encrypted channel, WhatsApp's or Telegram's. Nobody in the middle - not us, not your carrier - can read what you send.",
+      "Every message between you and meirei rides your app's own encrypted channel, WhatsApp's or Telegram's. Nobody in the middle - not us, not your carrier - can read what you send.",
     illustration: <EncryptionGlyph />,
   },
   {
@@ -22,29 +22,53 @@ const PILLARS = [
   },
   {
     id: "custody",
-    title: "Encrypted key custody",
+    title: "Non-Custodial Architecture",
     body:
-      "Your wallet's signing key never leaves our servers in the clear - it's encrypted at rest and only ever decrypted, briefly, to sign a transfer you approved.",
+      "Zero private keys stored on servers. Signing keys reside exclusively in your OKX Wallet, Passkey hardware enclave, or verified client-side device. Your funds remain under your sovereign control.",
     illustration: <CustodyGlyph />,
   },
 ];
 
 export function SecuritySection() {
   const ref = useRef<HTMLElement | null>(null);
-  // Single continuous scroll range covering the section's full time in the
-  // viewport: eases from the "how it works" light blue into ink-900, holds
-  // dark through the middle, then eases back out to white before
-  // UseCasesSection takes over — one interpolation instead of two
-  // separately-measured boundary transitions.
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== "undefined") {
+      return document.documentElement.classList.contains("dark");
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const checkDark = () => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    };
+    checkDark();
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
-  const backgroundColor = useTransform(
+
+  const bgLight = useTransform(
     scrollYProgress,
     [0, 0.15, 0.85, 1],
-    ["#E6EEFF", "#0a0a0a", "#0a0a0a", "#ffffff"],
+    ["#FFF5F2", "#0a0a0a", "#0a0a0a", "#ffffff"],
   );
+
+  const bgDark = useTransform(
+    scrollYProgress,
+    [0, 0.15, 0.85, 1],
+    ["#0a0a0c", "#0a0a0a", "#0a0a0a", "#0a0a0c"],
+  );
+
+  const backgroundColor = isDark ? bgDark : bgLight;
 
   return (
     <motion.section
@@ -53,7 +77,7 @@ export function SecuritySection() {
       style={{ backgroundColor }}
       className="relative overflow-hidden py-16 md:py-28 text-surface-50"
     >
-      <div className="relative mx-auto max-w-7xl px-[10px] sm:px[72px]">
+      <div className="relative mx-auto max-w-7xl px-[10px] sm:px-[72px]">
         <div className="mx-auto max-w-[820px] text-center">
           <Reveal>
             <div className="font-mono text-xs uppercase tracking-[0.2em] text-surface-50/40">
@@ -69,7 +93,7 @@ export function SecuritySection() {
           <Reveal delay={0.15}>
             <p className="mx-auto mt-6 max-w-2xl text-base md:text-xl leading-relaxed text-surface-50/60">
               Billions of people already trust WhatsApp and Telegram every day.
-              tella layers payment logic on top, without changing what makes
+              meirei layers payment logic on top, without changing what makes
               either channel feel safe.
             </p>
           </Reveal>
@@ -79,7 +103,7 @@ export function SecuritySection() {
           {PILLARS.map((p, i) => (
             <Reveal key={p.id} delay={i * 0.15}>
               <article className="flex h-full flex-col gap-6 rounded-3xl border border-surface-50/10 bg-surface-50/[0.02] p-8 transition-colors duration-300 hover:border-surface-50/20 hover:bg-surface-50/[0.04] md:p-10">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-50/[0.04] text-[#0057FF]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-50/[0.04] text-accent-500">
                   {p.illustration}
                 </div>
                 <div>

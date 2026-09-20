@@ -4,7 +4,7 @@ import { raiseAlert } from "@/lib/observability/alerts";
 /**
  * Per-user attempt limiting for the confirm-link auth paths.
  *
- * Backed by `tella_auth_attempts` + the `tella_record_auth_attempt` RPC
+ * Backed by `meirei_auth_attempts` + the `meirei_record_auth_attempt` RPC
  * (migrations/0007_auth_attempts.sql). The increment and the limit check
  * happen inside one Postgres call so a burst of parallel guesses can't all
  * read the same pre-increment count and slip through together.
@@ -35,9 +35,9 @@ function intFromEnv(name: string, fallback: number): number {
 
 function limits() {
   return {
-    max: intFromEnv("TELLA_AUTH_MAX_ATTEMPTS", 5),
-    windowSeconds: intFromEnv("TELLA_AUTH_WINDOW_SECONDS", 15 * 60),
-    lockoutSeconds: intFromEnv("TELLA_AUTH_LOCKOUT_SECONDS", 15 * 60),
+    max: intFromEnv("meirei_AUTH_MAX_ATTEMPTS", 5),
+    windowSeconds: intFromEnv("meirei_AUTH_WINDOW_SECONDS", 15 * 60),
+    lockoutSeconds: intFromEnv("meirei_AUTH_LOCKOUT_SECONDS", 15 * 60),
   };
 }
 
@@ -54,7 +54,7 @@ export async function recordAuthAttempt(
   const { max, windowSeconds, lockoutSeconds } = limits();
   const supabase = getSupabaseAdmin();
 
-  const { data, error } = await supabase.rpc("tella_record_auth_attempt", {
+  const { data, error } = await supabase.rpc("meirei_record_auth_attempt", {
     p_user_id: userId,
     p_scope: scope,
     p_max: max,
@@ -109,7 +109,7 @@ export async function resetAuthAttempts(
 ): Promise<void> {
   try {
     const supabase = getSupabaseAdmin();
-    const { error } = await supabase.rpc("tella_reset_auth_attempts", {
+    const { error } = await supabase.rpc("meirei_reset_auth_attempts", {
       p_user_id: userId,
       p_scope: scope,
     });
