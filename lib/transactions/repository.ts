@@ -10,7 +10,6 @@ export async function recordTransaction({
   counterpartyLabel,
   counterpartyAddress,
   txHash = null,
-  smeireirOperationId = null,
   status,
 }: {
   userId: string;
@@ -21,7 +20,6 @@ export async function recordTransaction({
   counterpartyLabel: string | null;
   counterpartyAddress: string | null;
   txHash?: string | null;
-  smeireirOperationId?: string | null;
   status: "submitted" | "complete";
 }): Promise<meireiTransaction> {
   const supabase = getSupabaseAdmin();
@@ -36,7 +34,6 @@ export async function recordTransaction({
       counterparty_label: counterpartyLabel,
       counterparty_address: counterpartyAddress,
       tx_hash: txHash,
-      smeireir_operation_id: smeireirOperationId,
       status,
     })
     .select()
@@ -199,41 +196,29 @@ export async function releaseReservedSend(transactionId: string): Promise<void> 
  * Persists a built-and-signed payment's XDR onto its reservation row, BEFORE
  * that payment is submitted.
  *
- * Smeireir has no server-assigned idempotency key. Safety instead comes from
- * the transaction's own sequence number (a signed envelope can only ever
- * apply once) plus Horizon returning the ORIGINAL result if the exact same
- * signed XDR is resubmitted. So this is what lets a crash between building
- * and submitting retry safely: reload this row, resubmit the SAME xdr,
- * rather than building a fresh one against a sequence number that may have
- * already advanced — which would mint a genuinely new second payment.
+ * Safety comes from X Layer sequence numbers and non-custodial smart contracts.
  */
-export async function attachSmeireirTxXdr(
+export async function attachXLayerTx(
   transactionId: string,
-  xdr: string,
+  txHash: string,
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("meirei_transactions")
-    .update({ smeireir_tx_xdr: xdr })
+    .update({ tx_hash: txHash })
     .eq("id", transactionId);
 
   if (error) {
-    throw new Error(`attachSmeireirTxXdr failed: ${error.message}`);
+    throw new Error(`attachXLayerTx failed: ${error.message}`);
   }
 }
 
 /**
- * Completes a reservation once its payment has been submitted successfully.
- *
- * Unlike Circle's async model — submit now, learn the real outcome later via
- * a webhook (attachCircleTransactionId, then markOutboundComplete once the
- * hash arrived) — Smeireir's submitTransaction is SYNCHRONOUS: the hash and
- * the outcome are both known the moment this call is made. So there is no
- * separate "mark complete" step to run later; this is that step, run inline.
+ * Completes a reservation once its payment has been submitted successfully to OKX X Layer.
  */
-export async function completeSmeireirSend(
+export async function completeXLayerSend(
   transactionId: string,
-  { txHash, operationId }: { txHash: string; operationId: string },
+  { txHash }: { txHash: string },
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
@@ -241,13 +226,11 @@ export async function completeSmeireirSend(
     .update({
       status: "complete",
       tx_hash: txHash,
-      smeireir_operation_id: operationId,
     })
     .eq("id", transactionId);
 
   if (error) {
-    // Bookkeeping, after the money has moved. Logged, never thrown.
-    console.error("[transactions] completing smeireir send failed", {
+    console.error("[transactions] completing X Layer transaction failed", {
       transactionId,
       error: error.message,
     });

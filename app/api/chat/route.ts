@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Stock list query
-    if (lower.includes("list stock") || lower.includes("what stocks") || lower.includes("tradable")) {
+    if (lower.includes("list stock") || lower.includes("what stocks") || lower.includes("tradable") || lower === "stocks" || lower === "/stocks" || lower.includes("all stocks")) {
       const stocks = await fetchAllStockPrices();
       const stockList = stocks
         .filter((s) => !s.isCash)

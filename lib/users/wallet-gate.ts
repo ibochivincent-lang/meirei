@@ -39,7 +39,7 @@ export type WalletGate =
 /**
  * Shared shape check, without any opinion about freezing.
  *
- * There is no external custody id on Smeireir — the account IS the address —
+ * There is no external custody id on OKX X Layer — the account IS the address —
  * so this gates on `wallet_address` directly rather than on a walletId the
  * way the Circle-era version did.
  */

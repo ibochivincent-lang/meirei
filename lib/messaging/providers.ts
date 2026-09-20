@@ -50,7 +50,7 @@ import {
  * THE ONE ASYMMETRY, and it is not a preference: `selfEnrolling`.
  *
  * A meirei account is phone-rooted. meirei_users.whatsapp_number is the
- * unique key, the Smeireir wallet provisions against it, recovery links
+ * unique key, the OKX X Layer smart account provisions against it, recovery links
  * deliver to it, and sends resolve recipients through it. An inbound
  * WhatsApp message therefore carries enough to create an account; a
  * Telegram chat id does not, because there is no phone number inside one.

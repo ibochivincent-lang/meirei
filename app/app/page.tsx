@@ -166,6 +166,64 @@ export default function AppDashboardPage() {
     spotPrice: 213.9,
   });
 
+  // Live stock prices and real-time tick flashes (15-second auto-refresh)
+  const [stockPrices, setStockPrices] = useState<Record<string, number>>({});
+  const [priceFlashes, setPriceFlashes] = useState<Record<string, "up" | "down">>({});
+  const prevPricesRef = useRef<Record<string, number>>({});
+
+  // Poll real-time stock prices from X Layer every 15 seconds
+  useEffect(() => {
+    let isMounted = true;
+    let flashTimer: ReturnType<typeof setTimeout> | null = null;
+
+    async function fetchLivePrices() {
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "stocks" }),
+        });
+        const data = await res.json();
+        if (isMounted && Array.isArray(data.stocks)) {
+          const updatedPrices: Record<string, number> = {};
+          const flashes: Record<string, "up" | "down"> = {};
+
+          data.stocks.forEach((item: { symbol: string; priceUsd: number }) => {
+            if (item.symbol && typeof item.priceUsd === "number" && item.priceUsd > 0) {
+              updatedPrices[item.symbol] = item.priceUsd;
+              const prev = prevPricesRef.current[item.symbol];
+              if (prev !== undefined && prev !== item.priceUsd) {
+                flashes[item.symbol] = item.priceUsd > prev ? "up" : "down";
+              }
+            }
+          });
+
+          prevPricesRef.current = { ...prevPricesRef.current, ...updatedPrices };
+          setStockPrices((prev) => ({ ...prev, ...updatedPrices }));
+
+          if (Object.keys(flashes).length > 0) {
+            setPriceFlashes(flashes);
+            if (flashTimer) clearTimeout(flashTimer);
+            flashTimer = setTimeout(() => {
+              if (isMounted) setPriceFlashes({});
+            }, 1500);
+          }
+        }
+      } catch (err) {
+        console.warn("[LivePrices] Failed to refresh prices:", err);
+      }
+    }
+
+    fetchLivePrices();
+    const interval = setInterval(fetchLivePrices, 15000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      if (flashTimer) clearTimeout(flashTimer);
+    };
+  }, []);
+
   const openWeb3Signer = (
     targetSymbol: string,
     fromAmountUsdg: number,
@@ -466,11 +524,23 @@ export default function AppDashboardPage() {
   }
   const areaD = `${pathD} L ${width} ${height} L 0 ${height} Z`;
 
-  const currentDisplayPrice =
-    chartHoverIndex !== null ? `$${coords[chartHoverIndex].val.toFixed(2)}` : selectedStock.price;
+  const getFormattedPrice = (stock: StockItem): string => {
+    const live = stockPrices[stock.symbol];
+    if (typeof live === "number" && live > 0) {
+      return `$${live.toFixed(2)}`;
+    }
+    return stock.price;
+  };
 
-  // Numerical price helper for price comparison & units calculator
+  const currentDisplayPrice =
+    chartHoverIndex !== null ? `$${coords[chartHoverIndex].val.toFixed(2)}` : getFormattedPrice(selectedStock);
+
+  // Numerical price helper for price comparison & units calculator (using live ticks if available)
   const getNumericPrice = (stock: StockItem): number => {
+    const live = stockPrices[stock.symbol];
+    if (typeof live === "number" && live > 0) {
+      return live;
+    }
     const cleaned = parseFloat(stock.price.replace(/[^0-9.]/g, ""));
     return isNaN(cleaned) || cleaned <= 0 ? 1.0 : cleaned;
   };
@@ -682,9 +752,15 @@ export default function AppDashboardPage() {
                 {/* 8 Stocks Horizontal Selector Tabs */}
                 <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-4 shadow-xs">
                   <div className="flex items-center justify-between pb-3">
-                    <span className="font-display text-sm font-bold text-ink-900 dark:text-white">
-                      Allowlisted xStocks (8 Assets on X Layer)
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-display text-sm font-bold text-ink-900 dark:text-white">
+                        Allowlisted xStocks (8 Assets on X Layer)
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Live 15s Feed</span>
+                      </span>
+                    </div>
                     <span className="text-xs text-ink-500 dark:text-zinc-400">
                       Select asset to inspect spot chart or calculate units
                     </span>
@@ -724,8 +800,15 @@ export default function AppDashboardPage() {
                           </div>
 
                           <div className="text-right">
-                            <p className="font-mono text-xs font-semibold text-ink-900 dark:text-white">
-                              {stock.price}
+                            <p
+                              className={cn(
+                                "font-mono text-xs font-semibold transition-colors duration-300",
+                                priceFlashes[stock.symbol] === "up" && "text-emerald-600 dark:text-emerald-400 font-bold",
+                                priceFlashes[stock.symbol] === "down" && "text-rose-600 dark:text-rose-400 font-bold",
+                                !priceFlashes[stock.symbol] && "text-ink-900 dark:text-white"
+                              )}
+                            >
+                              {getFormattedPrice(stock)}
                             </p>
                             <p className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
                               {stock.change24h}
@@ -1142,8 +1225,15 @@ export default function AppDashboardPage() {
                                   </div>
                                 </div>
                               </td>
-                              <td className="p-3 font-mono font-semibold text-ink-900 dark:text-white">
-                                {stk.price}
+                              <td
+                                className={cn(
+                                  "p-3 font-mono font-semibold transition-colors duration-300",
+                                  priceFlashes[stk.symbol] === "up" && "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-bold",
+                                  priceFlashes[stk.symbol] === "down" && "text-rose-600 dark:text-rose-400 bg-rose-500/10 font-bold",
+                                  !priceFlashes[stk.symbol] && "text-ink-900 dark:text-white"
+                                )}
+                              >
+                                {getFormattedPrice(stk)}
                               </td>
                               <td className="p-3 font-mono font-bold text-accent-700 dark:text-accent-400 text-sm">
                                 {units} units

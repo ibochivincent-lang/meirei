@@ -16,7 +16,7 @@ export interface meireiUser {
    * Smeireir migration section of migrations/README.md.
    */
   circle_wallet_id: string | null;
-  /** A Smeireir "G..." StrKey public key since the Arc  Smeireir migration. */
+  /** An OKX X Layer (Chain ID 196) public address. */
   wallet_address: string | null;
   wallet_status: WalletStatus;
   /** Envelope-encrypted Smeireir secret key. See lib/wallet/secret-envelope.ts. */

@@ -271,13 +271,7 @@ export async function findUserByWhatsApp(
 }
 
 /**
- * Resolves an on-chain wallet address back to the meirei user who owns it,
- * so an inbound transfer from another meirei user can be labeled with their
- * name instead of a shortened address. Case-SENSITIVE: unlike EVM's
- * checksum-casing (which was never guaranteed to match byte-for-byte, hence
- * the old `ilike` here), a Smeireir StrKey address is case-significant —
- * lowercasing or otherwise re-casing it produces either an invalid address
- * or a different one.
+ * Resolves an on-chain wallet address back to the meirei user who owns it on OKX X Layer.
  */
 export async function findUserByWalletAddress(
   address: string,
