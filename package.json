@@ -2,6 +2,7 @@
   "name": "meirei",
   "version": "0.1.0",
   "author": "IboTV",
+  "packageManager": "pnpm@9.15.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
