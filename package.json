@@ -9,7 +9,16 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx lib/agent/map-decoded-send.test.ts && tsx lib/sends/execute.test.ts && tsx lib/transactions/reservation.test.ts && tsx lib/agent/detect-reset-request.test.ts && tsx lib/wallet/balances.test.ts && tsx lib/wallet/network.test.ts && tsx lib/agent/detect-freeze-request.test.ts && tsx lib/agent/detect-unfreeze-request.test.ts && tsx lib/security/panic-code.test.ts && tsx lib/agent/fast-path.test.ts && tsx lib/agent/send-flow.test.ts && tsx lib/agent/confidence.test.ts && tsx lib/sends/limits.test.ts && tsx lib/sends/tiers.test.ts && tsx lib/agent/confirm-action.test.ts && tsx lib/agent/detect-command-keyword.test.ts && tsx lib/agent/beneficiary-flow.test.ts && tsx lib/beneficiaries/offer.test.ts && tsx lib/messaging/render.test.ts && tsx lib/messaging/return-link.test.ts",
-    "test:unit": "vitest run src/asp.test.ts"
+    "test:unit": "vitest run src/",
+    "smoke:live": "tsx scripts/smoke-live.ts",
+    "parse": "tsx src/cli.ts parse",
+    "plan": "tsx src/cli.ts plan",
+    "execute": "tsx src/cli.ts execute",
+    "asp:payload": "tsx src/cli.ts asp payload",
+    "asp:precheck": "tsx src/cli.ts asp precheck",
+    "asp:validate": "node -e \"const { spawnSync } = require('child_process'); const services = [{ serviceName: 'Mandate Portfolio Execution', serviceDescription: 'Executes natural-language investment mandates into rebalanced tokenized equities on OKX X Layer.\\nUser provides mandate text with target allocations and budget in USDG.\\nDelivers parsed target weights, diff rebalance legs, and X Layer swap executions.', serviceType: 'A2A', fee: '0.1' }]; spawnSync('onchainos', ['agent', 'validate-listing', '--role', 'asp', '--name', 'Meirei Mandates', '--description', 'Autonomous AI investment mandate execution agent for tokenized equities on OKX X Layer. Converts natural-language portfolio instructions into guardrailed X Layer rebalance swaps.', '--service', JSON.stringify(services)], { stdio: 'inherit' });\"",
+    "asp:register": "tsx src/cli.ts asp create --picture https://static.okx.com/cdn/web3/wallet/marketplace/headimages/agent/avatar/397e3f94-9dd8-4b96-8217-0d5c3f42e79c.jpg",
+    "asp:list": "tsx src/cli.ts asp list"
   },
   "dependencies": {
     "@simplewebauthn/browser": "^13.3.0",
