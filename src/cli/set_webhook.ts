@@ -4,26 +4,65 @@
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  *
  * Usage:
- *   npx tsx src/cli/set_webhook.ts https://your-deployment.vercel.app
+ *   npm run bot:webhook <URL> [BOT_TOKEN]
+ *   npm run bot:webhook https://meirei.vercel.app 123456789:ABCdefGhIJK...
  */
 
 import { setTelegramWebhook, getTelegramWebhookInfo } from "../../lib/telegram/client";
 
 async function main() {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) {
-    console.error("Error: TELEGRAM_BOT_TOKEN environment variable is required.");
-    console.error("Set it via: export TELEGRAM_BOT_TOKEN=... or add to .env");
-    process.exit(1);
-  }
+  const arg1 = process.argv[2]?.trim();
+  const arg2 = process.argv[3]?.trim();
 
-  let targetBaseUrl = process.argv[2] || process.env.NEXT_PUBLIC_APP_URL;
+  let targetBaseUrl = "";
+  let token = process.env.TELEGRAM_BOT_TOKEN || "";
+
+  // Helper to test if string is a Telegram Bot token format (e.g. 123456:ABC-DEF...)
+  const isBotToken = (val?: string) => Boolean(val && /^\d{6,}:[A-Za-z0-9_-]{20,}$/.test(val));
+  const isUrl = (val?: string) => Boolean(val && /^https?:\/\//i.test(val));
+
+  if (isUrl(arg1)) {
+    targetBaseUrl = arg1!;
+    if (arg2) token = arg2;
+  } else if (isBotToken(arg1)) {
+    token = arg1!;
+    if (isUrl(arg2)) targetBaseUrl = arg2!;
+  } else if (arg1) {
+    targetBaseUrl = arg1;
+    if (arg2) token = arg2;
+  }
 
   if (!targetBaseUrl) {
-    console.error("Error: Target URL must be provided as an argument or in NEXT_PUBLIC_APP_URL.");
-    console.error("Example: npx tsx src/cli/set_webhook.ts https://meirei.vercel.app");
+    targetBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+  }
+
+  // Detect literal placeholder in URL
+  if (targetBaseUrl.includes("<") || targetBaseUrl.includes("your-vercel-domain")) {
+    console.error("\n[Meirei Notice] Please replace '<your-vercel-domain>' with your actual deployment URL.");
+    console.error("Example: npm run bot:webhook https://meirei.vercel.app");
     process.exit(1);
   }
+
+  if (!targetBaseUrl) {
+    console.error("\n[Meirei Notice] Deployment URL is required.");
+    console.error("Usage:");
+    console.error("  npm run bot:webhook <URL> [BOT_TOKEN]");
+    console.error("  npm run bot:webhook https://meirei.vercel.app 123456789:ABCdefGhIJK...");
+    process.exit(1);
+  }
+
+  if (!token) {
+    console.error("\n[Meirei Notice] Telegram Bot Token is required.");
+    console.error("You can provide it directly on the command line:");
+    console.error(`  npm run bot:webhook ${targetBaseUrl} <YOUR_BOT_TOKEN>`);
+    console.error("\nOr set it in your environment or .env.local file:");
+    console.error("  TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJK...");
+    console.error("\nTo get a free bot token, open Telegram and send /newbot to @BotFather.");
+    process.exit(1);
+  }
+
+  // Set in environment for client functions
+  process.env.TELEGRAM_BOT_TOKEN = token;
 
   targetBaseUrl = targetBaseUrl.replace(/\/+$/, "");
   const fullWebhookUrl = targetBaseUrl.endsWith("/api/webhooks/telegram")
@@ -46,7 +85,7 @@ async function main() {
       console.log("\nVerifying current Webhook Info...");
       const info = await getTelegramWebhookInfo();
       console.log(JSON.stringify(info, null, 2));
-      console.log("\nYour Telegram Bot is now live and routing to your Vercel deployment.");
+      console.log("\nYour Telegram Bot is live and routing directly on OKX X Layer.");
     } else {
       console.error("\nFailed to configure webhook:", result.description);
       process.exit(1);

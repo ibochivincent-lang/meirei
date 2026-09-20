@@ -32,8 +32,6 @@ In the Vercel project configuration, expand **"Environment Variables"** and add 
 | `MEIREI_CHAIN` | `xlayer` | Enforces X Layer Mainnet routing |
 | `MEIREI_MOCK_ONCHAINOS` | `0` | Live Onchain OS mode |
 | `MEIREI_WALLET` | `0x7f17d6224e7d48606598732c3f511412b5c1e922` | Default execution wallet |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project.supabase.co` | Supabase Postgres URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | *(your service role secret)* | Server-side identity & device linking |
 | `META_WHATSAPP_ACCESS_TOKEN` | *(Meta Cloud API System User Token)* | Inbound & outbound WhatsApp messages |
 | `META_WHATSAPP_PHONE_NUMBER_ID` | *(Meta Phone Number ID)* | Sender ID for WhatsApp notifications |
 | `META_WHATSAPP_VERIFY_TOKEN` | *(your custom verification secret)* | Webhook verification handshake |
