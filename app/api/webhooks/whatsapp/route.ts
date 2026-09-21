@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
                 const failReason =
                   transcription.error ||
                   "Voice note received, but transcription failed. Please send your instruction as text.";
-                return await sendReply(`Voice Note Received:\n${failReason}`);
+                return await sendReply(`MEIREI | VOICE COMMAND RECEIVED\n\n${failReason}`);
               }
             } else {
               return await sendReply(

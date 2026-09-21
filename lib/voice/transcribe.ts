@@ -152,6 +152,7 @@ export async function transcribeAudioBuffer(
 
   return {
     ok: false,
-    error: "Voice note received. To enable speech-to-text transcription, add GEMINI_API_KEY to your deployment environment variables.",
+    error:
+      "To activate instant voice command transcription on WhatsApp:\n1. Get a free Gemini API key from https://aistudio.google.com/apikey\n2. Add GEMINI_API_KEY to your Vercel Project Environment Variables\n3. Redeploy your project\n\nIn the meantime, you can send any command as text:\n• \"Buy $250 in NVDAx\"\n• \"stocks\"\n• \"Price of AAPLx\"\n• \"balance\"",
   };
 }
