@@ -112,11 +112,11 @@ export async function POST(req: NextRequest) {
 
     // Helper: dispatch reply to Meta Cloud API (if configured) and return JSON
     const sendReply = async (reply: string) => {
-      if (senderPhone && (process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN)) {
+      if (senderPhone) {
         try {
           await sendWhatsAppMessage(senderPhone, reply);
         } catch (dispatchErr) {
-          console.warn("[WhatsApp Webhook] Outbound Meta send notice:", dispatchErr);
+          console.error("[WhatsApp Webhook] Outbound Meta send error:", dispatchErr);
         }
       }
 
