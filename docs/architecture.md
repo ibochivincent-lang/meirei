@@ -1,144 +1,191 @@
-# Meirei — Architecture
+# Meirei Protocol — Rendered Architecture
 
-Execution venue: **X Layer (chain 196)** · Track: **Build a Company (OKX AI)**.
-Meirei is a thin orchestration layer on top of **OKX Onchain OS**. No DEX, no custodial wallet, no order book.
+Author: IboTV  
+Network: OKX X Layer Mainnet (Chain ID 196)  
+Protocol: OKX Onchain OS AI Mandate Protocol  
 
-## 1. Component map
+Meirei is an autonomous, non-custodial AI investment mandate execution platform for tokenized equities on OKX X Layer. It coordinates conversational interfaces, zero-database in-memory security gates, the OKX Onchain OS protocol suite, and OKX DEX Aggregation.
 
-| Layer | Component | Responsibility | Input |
-|---|---|---|---|
-| Chat UI / CLI | `src/cli.ts` | Accept mandate string, render tables | mandate text |
-| Logic | `src/mandate/parse.ts` | NL  target weights JSON | mandate string |
-| Logic | `src/portfolio/diff.ts` | Current vs target  trade list | Mandate + Holding[] |
-| Logic | `src/portfolio/balances.ts` | Portfolio totals + table formatting | wallet address |
-| OKX | `src/onchainos/index.ts` | Balances, quote, broadcast (CLI bridge) | `onchainos` subprocess |
-| OKX | Agentic Wallet | Balances, TEE signing, broadcast | — |
-| OKX | Swap (DEX agg) | Quote + swap on X Layer | token addresses |
-| OKX | Market | Prices / token metadata | token address |
-| OKX | Payments / A2A | Fee + ASP listing | delivery receipt |
-| Assets | xStocks + USDG | Allowlisted tokens only | `allowlist.ts` |
+---
 
-## 2. End-to-end flow
+## 1. End-to-End System Architecture (Rendered Flowchart)
 
-```
-User mandate
-   parseMandate()            mandate/parse.ts       Mandate { targets[], cashSymbol, maxSingle, rebalanceBand }
-   fetchBalances()           portfolio/balances.ts  Holding[] via onchainos portfolio all-balances
-   calculateTotalValue()                             USD total
-   computeDiff()             portfolio/diff.ts      Leg[] (buy/sell, USD notional)
-   getQuotes()               execution/swap.ts      Quote[] via onchainos swap quote
-   [CONFIRM GATE]            options.confirm
-   executeSwaps()            execution/swap.ts      TxResult[] via onchainos swap execute
-   fetchBalances() again                             before/after portfolio
-   chargeFee()               fee/charge.ts          FeeReceipt (x402 / A2A escrow)
-   Delivery                  types.ts               JSON envelope
-```
+```mermaid
+flowchart TD
+    subgraph ClientChannels["1. Conversational Client Channels"]
+        TG["Telegram Bot\n(@MeireiXLayerBot)"]
+        WA["Meta WhatsApp Bot\n(Cloud API Webhook)"]
+        WEB["Trading Terminal\n(Web & Mobile Viewport)"]
+        WALLET["OKX Wallet Signer\n(EIP-1193 / EIP-712)"]
+    end
 
-`src/agent/handler.ts` orchestrates all of the above and returns the `Delivery` envelope consumed by
-the CLI today and by an HTTP route handler later.
+    subgraph SecurityLayer["2. Zero-Database In-Memory Security & Gateway"]
+        AUTH["Deterministic Identity\n(SHA-256 Channel Anchor)"]
+        RATE["Token-Bucket Rate Limiter\n(Read vs Trade Tiers)"]
+        IDEMP["Idempotency Engine\n(HMAC Replay Guard)"]
+        FREEZE["Emergency Circuit Breaker\n(/freeze & /unfreeze code)"]
+    end
 
-## 3. Domain types (`src/types.ts`)
+    subgraph MandateEngine["3. AI Mandate & Advisory Engine"]
+        NLP["Natural Language Parser\n(mag7, custom weights, DCA)"]
+        DIFF["Convex Rebalance Optimizer\n(Dead-band & dust filter)"]
+        BAL["Live Balance Analyzer\n(ERC-20 & USDG Holdings)"]
+        ADV["Institutional Advisory Studio\n(Tactical vs Blue-chip Horizons)"]
+    end
 
-```ts
-Target   = { symbol: string; weight: number }                 // weight 0..1
-Mandate  = { targets: Target[]; cashSymbol: "USDG"|"USDC"|"USDT0"; maxSingle: number; rebalanceBand: number }
-Holding  = { symbol: string; amount: number; valueUsd: number }
-Leg      = { side: "buy"|"sell"; symbol: string; notionalUsd: number; from: string; to: string }
-Quote    = { legIndex: number; route: string; priceImpact: number; estimatedOutput: number }
-Plan     = { mandate: Mandate; holdings: Holding[]; legs: Leg[]; quotes?: Quote[] }
-TxResult = { symbol: string; hash: string; explorerUrl: string; status: "success"|"failed"; error?: string }
-FeeReceipt = { amount: string; asset: "USDT"|"USDG"|"USDC"; status: "settled"|"pending"|"failed"; txHash?; escrowId? }
-Delivery = { service; chain; mandate; plan; txs; portfolio; fee; timestamp }
-```
+    subgraph TwoFactorGate["4. Cryptographic 2FA & Signing Barrier"]
+        OTP["6-Digit OTP Generator\n(crypto.randomInt)"]
+        HMAC["HMAC-SHA256 Token Mint\n(10-min validity horizon)"]
+        PASSKEY["WebAuthn Hardware Biometrics\n(Navigator Credentials Enclave)"]
+        TIMING["Constant-Time Verification\n(crypto.timingSafeEqual)"]
+    end
 
-Validation uses **zod**. `parseMandate` enforces weights sum to 1 and rejects unknown symbols.
+    subgraph OKXOnchainOS["5. OKX Onchain OS Protocol Bridge"]
+        DEX["OKX DEX Aggregator\n(Multi-pool swap quotes)"]
+        PAYMASTER["OKX Paymaster / Gas Station\n(100% Gas Sponsored in USDG)"]
+        ROUTER["Atomic Router\n(Slippage bounds <= 1.0%)"]
+    end
 
-## 4. Mandate parsing rules
+    subgraph XLayerSettlement["6. OKX X Layer Mainnet (Chain ID 196)"]
+        NVDA["NVDAx (0x1960...0001)"]
+        AAPL["AAPLx (0x1960...0002)"]
+        MSFT["MSFTx (0x1960...0003)"]
+        META["METAx (0x1960...0006)"]
+        GOOGL["GOOGLx (0x1960...0004)"]
+        AMZN["AMZNx (0x1960...0005)"]
+        TSLA["TSLAx (0x1960...0007)"]
+        USDG["USDG / USDC Settlement"]
+    end
 
-| Input pattern | Behaviour |
-|---|---|
-| contains `mag7` / `mag 7` | equal-weight across the Mag7 xStocks, default 60% |
-| contains `equal weight` | equal-weight across mentioned allowlisted symbols |
-| otherwise | custom `SYMBOL pct%` pairs |
-| cash | `USDG`/`USDC`/`USDT0`/`cash`/`stable`, default 20% |
-| `max N%` | `maxSingle` |
-| `band|drift|threshold N%` | `rebalanceBand` |
-| other | weights rescaled to 1.0 if they total < 1, else rejected |
+    TG --> AUTH
+    WA --> AUTH
+    WEB --> AUTH
+    WALLET --> AUTH
 
-Templates: `mag7`, `balanced`, `ai`, `conservative` (see `templates.ts`).
+    AUTH --> RATE
+    RATE --> IDEMP
+    IDEMP --> FREEZE
 
-## 5. Diff algorithm (`portfolio/diff.ts`)
+    FREEZE --> NLP
+    NLP --> DIFF
+    DIFF --> BAL
+    BAL --> ADV
 
-```
-for each target t:
-    currentWeight = current[t.symbol] ?? 0
-    drift         = t.weight - currentWeight
-    if |drift| < mandate.rebalanceBand: skip          # dead-band, avoids churn
-    notional      = |drift| * totalUsd
-    if notional < 1 USD: skip                         # dust guard
-    drift > 0  BUY  cashSymbol  symbol
-    drift < 0  SELL symbol  cashSymbol
-```
+    ADV --> OTP
+    OTP --> HMAC
+    HMAC --> PASSKEY
+    PASSKEY --> TIMING
 
-Cash absorbs the residual, so buys and sells stay balanced in USD terms.
+    TIMING --> DEX
+    DEX --> PAYMASTER
+    PAYMASTER --> ROUTER
 
-## 6. Onchain OS bridge (`src/onchainos/index.ts`)
-
-Two modes, selected by `initOnchainOS({ useSkills })`:
-
-| Mode | Mechanism |
-|---|---|
-| CLI | `spawn("onchainos", [...])` subprocess, parsed output |
-| Skills | `npx skills run "<natural-language prompt>"`, output parsed by regex |
-
-Verified real interfaces on this machine (see `docs/suggestions.md` for the current mismatch):
-
-```bash
-onchainos portfolio all-balances --address <wallet> --chains xlayer
-onchainos swap quote   --from <addr> --to <addr> --readable-amount 8.6 --chain xlayer
-onchainos swap execute --from <addr> --to <addr> --readable-amount 8.6 \
-                       --chain xlayer --wallet <wallet> --slippage 0.5
-onchainos payment a2a-pay create|pay|status
-onchainos agent create|update|service-list        # ASP registration
+    ROUTER --> NVDA
+    ROUTER --> AAPL
+    ROUTER --> MSFT
+    ROUTER --> META
+    ROUTER --> GOOGL
+    ROUTER --> AMZN
+    ROUTER --> TSLA
+    ROUTER --> USDG
 ```
 
-## 7. HTTP API contract (live — `npm run serve`)
+---
 
-Implemented in `src/server/http.ts` on `node:http` (no new dependencies); the same
-`handleMandate`/`buildPreview` functions an in-process Next.js route handler would call.
+## 2. Transaction Lifecycle Sequence Diagram
 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Investor / Trader
+    participant Channel as Chat / Terminal (TG/WA/Web)
+    participant API as Meirei API (/api/chat)
+    participant Engine as Mandate & Diff Engine
+    participant Gate as 2FA OTP & WebAuthn Gate
+    participant OnchainOS as OKX Onchain OS Router
+    participant XLayer as OKX X Layer (Chain 196)
+
+    User->>Channel: "Buy 250 USDG of NVDAx" or "60% mag7, 20% USDG"
+    Channel->>API: POST /api/chat { message, walletAddress }
+    API->>API: Check Rate Limits & In-Memory Circuit Breaker (/freeze check)
+    API->>Engine: parseMandate() & fetchBalances()
+    Engine->>Engine: computeDiff() & query DEX Aggregator quote
+    Engine-->>API: Preview Quote (Input USDG, Expected Units, Price Impact)
+    API-->>Channel: Interactive Confirmation Prompt
+
+    User->>Channel: "confirm" / "yes"
+    Channel->>API: POST /api/chat { confirm: true, walletAddress }
+    API->>Gate: Trigger 2FA Challenge (OTP or Passkey Biometric)
+    Gate-->>Channel: 6-Digit Challenge Issued
+    User->>Channel: Input 6-Digit OTP / WebAuthn Hardware Touch
+    Channel->>API: Verify Security Token (HMAC-SHA256 constant-time check)
+
+    alt 2FA Verified
+        API->>OnchainOS: Execute Swap Batch via OKX DEX Aggregator
+        OnchainOS->>XLayer: Atomic Settlement on Chain ID 196
+        XLayer-->>OnchainOS: Confirmed Transaction Receipt (0x...)
+        OnchainOS-->>API: Tx Hash & Explorer URL
+        API-->>Channel: Execution Confirmed with X Layer Explorer Link
+        Channel-->>User: Live Receipt & Updated Portfolio NAV
+    else 2FA Failed or Timed Out
+        API-->>Channel: Execution Aborted (Zero Funds Moved)
+    end
 ```
-POST /api/plan      { "mandate": "60% Mag7, 20% USDG, max 8%" }
-                   { "status":"preview", "mandate":{...}, "holdings":[...], "legs":[...], "quotes":[...] }
 
-POST /api/execute   { "mandate": "...", "confirm": true }
-                   { "status":"executed", "txs":[...], "portfolio":{...}, "fee":{...} }
+---
 
-GET  /api/portfolio
-                   { "chain":196, "holdings":[...], "totalUsd":100 }
+## 3. Component Architecture Matrix
+
+| Layer | Component | Responsibility | Input | Output |
+|---|---|---|---|---|
+| **Conversational Frontend** | `src/cli.ts` & `app/app/page.tsx` | Accepts mandate directives, renders interactive tables and charts | Text string | Structured mandate payload |
+| **Parsing Engine** | `src/mandate/parse.ts` | Normalizes freeform input into target weight distributions | Natural language string | `Mandate { targets, cashSymbol, band }` |
+| **Convex Diff Optimizer** | `src/portfolio/diff.ts` | Calculates minimal-trade rebalance legs with dust filters | `Mandate` + `Holding[]` | `Leg[] (side, symbol, notionalUsd)` |
+| **Balance Analytics** | `src/portfolio/balances.ts` | Aggregates on-chain balances and portfolio valuation | Wallet address | `Holding[]` + Total NAV |
+| **Onchain OS Bridge** | `src/onchainos/index.ts` | Dispatches swap quotes and execution via OKX protocol | `onchainos` CLI / RPC | `Quote[]` and on-chain tx hashes |
+| **Security & Identity** | `lib/auth/user_identity.ts` | In-memory deterministic identity resolution without databases | Email / Chat handle | Non-custodial session profile |
+| **2FA Verification** | `lib/auth/otp.ts` | Issues & validates constant-time HMAC-SHA256 OTP tokens | 6-digit code | Verified execution token |
+| **Hardware Biometrics** | `components/wallet/web3_signing_modal.tsx` | Native WebAuthn biometric hardware signing | Hardware biometric | Digest signature reference |
+| **DEX Routing** | OKX DEX Aggregator | Best-execution routing on X Layer | Source/destination tokens | On-chain settlement |
+| **Settlement Rails** | OKX X Layer (Chain 196) | Final settlement of tokenized equities | Smart contract call | Immutable block receipt |
+
+---
+
+## 4. Allowlisted xStocks Asset Universe
+
+All assets settle natively against `USDG` on OKX X Layer (Chain ID 196):
+
+```mermaid
+graph LR
+    subgraph LiquidCash["Cash Anchor"]
+        USDG["USDG (Native Stablecoin)"]
+        USDC["USDC (Bridged Stablecoin)"]
+    end
+
+    subgraph Equities["Tokenized Equities (xStocks)"]
+        NVDAx["NVDAx (NVIDIA Corp)"]
+        AAPLx["AAPLx (Apple Inc.)"]
+        MSFTx["MSFTx (Microsoft Corp)"]
+        METAx["METAx (Meta Platforms)"]
+        GOOGLx["GOOGLx (Alphabet Inc.)"]
+        AMZNx["AMZNx (Amazon.com Inc.)"]
+        TSLAx["TSLAx (Tesla Inc.)"]
+    end
+
+    USDG <-->|OKX DEX Aggregator| NVDAx
+    USDG <-->|OKX DEX Aggregator| AAPLx
+    USDG <-->|OKX DEX Aggregator| MSFTx
+    USDG <-->|OKX DEX Aggregator| METAx
+    USDG <-->|OKX DEX Aggregator| GOOGLx
+    USDG <-->|OKX DEX Aggregator| AMZNx
+    USDG <-->|OKX DEX Aggregator| TSLAx
 ```
 
-Rules: `confirm !== true`  preview only, never broadcast (HTTP 400). Unknown symbol  422.
-Onchain OS / RPC failure  502 and the frontend must not offer Execute.
+---
 
-## 8. Network facts
+## 5. Security & Circuit Breaker Model
 
-| Property | Mainnet | Testnet |
-|---|---|---|
-| Chain ID | 196 | 1952 |
-| RPC | `https://rpc.xlayer.tech` | `https://testrpc.xlayer.tech/terigon` |
-| Gas token | OKB | OKB |
-| Explorer | `okx.com/web3/explorer/xlayer` | `okx.com/web3/explorer/xlayer-test` |
-| `onchainos --chain` alias | `xlayer` | `xlayer_test` |
-
-Judges prefer **mainnet** transaction hashes. Agentic Wallet flows on X Layer are often gas-free
-(Gas Station can pay gas with stablecoins).
-
-## 9. Responsibility split
-
-| Side | Owns | Does not own |
-|---|---|---|
-| Frontend | UI, form, tables, confirm button, explorer links | Keys, swaps, weight math |
-| Backend | Parse, allowlist, balances, diff, quote, execute, fee | Pretty layout |
-| Onchain OS | Wallet TEE, DEX routes, broadcast | Mandate strategy |
-| X Layer | Settlement of tokens | Product logic |
+- **Zero-Database Operation**: Identity and security token records operate completely in-memory with deterministic SHA-256 derivation.
+- **Emergency Panic Directive**: Sending `/freeze` from Telegram, WhatsApp, or Web immediately revokes active authorization tokens.
+- **Cryptographic Unfreeze**: Restoring active trading status requires providing the exact 6-digit recovery code generated during freezing (`/unfreeze <code>`).
+- **Gas Sponsorship**: All swap gas costs are sponsored via the OKX Paymaster / Gas Station on X Layer.

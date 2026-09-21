@@ -5,7 +5,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Internals & Protocol Architecture | Meirei Docs",
-  description: "Deep dive into the execution engine, OKX DEX router, database models, and mathematical rebalance engine.",
+  description: "Deep dive into the execution engine, OKX DEX router, zero-database security models, and mathematical rebalance engine.",
 };
 
 export default function InternalsPage() {
@@ -21,16 +21,107 @@ export default function InternalsPage() {
               <span>Internals</span>
             </div>
             <h1 className="font-display text-4xl font-bold tracking-tight text-ink-950 dark:text-ink-50 sm:text-5xl">
-              System Internals & Architecture
+              System Internals &amp; Rendered Architecture
             </h1>
             <p className="mt-3 max-w-2xl text-base text-ink-700 dark:text-ink-300 sm:text-lg">
-              Teardown of the Meirei on-chain execution pipeline, convex rebalance optimizer, and OKX DEX routing on X Layer (chain 196).
+              Visual teardown of the Meirei on-chain execution pipeline, convex rebalance optimizer, and OKX DEX routing on X Layer (chain 196).
             </p>
           </div>
         </div>
 
         <div className="mx-auto max-w-4xl px-6 py-14 sm:px-12 space-y-12">
-          {/* Architecture Pipeline */}
+          {/* Visual Rendered Architecture Map */}
+          <section className="space-y-6 rounded-2xl border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-100 p-6 sm:p-8 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-accent-700 dark:text-accent-400">
+                  Rendered Flow Diagram
+                </span>
+                <h2 className="font-display text-2xl font-bold text-ink-950 dark:text-ink-50 mt-1">
+                  Full End-to-End System Topology
+                </h2>
+              </div>
+              <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 px-3 py-1 font-mono text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                OKX X Layer (Chain 196)
+              </span>
+            </div>
+
+            {/* Rendered Pipeline Diagram Box */}
+            <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-[#0B0E14] p-5 text-white shadow-md">
+              <div className="grid gap-4 sm:grid-cols-4 text-xs font-mono">
+                {/* Step 1 */}
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/90 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                    <span className="font-bold text-accent-400">01. INGESTION</span>
+                    <span>Chat / Web</span>
+                  </div>
+                  <p className="font-bold text-white text-sm">Client Channels</p>
+                  <ul className="text-zinc-400 space-y-1 text-[11px]">
+                    <li>• Telegram Bot (@MeireiXLayerBot)</li>
+                    <li>• WhatsApp Cloud API</li>
+                    <li>• Trading Web Terminal</li>
+                    <li>• OKX Wallet Bridge</li>
+                  </ul>
+                </div>
+
+                {/* Step 2 */}
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/90 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                    <span className="font-bold text-amber-400">02. SECURITY</span>
+                    <span>Zero Database</span>
+                  </div>
+                  <p className="font-bold text-white text-sm">In-Memory Gateway</p>
+                  <ul className="text-zinc-400 space-y-1 text-[11px]">
+                    <li>• SHA-256 Identity Anchor</li>
+                    <li>• Token-Bucket Rate Limiter</li>
+                    <li>• Idempotency Nonce Guard</li>
+                    <li>• /freeze Circuit Breaker</li>
+                  </ul>
+                </div>
+
+                {/* Step 3 */}
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/90 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                    <span className="font-bold text-emerald-400">03. MANDATE</span>
+                    <span>Onchain OS</span>
+                  </div>
+                  <p className="font-bold text-white text-sm">Optimizer &amp; 2FA</p>
+                  <ul className="text-zinc-400 space-y-1 text-[11px]">
+                    <li>• Natural-Language NLP</li>
+                    <li>• Convex Diff Engine</li>
+                    <li>• 6-Digit OTP / WebAuthn</li>
+                    <li>• Constant-Time Timing Check</li>
+                  </ul>
+                </div>
+
+                {/* Step 4 */}
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900/90 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                    <span className="font-bold text-cyan-400">04. EXECUTE</span>
+                    <span>X Layer 196</span>
+                  </div>
+                  <p className="font-bold text-white text-sm">OKX DEX Router</p>
+                  <ul className="text-zinc-400 space-y-1 text-[11px]">
+                    <li>• 8 Allowlisted xStocks</li>
+                    <li>• Multi-Pool Aggregation</li>
+                    <li>• Sponsored Paymaster Gas</li>
+                    <li>• Real-Time Tx Explorer Link</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Data Flow Direction Indicators */}
+              <div className="mt-4 pt-4 border-t border-zinc-800/80 flex flex-wrap items-center justify-between text-[11px] font-mono text-zinc-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Direction: Natural Language Prompt → In-Memory 2FA → Atomic OKX DEX Swaps → Verified X Layer Receipt</span>
+                </span>
+                <span className="text-zinc-500 font-bold">100% Non-Custodial</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Architecture Pipeline Stages */}
           <section className="space-y-4 rounded-2xl border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-100 p-6 sm:p-8 shadow-xs">
             <h2 className="font-display text-2xl font-bold text-ink-950 dark:text-ink-50">1. Autonomous Execution Pipeline</h2>
             <p className="text-ink-700 dark:text-ink-300 leading-relaxed">
@@ -79,17 +170,17 @@ subject to:
             </p>
           </section>
 
-          {/* Database Models */}
+          {/* Zero-Database Architecture */}
           <section className="space-y-4 rounded-2xl border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-100 p-6 sm:p-8 shadow-xs">
-            <h2 className="font-display text-2xl font-bold text-ink-950 dark:text-ink-50">3. Persistence Schema (Migration 0029)</h2>
+            <h2 className="font-display text-2xl font-bold text-ink-950 dark:text-ink-50">3. Zero-Database In-Memory State &amp; Cryptographic Enclaves</h2>
             <p className="text-ink-700 dark:text-ink-300 leading-relaxed">
-              Meirei persists on-chain users, mandates, and execution receipts using PostgreSQL:
+              Meirei is engineered with a strict zero-database requirement. All user identity derivation, rate-limiting buckets, idempotency hashes, and 2FA challenge nonces reside in deterministic in-memory caches and client-side WebAuthn hardware enclaves.
             </p>
             <ul className="list-disc pl-6 space-y-2 text-sm text-ink-700 dark:text-ink-300">
-              <li><code>meirei_users</code>: 0x-prefixed 40-byte hex EVM wallet addresses mapped to external chat handles.</li>
-              <li><code>meirei_mandates</code>: Mandate target weights JSON, frequency, cash symbol, rebalance drift tolerance.</li>
-              <li><code>meirei_executions</code>: Transaction hash array on X Layer, notional USD total, protocol fee receipts.</li>
-              <li><code>meirei_portfolio_snapshots</code>: Historical point-in-time balance and net asset value snapshots.</li>
+              <li><strong>Deterministic User Profiles:</strong> User identities are derived from verified email and messaging channel identifiers using SHA-256 digests.</li>
+              <li><strong>Zero Server-Held Private Keys:</strong> Transactions are signed client-side via WebAuthn hardware passkeys or user-connected Web3 wallets.</li>
+              <li><strong>Live On-Chain State:</strong> Balances, allowances, and swap execution receipts are queried and verified directly against OKX X Layer Mainnet (Chain ID 196).</li>
+              <li><strong>In-Memory Idempotency:</strong> Webhook deliveries and trade requests maintain short-lived cryptographic hash sets to prevent duplicate operations.</li>
             </ul>
           </section>
 
@@ -97,7 +188,7 @@ subject to:
           <section className="space-y-4 rounded-2xl border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-100 p-6 sm:p-8 shadow-xs">
             <h2 className="font-display text-2xl font-bold text-ink-950 dark:text-ink-50">4. Emergency Panic Circuit Breaker</h2>
             <p className="text-ink-700 dark:text-ink-300 leading-relaxed">
-              If a client detects compromised communication credentials, they can broadcast the panic freeze directive (<code>/api/panic/freeze</code>). This triggers an immediate system freeze for that wallet address, revoking all active 2FA authorization tokens and rejecting any pending mandate execution until manual identity unfreeze is verified.
+              If a client detects compromised communication credentials, they can broadcast the panic freeze directive (<code>/freeze</code>). This triggers an immediate in-memory freeze for that profile, revoking all active 2FA authorization tokens and rejecting any pending mandate execution until manual identity unfreeze is verified via the 6-digit recovery code (<code>/unfreeze &lt;code&gt;</code>).
             </p>
           </section>
         </div>

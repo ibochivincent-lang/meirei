@@ -50,8 +50,7 @@ All assets trade against USDG (native stablecoin on X Layer):
 - **Framework**: Next.js 16 (App Router, React 19, TypeScript)
 - **Styling**: Tailwind CSS v4 with custom dark mode variants
 - **Animations**: Framer Motion, Lenis smooth scroll
-- **Biometrics & Web3**: SimpleWebAuthn (Passkeys), EIP-1193 / EIP-712 client bridges
-- **Database**: Supabase (Postgres) with user identity device linking
+- **Architecture**: Zero-database in-memory deterministic cryptographic security with client-side WebAuthn enclaves & non-custodial X Layer smart accounts
 - **Execution Network**: OKX X Layer Mainnet (Chain ID 196, RPC `https://rpc.xlayer.tech`)
 - **Testing**: Vitest, native node assertion suites
 

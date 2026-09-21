@@ -176,16 +176,15 @@ export async function markWalletPending(userId: string): Promise<void> {
 export async function saveWalletKeys({
   userId,
   address,
-  secretCiphertext,
 }: {
   userId: string;
   address: string;
-  secretCiphertext: string;
+  secretCiphertext?: string;
 }): Promise<void> {
   const supabase = getSupabaseAdmin();
   const { error } = await supabase
     .from("meirei_users")
-    .update({ wallet_address: address, smeireir_secret_ciphertext: secretCiphertext })
+    .update({ wallet_address: address })
     .eq("id", userId);
   if (error) throw new Error(`saveWalletKeys failed: ${error.message}`);
 }

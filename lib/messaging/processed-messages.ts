@@ -10,14 +10,8 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
  * user can hold several at a time, which means nothing downstream can tell a
  * duplicate from a deliberate second send.
  *
- * The same shape as lib/wallet/smeireir-stream.ts's operation-claim helpers
- * (formerly lib/circle/processed-notifications.ts, for Circle's webhooks),
- * which has been correct in production since. The two are deliberately
- * separate modules over separate tables rather than one generic helper: the
- * key formats differ, the retention differs, and fusing them would couple
- * the money path's idempotency to the chat path's.
- *
- * See migrations/0013_inbound_message_idempotency.sql.
+ * Built with dedicated message deduplication helpers to ensure all chat
+ * webhooks remain idempotent across retried delivery attempts.
  */
 
 const TABLE = "meirei_processed_message";

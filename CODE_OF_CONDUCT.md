@@ -3,7 +3,7 @@
 ## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in
-the tella community a harassment-free experience for everyone, regardless
+the Meirei community a harassment-free experience for everyone, regardless
 of age, body size, visible or invisible disability, ethnicity, sex
 characteristics, gender identity and expression, level of experience,
 education, socio-economic status, nationality, personal appearance, race,
@@ -51,7 +51,7 @@ spaces.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the maintainers via a
-[GitHub security advisory](https://github.com/tella-cash/tella-cash/security/advisories/new)
+[GitHub security advisory](https://github.com/ibochivincent-lang/meirei/security/advisories/new)
 or a private message to a maintainer. All complaints will be reviewed and
 investigated promptly and fairly.
 

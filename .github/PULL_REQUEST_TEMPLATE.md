@@ -32,18 +32,18 @@ backticks, symbols with file_path:line_number where it helps.
 
 <!--
 At minimum: the command(s) you ran, and any manual verification — especially
-if this touches a real send, a real Stellar transaction, or a webhook/worker.
+if this touches a real swap, a real OKX X Layer transaction, or a bot webhook.
 -->
 
 - [ ] `npx tsc --noEmit` — no errors
 - [ ] `pnpm lint` — no new warnings
-- [ ] `pnpm test` — passes; new behaviour has a test
+- [ ] `pnpm test` / `npm run test:unit` — passes; new behaviour has a test
 - [ ] `pnpm build` — passes
 
 **Manual verification** (if applicable)
 
-<!-- e.g. "Sent 5 USDC testnet-to-testnet via the WhatsApp sandbox, confirmed
-via PIN, received the receipt with a working explorer link." -->
+<!-- e.g. "Executed 100 USDG rebalance on X Layer via Telegram bot, confirmed
+via OTP 2FA, received receipt with live explorer link." -->
 
 -
 
@@ -57,17 +57,15 @@ via PIN, received the receipt with a working explorer link." -->
 **Money & data integrity**
 
 - [ ] No mock, stub, or hardcoded value added to a production code path
-- [ ] Any new failure path on the send/wallet code is classified as
-      **definite** or **ambiguous** (never guessed) — see
-      `lib/sends/execute.ts`'s `isAmbiguousFailure`
-- [ ] Any new check that can't complete (DB error, unreachable API) **fails
+- [ ] Any new failure path on the swap/wallet code is classified as
+      **definite** or **ambiguous** (never guessed)
+- [ ] Any new check that can't complete (unreachable RPC, API error) **fails
       closed** — refuses rather than allows
 
 **Security**
 
-- [ ] No secret logged (wallet secrets, PINs, tokens)
+- [ ] No secret logged (wallet private keys, OTP secrets, API tokens)
 - [ ] No new/changed internal endpoint reachable without its auth check
-      (cron secret, stream-worker secret, admin allowlist)
 - [ ] New env var → added to `.env.example` with a comment, and to the
       README's env table if it's commonly needed
 
@@ -75,8 +73,7 @@ via PIN, received the receipt with a working explorer link." -->
 
 - [ ] User-facing behaviour change → `CHANGELOG.md` entry under
       `[Unreleased]`
-- [ ] Schema change → a new numbered file in `migrations/`, documented in
-      `migrations/README.md`
+- [ ] Architecture or protocol change documented in `docs/`
 
 ## Breaking changes
 
