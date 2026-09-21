@@ -27,6 +27,12 @@ export interface FreezeResult {
   changed: boolean;
 }
 
+const inMemoryFrozen = new Map<string, { source: FreezeSource; reason?: string; frozenAt: string }>();
+
+export function isAccountFrozenInMemory(userId: string): boolean {
+  return inMemoryFrozen.has(userId);
+}
+
 export async function freezeAccount({
   userId,
   source,
@@ -36,6 +42,17 @@ export async function freezeAccount({
   source: FreezeSource;
   reason?: string;
 }): Promise<FreezeResult> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const wasFrozen = inMemoryFrozen.has(userId);
+    inMemoryFrozen.set(userId, {
+      source,
+      reason,
+      frozenAt: new Date().toISOString(),
+    });
+    console.log("[freeze] account frozen (in-memory mode)", { userId, source, changed: !wasFrozen });
+    return { cancelledSends: 0, cancelledHolds: 0, changed: !wasFrozen };
+  }
+
   const supabase = getSupabaseAdmin();
 
   // Conditional on frozen_at being null so two freezes racing (a chat
@@ -189,6 +206,13 @@ export async function unfreezeAccount({
   userId: string;
   source: FreezeSource;
 }): Promise<boolean> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const wasFrozen = inMemoryFrozen.has(userId);
+    inMemoryFrozen.delete(userId);
+    console.log("[freeze] account unfrozen (in-memory mode)", { userId, source, changed: wasFrozen });
+    return wasFrozen;
+  }
+
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase

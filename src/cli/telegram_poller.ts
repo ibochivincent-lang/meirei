@@ -7,6 +7,15 @@
  * without requiring public HTTPS webhook tunnels or ngrok.
  */
 
+if (typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile(".env.local");
+  } catch {}
+  try {
+    process.loadEnvFile(".env");
+  } catch {}
+}
+
 import { sendTelegramMessage } from "../../lib/telegram/client";
 
 const SERVER_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

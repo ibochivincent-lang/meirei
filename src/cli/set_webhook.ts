@@ -8,6 +8,15 @@
  *   npm run bot:webhook https://meirei.vercel.app 123456789:ABCdefGhIJK...
  */
 
+if (typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile(".env.local");
+  } catch {}
+  try {
+    process.loadEnvFile(".env");
+  } catch {}
+}
+
 import { setTelegramWebhook, getTelegramWebhookInfo } from "../../lib/telegram/client";
 
 async function main() {
