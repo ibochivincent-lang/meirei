@@ -12,7 +12,12 @@ import { sendWhatsAppMessage } from "@/lib/meta/client";
 export const dynamic = "force-dynamic";
 
 const WHATSAPP_VERIFY_TOKEN = process.env.META_WHATSAPP_VERIFY_TOKEN || process.env.WHATSAPP_VERIFY_TOKEN || "meirei_wa_verify_token";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://meirei.vercel.app";
+const RAW_APP_URL = process.env.NEXT_PUBLIC_APP_URL || "";
+// Strictly enforce https://meirei-rho.vercel.app as the canonical project domain
+const APP_URL =
+  RAW_APP_URL.startsWith("https://") && !RAW_APP_URL.includes("meirei.vercel.app")
+    ? RAW_APP_URL.replace(/\/+$/, "")
+    : "https://meirei-rho.vercel.app";
 
 // Active in-memory tracking for channel unfreeze challenges
 const waUnfreezeChallenges = new Map<string, string>();
@@ -128,26 +133,72 @@ export async function POST(req: NextRequest) {
       });
     };
 
-    // Command: /start or /help
-    if (lower === "help" || lower === "/help" || lower === "/start" || lower === "menu") {
-      let welcome = `MEIREI | YOUR INTERACTIVE OKX X LAYER AGENT\n\n`;
-      welcome += `Network: OKX X Layer Mainnet (Chain ID 196)\n`;
-      welcome += `Wallet: ${shortAddr}\n`;
-      welcome += `Account: ${user.email}\n\n`;
-      welcome += `Available Commands:\n`;
-      welcome += `- Prices: "Price of NVDAx", "Quote TSLAx"\n`;
-      welcome += `- Market List: "stocks"\n`;
-      welcome += `- Comparison: "Compare NVDAx vs MSFTx"\n`;
-      welcome += `- Unit Calculator: "Calculate $250 in NVDAx"\n`;
-      welcome += `- Portfolio: "balance"\n`;
-      welcome += `- Connect OKX Wallet: "connect"\n`;
-      welcome += `- Mandates: "Allocate 40% NVDAx, 40% MSFTx, 20% USDG for $500"\n`;
-      welcome += `- Circuit Breaker: "freeze" and "unfreeze"\n`;
-      welcome += `- Project Guide: "about"\n\n`;
-      welcome += `Web Terminal: ${APP_URL}/app\n`;
-      welcome += `Link Wallet: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}`;
+    // 0a. Reciprocal Greetings Handler (Hello, Good morning, Good afternoon, etc.)
+    const isGreeting =
+      lower === "hello" ||
+      lower === "hi" ||
+      lower === "hey" ||
+      lower === "sup" ||
+      lower === "yo" ||
+      lower.includes("good morning") ||
+      lower.includes("good afternoon") ||
+      lower.includes("good evening") ||
+      lower.includes("good day") ||
+      lower === "morning" ||
+      lower === "afternoon" ||
+      lower === "evening" ||
+      lower.includes("how do i get started") ||
+      lower.includes("how to get started") ||
+      lower.includes("get started") ||
+      lower.includes("getting started") ||
+      lower === "/start" ||
+      lower === "start";
 
-      return await sendReply(welcome);
+    if (isGreeting) {
+      let salutation = "Hello!";
+      if (lower.includes("morning")) salutation = "Good morning!";
+      else if (lower.includes("afternoon")) salutation = "Good afternoon!";
+      else if (lower.includes("evening")) salutation = "Good evening!";
+      else if (lower === "hey" || lower.startsWith("hey ")) salutation = "Hey!";
+
+      let reply = `${salutation} I am Meirei, your interactive OKX X Layer agent.\n\n`;
+      reply += `Do you want to know what I can do?\n`;
+      reply += `Reply "Yes" to find out.`;
+
+      return await sendReply(reply);
+    }
+
+    // 0b. Affirmative Response ("Yes", "Sure", "Tell me") to greeting
+    if (
+      lower === "yes" ||
+      lower === "yep" ||
+      lower === "yeah" ||
+      lower === "sure" ||
+      lower === "ok" ||
+      lower === "okay" ||
+      lower === "tell me" ||
+      lower === "what can you do" ||
+      lower === "what can u do" ||
+      lower === "show me" ||
+      lower === "continue" ||
+      lower === "options" ||
+      lower === "help" ||
+      lower === "/help" ||
+      lower === "menu" ||
+      lower === "/menu"
+    ) {
+      let reply = `Okay! Here is what I can do:\n\n`;
+      reply += `1. View Live Stocks:\n   Reply: "stocks"\n\n`;
+      reply += `2. Check Single Stock Price:\n   Reply: "Price of NVDAx" or "Quote AAPLx"\n\n`;
+      reply += `3. Calculate Units:\n   Reply: "Calculate $500 in TSLAx"\n\n`;
+      reply += `4. Compare Two Stocks:\n   Reply: "Compare NVDAx vs MSFTx"\n\n`;
+      reply += `5. Check Portfolio Balance:\n   Reply: "balance"\n\n`;
+      reply += `6. Connect OKX Wallet:\n   Reply: "connect"\n   Link: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}\n\n`;
+      reply += `7. Emergency Situation:\n   Reply "freeze" or "unfreeze"\n\n`;
+      reply += `8. Who We Are & What We Do:\n   Reply: "about"\n\n`;
+      reply += `Open Web Terminal:\n${APP_URL}/app`;
+
+      return await sendReply(reply);
     }
 
     // Command: /about or /guide (Who we are, what we do, and getting started)

@@ -444,6 +444,78 @@ async function runTests() {
     failed++;
   }
 
+  // Test 17: WhatsApp POST reciprocal greeting "Good morning"
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "Good morning",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && data.ok && reply.includes("Good morning!") && reply.includes("interactive OKX X Layer agent") && reply.includes("Yes")) {
+      console.log("PASS: WhatsApp POST reciprocal greeting ('Good morning')");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp POST reciprocal greeting:", res.status, reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 17:", err.message);
+    failed++;
+  }
+
+  // Test 18: WhatsApp POST affirmative response "Yes"
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "Yes",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && data.ok && reply.includes("Okay! Here is what I can do") && reply.includes("stocks") && reply.includes("connect")) {
+      console.log("PASS: WhatsApp POST affirmative response ('Yes')");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp POST affirmative response:", res.status, reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 18:", err.message);
+    failed++;
+  }
+
+  // Test 19: Verify Canonical Domain in all outbound links
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "connect",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && reply.includes("https://meirei-rho.vercel.app") && !reply.includes("https://meirei.vercel.app") && !reply.includes("http://localhost:3000")) {
+      console.log("PASS: WhatsApp link points strictly to https://meirei-rho.vercel.app");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp canonical URL verification failed:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 19:", err.message);
+    failed++;
+  }
+
   console.log(`\n================================`);
   console.log(`TOTAL PASSED: ${passed}`);
   console.log(`TOTAL FAILED: ${failed}`);
