@@ -7,7 +7,7 @@ import { checkRateLimit, getClientIp } from "@/lib/security/rate_limiter";
 import { validatePayloadSize } from "@/lib/security/payload_guard";
 import { freezeAccount, unfreezeAccount } from "@/lib/users/freeze";
 import { generateOtpChallenge, verifyOtpChallenge } from "@/lib/auth/otp";
-import { sendWhatsAppMessage } from "@/lib/meta/client";
+import { sendWhatsAppMessage, markWhatsAppMessageRead } from "@/lib/meta/client";
 import { downloadWhatsAppAudio, transcribeAudioBuffer } from "@/lib/voice/transcribe";
 
 export const dynamic = "force-dynamic";
@@ -111,6 +111,9 @@ export async function POST(req: NextRequest) {
         } else if (msg.type === "audio" || msg.type === "voice" || msg.audio || msg.voice) {
           // Voice note audio stream processing
           isVoiceNote = true;
+          if (msg.id) {
+            void markWhatsAppMessageRead(msg.id);
+          }
           const audioObj = msg.audio || msg.voice;
           const mediaId = audioObj?.id;
           const mimeType = audioObj?.mime_type || "audio/ogg";

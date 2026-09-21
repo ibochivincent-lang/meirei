@@ -124,6 +124,33 @@ export async function sendWhatsAppMessage(
 export const sendMetaWhatsAppMessage = sendWhatsAppMessage;
 
 /**
+ * Mark an incoming WhatsApp message as read to show double blue checkmarks instantly.
+ */
+export async function markWhatsAppMessageRead(messageId: string): Promise<boolean> {
+  const { token, phoneId } = getMetaConfig();
+  if (!token || !phoneId || !messageId) return false;
+
+  try {
+    const endpoint = `https://graph.facebook.com/v21.0/${phoneId}/messages`;
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        status: "read",
+        message_id: messageId,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Send image via Meta WhatsApp Cloud API.
  */
 export async function sendWhatsAppImage({ to, imageUrl, caption }: ImageArgs): Promise<string> {
