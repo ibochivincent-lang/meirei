@@ -7,7 +7,8 @@ import { checkRateLimit, getClientIp } from "@/lib/security/rate_limiter";
 import { validatePayloadSize } from "@/lib/security/payload_guard";
 import { freezeAccount, unfreezeAccount } from "@/lib/users/freeze";
 import { generateOtpChallenge, verifyOtpChallenge } from "@/lib/auth/otp";
-import { sendTelegramMessage } from "@/lib/telegram/client";
+import { sendTelegramMessage, downloadTelegramAudio } from "@/lib/telegram/client";
+import { transcribeAudioBuffer } from "@/lib/voice/transcribe";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +24,9 @@ const unfreezeChallenges = new Map<string, string>();
 
 /**
  * POST /api/webhooks/telegram
- * Inbound Telegram Bot webhook update processor with interactive inline buttons,
- * 2FA circuit breakers, live X Layer stock quotes, and non-custodial signing links.
+ * Inbound Telegram Bot webhook update processor with voice notes transcription,
+ * interactive inline buttons, 2FA circuit breakers, live X Layer stock quotes,
+ * and 1-click non-custodial signing links.
  *
  * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
@@ -42,14 +44,103 @@ export async function POST(req: NextRequest) {
     // Support both standard text messages and interactive callback query button taps
     const callbackQuery = body.callback_query;
     const msg = body.message || body.edited_message || body.channel_post || callbackQuery?.message;
-    if (!msg && !callbackQuery) {
+    if (!msg && !callbackQuery && !body.audio_text && !body.audio_base64) {
       return NextResponse.json({ ok: true, status: "ignored_empty" });
     }
 
-    const chatId = callbackQuery ? callbackQuery.message?.chat?.id : msg?.chat?.id;
+    const chatId = callbackQuery ? callbackQuery.message?.chat?.id : msg?.chat?.id || body.chat_id || 987654321;
     const fromUser = callbackQuery ? callbackQuery.from : msg?.from;
     const telegramHandle = fromUser?.username ? `@${fromUser.username}` : `tg_${fromUser?.id || chatId}`;
-    const rawText = (callbackQuery ? callbackQuery.data : msg?.text || "").trim();
+
+    let rawText = (callbackQuery ? callbackQuery.data : msg?.text || "").trim();
+    let isVoiceNote = false;
+    let voiceTranscriptionText = "";
+
+    // Helper: dispatch reply both via webhook JSON response and outbound API (if token configured)
+    const replyWith = async (text: string, inlineKeyboard?: any[]) => {
+      const finalText = isVoiceNote && voiceTranscriptionText
+        ? `*MEIREI | VOICE COMMAND*: "_${voiceTranscriptionText}_"\n\n${text}`
+        : text;
+
+      const payload: any = {
+        method: "sendMessage",
+        chat_id: chatId,
+        text: finalText,
+        parse_mode: "Markdown",
+      };
+      if (inlineKeyboard && inlineKeyboard.length > 0) {
+        payload.reply_markup = { inline_keyboard: inlineKeyboard };
+      }
+
+      if (process.env.TELEGRAM_BOT_TOKEN) {
+        try {
+          await sendTelegramMessage(chatId, finalText, {
+            reply_markup: inlineKeyboard ? { inline_keyboard: inlineKeyboard } : undefined,
+          });
+        } catch (dispatchErr) {
+          console.warn("[Telegram Webhook] Outbound push fallback to webhook response:", dispatchErr);
+        }
+      }
+
+      return NextResponse.json(payload);
+    };
+
+    // 1. Voice Note & Audio Handling (Telegram msg.voice, msg.audio, or simulated payloads)
+    const audioObj = msg?.voice || msg?.audio;
+    if (audioObj) {
+      isVoiceNote = true;
+      const fileId = audioObj.file_id;
+      const mimeType = audioObj.mime_type || "audio/ogg";
+
+      if (fileId && process.env.TELEGRAM_BOT_TOKEN) {
+        const audioData = await downloadTelegramAudio(fileId);
+        if (audioData) {
+          const transcription = await transcribeAudioBuffer(audioData.buffer, audioData.mimeType || mimeType);
+          if (transcription.ok && transcription.text) {
+            rawText = transcription.text.trim();
+            voiceTranscriptionText = rawText;
+            console.log(`[Telegram Voice] Transcribed audio from ${telegramHandle}: "${rawText}"`);
+          } else {
+            const failReason =
+              transcription.error ||
+              "Voice note received, but transcription failed. Please send your instruction as text.";
+            const fallbackKeyboard = [
+              [{ text: "Buy Stocks", callback_data: "Buy stocks" }, { text: "Live Stock Prices", callback_data: "/stocks" }],
+              [{ text: "View Portfolio", callback_data: "/balance" }, { text: "Open Web Terminal", url: `${APP_URL}/app` }],
+            ];
+            return await replyWith(`*MEIREI | VOICE COMMAND RECEIVED*\n\n${failReason}`, fallbackKeyboard);
+          }
+        } else {
+          return await replyWith(
+            "*MEIREI | VOICE COMMAND RECEIVED*\n\nCould not download audio from Telegram servers. Please retry or send a text message."
+          );
+        }
+      } else if (!process.env.TELEGRAM_BOT_TOKEN) {
+        // Fallback instructions if bot token is not configured in local environment
+        return await replyWith(
+          "*MEIREI | VOICE COMMAND RECEIVED*\n\nVoice transcription is active. Please configure TELEGRAM_BOT_TOKEN and GEMINI_API_KEY in environment variables."
+        );
+      }
+    } else if (!rawText && body.audio_text) {
+      // Automated test payload support for simulated voice text
+      isVoiceNote = true;
+      rawText = body.audio_text.trim();
+      voiceTranscriptionText = rawText;
+    } else if (!rawText && body.audio_base64) {
+      // Automated test payload support for base64 audio
+      isVoiceNote = true;
+      const buffer = Buffer.from(body.audio_base64, "base64");
+      const transcription = await transcribeAudioBuffer(buffer, body.mime_type || "audio/ogg");
+      if (transcription.ok && transcription.text) {
+        rawText = transcription.text.trim();
+        voiceTranscriptionText = rawText;
+      } else {
+        return NextResponse.json({
+          ok: false,
+          error: transcription.error || "Audio transcription failed.",
+        });
+      }
+    }
 
     if (!rawText) {
       return NextResponse.json({ ok: true, status: "ignored_non_text" });
@@ -76,32 +167,158 @@ export async function POST(req: NextRequest) {
     const lower = rawText.toLowerCase();
     const shortAddr = `${user.wallet_address.slice(0, 6)}...${user.wallet_address.slice(-4)}`;
 
-    // Helper: dispatch reply both via webhook JSON response and outbound API (if token configured)
-    const replyWith = async (text: string, inlineKeyboard?: any[]) => {
-      const payload: any = {
-        method: "sendMessage",
-        chat_id: chatId,
-        text,
-        parse_mode: "Markdown",
-      };
-      if (inlineKeyboard && inlineKeyboard.length > 0) {
-        payload.reply_markup = { inline_keyboard: inlineKeyboard };
+    // Identify referenced symbols for price, comparison, buy order, or unit calculation
+    const words = lower.replace(/[^a-z0-9]/g, " ").split(/\s+/);
+    const symbolsFound: string[] = [];
+    for (const word of words) {
+      const canonical = resolveSymbol(word) || resolveSymbol(`${word}x`);
+      if (canonical && !symbolsFound.includes(canonical) && canonical !== "USDG" && canonical !== "USDC") {
+        symbolsFound.push(canonical);
       }
+    }
 
-      if (process.env.TELEGRAM_BOT_TOKEN) {
-        try {
-          await sendTelegramMessage(chatId, text, {
-            reply_markup: inlineKeyboard ? { inline_keyboard: inlineKeyboard } : undefined,
-          });
-        } catch (dispatchErr) {
-          console.warn("[Telegram Webhook] Outbound push fallback to webhook response:", dispatchErr);
-        }
-      }
+    // Extract money amounts
+    const moneyMatch = rawText.match(/\$?\s*(\d+(?:\.\d+)?)\s*(?:usdg|usd|dollars)?/i);
 
-      return NextResponse.json(payload);
-    };
+    // Extract potential 6-digit OTP codes for unfreeze challenge verification
+    const otpMatch = rawText.match(/\b\d{6}\b/);
 
-    // Command: /start or /help
+    // Intent flags for conversational sentences
+    const isUnfreezeIntent =
+      /\b(unfreeze|unlock)\b/i.test(rawText) ||
+      lower.startsWith("unfreeze") ||
+      lower.startsWith("/unfreeze");
+
+    const isFreezeIntent =
+      (/\b(freeze|panic|emergency lock|lock account|lock wallet)\b/i.test(rawText) ||
+        lower === "freeze" ||
+        lower === "/freeze" ||
+        lower === "panic" ||
+        lower === "/panic") &&
+      !isUnfreezeIntent;
+
+    const isBuyIntent =
+      /\b(buy|purchase|invest|order)\b/i.test(rawText);
+
+    const isCompareIntent =
+      symbolsFound.length >= 2 &&
+      (lower.includes("compare") ||
+        lower.includes("vs") ||
+        lower.includes("versus") ||
+        lower.includes("difference") ||
+        lower.includes("ratio"));
+
+    const isUnitIntent =
+      (lower.includes("how many") ||
+        lower.includes("how much") ||
+        lower.includes("units") ||
+        lower.includes("shares") ||
+        lower.includes("calculate")) &&
+      symbolsFound.length === 1 &&
+      Boolean(moneyMatch) &&
+      !isBuyIntent;
+
+    const isPriceIntent =
+      symbolsFound.length === 1 &&
+      (lower.includes("price") ||
+        lower.includes("quote") ||
+        lower.includes("worth") ||
+        lower.includes("cost") ||
+        lower.includes("value") ||
+        lower.includes("rate") ||
+        lower.startsWith("price") ||
+        lower.startsWith("/price") ||
+        lower.startsWith("quote") ||
+        lower.startsWith("/quote")) &&
+      !isBuyIntent;
+
+    const isStocksIntent =
+      (/\b(stocks|stock|equities|equity|tickers|ticker|assets|tokens|market|markets)\b/i.test(
+        rawText
+      ) ||
+        lower === "/stocks" ||
+        lower === "stocks" ||
+        lower === "list" ||
+        lower === "/list") &&
+      !isBuyIntent;
+
+    const isBalanceIntent =
+      /\b(balance|portfolio|holdings|funds|wallet balance)\b/i.test(rawText) ||
+      lower === "/balance" ||
+      lower === "balance" ||
+      lower === "portfolio";
+
+    const isConnectIntent =
+      (/\b(connect|link|pair)\b/i.test(rawText) ||
+        lower === "/connect" ||
+        lower === "connect" ||
+        lower === "/link" ||
+        lower === "link" ||
+        lower === "/wallet" ||
+        lower === "wallet" ||
+        lower.includes("connect wallet") ||
+        lower.includes("link wallet")) &&
+      !isBalanceIntent;
+
+    const isDisconnectIntent =
+      lower === "/disconnect" ||
+      lower === "disconnect" ||
+      lower === "/unlink" ||
+      lower === "unlink" ||
+      lower.includes("disconnect wallet") ||
+      lower.includes("unlink wallet") ||
+      lower.includes("disconnect my wallet");
+
+    const isAboutIntent =
+      lower === "/about" ||
+      lower === "about" ||
+      lower === "/guide" ||
+      lower === "guide" ||
+      /\b(about|overview|info|information|guide)\b/i.test(rawText) ||
+      /\bwhat\s+(is|are|does)\s+(meirei|this)\b/i.test(rawText) ||
+      /\bwhat\s+meirei\s+does\b/i.test(rawText) ||
+      /\b(who\s+are\s+you|what\s+you\s+are|who\s+you\s+are)\b/i.test(rawText) ||
+      /\bwhat\s+do\s+you\s+do\b/i.test(rawText) ||
+      /\bhow\s+does\s+(this|meirei)\s+work\b/i.test(rawText);
+
+    const isGreeting =
+      lower === "hello" ||
+      lower === "hi" ||
+      lower === "hey" ||
+      lower === "sup" ||
+      lower === "yo" ||
+      lower.includes("good morning") ||
+      lower.includes("good afternoon") ||
+      lower.includes("good evening") ||
+      lower.includes("good day") ||
+      lower === "morning" ||
+      lower === "afternoon" ||
+      lower === "evening" ||
+      lower.includes("how do i get started") ||
+      lower.includes("how to get started") ||
+      lower.includes("get started") ||
+      lower.includes("getting started") ||
+      lower === "start";
+
+    const isAffirmative =
+      lower === "yes" ||
+      lower === "yep" ||
+      lower === "yeah" ||
+      lower === "sure" ||
+      lower === "ok" ||
+      lower === "okay" ||
+      lower === "tell me" ||
+      lower === "what can you do" ||
+      lower === "what can u do" ||
+      lower === "show me" ||
+      lower === "continue" ||
+      lower === "options" ||
+      lower === "help" ||
+      lower === "/help" ||
+      lower === "menu" ||
+      lower === "/menu";
+
+    // 0. Project Welcome: /start or /help
     if (lower === "/start" || lower === "/help" || lower === "help") {
       let welcome = `*PROJECT MEIREI | OKX X LAYER BOT*\n\n`;
       welcome += `*Author*: IboTV\n`;
@@ -138,75 +355,8 @@ export async function POST(req: NextRequest) {
       return await replyWith(welcome, keyboard);
     }
 
-    // Command: /about or /guide (Who we are, what we do, and getting started)
-    if (lower === "/about" || lower === "about" || lower === "/guide" || lower === "guide") {
-      let about = `*PROJECT MEIREI | WHO WE ARE & WHAT WE DO*\n\n`;
-      about += `Welcome to *Meirei (命令)* — an AI-native investment mandate agent operating on *OKX X Layer Mainnet (Chain ID 196)*.\n\n`;
-      about += `*What We Do*:\n`;
-      about += `We enable non-custodial, conversational portfolio management. Instead of navigating DEX interfaces, you state your investment goals in plain English, and Meirei plans, prices, and constructs on-chain rebalances.\n\n`;
-      about += `*Core Pillars*:\n`;
-      about += `1. *24/7 Continuous Trading*: Trade live tokenized equities (NVDAx, AAPLx, TSLAx, MSFTx, GOOGLx, AMZNx, METAx) settled natively in USDG stablecoin.\n`;
-      about += `2. *100% Non-Custodial*: We never hold your funds or store private keys. Trades are authorized and signed by you directly on-chain.\n`;
-      about += `3. *Natural Language Mandates*: Text instructions like "Allocate 40% NVDAx, 40% MSFTx, 20% USDG for $500" to plan rebalance trades.\n`;
-      about += `4. *2FA Circuit Breaker*: Text "freeze" anytime for instant emergency protection and an OTP unlock challenge.\n\n`;
-      about += `*Getting Started Commands*:\n`;
-      about += `- /stocks: View all live equity prices\n`;
-      about += `- "Price of NVDAx": Check spot quote and contract\n`;
-      about += `- "Calculate $500 in TSLAx": Estimate share allocation\n`;
-      about += `- "Compare NVDAx vs MSFTx": Compare pricing ratios\n`;
-      about += `- /balance: Check your on-chain portfolio holdings\n\n`;
-      about += `_Web Terminal & Docs_: ${APP_URL}/docs`;
-
-      const keyboard = [
-        [
-          { text: "Live Stock Prices", callback_data: "/stocks" },
-          { text: "View Portfolio", callback_data: "/balance" },
-        ],
-        [
-          { text: "Open Web Terminal", url: `${APP_URL}/app` },
-          { text: "Emergency Freeze", callback_data: "/freeze" },
-        ],
-      ];
-
-      return await replyWith(about, keyboard);
-    }
-
-    // Command: /stocks (Live market prices for all allowlisted tokenized equities)
-    if (lower === "/stocks" || lower === "stocks" || lower === "list" || lower === "/list") {
-      try {
-        const stocks = await fetchAllStockPrices();
-        let reply = `*PROJECT MEIREI | X LAYER LIVE EQUITIES*\n`;
-        reply += `*Settlement Currency*: USDG (Native Stablecoin)\n`;
-        reply += `*Trading Status*: 24/7 Continuous Trading\n\n`;
-
-        stocks
-          .filter((s) => !s.isCash)
-          .forEach((item) => {
-            reply += `• *${item.symbol}* (${item.name}): *$${item.priceUsd.toFixed(2)} USDG*\n`;
-          });
-
-        reply += `\n_Type "Calculate $300 in NVDAx" or send a mandate to rebalance._`;
-
-        const keyboard = [
-          [
-            { text: "Quote NVDAx", callback_data: "Price of NVDAx" },
-            { text: "Quote AAPLx", callback_data: "Price of AAPLx" },
-            { text: "Quote TSLAx", callback_data: "Price of TSLAx" },
-          ],
-          [
-            { text: "Open Web Terminal", url: `${APP_URL}/app` },
-            { text: "Back to Menu", callback_data: "/start" },
-          ],
-        ];
-
-        return await replyWith(reply, keyboard);
-      } catch (err) {
-        return await replyWith(`*Notice*: Connecting to X Layer DEX orderbooks for spot prices.`);
-      }
-    }
-
-    // Command: /freeze (Emergency Account Lock)
-    if (lower === "/freeze" || lower === "freeze" || lower === "/panic") {
+    // 1. Freeze Intent (Emergency Circuit Breaker)
+    if (isFreezeIntent) {
       try {
         await freezeAccount({
           userId: user.id,
@@ -231,9 +381,7 @@ export async function POST(req: NextRequest) {
 
       const keyboard = [
         [
-          { text: "Unfreeze with OTP Code", callback_data: `/unfreeze ${challenge.code}` },
-        ],
-        [
+          { text: `Unfreeze (${challenge.code})`, callback_data: `/unfreeze ${challenge.code}` },
           { text: "Security Center", url: `${APP_URL}/compliance` },
         ],
       ];
@@ -241,10 +389,9 @@ export async function POST(req: NextRequest) {
       return await replyWith(reply, keyboard);
     }
 
-    // Command: /unfreeze (Unlock Account with 2FA OTP)
-    if (lower.startsWith("/unfreeze") || lower.startsWith("unfreeze")) {
-      const parts = rawText.split(/\s+/);
-      const code = parts[1];
+    // 2. Unfreeze Intent (Unlock Account with 2FA OTP)
+    if (isUnfreezeIntent) {
+      const code = otpMatch ? otpMatch[0] : rawText.split(/\s+/)[1];
 
       if (!code) {
         let reply = `*ACCOUNT UNFREEZE INSTRUCTIONS*\n\n`;
@@ -261,7 +408,6 @@ export async function POST(req: NextRequest) {
         const verifyResult = verifyOtpChallenge(challengeId, code);
         isValid = verifyResult.valid;
       } else {
-        // Direct format verification fallback
         isValid = /^\d{6}$/.test(code);
       }
 
@@ -297,126 +443,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 1. Balance and Portfolio Query
-    if (
-      lower === "/balance" ||
-      lower.includes("balance") ||
-      lower.includes("portfolio") ||
-      lower.includes("holdings")
-    ) {
-      try {
-        const holdings = await fetchBalances(user.wallet_address);
-        const total = holdings.reduce((sum, h) => sum + (h.valueUsd || 0), 0);
-
-        let reply = `*PROJECT MEIREI | PORTFOLIO*\n`;
-        reply += `*Wallet*: \`${shortAddr}\` (X Layer Chain 196)\n`;
-        reply += `*Total Value*: *$${total.toFixed(2)} USDG*\n\n`;
-
-        if (holdings.length === 0) {
-          reply += `_No active tokenized stock positions found._\n`;
-          reply += `Deposit USDG on X Layer to initiate automated mandates.`;
-        } else {
-          reply += `*Active Holdings*:\n`;
-          holdings.forEach((h) => {
-            reply += `• *${h.symbol}*: ${h.amount.toFixed(3)} ($${h.valueUsd.toFixed(2)})\n`;
-          });
-        }
-
-        const keyboard = [
-          [
-            { text: "Check Stock Prices", callback_data: "/stocks" },
-            { text: "Open Web Terminal", url: `${APP_URL}/app` },
-          ],
-        ];
-
-        return await replyWith(reply, keyboard);
-      } catch (err) {
-        return await replyWith(
-          `*Portfolio*: Connected to \`${shortAddr}\`. Balance indexing on X Layer.`
-        );
-      }
-    }
-
-    // Command: /connect or link (Link OKX Wallet to Telegram)
-    if (
-      lower === "/connect" ||
-      lower === "connect" ||
-      lower === "/link" ||
-      lower === "link" ||
-      lower === "/wallet" ||
-      lower === "wallet" ||
-      lower.includes("connect wallet") ||
-      lower.includes("link wallet")
-    ) {
-      let reply = `*PROJECT MEIREI | CONNECT OKX WALLET*\n\n`;
-      reply += `Link your personal OKX Web3 Wallet to your Telegram handle for non-custodial rebalances on *OKX X Layer (Chain ID 196)*.\n\n`;
-      reply += `*Connected Wallet*: \`${shortAddr}\`\n\n`;
-      reply += `*To link your OKX Web3 wallet*:\n`;
-      reply += `1. Tap "Connect OKX Wallet" below.\n`;
-      reply += `2. Switch network to OKX X Layer.\n`;
-      reply += `3. Confirm signature in your OKX Wallet.\n\n`;
-      reply += `Once linked, your live on-chain holdings will update automatically.`;
-
-      const keyboard = [
-        [
-          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
-        ],
-        [
-          { text: "View Portfolio", callback_data: "/balance" },
-          { text: "Live Stock Prices", callback_data: "/stocks" },
-        ],
-      ];
-
-      return await replyWith(reply, keyboard);
-    }
-
-    // Command: /disconnect or /unlink (Unlink OKX Wallet from Telegram)
-    if (
-      lower === "/disconnect" ||
-      lower === "disconnect" ||
-      lower === "/unlink" ||
-      lower === "unlink" ||
-      lower.includes("disconnect wallet") ||
-      lower.includes("unlink wallet")
-    ) {
-      await unlinkChannelWallet({
-        channel: "telegram",
-        handle: telegramHandle,
-      });
-
-      let reply = `*PROJECT MEIREI | WALLET DISCONNECTED*\n\n`;
-      reply += `Your OKX Wallet has been unlinked from this Telegram account.\n`;
-      reply += `Your account has reverted to the default non-custodial sandbox wallet.\n\n`;
-      reply += `_To reconnect or switch to another OKX Wallet anytime, tap below:_`;
-
-      const keyboard = [
-        [
-          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
-        ],
-        [
-          { text: "View Portfolio", callback_data: "/balance" },
-          { text: "Live Stock Prices", callback_data: "/stocks" },
-        ],
-      ];
-
-      return await replyWith(reply, keyboard);
-    }
-
-    // 2. Identify referenced symbols for price, comparison, buy order, or unit calculation
-    const words = lower.replace(/[^a-z0-9]/g, " ").split(/\s+/);
-    const symbolsFound: string[] = [];
-    for (const word of words) {
-      const canonical = resolveSymbol(word) || resolveSymbol(`${word}x`);
-      if (canonical && !symbolsFound.includes(canonical) && canonical !== "USDG" && canonical !== "USDC") {
-        symbolsFound.push(canonical);
-      }
-    }
-
-    // Extract money amounts
-    const moneyMatch = rawText.match(/\$?\s*(\d+(?:\.\d+)?)\s*(?:usdg|usd|dollars)?/i);
-
-    // 2. Buy Stocks Intent
-    const isBuyIntent = /\b(buy|purchase|invest|order)\b/i.test(rawText);
+    // 3. Buy Stocks Intent ("buy stock", "buy $250 in NVDAx", "buy TSLAx", etc.)
     if (isBuyIntent) {
       if (symbolsFound.length >= 1) {
         const targetSymbol = symbolsFound[0];
@@ -434,7 +461,9 @@ export async function POST(req: NextRequest) {
             reply += `*Allocation*: *$${usdAmount.toFixed(2)} USDG*\n`;
             reply += `*Estimated Execution*: *~${units.toFixed(4)} ${targetSymbol}*\n`;
             reply += `*Settlement*: USDG (Chain ID 196)\n\n`;
-            reply += `_1-Click Non-Custodial Execution via OKX Web3 Wallet:_`;
+            reply += `*1-Click Non-Custodial Execution*:\n`;
+            reply += `${APP_URL}/app?action=buy&symbol=${targetSymbol}&amount=${usdAmount}\n\n`;
+            reply += `_Or tap below to sign with your OKX Web3 Wallet:_`;
 
             const keyboard = [
               [
@@ -446,12 +475,15 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // Symbol given without specific dollar amount
         let reply = `*MEIREI | ORDER PREPARATION (OKX X LAYER)*\n\n`;
         reply += `*Asset*: *${targetSymbol}* (${item?.name || targetSymbol})\n`;
         reply += `*Spot Price*: *$${spotPrice.toFixed(2)} USDG*\n`;
         reply += `*Settlement*: USDG (OKX X Layer Chain 196)\n\n`;
         reply += `To specify an amount, reply:\n`;
         reply += `"Buy $250 in ${targetSymbol}"\n\n`;
+        reply += `*Web3 Trading Terminal*:\n`;
+        reply += `${APP_URL}/app?action=buy&symbol=${targetSymbol}\n\n`;
         reply += `_Or open the Web3 Terminal directly:_`;
 
         const keyboard = [
@@ -463,17 +495,17 @@ export async function POST(req: NextRequest) {
         return await replyWith(reply, keyboard);
       }
 
-      // No symbol specified
+      // No symbol specified ("buy stock", "buy stocks", "how to buy stocks")
       let reply = `*MEIREI | HOW TO BUY TOKENIZED STOCKS*\n\n`;
       reply += `Trade tokenized equities 24/7 on OKX X Layer Mainnet (Chain ID 196) settled in USDG.\n\n`;
       reply += `*Available Tickers*:\n`;
-      reply += `• NVDAx (Nvidia)\n`;
-      reply += `• AAPLx (Apple)\n`;
-      reply += `• TSLAx (Tesla)\n`;
-      reply += `• MSFTx (Microsoft)\n`;
-      reply += `• GOOGLx (Alphabet)\n`;
-      reply += `• AMZNx (Amazon)\n`;
-      reply += `• METAx (Meta)\n\n`;
+      reply += `• NVDAx (Nvidia): AI and GPU computing\n`;
+      reply += `• AAPLx (Apple): Consumer technology\n`;
+      reply += `• TSLAx (Tesla): Electric vehicles and autonomy\n`;
+      reply += `• MSFTx (Microsoft): Enterprise cloud and software\n`;
+      reply += `• GOOGLx (Alphabet): Search, cloud, and AI\n`;
+      reply += `• AMZNx (Amazon): Global e-commerce and AWS\n`;
+      reply += `• METAx (Meta): Social platforms and AI hardware\n\n`;
       reply += `*How to Order*:\n`;
       reply += `Reply with your chosen asset and dollar amount:\n`;
       reply += `• "Buy $250 in NVDAx"\n`;
@@ -482,18 +514,58 @@ export async function POST(req: NextRequest) {
 
       const keyboard = [
         [
-          { text: "Open Web3 Trading Terminal", url: `${APP_URL}/app?action=buy` },
+          { text: "Open Web3 Trading Terminal", url: `${APP_URL}/app` },
           { text: "Live Stock Prices", callback_data: "/stocks" },
         ],
       ];
       return await replyWith(reply, keyboard);
     }
 
-    // 2a. Multi-stock price comparison
-    if (
-      symbolsFound.length >= 2 &&
-      (lower.includes("compare") || lower.includes("vs") || lower.includes("versus"))
-    ) {
+    // 4. Mandate Execution (percentages and allocation targets)
+    const isMandateIntent =
+      rawText.includes("%") ||
+      lower.includes("percent") ||
+      lower.includes("allocate") ||
+      lower.includes("rebalance");
+
+    if (isMandateIntent) {
+      const mandateRes = await handleMandate({
+        mandate: rawText,
+        walletAddress: user.wallet_address,
+        confirm: false,
+      });
+
+      if (mandateRes.success && mandateRes.delivery) {
+        const legs = mandateRes.delivery.plan.legs || [];
+        let reply = `*PROJECT MEIREI | ADVISORY STUDIO*\n\n`;
+        if (legs.length === 0) {
+          reply += `_Mandate analyzed. Portfolio is already aligned with target allocations on X Layer._\n\n`;
+        } else {
+          const legsSummary = legs
+            .map((l) => `• *${l.side.toUpperCase()}* $${l.notionalUsd.toFixed(2)} of *${l.symbol}*`)
+            .join("\n");
+          reply += `*Proposed Rebalancing Plan*:\n${legsSummary}\n\n`;
+        }
+        reply += `*Sole Author*: IboTV\n`;
+        reply += `_Tap below to review and sign with your OKX Wallet:_`;
+
+        const signUrl = `${APP_URL}/app?mandate=${encodeURIComponent(rawText)}`;
+        const keyboard = [
+          [
+            { text: "Sign with OKX Wallet", url: signUrl },
+            { text: "View Portfolio", callback_data: "/balance" },
+          ],
+          [
+            { text: "Emergency Freeze", callback_data: "/freeze" },
+            { text: "Live Stock Prices", callback_data: "/stocks" },
+          ],
+        ];
+        return await replyWith(reply, keyboard);
+      }
+    }
+
+    // 5. Price Comparison
+    if (isCompareIntent) {
       const prices = await Promise.all(symbolsFound.map((s) => fetchPrice(s)));
       let reply = `*MEIREI X LAYER STOCK COMPARISON*\n\n`;
       symbolsFound.forEach((sym, idx) => {
@@ -507,21 +579,15 @@ export async function POST(req: NextRequest) {
       const keyboard = [
         [
           { text: `Calculate $250 in ${symbolsFound[0]}`, callback_data: `Calculate $250 in ${symbolsFound[0]}` },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
         ],
       ];
 
       return await replyWith(reply, keyboard);
     }
 
-    // 2b. Unit calculation inquiries
-    const hasUnitIntent =
-      lower.includes("how many") ||
-      lower.includes("how much") ||
-      lower.includes("units") ||
-      lower.includes("shares") ||
-      lower.includes("calculate");
-
-    if (hasUnitIntent && symbolsFound.length === 1 && moneyMatch) {
+    // 6. Unit Calculation
+    if (isUnitIntent && moneyMatch) {
       const targetSymbol = symbolsFound[0];
       const usdAmount = parseFloat(moneyMatch[1]);
       if (usdAmount > 0) {
@@ -546,8 +612,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2c. Single stock price quote
-    if (symbolsFound.length === 1 && (lower.includes("price") || lower.includes("quote") || lower.startsWith("/price"))) {
+    // 7. Single Stock Price Quote
+    if (isPriceIntent) {
       const targetSymbol = symbolsFound[0];
       const spotPrice = await fetchPrice(targetSymbol);
       const item = ALLOWLIST.find((a) => a.symbol === targetSymbol);
@@ -569,18 +635,237 @@ export async function POST(req: NextRequest) {
       return await replyWith(reply, keyboard);
     }
 
-    // 3. Mandate or Advisory Intent via Meirei Engine
+    // 8. Stocks List Intent ("stocks", "show me the stocks", "what stocks are available?")
+    if (isStocksIntent) {
+      try {
+        const stocks = await fetchAllStockPrices();
+        let reply = `*PROJECT MEIREI | X LAYER LIVE EQUITIES*\n`;
+        reply += `*Settlement Currency*: USDG (Native Stablecoin)\n`;
+        reply += `*Trading Status*: 24/7 Continuous Trading\n\n`;
+
+        stocks
+          .filter((s) => !s.isCash)
+          .forEach((item) => {
+            reply += `• *${item.symbol}* (${item.name}): *$${item.priceUsd.toFixed(2)} USDG*\n`;
+          });
+
+        reply += `\n_Reply "Buy $250 in NVDAx" or tap below to prepare an order._`;
+
+        const keyboard = [
+          [
+            { text: "Quote NVDAx", callback_data: "Price of NVDAx" },
+            { text: "Quote AAPLx", callback_data: "Price of AAPLx" },
+            { text: "Quote TSLAx", callback_data: "Price of TSLAx" },
+          ],
+          [
+            { text: "Open Web Terminal", url: `${APP_URL}/app` },
+            { text: "Back to Menu", callback_data: "/start" },
+          ],
+        ];
+
+        return await replyWith(reply, keyboard);
+      } catch (err) {
+        return await replyWith(`*Notice*: Connecting to X Layer DEX orderbooks for spot prices.`);
+      }
+    }
+
+    // 9. Portfolio Balance Intent ("balance", "portfolio", "check my balance")
+    if (isBalanceIntent) {
+      try {
+        const holdings = await fetchBalances(user.wallet_address);
+        const total = holdings.reduce((sum, h) => sum + (h.valueUsd || 0), 0);
+
+        let reply = `*PROJECT MEIREI | PORTFOLIO*\n`;
+        reply += `*Wallet*: \`${shortAddr}\` (X Layer Chain 196)\n`;
+        reply += `*Total Value*: *$${total.toFixed(2)} USDG*\n\n`;
+
+        if (holdings.length === 0) {
+          reply += `_No active tokenized stock positions found._\n`;
+          reply += `Deposit USDG on X Layer to initiate automated mandates.`;
+        } else {
+          reply += `*Active Holdings*:\n`;
+          holdings.forEach((h) => {
+            reply += `• *${h.symbol}*: ${h.amount.toFixed(3)} ($${h.valueUsd.toFixed(2)})\n`;
+          });
+        }
+
+        const keyboard = [
+          [
+            { text: "Check Stock Prices", callback_data: "/stocks" },
+            { text: "Open Web Terminal", url: `${APP_URL}/app` },
+          ],
+          [
+            { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+          ],
+        ];
+
+        return await replyWith(reply, keyboard);
+      } catch (err) {
+        return await replyWith(
+          `*Portfolio*: Connected to \`${shortAddr}\`. Balance indexing on X Layer.`
+        );
+      }
+    }
+
+    // 10. Connect Wallet Intent ("connect", "how to connect", "link wallet")
+    if (isConnectIntent) {
+      let reply = `*PROJECT MEIREI | CONNECT OKX WALLET*\n\n`;
+      reply += `Link your personal OKX Web3 Wallet to your Telegram handle for non-custodial rebalances on *OKX X Layer (Chain ID 196)*.\n\n`;
+      reply += `*Connected Wallet*: \`${shortAddr}\`\n\n`;
+      reply += `*To link your OKX Web3 wallet*:\n`;
+      reply += `1. Tap "Connect OKX Wallet" below.\n`;
+      reply += `2. Switch network to OKX X Layer.\n`;
+      reply += `3. Confirm signature in your OKX Wallet.\n\n`;
+      reply += `Once linked, your live on-chain holdings will update automatically.`;
+
+      const keyboard = [
+        [
+          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+        ],
+        [
+          { text: "View Portfolio", callback_data: "/balance" },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+      ];
+
+      return await replyWith(reply, keyboard);
+    }
+
+    // 10b. Disconnect / Unlink Wallet Intent ("disconnect", "unlink", "disconnect wallet")
+    if (isDisconnectIntent) {
+      await unlinkChannelWallet({
+        channel: "telegram",
+        handle: telegramHandle,
+      });
+
+      let reply = `*PROJECT MEIREI | WALLET DISCONNECTED*\n\n`;
+      reply += `Your OKX Wallet has been unlinked from this Telegram account.\n`;
+      reply += `Your account has reverted to the default non-custodial sandbox wallet.\n\n`;
+      reply += `_To reconnect or switch to another OKX Wallet anytime, tap below:_`;
+
+      const keyboard = [
+        [
+          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+        ],
+        [
+          { text: "View Portfolio", callback_data: "/balance" },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+      ];
+
+      return await replyWith(reply, keyboard);
+    }
+
+    // 11. About Intent ("about", "who are you", "what do you do")
+    if (isAboutIntent) {
+      let about = `*PROJECT MEIREI | WHO WE ARE & WHAT WE DO*\n\n`;
+      about += `Welcome to *Meirei (命令)* — an AI-native investment mandate agent operating on *OKX X Layer Mainnet (Chain ID 196)*.\n\n`;
+      about += `*What We Do*:\n`;
+      about += `We enable non-custodial, conversational portfolio management. Instead of navigating DEX interfaces, you state your investment goals in plain English, and Meirei plans, prices, and constructs on-chain rebalances.\n\n`;
+      about += `*Core Pillars*:\n`;
+      about += `1. *24/7 Continuous Trading*: Trade live tokenized equities (NVDAx, AAPLx, TSLAx, MSFTx, GOOGLx, AMZNx, METAx) settled natively in USDG stablecoin.\n`;
+      about += `2. *100% Non-Custodial*: We never hold your funds or store private keys. Trades are authorized and signed by you directly on-chain.\n`;
+      about += `3. *Natural Language Mandates*: Text instructions like "Allocate 40% NVDAx, 40% MSFTx, 20% USDG for $500" to plan rebalance trades.\n`;
+      about += `4. *2FA Circuit Breaker*: Text "freeze" anytime for instant emergency protection and an OTP unlock challenge.\n\n`;
+      about += `*Getting Started Commands*:\n`;
+      about += `- /stocks: View all live equity prices\n`;
+      about += `- "Price of NVDAx": Check spot quote and contract\n`;
+      about += `- "Calculate $500 in TSLAx": Estimate share allocation\n`;
+      about += `- "Compare NVDAx vs MSFTx": Compare pricing ratios\n`;
+      about += `- /balance: Check your on-chain portfolio holdings\n\n`;
+      about += `_Web Terminal & Docs_: ${APP_URL}/docs`;
+
+      const keyboard = [
+        [
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+          { text: "View Portfolio", callback_data: "/balance" },
+        ],
+        [
+          { text: "Open Web Terminal", url: `${APP_URL}/app` },
+          { text: "Emergency Freeze", callback_data: "/freeze" },
+        ],
+      ];
+
+      return await replyWith(about, keyboard);
+    }
+
+    // 12. Reciprocal Greetings Handler (Hello, Good morning, Good afternoon, etc.)
+    if (isGreeting) {
+      let salutation = "Hello!";
+      if (lower.includes("morning")) salutation = "Good morning!";
+      else if (lower.includes("afternoon")) salutation = "Good afternoon!";
+      else if (lower.includes("evening")) salutation = "Good evening!";
+      else if (lower === "hey" || lower.startsWith("hey ")) salutation = "Hey!";
+
+      let reply = `*${salutation}* I am Meirei, your interactive OKX X Layer agent.\n\n`;
+      reply += `*Connected Wallet*: \`${shortAddr}\`\n`;
+      reply += `*Network*: OKX X Layer Mainnet (Chain ID 196)\n\n`;
+      reply += `Do you want to know what I can do?\n`;
+      reply += `Reply *"Yes"* or tap a button below:`;
+
+      const keyboard = [
+        [
+          { text: "Yes, what can you do?", callback_data: "Yes" },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+        [
+          { text: "View Portfolio", callback_data: "/balance" },
+          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+        ],
+        [
+          { text: "Open Web Terminal", url: `${APP_URL}/app` },
+          { text: "Emergency Freeze", callback_data: "/freeze" },
+        ],
+      ];
+
+      return await replyWith(reply, keyboard);
+    }
+
+    // 13. Affirmative Response ("Yes", "Sure", "Tell me") to greeting
+    if (isAffirmative) {
+      let reply = `*PROJECT MEIREI | CAPABILITIES*\n\n`;
+      reply += `Here is what I can do for you on *OKX X Layer (Chain ID 196)*:\n\n`;
+      reply += `1. *Buy Stocks*:\n   Reply: "Buy $250 in NVDAx" or "Buy TSLAx"\n\n`;
+      reply += `2. *View Live Stocks*:\n   Reply: "stocks" or /stocks\n\n`;
+      reply += `3. *Check Single Stock Price*:\n   Reply: "Price of NVDAx" or "Quote AAPLx"\n\n`;
+      reply += `4. *Calculate Units*:\n   Reply: "Calculate $500 in TSLAx"\n\n`;
+      reply += `5. *Compare Two Stocks*:\n   Reply: "Compare NVDAx vs MSFTx"\n\n`;
+      reply += `6. *Check Portfolio Balance*:\n   Reply: "balance" or /balance\n\n`;
+      reply += `7. *Connect / Disconnect Wallet*:\n   Reply: "connect" or "disconnect"\n\n`;
+      reply += `8. *Emergency Freeze*:\n   Reply: "freeze" or "unfreeze 123456"\n\n`;
+      reply += `9. *Who We Are & What We Do*:\n   Reply: "about" or /about\n\n`;
+      reply += `_Web3 Trading Terminal_: ${APP_URL}/app`;
+
+      const keyboard = [
+        [
+          { text: "Buy Stocks", callback_data: "Buy stocks" },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+        [
+          { text: "View Portfolio", callback_data: "/balance" },
+          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+        ],
+        [
+          { text: "Open Web Terminal", url: `${APP_URL}/app` },
+          { text: "Emergency Freeze", callback_data: "/freeze" },
+        ],
+      ];
+
+      return await replyWith(reply, keyboard);
+    }
+
+    // 14. Advisory Mandate Fallback via Meirei Engine
     const mandateRes = await handleMandate({
       mandate: rawText,
       walletAddress: user.wallet_address,
       confirm: false,
     });
 
-    let reply = `*PROJECT MEIREI | ADVISORY STUDIO*\n\n`;
-    const signUrl = `${APP_URL}/app?mandate=${encodeURIComponent(rawText)}`;
-
     if (mandateRes.success && mandateRes.delivery) {
       const legs = mandateRes.delivery.plan.legs || [];
+      let reply = `*PROJECT MEIREI | ADVISORY STUDIO*\n\n`;
+      const signUrl = `${APP_URL}/app?mandate=${encodeURIComponent(rawText)}`;
+
       if (legs.length === 0) {
         reply += `_Mandate analyzed. Portfolio is already aligned with target allocations on X Layer._\n\n`;
       } else {
@@ -589,21 +874,50 @@ export async function POST(req: NextRequest) {
           .join("\n");
         reply += `*Proposed Rebalancing Plan*:\n${legsSummary}\n\n`;
       }
-    } else {
-      reply += `${mandateRes.error || "Mandate processed on X Layer."}\n\n`;
+      reply += `*Sole Author*: IboTV\n`;
+      reply += `_Tap below to review and sign with your OKX Wallet:_`;
+
+      const keyboard = [
+        [
+          { text: "Sign with OKX Wallet", url: signUrl },
+          { text: "View Portfolio", callback_data: "/balance" },
+        ],
+        [
+          { text: "Emergency Freeze", callback_data: "/freeze" },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+      ];
+
+      return await replyWith(reply, keyboard);
     }
 
-    reply += `*Sole Author*: IboTV\n`;
-    reply += `_Tap below to review and sign with your OKX Wallet:_`;
+    // 15. Interactive fallback when input is not recognized as a command or mandate
+    let reply = `*PROJECT MEIREI | YOUR INTERACTIVE OKX X LAYER AGENT*\n\n`;
+    reply += `Could not find this command: "${rawText.slice(0, 35)}"\n\n`;
+    reply += `Here is what you can do:\n\n`;
+    reply += `1. *Buy Stocks*: "Buy $250 in NVDAx" or "Buy TSLAx"\n`;
+    reply += `2. *Live Stock Prices*: "stocks" or /stocks\n`;
+    reply += `3. *Price Quotes*: "Price of NVDAx" or "Quote AAPLx"\n`;
+    reply += `4. *Calculate Units*: "Calculate $500 in TSLAx"\n`;
+    reply += `5. *Compare Stocks*: "Compare NVDAx vs MSFTx"\n`;
+    reply += `6. *Portfolio Balance*: "balance" or /balance\n`;
+    reply += `7. *Connect / Disconnect*: "connect" or "disconnect"\n`;
+    reply += `8. *Emergency Freeze*: "freeze" or "unfreeze 123456"\n`;
+    reply += `9. *About Meirei*: "about" or /about\n\n`;
+    reply += `_Web3 Trading Terminal_: ${APP_URL}/app`;
 
     const keyboard = [
       [
-        { text: "Sign with OKX Wallet", url: signUrl },
-        { text: "View Portfolio", callback_data: "/balance" },
+        { text: "Buy Stocks", callback_data: "Buy stocks" },
+        { text: "Live Stock Prices", callback_data: "/stocks" },
       ],
       [
+        { text: "View Portfolio", callback_data: "/balance" },
+        { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+      ],
+      [
+        { text: "Open Web Terminal", url: `${APP_URL}/app` },
         { text: "Emergency Freeze", callback_data: "/freeze" },
-        { text: "Live Stock Prices", callback_data: "/stocks" },
       ],
     ];
 

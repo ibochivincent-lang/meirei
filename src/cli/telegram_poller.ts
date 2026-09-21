@@ -90,7 +90,10 @@ async function startPolling() {
         offset = update.update_id + 1;
 
         const chatId = update.message?.chat?.id || update.callback_query?.message?.chat?.id;
-        const text = update.message?.text || update.callback_query?.data || "";
+        const text =
+          update.message?.text ||
+          update.callback_query?.data ||
+          (update.message?.voice ? "[Voice Note]" : update.message?.audio ? "[Audio File]" : "");
         const from = update.message?.from?.username || update.callback_query?.from?.username || "user";
 
         console.log(`[Telegram Update #${update.update_id}] From @${from} (Chat ${chatId}): "${text}"`);

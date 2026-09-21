@@ -819,6 +819,350 @@ async function runTests() {
     failed++;
   }
 
+  // Test 32: Telegram Simulated Voice Note Transcription Pipeline
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+        },
+        audio_text: "Buy $500 in TSLAx",
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (
+      res.ok &&
+      text.includes("VOICE COMMAND") &&
+      text.includes("TSLAx") &&
+      text.includes("action=buy&symbol=TSLAx&amount=500")
+    ) {
+      console.log("PASS: Telegram Simulated Voice Note Transcription Pipeline ('Buy $500 in TSLAx')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Simulated Voice Note Transcription Pipeline:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 32:", err.message);
+    failed++;
+  }
+
+  // Test 33: Telegram Conversational Buy with amount
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "buy $250 in NVDAx",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (
+      res.ok &&
+      text.includes("ORDER PREPARATION") &&
+      text.includes("NVDAx") &&
+      text.includes("action=buy&symbol=NVDAx&amount=250")
+    ) {
+      console.log("PASS: Telegram Conversational Buy Stock with amount ('buy $250 in NVDAx')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Conversational Buy Stock with amount:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 33:", err.message);
+    failed++;
+  }
+
+  // Test 34: Telegram Conversational Buy without amount
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "buy TSLAx",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (
+      res.ok &&
+      text.includes("ORDER PREPARATION") &&
+      text.includes("TSLAx") &&
+      text.includes("action=buy&symbol=TSLAx")
+    ) {
+      console.log("PASS: Telegram Conversational Buy Stock without amount ('buy TSLAx')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Conversational Buy Stock without amount:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 34:", err.message);
+    failed++;
+  }
+
+  // Test 35: Telegram Generic Buy Inquiry
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "How do I buy stocks?",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (
+      res.ok &&
+      text.includes("HOW TO BUY TOKENIZED STOCKS") &&
+      text.includes("NVDAx") &&
+      text.includes("TSLAx")
+    ) {
+      console.log("PASS: Telegram Generic Buy Stock inquiry ('How do I buy stocks?')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Generic Buy Stock inquiry:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 35:", err.message);
+    failed++;
+  }
+
+  // Test 36: Telegram Conversational Greeting
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "Good morning",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (res.ok && text.includes("Good morning!") && text.includes("Do you want to know what I can do?")) {
+      console.log("PASS: Telegram Conversational Greeting ('Good morning')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Conversational Greeting:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 36:", err.message);
+    failed++;
+  }
+
+  // Test 37: Telegram Conversational Affirmative ("Yes")
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "Yes",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (res.ok && text.includes("CAPABILITIES") && text.includes("Buy Stocks") && text.includes("View Live Stocks")) {
+      console.log("PASS: Telegram Conversational Affirmative ('Yes')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Conversational Affirmative:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 37:", err.message);
+    failed++;
+  }
+
+  // Test 38: Telegram Conversational Stock List
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "what stocks are available?",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (res.ok && text.includes("LIVE EQUITIES") && text.includes("NVDAx")) {
+      console.log("PASS: Telegram Conversational Stock List ('what stocks are available?')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Conversational Stock List:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 38:", err.message);
+    failed++;
+  }
+
+  // Test 39: Telegram Conversational Price Quote
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "price of Apple",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (res.ok && text.includes("SPOT QUOTE") && text.includes("AAPLx")) {
+      console.log("PASS: Telegram Conversational Price Quote ('price of Apple')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Conversational Price Quote:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 39:", err.message);
+    failed++;
+  }
+
+  // Test 40: Telegram Conversational Stock Comparison
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "compare Apple and Nvidia",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (res.ok && text.includes("STOCK COMPARISON") && text.includes("AAPLx") && text.includes("NVDAx")) {
+      console.log("PASS: Telegram Conversational Stock Comparison ('compare Apple and Nvidia')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Conversational Stock Comparison:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 40:", err.message);
+    failed++;
+  }
+
+  // Test 41: Telegram Conversational Balance
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "check my portfolio balance",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (res.ok && (text.includes("PORTFOLIO") || text.includes("indexing on X Layer"))) {
+      console.log("PASS: Telegram Conversational Balance ('check my portfolio balance')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Conversational Balance:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 41:", err.message);
+    failed++;
+  }
+
+  // Test 42: Telegram Conversational About
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "Tell me what Meirei does",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (res.ok && text.includes("WHO WE ARE & WHAT WE DO") && text.includes("OKX X Layer")) {
+      console.log("PASS: Telegram Conversational About ('Tell me what Meirei does')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Conversational About:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 42:", err.message);
+    failed++;
+  }
+
+  // Test 43: Telegram POST disconnect command
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "disconnect",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (res.ok && text.includes("WALLET DISCONNECTED") && text.includes("reconnect")) {
+      console.log("PASS: Telegram POST disconnect command ('disconnect')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram POST disconnect command:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 43:", err.message);
+    failed++;
+  }
+
   console.log(`\n================================`);
   console.log(`TOTAL PASSED: ${passed}`);
   console.log(`TOTAL FAILED: ${failed}`);

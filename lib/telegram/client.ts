@@ -206,3 +206,57 @@ export async function getTelegramWebhookInfo(): Promise<any> {
   const res = await fetch(endpoint);
   return await res.json();
 }
+
+/**
+ * Download voice note or audio file buffer from Telegram servers using getFile.
+ */
+export async function downloadTelegramAudio(
+  fileId: string
+): Promise<{ buffer: Buffer; mimeType: string } | null> {
+  const token = getToken();
+  if (!token) {
+    console.warn("[Telegram Client] TELEGRAM_BOT_TOKEN not configured, cannot download audio.");
+    return null;
+  }
+
+  try {
+    const fileInfoRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
+    if (!fileInfoRes.ok) {
+      console.error("[Telegram Client] getFile failed:", fileInfoRes.status);
+      return null;
+    }
+    const fileInfo = await fileInfoRes.json();
+    if (!fileInfo.ok || !fileInfo.result?.file_path) {
+      console.error("[Telegram Client] getFile invalid result:", fileInfo);
+      return null;
+    }
+
+    const filePath = fileInfo.result.file_path;
+    const downloadUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
+    const audioRes = await fetch(downloadUrl);
+    if (!audioRes.ok) {
+      console.error("[Telegram Client] Download audio stream failed:", audioRes.status);
+      return null;
+    }
+
+    const arrayBuffer = await audioRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const mimeType =
+      filePath.endsWith(".oga") || filePath.endsWith(".ogg")
+        ? "audio/ogg"
+        : filePath.endsWith(".mp3")
+        ? "audio/mpeg"
+        : filePath.endsWith(".m4a")
+        ? "audio/m4a"
+        : filePath.endsWith(".wav")
+        ? "audio/wav"
+        : "audio/ogg";
+
+    return { buffer, mimeType };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[Telegram Client] downloadTelegramAudio error:", msg);
+    return null;
+  }
+}
+
