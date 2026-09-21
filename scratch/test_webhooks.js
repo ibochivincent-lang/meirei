@@ -315,6 +315,55 @@ async function runTests() {
     failed++;
   }
 
+  // Test 12: WhatsApp POST /about command
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "/about",
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok && data.reply.includes("PROJECT MEIREI") && data.reply.includes("What We Do")) {
+      console.log("PASS: WhatsApp POST /about command");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp POST /about:", res.status, data);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 12:", err.message);
+    failed++;
+  }
+
+  // Test 13: Telegram POST /guide command
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "/guide",
+        },
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.method === "sendMessage" && data.text.includes("PROJECT MEIREI") && data.text.includes("What We Do")) {
+      console.log("PASS: Telegram POST /guide command");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram POST /guide:", res.status, data);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 13:", err.message);
+    failed++;
+  }
+
   console.log(`\n================================`);
   console.log(`TOTAL PASSED: ${passed}`);
   console.log(`TOTAL FAILED: ${failed}`);

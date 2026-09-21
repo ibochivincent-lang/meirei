@@ -131,6 +131,39 @@ export async function POST(req: NextRequest) {
       return await replyWith(welcome, keyboard);
     }
 
+    // Command: /about or /guide (Who we are, what we do, and getting started)
+    if (lower === "/about" || lower === "about" || lower === "/guide" || lower === "guide") {
+      let about = `*PROJECT MEIREI | WHO WE ARE & WHAT WE DO*\n\n`;
+      about += `Welcome to *Meirei (命令)* — an AI-native investment mandate agent operating on *OKX X Layer Mainnet (Chain ID 196)*.\n\n`;
+      about += `*What We Do*:\n`;
+      about += `We enable non-custodial, conversational portfolio management. Instead of navigating DEX interfaces, you state your investment goals in plain English, and Meirei plans, prices, and constructs on-chain rebalances.\n\n`;
+      about += `*Core Pillars*:\n`;
+      about += `1. *24/7 Continuous Trading*: Trade live tokenized equities (NVDAx, AAPLx, TSLAx, MSFTx, GOOGLx, AMZNx, METAx) settled natively in USDG stablecoin.\n`;
+      about += `2. *100% Non-Custodial*: We never hold your funds or store private keys. Trades are authorized and signed by you directly on-chain.\n`;
+      about += `3. *Natural Language Mandates*: Text instructions like "Allocate 40% NVDAx, 40% MSFTx, 20% USDG for $500" to plan rebalance trades.\n`;
+      about += `4. *2FA Circuit Breaker*: Text "freeze" anytime for instant emergency protection and an OTP unlock challenge.\n\n`;
+      about += `*Getting Started Commands*:\n`;
+      about += `- /stocks: View all live equity prices\n`;
+      about += `- "Price of NVDAx": Check spot quote and contract\n`;
+      about += `- "Calculate $500 in TSLAx": Estimate share allocation\n`;
+      about += `- "Compare NVDAx vs MSFTx": Compare pricing ratios\n`;
+      about += `- /balance: Check your on-chain portfolio holdings\n\n`;
+      about += `_Web Terminal & Docs_: ${APP_URL}/docs`;
+
+      const keyboard = [
+        [
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+          { text: "View Portfolio", callback_data: "/balance" },
+        ],
+        [
+          { text: "Open Web Terminal", url: `${APP_URL}/app` },
+          { text: "Emergency Freeze", callback_data: "/freeze" },
+        ],
+      ];
+
+      return await replyWith(about, keyboard);
+    }
+
     // Command: /stocks (Live market prices for all allowlisted tokenized equities)
     if (lower === "/stocks" || lower === "stocks" || lower === "list" || lower === "/list") {
       try {
