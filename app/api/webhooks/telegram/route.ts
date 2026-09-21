@@ -11,7 +11,11 @@ import { sendTelegramMessage } from "@/lib/telegram/client";
 
 export const dynamic = "force-dynamic";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://meirei.vercel.app";
+const RAW_APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://meirei.vercel.app";
+// Telegram Bot API requires HTTPS for inline keyboard button URLs; http://localhost is rejected
+const APP_URL = RAW_APP_URL.startsWith("https://")
+  ? RAW_APP_URL.replace(/\/+$/, "")
+  : "https://meirei.vercel.app";
 
 // Active in-memory tracking for channel unfreeze challenges
 const unfreezeChallenges = new Map<string, string>();

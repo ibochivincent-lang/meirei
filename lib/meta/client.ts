@@ -35,6 +35,7 @@ interface LinkArgs extends TextArgs {
 function getMetaConfig() {
   const token =
     process.env.WHATSAPP_ACCESS_TOKEN ||
+    process.env.WHATSAPP_TOKEN ||
     process.env.META_WHATSAPP_TOKEN ||
     process.env.META_ACCESS_TOKEN ||
     null;
