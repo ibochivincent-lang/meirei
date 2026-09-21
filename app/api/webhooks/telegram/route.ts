@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveChannelUser } from "@/lib/auth/user_identity";
+import { resolveChannelUser, unlinkChannelWallet } from "@/lib/auth/user_identity";
 import { fetchPrice, fetchBalances, fetchAllStockPrices } from "@/src/onchainos";
 import { resolveSymbol, ALLOWLIST } from "@/src/allowlist";
 import { handleMandate } from "@/src/agent/handler";
@@ -356,6 +356,38 @@ export async function POST(req: NextRequest) {
       reply += `2. Switch network to OKX X Layer.\n`;
       reply += `3. Confirm signature in your OKX Wallet.\n\n`;
       reply += `Once linked, your live on-chain holdings will update automatically.`;
+
+      const keyboard = [
+        [
+          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+        ],
+        [
+          { text: "View Portfolio", callback_data: "/balance" },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+      ];
+
+      return await replyWith(reply, keyboard);
+    }
+
+    // Command: /disconnect or /unlink (Unlink OKX Wallet from Telegram)
+    if (
+      lower === "/disconnect" ||
+      lower === "disconnect" ||
+      lower === "/unlink" ||
+      lower === "unlink" ||
+      lower.includes("disconnect wallet") ||
+      lower.includes("unlink wallet")
+    ) {
+      await unlinkChannelWallet({
+        channel: "telegram",
+        handle: telegramHandle,
+      });
+
+      let reply = `*PROJECT MEIREI | WALLET DISCONNECTED*\n\n`;
+      reply += `Your OKX Wallet has been unlinked from this Telegram account.\n`;
+      reply += `Your account has reverted to the default non-custodial sandbox wallet.\n\n`;
+      reply += `_To reconnect or switch to another OKX Wallet anytime, tap below:_`;
 
       const keyboard = [
         [

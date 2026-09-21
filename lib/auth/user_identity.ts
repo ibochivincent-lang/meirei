@@ -459,3 +459,51 @@ export async function linkChannelWallet({
   return user;
 }
 
+/**
+ * Unlinks an external OKX wallet from a social channel user, restoring deterministic sandbox address.
+ */
+export async function unlinkChannelWallet({
+  channel,
+  handle,
+}: {
+  channel: UserPrimaryChannel;
+  handle: string;
+}): Promise<MeireiIdentityUser> {
+  const cleanHandle = handle.trim();
+  const cacheKey = `${channel}:${cleanHandle.toLowerCase()}`;
+  inMemoryChannelUsers.delete(cacheKey);
+
+  // Generate fallback deterministic wallet address
+  const sanitized = cleanHandle.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  const fallbackEmail = `${sanitized || "user"}@${channel}.meirei.app`;
+  const hash = crypto.createHash("sha256").update(`meirei_xlayer_${fallbackEmail}`).digest("hex");
+  const defaultWallet = `0x${hash.slice(24, 64)}`.toLowerCase();
+
+  const user = await resolveChannelUser({
+    channel,
+    handle: cleanHandle,
+    walletAddress: defaultWallet,
+  });
+
+  user.wallet_address = defaultWallet;
+  user.updated_at = new Date().toISOString();
+  inMemoryChannelUsers.set(cacheKey, user);
+
+  const supabase = getSupabaseClientSafe();
+  if (supabase) {
+    try {
+      await supabase
+        .from("meirei_users")
+        .update({
+          wallet_address: defaultWallet,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+    } catch (err) {
+      console.warn("[Identity] Notice updating unlinked wallet in database:", err);
+    }
+  }
+
+  return user;
+}
+

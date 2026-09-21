@@ -640,6 +640,25 @@ export default function AppDashboardPage() {
                     <path d="M10.146 5.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L12.293 9H6.5a.5.5 0 0 1 0-1h5.793l-2.147-2.146a.5.5 0 0 1 0-.708z" />
                   </svg>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfile({
+                      ...DEFAULT_PROFILE,
+                      handle: "Disconnected",
+                      email: "disconnected@meirei.app",
+                      address: "0x0000000000000000000000000000000000000000",
+                      holdings: [],
+                      portfolioValue: 0,
+                    });
+                  }}
+                  className="ml-1 rounded p-1 text-xs text-ink-400 hover:text-red-500 dark:hover:text-red-400 cursor-pointer"
+                  title="Disconnect wallet"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 stroke-current stroke-2 fill-none">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
+                  </svg>
+                </button>
               </div>
             ) : (
               <button
@@ -1622,13 +1641,31 @@ export default function AppDashboardPage() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowLoginModal(true)}
-                className="mt-4 w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] py-2 text-center text-xs font-semibold text-ink-800 dark:text-zinc-200 transition-colors hover:bg-surface-100 dark:hover:bg-[#202736] cursor-pointer"
-              >
-                Switch Profile or Channel
-              </button>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLoginModal(true)}
+                  className="w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] py-2 text-center text-xs font-semibold text-ink-800 dark:text-zinc-200 transition-colors hover:bg-surface-100 dark:hover:bg-[#202736] cursor-pointer"
+                >
+                  Switch Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfile({
+                      ...DEFAULT_PROFILE,
+                      handle: "Disconnected",
+                      email: "disconnected@meirei.app",
+                      address: "0x0000000000000000000000000000000000000000",
+                      holdings: [],
+                      portfolioValue: 0,
+                    });
+                  }}
+                  className="w-full rounded-xl border border-red-500/30 bg-red-500/10 py-2 text-center text-xs font-semibold text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
+                >
+                  Disconnect
+                </button>
+              </div>
             </div>
 
             {/* Live Portfolio Breakdown Card */}

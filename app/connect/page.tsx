@@ -30,6 +30,7 @@ function ConnectWalletContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
   const [linkSuccess, setLinkSuccess] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Check initial provider and accounts
@@ -62,6 +63,7 @@ function ConnectWalletContent() {
   const handleConnectWallet = async () => {
     setIsLoading(true);
     setErrorMessage(null);
+    setInfoMessage(null);
 
     try {
       const provider = getInjectedProvider();
@@ -105,6 +107,36 @@ function ConnectWalletContent() {
       }
 
       setCurrentChainId(chainId);
+      setInfoMessage(`Connected to ${formatShortAddress(activeAddr)} on OKX X Layer.`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrorMessage(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDisconnectWallet = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    setInfoMessage(null);
+
+    try {
+      // Unlink from channel backend if linked
+      await fetch("/api/wallet/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel,
+          handle: cleanHandle,
+          action: "unlink",
+        }),
+      }).catch(() => {});
+
+      setConnectedAddress(null);
+      setCurrentChainId(null);
+      setLinkSuccess(false);
+      setInfoMessage("Wallet disconnected and unlinked successfully.");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
@@ -121,6 +153,7 @@ function ConnectWalletContent() {
 
     setIsLinking(true);
     setErrorMessage(null);
+    setInfoMessage(null);
 
     try {
       const res = await fetch("/api/wallet/link", {
@@ -139,6 +172,7 @@ function ConnectWalletContent() {
       }
 
       setLinkSuccess(true);
+      setInfoMessage(`Wallet successfully linked to ${channel} (${cleanHandle}).`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
@@ -176,14 +210,20 @@ function ConnectWalletContent() {
         <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-6 backdrop-blur-xl shadow-2xl">
           <div className="mb-6">
             <h1 className="text-xl font-bold tracking-tight text-white">
-              Connect OKX Wallet
+              Connect & Manage Wallet
             </h1>
             <p className="text-sm text-gray-400 mt-1.5">
-              Link your non-custodial Web3 wallet to your{" "}
+              Link or disconnect your OKX Web3 wallet for your{" "}
               <span className="text-white font-medium capitalize">{channel}</span> account (
               <span className="font-mono text-gray-300">{cleanHandle}</span>).
             </p>
           </div>
+
+          {infoMessage && (
+            <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs text-emerald-300 leading-relaxed">
+              {infoMessage}
+            </div>
+          )}
 
           {errorMessage && (
             <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-xs text-red-300 leading-relaxed">
@@ -211,6 +251,7 @@ function ConnectWalletContent() {
                 <p>1. Return to your {channel} chat.</p>
                 <p>2. Send &quot;balance&quot; to inspect your on-chain assets.</p>
                 <p>3. Send &quot;stocks&quot; to preview live tokenized equity prices.</p>
+                <p>4. Send &quot;disconnect&quot; anytime in chat to unlink.</p>
               </div>
 
               <div className="pt-2 flex flex-col gap-2.5">
@@ -220,9 +261,16 @@ function ConnectWalletContent() {
                 >
                   Return to WhatsApp
                 </a>
+                <button
+                  type="button"
+                  onClick={handleDisconnectWallet}
+                  className="w-full py-2.5 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium text-center transition border border-red-500/25 cursor-pointer"
+                >
+                  Disconnect & Unlink Wallet
+                </button>
                 <Link
                   href="/app"
-                  className="w-full py-3 px-4 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-gray-300 font-medium text-sm text-center transition border border-white/[0.08]"
+                  className="w-full py-2.5 px-4 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-gray-300 font-medium text-xs text-center transition border border-white/[0.08]"
                 >
                   Open Web Terminal
                 </Link>
@@ -247,11 +295,17 @@ function ConnectWalletContent() {
                 <div className="flex items-center justify-between text-xs border-t border-white/[0.06] pt-3">
                   <span className="text-gray-400">Wallet Status:</span>
                   {connectedAddress ? (
-                    <span className="font-mono text-xs text-emerald-400 font-medium">
-                      Connected ({formatShortAddress(connectedAddress)})
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      <span className="font-mono text-xs text-emerald-400 font-medium">
+                        Connected ({formatShortAddress(connectedAddress)})
+                      </span>
+                    </div>
                   ) : (
-                    <span className="font-mono text-xs text-amber-400">Not Connected</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-amber-500" />
+                      <span className="font-mono text-xs text-amber-400">Not Connected</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -263,7 +317,7 @@ function ConnectWalletContent() {
                     type="button"
                     onClick={handleConnectWallet}
                     disabled={isLoading}
-                    className="w-full py-3.5 px-4 rounded-xl bg-[#FF6B4E] hover:bg-[#FF5B3E] disabled:opacity-50 text-white font-semibold text-sm transition shadow-lg shadow-[#FF6B4E]/25"
+                    className="w-full py-3.5 px-4 rounded-xl bg-[#FF6B4E] hover:bg-[#FF5B3E] disabled:opacity-50 text-white font-semibold text-sm transition shadow-lg shadow-[#FF6B4E]/25 cursor-pointer"
                   >
                     {isLoading ? "Connecting OKX Wallet..." : "Connect OKX Wallet"}
                   </button>
@@ -281,19 +335,29 @@ function ConnectWalletContent() {
                     type="button"
                     onClick={handleLinkToChannel}
                     disabled={isLinking}
-                    className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-sm transition shadow-lg shadow-emerald-600/20"
+                    className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-sm transition shadow-lg shadow-emerald-600/20 cursor-pointer"
                   >
                     {isLinking ? "Anchoring Linkage..." : "Confirm Linkage to WhatsApp"}
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={handleConnectWallet}
-                    disabled={isLoading}
-                    className="w-full py-2.5 px-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-gray-400 hover:text-gray-200 text-xs font-medium text-center transition border border-white/[0.06]"
-                  >
-                    Switch Wallet Account
-                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={handleConnectWallet}
+                      disabled={isLoading}
+                      className="py-2.5 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-gray-300 text-xs font-medium text-center transition border border-white/[0.06] cursor-pointer"
+                    >
+                      Switch Account
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDisconnectWallet}
+                      disabled={isLoading}
+                      className="py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium text-center transition border border-red-500/25 cursor-pointer"
+                    >
+                      Disconnect Wallet
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

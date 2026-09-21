@@ -771,6 +771,54 @@ async function runTests() {
     failed++;
   }
 
+  // Test 30: WhatsApp POST disconnect command
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "disconnect",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && data.ok && reply.includes("WALLET DISCONNECTED") && reply.includes("reconnect")) {
+      console.log("PASS: WhatsApp POST disconnect command ('disconnect')");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp POST disconnect command:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 30:", err.message);
+    failed++;
+  }
+
+  // Test 31: POST /api/wallet/link with action: "unlink"
+  try {
+    const res = await fetch(`${baseUrl}/api/wallet/link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channel: "whatsapp",
+        handle: "+1 (555) 392 1084",
+        action: "unlink",
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok && data.unlinked === true) {
+      console.log("PASS: POST /api/wallet/link action: unlink");
+      passed++;
+    } else {
+      console.error("FAIL: POST /api/wallet/link action: unlink:", res.status, data);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 31:", err.message);
+    failed++;
+  }
+
   console.log(`\n================================`);
   console.log(`TOTAL PASSED: ${passed}`);
   console.log(`TOTAL FAILED: ${failed}`);

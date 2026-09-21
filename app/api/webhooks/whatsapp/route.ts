@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveChannelUser } from "@/lib/auth/user_identity";
+import { resolveChannelUser, unlinkChannelWallet } from "@/lib/auth/user_identity";
 import { fetchPrice, fetchBalances, fetchAllStockPrices } from "@/src/onchainos";
 import { resolveSymbol, ALLOWLIST } from "@/src/allowlist";
 import { handleMandate } from "@/src/agent/handler";
@@ -298,6 +298,15 @@ export async function POST(req: NextRequest) {
         lower.includes("connect wallet") ||
         lower.includes("link wallet")) &&
       !isBalanceIntent;
+
+    const isDisconnectIntent =
+      lower === "/disconnect" ||
+      lower === "disconnect" ||
+      lower === "/unlink" ||
+      lower === "unlink" ||
+      lower.includes("disconnect wallet") ||
+      lower.includes("unlink wallet") ||
+      lower.includes("disconnect my wallet");
 
     const isAboutIntent =
       lower === "/about" ||
@@ -632,6 +641,23 @@ export async function POST(req: NextRequest) {
       return await sendReply(reply);
     }
 
+    // 10b. Disconnect / Unlink Wallet Intent ("disconnect", "unlink", "disconnect wallet")
+    if (isDisconnectIntent) {
+      await unlinkChannelWallet({
+        channel: "whatsapp",
+        handle: senderPhone || "+1 (555) 392 1084",
+      });
+
+      let reply = `MEIREI | WALLET DISCONNECTED\n\n`;
+      reply += `Your OKX Wallet has been unlinked from this WhatsApp number.\n`;
+      reply += `Your account has reverted to the default non-custodial sandbox wallet.\n\n`;
+      reply += `To reconnect or switch to another OKX Wallet:\n`;
+      reply += `Reply: "connect"\n`;
+      reply += `Link: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}`;
+
+      return await sendReply(reply);
+    }
+
     // 11. About Intent ("about", "who are you", "what do you do")
     if (isAboutIntent) {
       let about = `MEIREI | WHO WE ARE & WHAT WE DO\n\n`;
@@ -681,7 +707,7 @@ export async function POST(req: NextRequest) {
       reply += `4. Calculate Units:\n   Reply: "Calculate $500 in TSLAx"\n\n`;
       reply += `5. Compare Two Stocks:\n   Reply: "Compare NVDAx vs MSFTx"\n\n`;
       reply += `6. Check Portfolio Balance:\n   Reply: "balance"\n\n`;
-      reply += `7. Connect OKX Wallet:\n   Reply: "connect"\n   Link: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}\n\n`;
+      reply += `7. Connect / Disconnect Wallet:\n   Reply: "connect" or "disconnect"\n   Link: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}\n\n`;
       reply += `8. Emergency Freeze:\n   Reply: "freeze" or "unfreeze 123456"\n\n`;
       reply += `9. Who We Are & What We Do:\n   Reply: "about"\n\n`;
       reply += `Open Web Terminal:\n${APP_URL}/app`;
@@ -699,7 +725,7 @@ export async function POST(req: NextRequest) {
     replyText += `4. Calculate Units:\n   Reply: "Calculate $500 in TSLAx"\n\n`;
     replyText += `5. Compare Two Stocks:\n   Reply: "Compare NVDAx vs MSFTx"\n\n`;
     replyText += `6. Check Portfolio Balance:\n   Reply: "balance"\n\n`;
-    replyText += `7. Connect OKX Wallet:\n   Reply: "connect"\n   Link: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}\n\n`;
+    replyText += `7. Connect / Disconnect Wallet:\n   Reply: "connect" or "disconnect"\n   Link: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}\n\n`;
     replyText += `8. Emergency Freeze:\n   Reply: "freeze" or "unfreeze 123456"\n\n`;
     replyText += `9. Who We Are & What We Do:\n   Reply: "about"\n\n`;
     replyText += `Open Web Terminal:\n${APP_URL}/app`;
