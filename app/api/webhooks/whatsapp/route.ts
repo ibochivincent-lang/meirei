@@ -130,51 +130,80 @@ export async function POST(req: NextRequest) {
 
     // Command: /start or /help
     if (lower === "help" || lower === "/help" || lower === "/start" || lower === "menu") {
-      let welcome = `PROJECT MEIREI | OKX X LAYER BOT\n\n`;
-      welcome += `Author: IboTV\n`;
+      let welcome = `MEIREI | YOUR INTERACTIVE OKX X LAYER AGENT\n\n`;
       welcome += `Network: OKX X Layer Mainnet (Chain ID 196)\n`;
       welcome += `Wallet: ${shortAddr}\n`;
       welcome += `Account: ${user.email}\n\n`;
       welcome += `Available Commands:\n`;
       welcome += `- Prices: "Price of NVDAx", "Quote TSLAx"\n`;
-      welcome += `- Market List: "stocks" or "/stocks"\n`;
+      welcome += `- Market List: "stocks"\n`;
       welcome += `- Comparison: "Compare NVDAx vs MSFTx"\n`;
       welcome += `- Unit Calculator: "Calculate $250 in NVDAx"\n`;
-      welcome += `- Portfolio: "balance" or "portfolio"\n`;
-      welcome += `- Mandates: "60% Mag7, 20% USDG, max 8%"\n`;
-      welcome += `- Circuit Breaker: "freeze" and "unfreeze"\n\n`;
-      welcome += `Web Terminal: ${APP_URL}/app`;
+      welcome += `- Portfolio: "balance"\n`;
+      welcome += `- Connect OKX Wallet: "connect"\n`;
+      welcome += `- Mandates: "Allocate 40% NVDAx, 40% MSFTx, 20% USDG for $500"\n`;
+      welcome += `- Circuit Breaker: "freeze" and "unfreeze"\n`;
+      welcome += `- Project Guide: "about"\n\n`;
+      welcome += `Web Terminal: ${APP_URL}/app\n`;
+      welcome += `Link Wallet: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}`;
 
       return await sendReply(welcome);
     }
 
     // Command: /about or /guide (Who we are, what we do, and getting started)
     if (lower === "/about" || lower === "about" || lower === "/guide" || lower === "guide") {
-      let about = `PROJECT MEIREI | WHO WE ARE & WHAT WE DO\n\n`;
-      about += `Welcome to Meirei (命令) — an AI-native investment mandate agent operating on OKX X Layer Mainnet (Chain ID 196).\n\n`;
+      let about = `MEIREI | WHO WE ARE & WHAT WE DO\n\n`;
+      about += `Welcome to Meirei (命令) — your interactive AI-native investment mandate agent on OKX X Layer Mainnet (Chain ID 196).\n\n`;
       about += `What We Do:\n`;
       about += `We enable conversational portfolio management directly inside WhatsApp. Instead of navigating DEX interfaces, you state your investment goals in plain English, and Meirei plans, prices, and constructs on-chain rebalances.\n\n`;
-      about += `Core Pillars:\n`;
+      about += `Core Capabilities:\n`;
       about += `1. 24/7 Continuous Trading: Trade live tokenized equities (NVDAx, AAPLx, TSLAx, MSFTx, GOOGLx, AMZNx, METAx) settled natively in USDG stablecoin.\n`;
-      about += `2. 100% Non-Custodial: We never hold your funds or store private keys. Trades are authorized and signed by you directly on-chain.\n`;
+      about += `2. Non-Custodial Security: Trades are authorized and signed by you directly on OKX X Layer.\n`;
       about += `3. Natural Language Mandates: Text instructions like "Allocate 40% NVDAx, 40% MSFTx, 20% USDG for $500" to plan rebalance trades.\n`;
       about += `4. 2FA Circuit Breaker: Text "freeze" anytime for instant emergency protection and an OTP unlock challenge.\n\n`;
-      about += `Getting Started Commands:\n`;
-      about += `- stocks: View all live equity prices\n`;
-      about += `- Price of NVDAx: Check spot quote and contract\n`;
-      about += `- Calculate $500 in TSLAx: Estimate share allocation\n`;
-      about += `- Compare NVDAx vs MSFTx: Compare pricing ratios\n`;
-      about += `- balance: Check your on-chain portfolio holdings\n\n`;
-      about += `Web Terminal & Docs: ${APP_URL}/docs`;
+      about += `Interactive Commands:\n`;
+      about += `- "stocks": View all live equity prices\n`;
+      about += `- "Price of NVDAx": Check spot quote and contract\n`;
+      about += `- "Calculate $500 in TSLAx": Estimate share allocation\n`;
+      about += `- "Compare NVDAx vs MSFTx": Compare pricing ratios\n`;
+      about += `- "balance": Check your on-chain portfolio holdings\n`;
+      about += `- "connect": Link your OKX Wallet\n\n`;
+      about += `Web Terminal: ${APP_URL}/app\n`;
+      about += `Connect Wallet: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}`;
 
       return await sendReply(about);
+    }
+
+    // Command: /connect or link (Link OKX Wallet to WhatsApp)
+    if (
+      lower === "/connect" ||
+      lower === "connect" ||
+      lower === "/link" ||
+      lower === "link" ||
+      lower === "/wallet" ||
+      lower === "wallet" ||
+      lower.includes("connect wallet") ||
+      lower.includes("link wallet")
+    ) {
+      let reply = `MEIREI | CONNECT OKX WALLET\n\n`;
+      reply += `Link your personal OKX Wallet to your WhatsApp account for non-custodial rebalances on OKX X Layer (Chain ID 196).\n\n`;
+      reply += `Current Wallet: ${shortAddr}\n\n`;
+      reply += `To link your OKX Web3 wallet:\n`;
+      reply += `1. Open this secure linkage portal in your browser:\n`;
+      reply += `${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}\n\n`;
+      reply += `2. Tap "Connect OKX Wallet".\n`;
+      reply += `3. Switch network to OKX X Layer.\n`;
+      reply += `4. Tap "Confirm Linkage to WhatsApp".\n\n`;
+      reply += `Once linked, your portfolio balances will update automatically here.`;
+
+      return await sendReply(reply);
     }
 
     // Command: /stocks (Live market prices for all allowlisted tokenized equities)
     if (lower === "/stocks" || lower === "stocks" || lower === "list" || lower === "/list") {
       try {
         const stocks = await fetchAllStockPrices();
-        let reply = `PROJECT MEIREI | X LAYER LIVE EQUITIES\n`;
+        let reply = `MEIREI | X LAYER LIVE EQUITIES\n`;
         reply += `Settlement Asset: USDG (Native Stablecoin)\n`;
         reply += `Continuous Trading: 24/7\n\n`;
 
@@ -275,7 +304,7 @@ export async function POST(req: NextRequest) {
         const holdings = await fetchBalances(user.wallet_address);
         const total = holdings.reduce((sum, h) => sum + (h.valueUsd || 0), 0);
 
-        let replyText = `PROJECT MEIREI | X LAYER PORTFOLIO\n`;
+        let replyText = `MEIREI | X LAYER PORTFOLIO\n`;
         replyText += `Account: ${user.email}\n`;
         replyText += `Wallet: ${shortAddr}\n`;
         replyText += `Total Portfolio Value: $${total.toFixed(2)} USDG\n\n`;
@@ -289,11 +318,12 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        replyText += `\nTerminal: ${APP_URL}/app`;
+        replyText += `\nTerminal: ${APP_URL}/app\n`;
+        replyText += `Link Wallet: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}`;
         return await sendReply(replyText);
       } catch (err) {
         return await sendReply(
-          `PROJECT MEIREI | X LAYER\nWallet ${shortAddr} is connected. Balance is indexing on X Layer (chain 196).`
+          `MEIREI | X LAYER\nWallet ${shortAddr} is connected. Balance is indexing on X Layer (chain 196).`
         );
       }
     }
@@ -370,30 +400,49 @@ export async function POST(req: NextRequest) {
       return await sendReply(replyText);
     }
 
-    // 3. Fallback: Parse Mandate or Advisory Intent via Meirei Engine
-    const mandateRes = await handleMandate({
-      mandate: cleanMessage,
-      walletAddress: user.wallet_address,
-      confirm: false,
-    });
+    // 3. Mandate Execution (if input contains explicit percentages and rebalance targets)
+    const isMandateIntent =
+      cleanMessage.includes("%") ||
+      lower.includes("percent") ||
+      lower.includes("allocate") ||
+      lower.includes("rebalance");
 
-    let replyText = `PROJECT MEIREI | ADVISORY ENGINE\n\n`;
-    if (mandateRes.success && mandateRes.delivery) {
-      const legs = mandateRes.delivery.plan.legs || [];
-      if (legs.length === 0) {
-        replyText += `Mandate analyzed. Portfolio is already aligned with target allocations on X Layer.\n\n`;
-      } else {
-        const legsSummary = legs
-          .map((l) => `- ${l.side.toUpperCase()} $${l.notionalUsd.toFixed(2)} of ${l.symbol}`)
-          .join("\n");
-        replyText += `Proposed Rebalancing Operations:\n${legsSummary}\n\n`;
+    if (isMandateIntent) {
+      const mandateRes = await handleMandate({
+        mandate: cleanMessage,
+        walletAddress: user.wallet_address,
+        confirm: false,
+      });
+
+      if (mandateRes.success && mandateRes.delivery) {
+        const legs = mandateRes.delivery.plan.legs || [];
+        let replyText = `MEIREI | REBALANCING PLAN (OKX X LAYER)\n\n`;
+        if (legs.length === 0) {
+          replyText += `Mandate analyzed. Portfolio is already aligned with target allocations on X Layer.\n\n`;
+        } else {
+          const legsSummary = legs
+            .map((l) => `- ${l.side.toUpperCase()} $${l.notionalUsd.toFixed(2)} of ${l.symbol}`)
+            .join("\n");
+          replyText += `Proposed Rebalancing Operations:\n${legsSummary}\n\n`;
+        }
+        replyText += `Open Web Terminal to sign with OKX Wallet:\n${APP_URL}/app?mandate=${encodeURIComponent(cleanMessage)}`;
+        return await sendReply(replyText);
       }
-    } else {
-      replyText += `${mandateRes.error || "Mandate processed on X Layer."}\n\n`;
     }
 
-    replyText += `Author: IboTV | Non-Custodial Engine\n`;
-    replyText += `Open Web Terminal to sign with OKX Wallet:\n${APP_URL}/app?mandate=${encodeURIComponent(cleanMessage)}`;
+    // Interactive fallback when input is not recognized as a command or mandate
+    let replyText = `MEIREI | YOUR INTERACTIVE OKX X LAYER AGENT\n\n`;
+    replyText += `Could not find this command: "${cleanMessage.slice(0, 35)}"\n\n`;
+    replyText += `Here is what you can do:\n\n`;
+    replyText += `1. View Live Stocks:\n   Reply: "stocks"\n\n`;
+    replyText += `2. Check Single Stock Price:\n   Reply: "Price of NVDAx" or "Quote AAPLx"\n\n`;
+    replyText += `3. Calculate Units:\n   Reply: "Calculate $500 in TSLAx"\n\n`;
+    replyText += `4. Compare Two Stocks:\n   Reply: "Compare NVDAx vs MSFTx"\n\n`;
+    replyText += `5. Check Portfolio Balance:\n   Reply: "balance"\n\n`;
+    replyText += `6. Connect OKX Wallet:\n   Reply: "connect"\n   Link: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}\n\n`;
+    replyText += `7. Emergency Freeze:\n   Reply: "freeze"\n\n`;
+    replyText += `8. Who We Are & What We Do:\n   Reply: "about"\n\n`;
+    replyText += `Open Web Terminal:\n${APP_URL}/app`;
 
     return await sendReply(replyText);
   } catch (err: unknown) {

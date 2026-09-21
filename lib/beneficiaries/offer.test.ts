@@ -56,7 +56,7 @@ function workingDeps(overrides: Partial<BeneficiaryOfferDeps> = {}): {
       recorded.offers++;
       return {} as Awaited<ReturnType<BeneficiaryOfferDeps["recordOffer"]>>;
     },
-    notify: async ({ body }) => {
+    notify: async ({ body }: { body: string }) => {
       recorded.messages.push(body);
       return 1;
     },

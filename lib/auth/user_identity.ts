@@ -368,6 +368,9 @@ export async function lookupUserByChannelHandle(
   return null;
 }
 
+// In-memory cache for zero-db channel user and linked wallet persistence
+const inMemoryChannelUsers = new Map<string, MeireiIdentityUser>();
+
 /**
  * Resolves or automatically registers a social bot user from WhatsApp or Telegram.
  */
@@ -380,12 +383,23 @@ export async function resolveChannelUser({
   handle: string;
   walletAddress?: string;
 }): Promise<MeireiIdentityUser> {
-  const existing = await lookupUserByChannelHandle(channel, handle);
+  const cleanHandle = handle.trim();
+  const cacheKey = `${channel}:${cleanHandle.toLowerCase()}`;
+
+  const cached = inMemoryChannelUsers.get(cacheKey);
+  if (cached) {
+    if (walletAddress && /^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      cached.wallet_address = walletAddress.toLowerCase();
+    }
+    return cached;
+  }
+
+  const existing = await lookupUserByChannelHandle(channel, cleanHandle);
   if (existing) {
+    inMemoryChannelUsers.set(cacheKey, existing);
     return existing;
   }
 
-  const cleanHandle = handle.trim();
   const sanitized = cleanHandle.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
   const fallbackEmail = `${sanitized || "user"}@${channel}.meirei.app`;
 
@@ -397,5 +411,51 @@ export async function resolveChannelUser({
     deviceFingerprint: `${channel}_${cleanHandle}`,
   });
 
+  inMemoryChannelUsers.set(cacheKey, user);
   return user;
 }
+
+/**
+ * Links an external OKX wallet to a social channel user (e.g. WhatsApp / Telegram).
+ */
+export async function linkChannelWallet({
+  channel,
+  handle,
+  walletAddress,
+}: {
+  channel: UserPrimaryChannel;
+  handle: string;
+  walletAddress: string;
+}): Promise<MeireiIdentityUser> {
+  const cleanHandle = handle.trim();
+  const cleanWallet = walletAddress.trim().toLowerCase();
+  const cacheKey = `${channel}:${cleanHandle.toLowerCase()}`;
+
+  const user = await resolveChannelUser({
+    channel,
+    handle: cleanHandle,
+    walletAddress: cleanWallet,
+  });
+
+  user.wallet_address = cleanWallet;
+  user.updated_at = new Date().toISOString();
+  inMemoryChannelUsers.set(cacheKey, user);
+
+  const supabase = getSupabaseClientSafe();
+  if (supabase) {
+    try {
+      await supabase
+        .from("meirei_users")
+        .update({
+          wallet_address: cleanWallet,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+    } catch (err) {
+      console.warn("[Identity] Notice updating wallet in database:", err);
+    }
+  }
+
+  return user;
+}
+

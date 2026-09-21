@@ -326,7 +326,7 @@ async function runTests() {
       }),
     });
     const data = await res.json();
-    if (res.ok && data.ok && data.reply.includes("PROJECT MEIREI") && data.reply.includes("What We Do")) {
+    if (res.ok && data.ok && data.reply.includes("MEIREI") && data.reply.includes("What We Do")) {
       console.log("PASS: WhatsApp POST /about command");
       passed++;
     } else {
@@ -361,6 +361,86 @@ async function runTests() {
     }
   } catch (err) {
     console.error("ERROR in Test 13:", err.message);
+    failed++;
+  }
+
+  // Test 14: WhatsApp POST wrong/unhandled command fallback
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "wrong_command_click",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    const isInteractive =
+      reply.includes("MEIREI | YOUR INTERACTIVE OKX X LAYER AGENT") &&
+      reply.includes("Could not find this command") &&
+      reply.includes("stocks") &&
+      !reply.includes("ADVISORY ENGINE") &&
+      !reply.includes("PROJECT MEIREI") &&
+      !reply.includes("Author: IboTV") &&
+      !reply.includes("Non-Custodial Engine");
+
+    if (res.ok && data.ok && isInteractive) {
+      console.log("PASS: WhatsApp POST wrong command interactive fallback");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp POST wrong command fallback:", res.status, reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 14:", err.message);
+    failed++;
+  }
+
+  // Test 15: WhatsApp POST connect command
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "connect",
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok && data.reply.includes("CONNECT OKX WALLET") && data.reply.includes("/connect?channel=whatsapp")) {
+      console.log("PASS: WhatsApp POST connect command");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp POST connect command:", res.status, data);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 15:", err.message);
+    failed++;
+  }
+
+  // Test 16: POST /api/wallet/link
+  try {
+    const res = await fetch(`${baseUrl}/api/wallet/link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channel: "whatsapp",
+        handle: "+1 (555) 392 1084",
+        walletAddress: "0x7f17d6224e7d48606598732c3f511412b5c1e922",
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok && data.walletAddress === "0x7f17d6224e7d48606598732c3f511412b5c1e922") {
+      console.log("PASS: POST /api/wallet/link API");
+      passed++;
+    } else {
+      console.error("FAIL: POST /api/wallet/link API:", res.status, data);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 16:", err.message);
     failed++;
   }
 
