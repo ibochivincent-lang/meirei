@@ -109,19 +109,25 @@ export async function POST(req: NextRequest) {
       welcome += `*Connected Wallet*: \`${shortAddr}\`\n`;
       welcome += `*Identity*: ${user.email}\n\n`;
       welcome += `*Commands & Capabilities*:\n`;
+      welcome += `- *Buy Stocks*: "Buy $250 in NVDAx" or "Buy TSLAx"\n`;
       welcome += `- *Check Prices*: "Price of NVDAx", "Quote TSLAx"\n`;
       welcome += `- *Live Market List*: /stocks or "stocks"\n`;
       welcome += `- *Compare Stocks*: "Compare NVDAx vs MSFTx"\n`;
       welcome += `- *Unit Calculator*: "Calculate $250 in NVDAx"\n`;
       welcome += `- *Portfolio Balance*: /balance or "portfolio"\n`;
+      welcome += `- *Connect OKX Wallet*: /connect\n`;
       welcome += `- *Run Mandates*: "60% Mag7, 20% USDG, max 8%"\n`;
       welcome += `- *Emergency Freeze*: /freeze and /unfreeze\n\n`;
       welcome += `_Non-custodial architecture: Zero private keys stored on servers._`;
 
       const keyboard = [
         [
-          { text: "View Portfolio", callback_data: "/balance" },
+          { text: "Buy Stocks", callback_data: "Buy stocks" },
           { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+        [
+          { text: "View Portfolio", callback_data: "/balance" },
+          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
         ],
         [
           { text: "Open Web Terminal", url: `${APP_URL}/app` },
@@ -331,7 +337,40 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Identify referenced symbols for price, comparison, or unit calculation
+    // Command: /connect or link (Link OKX Wallet to Telegram)
+    if (
+      lower === "/connect" ||
+      lower === "connect" ||
+      lower === "/link" ||
+      lower === "link" ||
+      lower === "/wallet" ||
+      lower === "wallet" ||
+      lower.includes("connect wallet") ||
+      lower.includes("link wallet")
+    ) {
+      let reply = `*PROJECT MEIREI | CONNECT OKX WALLET*\n\n`;
+      reply += `Link your personal OKX Web3 Wallet to your Telegram handle for non-custodial rebalances on *OKX X Layer (Chain ID 196)*.\n\n`;
+      reply += `*Connected Wallet*: \`${shortAddr}\`\n\n`;
+      reply += `*To link your OKX Web3 wallet*:\n`;
+      reply += `1. Tap "Connect OKX Wallet" below.\n`;
+      reply += `2. Switch network to OKX X Layer.\n`;
+      reply += `3. Confirm signature in your OKX Wallet.\n\n`;
+      reply += `Once linked, your live on-chain holdings will update automatically.`;
+
+      const keyboard = [
+        [
+          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+        ],
+        [
+          { text: "View Portfolio", callback_data: "/balance" },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+      ];
+
+      return await replyWith(reply, keyboard);
+    }
+
+    // 2. Identify referenced symbols for price, comparison, buy order, or unit calculation
     const words = lower.replace(/[^a-z0-9]/g, " ").split(/\s+/);
     const symbolsFound: string[] = [];
     for (const word of words) {
@@ -339,6 +378,83 @@ export async function POST(req: NextRequest) {
       if (canonical && !symbolsFound.includes(canonical) && canonical !== "USDG" && canonical !== "USDC") {
         symbolsFound.push(canonical);
       }
+    }
+
+    // Extract money amounts
+    const moneyMatch = rawText.match(/\$?\s*(\d+(?:\.\d+)?)\s*(?:usdg|usd|dollars)?/i);
+
+    // 2. Buy Stocks Intent
+    const isBuyIntent = /\b(buy|purchase|invest|order)\b/i.test(rawText);
+    if (isBuyIntent) {
+      if (symbolsFound.length >= 1) {
+        const targetSymbol = symbolsFound[0];
+        const spotPrice = await fetchPrice(targetSymbol);
+        const item = ALLOWLIST.find((a) => a.symbol === targetSymbol);
+
+        if (moneyMatch) {
+          const usdAmount = parseFloat(moneyMatch[1]);
+          if (usdAmount > 0) {
+            const units = usdAmount / (spotPrice || 1);
+            let reply = `*MEIREI | ORDER PREPARATION (OKX X LAYER)*\n\n`;
+            reply += `*Action*: BUY\n`;
+            reply += `*Target Asset*: *${targetSymbol}* (${item?.name || targetSymbol})\n`;
+            reply += `*Spot Price*: *$${spotPrice.toFixed(2)} USDG*\n`;
+            reply += `*Allocation*: *$${usdAmount.toFixed(2)} USDG*\n`;
+            reply += `*Estimated Execution*: *~${units.toFixed(4)} ${targetSymbol}*\n`;
+            reply += `*Settlement*: USDG (Chain ID 196)\n\n`;
+            reply += `_1-Click Non-Custodial Execution via OKX Web3 Wallet:_`;
+
+            const keyboard = [
+              [
+                { text: `Sign Buy Order ($${usdAmount})`, url: `${APP_URL}/app?action=buy&symbol=${targetSymbol}&amount=${usdAmount}` },
+                { text: "View Portfolio", callback_data: "/balance" },
+              ],
+            ];
+            return await replyWith(reply, keyboard);
+          }
+        }
+
+        let reply = `*MEIREI | ORDER PREPARATION (OKX X LAYER)*\n\n`;
+        reply += `*Asset*: *${targetSymbol}* (${item?.name || targetSymbol})\n`;
+        reply += `*Spot Price*: *$${spotPrice.toFixed(2)} USDG*\n`;
+        reply += `*Settlement*: USDG (OKX X Layer Chain 196)\n\n`;
+        reply += `To specify an amount, reply:\n`;
+        reply += `"Buy $250 in ${targetSymbol}"\n\n`;
+        reply += `_Or open the Web3 Terminal directly:_`;
+
+        const keyboard = [
+          [
+            { text: `Trade ${targetSymbol} on Web Terminal`, url: `${APP_URL}/app?action=buy&symbol=${targetSymbol}` },
+            { text: "Live Stock Prices", callback_data: "/stocks" },
+          ],
+        ];
+        return await replyWith(reply, keyboard);
+      }
+
+      // No symbol specified
+      let reply = `*MEIREI | HOW TO BUY TOKENIZED STOCKS*\n\n`;
+      reply += `Trade tokenized equities 24/7 on OKX X Layer Mainnet (Chain ID 196) settled in USDG.\n\n`;
+      reply += `*Available Tickers*:\n`;
+      reply += `• NVDAx (Nvidia)\n`;
+      reply += `• AAPLx (Apple)\n`;
+      reply += `• TSLAx (Tesla)\n`;
+      reply += `• MSFTx (Microsoft)\n`;
+      reply += `• GOOGLx (Alphabet)\n`;
+      reply += `• AMZNx (Amazon)\n`;
+      reply += `• METAx (Meta)\n\n`;
+      reply += `*How to Order*:\n`;
+      reply += `Reply with your chosen asset and dollar amount:\n`;
+      reply += `• "Buy $250 in NVDAx"\n`;
+      reply += `• "Buy $500 in TSLAx"\n`;
+      reply += `• "Buy AAPLx"\n\n`;
+
+      const keyboard = [
+        [
+          { text: "Open Web3 Trading Terminal", url: `${APP_URL}/app?action=buy` },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+      ];
+      return await replyWith(reply, keyboard);
     }
 
     // 2a. Multi-stock price comparison
@@ -366,7 +482,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 2b. Unit calculation inquiries
-    const moneyMatch = rawText.match(/\$?\s*(\d+(?:\.\d+)?)\s*(?:usdg|usd|dollars)?/i);
     const hasUnitIntent =
       lower.includes("how many") ||
       lower.includes("how much") ||

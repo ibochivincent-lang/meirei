@@ -516,6 +516,261 @@ async function runTests() {
     failed++;
   }
 
+  // Test 20: Affirmative Menu includes "Buy Stocks" prominently
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "Yes",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && reply.includes("Buy Stocks") && reply.includes("Buy $250 in NVDAx")) {
+      console.log("PASS: Affirmative Menu prominently features 'Buy Stocks'");
+      passed++;
+    } else {
+      console.error("FAIL: Affirmative Menu missing 'Buy Stocks':", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 20:", err.message);
+    failed++;
+  }
+
+  // Test 21: Conversational Buy Stock with symbol and amount
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "Can you help me buy $250 in NVDAx right now?",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (
+      res.ok &&
+      reply.includes("ORDER PREPARATION") &&
+      reply.includes("NVDAx") &&
+      reply.includes("https://meirei-rho.vercel.app/app?action=buy&symbol=NVDAx&amount=250")
+    ) {
+      console.log("PASS: Conversational Buy Stock with amount ('buy $250 in NVDAx')");
+      passed++;
+    } else {
+      console.error("FAIL: Conversational Buy Stock with amount:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 21:", err.message);
+    failed++;
+  }
+
+  // Test 22: Conversational Buy Stock without amount
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "I want to buy TSLAx stock",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (
+      res.ok &&
+      reply.includes("ORDER PREPARATION") &&
+      reply.includes("TSLAx") &&
+      reply.includes("https://meirei-rho.vercel.app/app?action=buy&symbol=TSLAx")
+    ) {
+      console.log("PASS: Conversational Buy Stock without amount ('buy TSLAx')");
+      passed++;
+    } else {
+      console.error("FAIL: Conversational Buy Stock without amount:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 22:", err.message);
+    failed++;
+  }
+
+  // Test 23: Generic Buy Stock inquiry
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "How do I buy stocks on Meirei?",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && reply.includes("HOW TO BUY TOKENIZED STOCKS") && reply.includes("Available Assets")) {
+      console.log("PASS: Generic Buy Stock inquiry ('How do I buy stocks?')");
+      passed++;
+    } else {
+      console.error("FAIL: Generic Buy Stock inquiry:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 23:", err.message);
+    failed++;
+  }
+
+  // Test 24: Conversational Stock List request
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "Can you show me what stocks are available to trade?",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && reply.includes("X LAYER LIVE EQUITIES") && reply.includes("NVDAx") && reply.includes("AAPLx")) {
+      console.log("PASS: Conversational Stock List request ('what stocks are available?')");
+      passed++;
+    } else {
+      console.error("FAIL: Conversational Stock List request:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 24:", err.message);
+    failed++;
+  }
+
+  // Test 25: Conversational Price Quote
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "What is the current price of Apple?",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && reply.includes("MEIREI SPOT QUOTE") && reply.includes("AAPLx") && reply.includes("USDG")) {
+      console.log("PASS: Conversational Price Quote ('price of Apple')");
+      passed++;
+    } else {
+      console.error("FAIL: Conversational Price Quote:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 25:", err.message);
+    failed++;
+  }
+
+  // Test 26: Conversational Stock Comparison
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "Can you compare Apple and Nvidia for me please?",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && reply.includes("STOCK COMPARISON") && reply.includes("AAPLx") && reply.includes("NVDAx")) {
+      console.log("PASS: Conversational Stock Comparison ('compare Apple and Nvidia')");
+      passed++;
+    } else {
+      console.error("FAIL: Conversational Stock Comparison:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 26:", err.message);
+    failed++;
+  }
+
+  // Test 27: Conversational Balance Request
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "Can you check my wallet portfolio balance?",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && reply.includes("X LAYER") && (reply.includes("PORTFOLIO") || reply.includes("indexing on X Layer"))) {
+      console.log("PASS: Conversational Balance Request ('check my portfolio balance')");
+      passed++;
+    } else {
+      console.error("FAIL: Conversational Balance Request:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 27:", err.message);
+    failed++;
+  }
+
+  // Test 28: Conversational About & Guide Request
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "Tell me what Meirei does and what you are",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (res.ok && reply.includes("WHO WE ARE & WHAT WE DO") && reply.includes("OKX X Layer")) {
+      console.log("PASS: Conversational About Request ('Tell me what Meirei does')");
+      passed++;
+    } else {
+      console.error("FAIL: Conversational About Request:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 28:", err.message);
+    failed++;
+  }
+
+  // Test 29: Simulated WhatsApp Audio / Voice Note Transcription
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        audio_text: "Buy $500 in TSLAx",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (
+      res.ok &&
+      reply.includes("ORDER PREPARATION") &&
+      reply.includes("TSLAx") &&
+      reply.includes("action=buy&symbol=TSLAx&amount=500")
+    ) {
+      console.log("PASS: Simulated Voice Note Transcription Pipeline ('Buy $500 in TSLAx')");
+      passed++;
+    } else {
+      console.error("FAIL: Simulated Voice Note Transcription Pipeline:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 29:", err.message);
+    failed++;
+  }
+
   console.log(`\n================================`);
   console.log(`TOTAL PASSED: ${passed}`);
   console.log(`TOTAL FAILED: ${failed}`);

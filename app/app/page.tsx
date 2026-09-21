@@ -293,10 +293,19 @@ export default function AppDashboardPage() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const mandateParam = params.get("mandate");
+      const actionParam = params.get("action");
+      const symbolParam = params.get("symbol");
+      const amountParam = params.get("amount");
+
       if (mandateParam && mandateParam.trim()) {
         setPromptText(mandateParam.trim());
+      } else if (actionParam === "buy" && symbolParam) {
+        const amtStr = amountParam ? `$${amountParam} in ` : "";
+        setPromptText(`Buy ${amtStr}${symbolParam}`);
+      } else if (actionParam === "buy") {
+        setPromptText("Buy $250 in NVDAx");
       }
-      const symbolParam = params.get("symbol");
+
       if (symbolParam) {
         const match = STOCKS.find(
           (s) =>
