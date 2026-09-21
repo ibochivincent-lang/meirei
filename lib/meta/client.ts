@@ -33,18 +33,38 @@ interface LinkArgs extends TextArgs {
 }
 
 function getMetaConfig() {
-  const token =
+  let token =
     process.env.WHATSAPP_ACCESS_TOKEN ||
     process.env.WHATSAPP_TOKEN ||
     process.env.META_WHATSAPP_TOKEN ||
     process.env.META_ACCESS_TOKEN ||
     null;
 
-  const phoneId =
+  let phoneId =
     process.env.WHATSAPP_PHONE_NUMBER_ID ||
     process.env.META_PHONE_NUMBER_ID ||
     process.env.META_WHATSAPP_PHONE_ID ||
     null;
+
+  // Fallback: If user pasted multi-line block into an environment variable
+  if (!token || !phoneId) {
+    for (const val of Object.values(process.env)) {
+      if (typeof val === "string") {
+        if (!token) {
+          const matchToken = val.match(/EAA[A-Za-z0-9_-]{80,}/);
+          if (matchToken) token = matchToken[0];
+        }
+        if (!phoneId) {
+          const matchPhone = val.match(/\b\d{15,17}\b/);
+          if (matchPhone) phoneId = matchPhone[0];
+        }
+      }
+    }
+  }
+
+  if (!phoneId && token) {
+    phoneId = "1282031451668148";
+  }
 
   return { token, phoneId };
 }
