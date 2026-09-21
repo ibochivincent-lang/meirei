@@ -42,6 +42,125 @@ export interface SigningResult {
   error?: string;
 }
 
+export type WalletType = "okx" | "metamask" | "coinbase" | "trust" | "injected";
+
+export interface WalletOption {
+  id: WalletType;
+  name: string;
+  description: string;
+  isInstalled: boolean;
+  installUrl: string;
+  deepLink?: string;
+  icon: string;
+}
+
+/**
+ * Returns a specific Web3 provider by wallet type, preventing provider conflicts.
+ */
+export function getSpecificProvider(type: WalletType = "injected"): any {
+  if (typeof window === "undefined") return null;
+  const win = window as any;
+
+  if (type === "okx") {
+    if (win.okxwallet) return win.okxwallet;
+    if (win.ethereum?.isOkxWallet) return win.ethereum;
+    if (win.ethereum?.providers?.length) {
+      const okx = win.ethereum.providers.find((p: any) => p.isOkxWallet);
+      if (okx) return okx;
+    }
+    return null;
+  }
+
+  if (type === "metamask") {
+    if (win.ethereum?.isMetaMask && !win.ethereum?.isOkxWallet) return win.ethereum;
+    if (win.ethereum?.providers?.length) {
+      const mm = win.ethereum.providers.find((p: any) => p.isMetaMask && !p.isOkxWallet);
+      if (mm) return mm;
+    }
+    if (win.ethereum && !win.okxwallet) return win.ethereum;
+    return null;
+  }
+
+  if (type === "coinbase") {
+    if (win.coinbaseWalletExtension) return win.coinbaseWalletExtension;
+    if (win.ethereum?.isCoinbaseWallet) return win.ethereum;
+    if (win.ethereum?.providers?.length) {
+      const cb = win.ethereum.providers.find((p: any) => p.isCoinbaseWallet);
+      if (cb) return cb;
+    }
+    return null;
+  }
+
+  if (type === "trust") {
+    if (win.trustwallet) return win.trustwallet;
+    if (win.ethereum?.isTrust) return win.ethereum;
+    if (win.ethereum?.providers?.length) {
+      const tw = win.ethereum.providers.find((p: any) => p.isTrust);
+      if (tw) return tw;
+    }
+    return null;
+  }
+
+  return getInjectedProvider();
+}
+
+/**
+ * Checks which wallets are currently installed in the user's browser.
+ */
+export function getAvailableWallets(): WalletOption[] {
+  if (typeof window === "undefined") return [];
+  const win = window as any;
+
+  const hasOkx = !!(win.okxwallet || win.ethereum?.isOkxWallet || win.ethereum?.providers?.some((p: any) => p.isOkxWallet));
+  const hasMetaMask = !!(win.ethereum?.isMetaMask && !win.ethereum?.isOkxWallet) || !!win.ethereum?.providers?.some((p: any) => p.isMetaMask && !p.isOkxWallet);
+  const hasCoinbase = !!(win.coinbaseWalletExtension || win.ethereum?.isCoinbaseWallet || win.ethereum?.providers?.some((p: any) => p.isCoinbaseWallet));
+  const hasTrust = !!(win.trustwallet || win.ethereum?.isTrust || win.ethereum?.providers?.some((p: any) => p.isTrust));
+
+  return [
+    {
+      id: "okx",
+      name: "OKX Wallet",
+      description: "Recommended • Native to OKX X Layer (Chain 196)",
+      isInstalled: hasOkx,
+      installUrl: "https://www.okx.com/web3",
+      deepLink: "okx://wallet/dapp/url?dappUrl=",
+      icon: "OKX",
+    },
+    {
+      id: "metamask",
+      name: "MetaMask",
+      description: "Popular Web3 & EVM browser extension",
+      isInstalled: hasMetaMask,
+      installUrl: "https://metamask.io/download/",
+      icon: "MM",
+    },
+    {
+      id: "coinbase",
+      name: "Coinbase Wallet",
+      description: "Self-custody EVM wallet extension & mobile app",
+      isInstalled: hasCoinbase,
+      installUrl: "https://www.coinbase.com/wallet",
+      icon: "CB",
+    },
+    {
+      id: "trust",
+      name: "Trust Wallet",
+      description: "Multi-chain Web3 crypto wallet",
+      isInstalled: hasTrust,
+      installUrl: "https://trustwallet.com/browser-extension",
+      icon: "TW",
+    },
+    {
+      id: "injected",
+      name: "Browser Web3 Wallet",
+      description: "Auto-detect any active EIP-1193 wallet provider",
+      isInstalled: !!(win.ethereum || win.okxwallet),
+      installUrl: "https://www.okx.com/web3",
+      icon: "W3",
+    },
+  ];
+}
+
 /**
  * Detects injected Web3 provider, prioritizing OKX Wallet.
  */

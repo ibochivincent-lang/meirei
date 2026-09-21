@@ -121,11 +121,8 @@ async function queryGeminiModel(
         },
       ],
       generationConfig: {
-        temperature: 0.0,
-        maxOutputTokens: 64,
-        thinkingConfig: {
-          thinkingLevel: "minimal",
-        },
+        temperature: 0.1,
+        maxOutputTokens: 256,
       },
     };
 

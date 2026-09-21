@@ -111,9 +111,6 @@ export async function POST(req: NextRequest) {
         } else if (msg.type === "audio" || msg.type === "voice" || msg.audio || msg.voice) {
           // Voice note audio stream processing
           isVoiceNote = true;
-          if (msg.id) {
-            void markWhatsAppMessageRead(msg.id);
-          }
           const audioObj = msg.audio || msg.voice;
           const mediaId = audioObj?.id;
           const mimeType = audioObj?.mime_type || "audio/ogg";
