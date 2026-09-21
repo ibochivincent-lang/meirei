@@ -81,18 +81,20 @@ export async function transcribeAudioBuffer(
 
   let lastGeminiError: string | null = null;
 
-  // Option A: Gemini Multimodal Audio Transcription with Model Fallbacks
+  // Option A: Gemini Multimodal Audio Transcription (gemini-3.6-flash & gemini-3.7-flash)
   if (geminiKey) {
-    const modelsToTry = [
-      "gemini-2.0-flash",
-      "gemini-1.5-flash",
-      "gemini-2.5-flash",
-    ];
-
     const cleanMime = mimeType.split(";")[0].trim() || "audio/ogg";
     const base64Data = buffer.toString("base64");
 
-    const payload = {
+    // 1. Try generateContent with Google's recommended 3.x Flash models
+    const modelsToTry = [
+      "gemini-3.6-flash",
+      "gemini-3.7-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.5-transcribe",
+    ];
+
+    const generatePayload = {
       contents: [
         {
           parts: [
@@ -120,19 +122,19 @@ export async function transcribeAudioBuffer(
         const res = await fetch(geminiEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(generatePayload),
         });
 
         if (res.ok) {
           const data = await res.json();
           const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
           if (candidate) {
-            console.log(`[Voice Transcription] Successfully transcribed using ${model}: "${candidate}"`);
+            console.log(`[Voice Transcription] Successfully transcribed using ${model} generateContent: "${candidate}"`);
             return { ok: true, text: candidate };
           }
         } else {
           const errText = await res.text();
-          console.warn(`[Voice Transcription] ${model} returned HTTP ${res.status}:`, errText);
+          console.warn(`[Voice Transcription] ${model} generateContent HTTP ${res.status}:`, errText);
           try {
             const parsed = JSON.parse(errText);
             lastGeminiError = parsed.error?.message || `HTTP ${res.status}`;
@@ -145,6 +147,60 @@ export async function transcribeAudioBuffer(
         console.warn(`[Voice Transcription] Gemini (${model}) connection exception:`, msg);
         lastGeminiError = msg;
       }
+    }
+
+    // 2. Try Google Interactions API (Interactions endpoint recommended by Google)
+    try {
+      const interactionsUrl = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${geminiKey}`;
+      const interactionsPayload = {
+        model: "gemini-3.6-flash",
+        input: [
+          {
+            audio: {
+              mime_type: cleanMime,
+              data: base64Data,
+            },
+          },
+          {
+            text: "Transcribe this voice audio recording into plain English text. Return ONLY the spoken words with no commentary, no markdown, and no quotes.",
+          },
+        ],
+      };
+
+      const intRes = await fetch(interactionsUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Api-Revision": "2026-05-20",
+        },
+        body: JSON.stringify(interactionsPayload),
+      });
+
+      if (intRes.ok) {
+        const intData = await intRes.json();
+        const recognized =
+          intData.output_text ||
+          intData.steps?.[intData.steps.length - 1]?.content?.[0]?.text ||
+          intData.steps?.[0]?.content?.[0]?.text;
+        if (recognized && typeof recognized === "string" && recognized.trim()) {
+          console.log(`[Voice Transcription] Successfully transcribed using Interactions API: "${recognized.trim()}"`);
+          return { ok: true, text: recognized.trim() };
+        }
+      } else {
+        const intErrText = await intRes.text();
+        console.warn(`[Voice Transcription] Interactions API HTTP ${intRes.status}:`, intErrText);
+        try {
+          const parsedInt = JSON.parse(intErrText);
+          if (parsedInt.error?.message) {
+            lastGeminiError = parsedInt.error.message;
+          }
+        } catch {
+          // Keep earlier lastGeminiError if available
+        }
+      }
+    } catch (intEx: unknown) {
+      const msg = intEx instanceof Error ? intEx.message : String(intEx);
+      console.warn("[Voice Transcription] Interactions API exception:", msg);
     }
   }
 
