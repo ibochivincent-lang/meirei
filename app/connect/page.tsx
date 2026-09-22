@@ -14,6 +14,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { SITE } from "@/lib/data/site";
+import { cn } from "@/lib/utils/cn";
 import {
   XLAYER_CHAIN_ID_DECIMAL,
   XLAYER_CHAIN_ID_HEX,
@@ -482,8 +483,17 @@ function ConnectWalletContent() {
 
       setLinkSuccess(true);
       setInfoMessage(
-        `Wallet ${formatShortAddress(connectedAddress)} successfully anchored to your ${activeConfig.name} account.`
+        `Wallet ${formatShortAddress(connectedAddress)} successfully anchored to your ${activeConfig.name} account. Redirecting to ${activeConfig.name}...`
       );
+
+      const targetUrl = activeConfig.getReturnUrl(effectiveHandle);
+      if (targetUrl && typeof window !== "undefined") {
+        if (selectedChannel === "web") {
+          window.location.href = targetUrl;
+        } else {
+          window.open(targetUrl, "_blank", "noopener,noreferrer");
+        }
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(msg);
@@ -702,7 +712,13 @@ function ConnectWalletContent() {
                   href={returnUrl}
                   target={selectedChannel === "web" ? "_self" : "_blank"}
                   rel="noopener noreferrer"
-                  className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm text-center transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                  className={cn(
+                    "w-full py-3 px-4 rounded-xl text-white font-semibold text-sm text-center transition shadow-lg flex items-center justify-center gap-2",
+                    selectedChannel === "whatsapp" && "bg-[#25D366] hover:bg-[#20ba5a] shadow-[#25D366]/25",
+                    selectedChannel === "telegram" && "bg-[#229ED9] hover:bg-[#1c8ec4] shadow-[#229ED9]/25",
+                    selectedChannel === "instagram" && "bg-[#E1306C] hover:bg-[#c9255c] shadow-[#E1306C]/25",
+                    selectedChannel === "web" && "bg-[#FF6B4E] hover:bg-[#ff5533] shadow-[#FF6B4E]/25"
+                  )}
                 >
                   <ActiveLogo className="w-4 h-4 text-white" />
                   <span>{activeConfig.returnCtaText}</span>
@@ -808,7 +824,13 @@ function ConnectWalletContent() {
                     type="button"
                     onClick={handleLinkToChannel}
                     disabled={isLinking}
-                    className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-sm transition shadow-lg shadow-emerald-600/20 cursor-pointer flex items-center justify-center gap-2"
+                    className={cn(
+                      "w-full py-3.5 px-4 rounded-xl disabled:opacity-50 text-white font-semibold text-sm transition shadow-lg cursor-pointer flex items-center justify-center gap-2",
+                      selectedChannel === "whatsapp" && "bg-[#25D366] hover:bg-[#20ba5a] shadow-[#25D366]/25",
+                      selectedChannel === "telegram" && "bg-[#229ED9] hover:bg-[#1c8ec4] shadow-[#229ED9]/25",
+                      selectedChannel === "instagram" && "bg-[#E1306C] hover:bg-[#c9255c] shadow-[#E1306C]/25",
+                      selectedChannel === "web" && "bg-[#FF6B4E] hover:bg-[#ff5533] shadow-[#FF6B4E]/25"
+                    )}
                   >
                     <ActiveLogo className="w-4 h-4 text-white" />
                     <span>

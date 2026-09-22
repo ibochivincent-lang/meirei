@@ -379,7 +379,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Generate 2FA unfreeze challenge code
-      const challenge = generateOtpChallenge(user.wallet_address, "account_unfreeze");
+      const challenge = await generateOtpChallenge(user.wallet_address, "account_unfreeze");
       waUnfreezeChallenges.set(senderPhone, challenge.challengeId);
 
       let reply = `EMERGENCY CIRCUIT BREAKER ACTIVATED\n\n`;
@@ -409,7 +409,7 @@ export async function POST(req: NextRequest) {
       let isValid = false;
 
       if (challengeId) {
-        const verifyResult = verifyOtpChallenge(challengeId, code);
+        const verifyResult = await verifyOtpChallenge(challengeId, code);
         isValid = verifyResult.valid;
       } else {
         isValid = /^\d{6}$/.test(code);

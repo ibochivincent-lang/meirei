@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       }
 
       const purpose = body.purpose || "trade_execution";
-      const challenge = generateOtpChallenge(identifier, purpose);
+      const challenge = await generateOtpChallenge(identifier, purpose);
 
       const isEmail = identifier.includes("@");
       const maskedId = isEmail
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const result = verifyOtpChallenge(challengeId, code);
+      const result = await verifyOtpChallenge(challengeId, code);
 
       if (!result.valid) {
         return NextResponse.json(

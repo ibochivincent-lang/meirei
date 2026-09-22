@@ -18,6 +18,7 @@ import {
 } from "@/components/illustrations/feature-illustrations";
 
 import { ResearchSpotlight } from "@/components/sections/research_spotlight";
+import { LiquidityRoutingSection } from "@/components/sections/liquidity-routing-section";
 
 export default function HomePage() {
   return (
@@ -76,6 +77,7 @@ export default function HomePage() {
         </HowItWorksWrapper>
 
         <SecuritySection />
+        <LiquidityRoutingSection />
         <UseCasesSection />
         <FaqSection />
         <ClosingCta />

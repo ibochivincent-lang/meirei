@@ -18,7 +18,7 @@ export function ResearchSpotlight() {
           </h2>
 
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-700 dark:text-ink-300 sm:text-lg">
-            Authored by IboTV. This paper introduces an autonomous non-custodial rebalancing agent that combines intent-based natural language parsing with cryptographic 2FA authorization and atomic execution via OKX DEX on X Layer (chain 196).
+            Authored by IboTV. This paper introduces an autonomous non-custodial rebalancing agent that combines intent-based natural language parsing with cryptographic 2FA authorization and atomic execution via OKX Exchange OS on X Layer (chain 196).
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">

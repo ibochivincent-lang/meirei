@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       if (otpMatch) {
         const inputCode = otpMatch[0];
         const challengeId = body.challengeId || `otp_${walletAddress}`;
-        const verifyRes = verifyOtpChallenge(challengeId, inputCode);
+        const verifyRes = await verifyOtpChallenge(challengeId, inputCode);
 
         // Accept verified challenge or standard dev code
         if (verifyRes.valid || inputCode === "123456" || inputCode.length === 6) {
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Generate challenge and prompt user for 6-digit confirmation code
-      const challenge = generateOtpChallenge(walletAddress, "unfreeze_account");
+      const challenge = await generateOtpChallenge(walletAddress, "unfreeze_account");
       return NextResponse.json({
         reply: `UNFREEZE AUTHORIZATION REQUIRED: A 6-digit verification code has been issued: [${challenge.code}]. Reply with "/unfreeze ${challenge.code}" or enter this code in your terminal to reactivate trading on OKX X Layer.`,
         type: "unfreeze_challenge",

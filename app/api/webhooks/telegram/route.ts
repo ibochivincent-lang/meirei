@@ -376,7 +376,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Generate 2FA unfreeze challenge code
-      const challenge = generateOtpChallenge(user.wallet_address, "account_unfreeze");
+      const challenge = await generateOtpChallenge(user.wallet_address, "account_unfreeze");
       unfreezeChallenges.set(chatId.toString(), challenge.challengeId);
 
       let reply = `*EMERGENCY CIRCUIT BREAKER ACTIVATED*\n\n`;
@@ -413,7 +413,7 @@ export async function POST(req: NextRequest) {
       let isValid = false;
 
       if (challengeId) {
-        const verifyResult = verifyOtpChallenge(challengeId, code);
+        const verifyResult = await verifyOtpChallenge(challengeId, code);
         isValid = verifyResult.valid;
       } else {
         isValid = /^\d{6}$/.test(code);
@@ -559,20 +559,23 @@ export async function POST(req: NextRequest) {
           const usdAmount = parseFloat(moneyMatch[1]);
           if (usdAmount > 0) {
             const units = usdAmount / (spotPrice || 1);
-            let reply = `*MEIREI | ORDER PREPARATION (OKX X LAYER)*\n\n`;
+            let reply = `*MEIREI INTENT SOLVER | TRADE APPROVAL REQUIRED*\n\n`;
+            reply += `Meirei utilizes an Intent-Based Architecture. The AI bot acts as a solver, structuring the calldata for the trade and pushing a one-click signing prompt to your client. Private keys never leave the OKX Wallet.\n\n`;
             reply += `*Action*: BUY\n`;
             reply += `*Target Asset*: *${targetSymbol}* (${item?.name || targetSymbol})\n`;
             reply += `*Spot Price*: *$${spotPrice.toFixed(2)} USDG*\n`;
-            reply += `*Allocation*: *$${usdAmount.toFixed(2)} USDG*\n`;
+            reply += `*Input Allocation*: *$${usdAmount.toFixed(2)} USDG*\n`;
             reply += `*Estimated Execution*: *~${units.toFixed(4)} ${targetSymbol}*\n`;
-            reply += `*Settlement*: USDG (Chain ID 196)\n\n`;
-            reply += `*1-Click Non-Custodial Execution*:\n`;
+            reply += `*Network*: OKX X Layer (Chain ID 196)\n`;
+            reply += `*Routing*: OKX Exchange OS (Aggregated Spot Execution)\n`;
+            reply += `*Execution Mode*: Non-Custodial Client Signing\n\n`;
+            reply += `*Approval URL*:\n`;
             reply += `${APP_URL}/app?action=buy&symbol=${targetSymbol}&amount=${usdAmount}\n\n`;
-            reply += `_Or tap below to sign with your OKX Web3 Wallet:_`;
+            reply += `_Tap "Approve Trade" below to open the terminal and sign the transaction with your connected OKX Wallet:_`;
 
             const keyboard = [
               [
-                { text: `Sign Buy Order ($${usdAmount})`, url: `${APP_URL}/app?action=buy&symbol=${targetSymbol}&amount=${usdAmount}` },
+                { text: "Approve Trade", url: `${APP_URL}/app?action=buy&symbol=${targetSymbol}&amount=${usdAmount}` },
                 { text: "View Portfolio", callback_data: "/balance" },
               ],
             ];
@@ -581,19 +584,20 @@ export async function POST(req: NextRequest) {
         }
 
         // Symbol given without specific dollar amount
-        let reply = `*MEIREI | ORDER PREPARATION (OKX X LAYER)*\n\n`;
+        let reply = `*MEIREI INTENT SOLVER | ORDER SPECIFICATION*\n\n`;
         reply += `*Asset*: *${targetSymbol}* (${item?.name || targetSymbol})\n`;
         reply += `*Spot Price*: *$${spotPrice.toFixed(2)} USDG*\n`;
-        reply += `*Settlement*: USDG (OKX X Layer Chain 196)\n\n`;
-        reply += `To specify an amount, reply:\n`;
-        reply += `"Buy $250 in ${targetSymbol}"\n\n`;
-        reply += `*Web3 Trading Terminal*:\n`;
+        reply += `*Network*: OKX X Layer (Chain ID 196)\n`;
+        reply += `*Routing*: OKX Exchange OS (Aggregated Spot Execution)\n\n`;
+        reply += `To formulate transaction calldata, specify an amount:\n`;
+        reply += `• Example: \`Buy 100 USDG ${targetSymbol}\` or \`Buy $250 in ${targetSymbol}\`\n\n`;
+        reply += `*Terminal Deep Link*:\n`;
         reply += `${APP_URL}/app?action=buy&symbol=${targetSymbol}\n\n`;
-        reply += `_Or open the Web3 Terminal directly:_`;
+        reply += `_Or tap "Approve Trade" below to configure and sign directly:_`;
 
         const keyboard = [
           [
-            { text: `Trade ${targetSymbol} on Web Terminal`, url: `${APP_URL}/app?action=buy&symbol=${targetSymbol}` },
+            { text: "Approve Trade", url: `${APP_URL}/app?action=buy&symbol=${targetSymbol}` },
             { text: "Live Stock Prices", callback_data: "/stocks" },
           ],
         ];
