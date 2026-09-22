@@ -143,77 +143,29 @@ interface UserProfile {
 }
 
 const DEFAULT_PROFILE: UserProfile = {
-  email: "alex.trader@meirei.app",
-  platform: "whatsapp",
-  handle: "+1 (555) 392 1084",
-  address: "0x7f17d6224e7d48606598732c3f511412b5c1e922",
+  email: "investor@meirei.app",
+  platform: "web",
+  handle: "Web Terminal Session",
+  address: "",
   twoFactorMethod: "email",
-  botStatus: "Active on WhatsApp & Web",
-  portfolioValue: 4850.0,
-  usdgBalance: 1455.0,
-  holdings: [
-    { symbol: "NVDAx", amount: 9.07, valueUsd: 1940.0, color: "#76B900" },
-    { symbol: "USDG", amount: 1455.0, valueUsd: 1455.0, color: "#0052FF" },
-    { symbol: "AAPLx", amount: 2.92, valueUsd: 970.0, color: "#111111" },
-    { symbol: "TSLAx", amount: 1.17, valueUsd: 485.0, color: "#E82127" },
-  ],
-  activeMandates: [
-    {
-      id: "m-1",
-      rule: "Short Term Momentum: 35% NVDAx, 25% TSLAx, 15% METAx, 25% USDG",
-      status: "Active",
-      frequency: "7 day rebalance",
-    },
-    {
-      id: "m-2",
-      rule: "Long Term Core: 70% mag7, 30% USDG, max 15%, band 3%",
-      status: "Active",
-      frequency: "Quarterly rebalance",
-    },
-  ],
+  botStatus: "Connected on Web",
+  portfolioValue: 0.0,
+  usdgBalance: 0.0,
+  holdings: [],
+  activeMandates: [],
 };
-
-const SAMPLE_LOGINS = [
-  {
-    platform: "whatsapp" as Platform,
-    handle: "+1 (555) 392 1084",
-    email: "alex.whatsapp@meirei.app",
-    label: "WhatsApp Bot User",
-    address: "0x7f17d6224e7d48606598732c3f511412b5c1e922",
-  },
-  {
-    platform: "telegram" as Platform,
-    handle: "@alex_trader",
-    email: "alex.telegram@meirei.app",
-    label: "Telegram Bot User",
-    address: "0x98f2b3149c95d9e5b8d21a221f7c35a821e3309a",
-  },
-  {
-    platform: "web" as Platform,
-    handle: "Web Browser Session",
-    email: "web.trader@meirei.app",
-    label: "Web Terminal User",
-    address: "0x514910771af9ca656af840dff83e8264ecf986ca",
-  },
-  {
-    platform: "instagram" as Platform,
-    handle: "@jordan.trades",
-    email: "jordan.ig@meirei.app",
-    label: "Instagram DM User",
-    address: "0x3a4b91287c889f3014e7a25591d839218ab44012",
-  },
-];
 
 export default function AppDashboardPage() {
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
+  const [isLoadingBalance, setIsLoadingBalance] = useState<boolean>(false);
+  const isLoggedIn = Boolean(profile.address && profile.address !== "0x0000000000000000000000000000000000000000");
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
   // Transparent Connect Portal state inside /app
-  const [connectChannel, setConnectChannel] = useState<Platform>("whatsapp");
+  const [connectChannel, setConnectChannel] = useState<Platform>("web");
   const [connectHandle, setConnectHandle] = useState<string>(DEFAULT_PROFILE.handle);
-  const [connectAddress, setConnectAddress] = useState<string | null>(DEFAULT_PROFILE.address);
-  const [connectWalletName, setConnectWalletName] = useState<string | null>("OKX Wallet");
+  const [connectAddress, setConnectAddress] = useState<string | null>(null);
+  const [connectWalletName, setConnectWalletName] = useState<string | null>(null);
   const [isWalletConnecting, setIsWalletConnecting] = useState<boolean>(false);
   const [isChannelLinking, setIsChannelLinking] = useState<boolean>(false);
   const [connectSuccess, setConnectSuccess] = useState<boolean>(false);
@@ -223,6 +175,64 @@ export default function AppDashboardPage() {
   const [availableConnectWallets, setAvailableConnectWallets] = useState<WalletOption[]>([]);
   const [isListeningVoice, setIsListeningVoice] = useState<boolean>(false);
   const [isAccountFrozen, setIsAccountFrozen] = useState<boolean>(false);
+
+  // Fetch authentic real-time on-chain balances from OKX X Layer (Chain ID 196)
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRealBalances() {
+      const addr = profile.address?.trim();
+      if (!addr || !isValidEvmAddress(addr) || addr === "0x0000000000000000000000000000000000000000") {
+        setProfile((prev) => ({
+          ...prev,
+          portfolioValue: 0,
+          usdgBalance: 0,
+          holdings: [],
+        }));
+        return;
+      }
+
+      setIsLoadingBalance(true);
+      try {
+        const res = await fetch(`/api/wallet/balance?address=${encodeURIComponent(addr)}`);
+        const data = await res.json();
+        if (isMounted && data.ok) {
+          const rawHoldings = Array.isArray(data.holdings) ? data.holdings : [];
+          const mappedHoldings = rawHoldings.map((h: { symbol: string; amount: number; valueUsd: number }) => {
+            const stockDef = STOCKS.find((s) => s.symbol === h.symbol);
+            return {
+              symbol: h.symbol,
+              amount: Number(h.amount) || 0,
+              valueUsd: Number(h.valueUsd) || 0,
+              color: stockDef?.color || (h.symbol === "NVDAx" ? "#76B900" : h.symbol === "AAPLx" ? "#111111" : "#3B82F6"),
+            };
+          });
+
+          const usdg = Number(data.usdgBalance) || 0;
+          const equitiesTotal = mappedHoldings.reduce((sum: number, h: { valueUsd: number }) => sum + h.valueUsd, 0);
+          const total = Number(data.totalValueUsd) || (usdg + equitiesTotal);
+
+          setProfile((prev) => ({
+            ...prev,
+            usdgBalance: usdg,
+            portfolioValue: total,
+            holdings: mappedHoldings,
+          }));
+        }
+      } catch (err) {
+        console.warn("[Balances] Notice checking real on-chain balance:", err);
+      } finally {
+        if (isMounted) setIsLoadingBalance(false);
+      }
+    }
+
+    loadRealBalances();
+    const timer = setInterval(loadRealBalances, 25000);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
+  }, [profile.address]);
 
   // Conversational Chat Console State (Just like Telegram and WhatsApp)
   const INITIAL_CHAT_MESSAGE: ChatMessage = {
@@ -570,6 +580,13 @@ export default function AppDashboardPage() {
       } catch {}
 
       setConnectInfoMsg(`Connected ${title} (${formatShortAddress(activeAddr)}) on OKX X Layer.`);
+      setProfile((prev) => ({
+        ...prev,
+        address: activeAddr,
+        handle: formatShortAddress(activeAddr),
+        email: `${activeAddr.slice(2, 8)}@xlayer.wallet`,
+        botStatus: `Connected via ${title} on OKX X Layer`,
+      }));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setConnectErrorMsg(msg);
@@ -917,6 +934,7 @@ export default function AppDashboardPage() {
     high: number;
     low: number;
     close: number;
+    volume: number;
     isBullish: boolean;
     isLive?: boolean;
   }
@@ -945,7 +963,37 @@ export default function AppDashboardPage() {
 
     let config: TimeframeConfig;
 
-    if (timeframe === "1W") {
+    if (timeframe === "1m") {
+      config = {
+        timestamps: ["09:30", "09:31", "09:32", "09:33", "09:34", "09:35", "09:36", "09:37", "09:38", "09:39", "09:40", "09:41", "09:42", "09:43", "09:44", "Live"],
+        totalBars: 16,
+        volatility: 0.002,
+      };
+    } else if (timeframe === "5m") {
+      config = {
+        timestamps: ["09:30", "09:35", "09:40", "09:45", "09:50", "09:55", "10:00", "10:05", "10:10", "10:15", "10:20", "10:25", "10:30", "10:35", "10:40", "Live"],
+        totalBars: 16,
+        volatility: 0.0035,
+      };
+    } else if (timeframe === "15m") {
+      config = {
+        timestamps: ["09:30", "09:45", "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "11:45", "12:00", "12:15", "12:30", "12:45", "13:00", "Live"],
+        totalBars: 16,
+        volatility: 0.005,
+      };
+    } else if (timeframe === "1h") {
+      config = {
+        timestamps: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "Live"],
+        totalBars: 14,
+        volatility: 0.008,
+      };
+    } else if (timeframe === "4h") {
+      config = {
+        timestamps: ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "00:00", "04:00", "08:00", "12:00", "16:00", "Live"],
+        totalBars: 12,
+        volatility: 0.012,
+      };
+    } else if (timeframe === "1W") {
       config = {
         timestamps: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Today (Live)"],
         totalBars: 7,
@@ -1032,12 +1080,17 @@ export default function AppDashboardPage() {
       const high = Number((Math.max(open, close) + spread).toFixed(2));
       const low = Number(Math.max(0.05, Math.min(open, close) - spread).toFixed(2));
 
+      const volume = Math.round(
+        (Math.abs(seed) * 0.5 + 0.5) * 85000 + (Math.abs(open - close) / (open || 1)) * 650000
+      );
+
       bars.push({
         time: timestamps[i] || `Bar ${i + 1}`,
         open,
         high,
         low,
         close,
+        volume,
         isBullish: close >= open,
         isLive: isLast,
       });
@@ -1048,27 +1101,116 @@ export default function AppDashboardPage() {
     return bars;
   }, [selectedStock, stockPrices, timeframe]);
 
-  // Chart coordinate calculations (Line mode synced with candles)
+  // TradingView Technical Indicators and Interactive Tool States
+  const [showIndicators, setShowIndicators] = useState<boolean>(true);
+  const [activeDrawingTool, setActiveDrawingTool] = useState<string>("crosshair");
+
+  // TradingView Style Chart Dimensions and Scales
+  const width = 740;
+  const height = 280;
+  const priceScaleWidth = 62;
+  const plotWidth = width - priceScaleWidth; // 678
+  const timeScaleHeight = 24;
+  const plotHeight = height - timeScaleHeight; // 256
+  const padY = 16;
+  const chartHeight = plotHeight - padY * 2; // 224
+  const volSubchartHeight = 44;
+
+  const candleMin = Math.min(...candleBars.map((b) => b.low));
+  const candleMax = Math.max(...candleBars.map((b) => b.high));
+  const candleRange = candleMax - candleMin || 1;
+  const maxVolume = Math.max(...candleBars.map((b) => b.volume || 1), 1);
+
+  // Moving Average 9 (Blue line #2962FF) and EMA 21 (Orange line #FF9800)
+  const ma9Points = useMemo(() => {
+    return candleBars.map((_, i) => {
+      const window = candleBars.slice(Math.max(0, i - 8), i + 1);
+      const avg = window.reduce((acc, b) => acc + b.close, 0) / window.length;
+      return avg;
+    });
+  }, [candleBars]);
+
+  const ma9Coords = useMemo(() => {
+    return ma9Points.map((val, idx) => {
+      const barSpacing = plotWidth / candleBars.length;
+      const x = (idx + 0.5) * barSpacing;
+      const y = plotHeight - padY - ((val - candleMin) / candleRange) * chartHeight;
+      return { x, y, val };
+    });
+  }, [ma9Points, candleBars.length, plotWidth, plotHeight, padY, candleMin, candleRange, chartHeight]);
+
+  let ma9PathD = "";
+  if (ma9Coords.length > 0) {
+    ma9PathD = `M ${ma9Coords[0].x} ${ma9Coords[0].y}`;
+    for (let i = 1; i < ma9Coords.length; i++) {
+      ma9PathD += ` L ${ma9Coords[i].x} ${ma9Coords[i].y}`;
+    }
+  }
+
+  const ema21Points = useMemo(() => {
+    const k = 2 / (21 + 1);
+    let prevEma = candleBars[0]?.close || 100;
+    return candleBars.map((b, i) => {
+      if (i === 0) return prevEma;
+      prevEma = b.close * k + prevEma * (1 - k);
+      return prevEma;
+    });
+  }, [candleBars]);
+
+  const ema21Coords = useMemo(() => {
+    return ema21Points.map((val, idx) => {
+      const barSpacing = plotWidth / candleBars.length;
+      const x = (idx + 0.5) * barSpacing;
+      const y = plotHeight - padY - ((val - candleMin) / candleRange) * chartHeight;
+      return { x, y, val };
+    });
+  }, [ema21Points, candleBars.length, plotWidth, plotHeight, padY, candleMin, candleRange, chartHeight]);
+
+  let ema21PathD = "";
+  if (ema21Coords.length > 0) {
+    ema21PathD = `M ${ema21Coords[0].x} ${ema21Coords[0].y}`;
+    for (let i = 1; i < ema21Coords.length; i++) {
+      ema21PathD += ` L ${ema21Coords[i].x} ${ema21Coords[i].y}`;
+    }
+  }
+
+  // Price ticks on right axis (5 horizontal grid lines)
+  const priceGridTicks = useMemo(() => {
+    const steps = 4;
+    const ticks: { y: number; price: number }[] = [];
+    for (let i = 0; i <= steps; i++) {
+      const price = candleMin + (candleRange * (steps - i)) / steps;
+      const y = padY + (chartHeight * i) / steps;
+      ticks.push({ y, price });
+    }
+    return ticks;
+  }, [candleMin, candleRange, padY, chartHeight]);
+
+  const currentNumeric = getNumericPrice(selectedStock);
+  const livePrice =
+    stockPrices[selectedStock.symbol] !== undefined && stockPrices[selectedStock.symbol] > 0
+      ? stockPrices[selectedStock.symbol]
+      : currentNumeric;
+
+  const livePriceY = Math.max(
+    padY,
+    Math.min(plotHeight - padY, plotHeight - padY - ((livePrice - candleMin) / candleRange) * chartHeight)
+  );
+  const isLiveBullish = livePrice >= (candleBars[0]?.open || livePrice);
+  const livePriceColor = isLiveBullish ? "#089981" : "#F23645";
+
+  // Coordinates for line chart mode
   const points = useMemo(() => {
     return candleBars.map((b) => b.close);
   }, [candleBars]);
 
-  const minVal = Math.min(...points);
-  const maxVal = Math.max(...points);
-  const range = maxVal - minVal || 1;
-
-  const width = 640;
-  const height = 180;
-  const padY = 16;
-  const chartHeight = height - padY * 2;
-
   const coords = points.map((p, idx) => {
-    const x = (idx / (points.length - 1 || 1)) * width;
-    const y = height - padY - ((p - minVal) / range) * chartHeight;
+    const x = (idx / (points.length - 1 || 1)) * plotWidth;
+    const y = plotHeight - padY - ((p - candleMin) / candleRange) * chartHeight;
     return { x, y, val: p };
   });
 
-  let pathD = `M ${coords[0].x} ${coords[0].y}`;
+  let pathD = `M ${coords[0]?.x ?? 0} ${coords[0]?.y ?? 0}`;
   for (let i = 0; i < coords.length - 1; i++) {
     const p0 = coords[i === 0 ? 0 : i - 1];
     const p1 = coords[i];
@@ -1081,15 +1223,29 @@ export default function AppDashboardPage() {
     const cp2y = p2.y - (p3.y - p1.y) / 6;
     pathD += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
   }
-  const areaD = `${pathD} L ${width} ${height} L 0 ${height} Z`;
+  const areaD = `${pathD} L ${plotWidth} ${plotHeight} L 0 ${plotHeight} Z`;
 
-  const candleMin = Math.min(...candleBars.map((b) => b.low));
-  const candleMax = Math.max(...candleBars.map((b) => b.high));
-  const candleRange = candleMax - candleMin || 1;
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+
+  const activeHoverBar =
+    candleHoverIndex !== null && candleBars[candleHoverIndex]
+      ? candleBars[candleHoverIndex]
+      : candleBars[candleBars.length - 1];
+
+  const activeBarChange = activeHoverBar ? activeHoverBar.close - activeHoverBar.open : 0;
+  const activeBarChangePct = activeHoverBar ? (activeBarChange / (activeHoverBar.open || 1)) * 100 : 0;
+
+  const activeMa9 = activeHoverBar
+    ? ma9Points[candleHoverIndex !== null ? candleHoverIndex : candleBars.length - 1]
+    : ma9Points[ma9Points.length - 1];
+
+  const activeEma21 = activeHoverBar
+    ? ema21Points[candleHoverIndex !== null ? candleHoverIndex : candleBars.length - 1]
+    : ema21Points[ema21Points.length - 1];
 
   const currentDisplayPrice =
-    chartType === "candle" && candleHoverIndex !== null && candleBars[candleHoverIndex]
-      ? `$${candleBars[candleHoverIndex].close.toFixed(2)}`
+    chartType === "candle" && activeHoverBar
+      ? `$${activeHoverBar.close.toFixed(2)}`
       : chartHoverIndex !== null && coords[chartHoverIndex]
       ? `$${coords[chartHoverIndex].val.toFixed(2)}`
       : getFormattedPrice(selectedStock);
@@ -1375,58 +1531,75 @@ export default function AppDashboardPage() {
                   </div>
                 </div>
 
-                {/* Interactive Chart Canvas Card */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-3.5 sm:p-5 shadow-xs">
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl shadow-xs shrink-0"
-                        style={{ backgroundColor: selectedStock.color }}
-                      >
-                        {selectedStock.logo}
+                {/* TradingView-Style Interactive Chart Canvas Card */}
+                <div className="rounded-2xl border border-[#2A2E39] bg-[#131722] text-white overflow-hidden shadow-2xl flex flex-col">
+                  {/* TradingView Top Header Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-[#2A2E39] px-3 py-2 text-xs font-mono bg-[#131722]">
+                    {/* Left: Stock info & Live OHLC stream */}
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-white">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="flex h-6 w-6 items-center justify-center rounded-md shadow-xs shrink-0"
+                          style={{ backgroundColor: selectedStock.color }}
+                        >
+                          {selectedStock.logo}
+                        </div>
+                        <span className="font-bold text-sm tracking-wide text-white">{selectedStock.symbol}</span>
+                        <span className="text-[11px] text-[#787B86] hidden sm:inline">/ USDG</span>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 dark:text-white">
-                            {selectedStock.name} ({selectedStock.symbol})
-                          </h2>
-                          <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                            X Layer Live
+
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-1.5 py-0.5 rounded bg-[#1E222D] border border-[#2A2E39] text-[10px] text-gray-400">
+                          OKX X LAYER
+                        </span>
+                        <span className="flex items-center gap-1 rounded bg-[#089981]/15 border border-[#089981]/30 px-1.5 py-0.5 text-[9px] font-bold text-[#089981]">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#089981] animate-pulse" />
+                          LIVE
+                        </span>
+                      </div>
+
+                      {/* TradingView Dynamic OHLC Values */}
+                      {activeHoverBar && (
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                          <span className="text-[#787B86]">O <span className="text-white font-semibold">${activeHoverBar.open.toFixed(2)}</span></span>
+                          <span className="text-[#787B86]">H <span className="text-white font-semibold">${activeHoverBar.high.toFixed(2)}</span></span>
+                          <span className="text-[#787B86]">L <span className="text-white font-semibold">${activeHoverBar.low.toFixed(2)}</span></span>
+                          <span className="text-[#787B86]">C <span className="text-white font-semibold">${activeHoverBar.close.toFixed(2)}</span></span>
+                          <span
+                            className={cn(
+                              "font-bold",
+                              activeBarChange >= 0 ? "text-[#089981]" : "text-[#F23645]"
+                            )}
+                          >
+                            {activeBarChange >= 0 ? "+" : ""}{activeBarChange.toFixed(2)} ({activeBarChangePct >= 0 ? "+" : ""}{activeBarChangePct.toFixed(2)}%)
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 pt-0.5">
-                          <span className="font-mono text-xl sm:text-2xl font-bold tracking-tight text-ink-900 dark:text-white">
-                            {currentDisplayPrice}
-                          </span>
-                          <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                            {selectedStock.change24h} past 24h
-                          </span>
-                        </div>
-                      </div>
+                      )}
                     </div>
 
-                    {/* Controls: Chart Type Toggle (Line | Candles) & Timeframe Selector */}
+                    {/* Right: Timeframe Intervals, Chart Mode, Indicators Button */}
                     <div className="flex flex-wrap items-center gap-2">
-                      {/* Chart Type Toggle */}
-                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setChartType("line");
-                            setCandleHoverIndex(null);
-                          }}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-                            chartType === "line"
-                              ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
-                              : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
-                          )}
-                        >
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M2 11l4-5 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <span>Line</span>
-                        </button>
+                      {/* Resolution Intervals */}
+                      <div className="flex items-center gap-0.5 rounded-md bg-[#1E222D] border border-[#2A2E39] p-0.5">
+                        {["1m", "5m", "15m", "1h", "4h", "1D", "1W", "1M"].map((tf) => (
+                          <button
+                            key={tf}
+                            type="button"
+                            onClick={() => setTimeframe(tf)}
+                            className={cn(
+                              "px-1.5 py-0.5 text-[10px] font-bold rounded transition-colors cursor-pointer",
+                              timeframe === tf
+                                ? "bg-[#2962FF] text-white shadow-xs"
+                                : "text-[#787B86] hover:text-white"
+                            )}
+                          >
+                            {tf}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Chart Type (Candle vs Line) */}
+                      <div className="flex items-center gap-0.5 rounded-md bg-[#1E222D] border border-[#2A2E39] p-0.5">
                         <button
                           type="button"
                           onClick={() => {
@@ -1434,11 +1607,10 @@ export default function AppDashboardPage() {
                             setChartHoverIndex(null);
                           }}
                           className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-                            chartType === "candle"
-                              ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
-                              : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                            "px-2 py-1 text-[11px] rounded transition-colors cursor-pointer flex items-center gap-1",
+                            chartType === "candle" ? "bg-[#2A2E39] text-white" : "text-[#787B86] hover:text-white"
                           )}
+                          title="Candlesticks"
                         >
                           <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
                             <rect x="3" y="4" width="3" height="7" rx="0.5" />
@@ -1448,287 +1620,646 @@ export default function AppDashboardPage() {
                             <line x1="11.5" y1="3" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1.5" />
                             <line x1="11.5" y1="12" x2="11.5" y2="15" stroke="currentColor" strokeWidth="1.5" />
                           </svg>
-                          <span>Candles</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChartType("line");
+                            setCandleHoverIndex(null);
+                          }}
+                          className={cn(
+                            "px-2 py-1 text-[11px] rounded transition-colors cursor-pointer flex items-center gap-1",
+                            chartType === "line" ? "bg-[#2A2E39] text-white" : "text-[#787B86] hover:text-white"
+                          )}
+                          title="Line"
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M2 11l4-5 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
                         </button>
                       </div>
 
-                      {/* Timeframe Selector */}
-                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-1">
-                        {["1D", "1W", "1M", "1Y", "ALL"].map((tf) => (
-                          <button
-                            key={tf}
-                            type="button"
-                            onClick={() => setTimeframe(tf)}
-                            className={cn(
-                              "rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
-                              timeframe === tf
-                                ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
-                                : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
-                            )}
-                          >
-                            {tf}
-                          </button>
-                        ))}
-                      </div>
+                      {/* Technical Indicators Toggle Button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowIndicators((prev) => !prev)}
+                        className={cn(
+                          "flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors cursor-pointer",
+                          showIndicators
+                            ? "bg-[#2962FF]/20 border-[#2962FF] text-[#2962FF]"
+                            : "bg-[#1E222D] border-[#2A2E39] text-[#787B86] hover:text-white"
+                        )}
+                        title="Toggle Technical Indicators (MA 9 & EMA 21)"
+                      >
+                        <span className="font-serif italic font-bold text-[10px]">fx</span>
+                        <span>Indicators</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Candlestick OHLC Telemetry Bar (active in Candle mode) */}
-                  {chartType === "candle" && (
-                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 rounded-xl bg-surface-50 dark:bg-[#161B26] border border-ink-100 dark:border-zinc-800 p-2.5 text-xs font-mono">
-                      {(() => {
-                        const activeBar =
-                          candleHoverIndex !== null && candleBars[candleHoverIndex]
-                            ? candleBars[candleHoverIndex]
-                            : candleBars[candleBars.length - 1];
-                        const barChange = ((activeBar.close - activeBar.open) / (activeBar.open || 1)) * 100;
-                        return (
-                          <>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
-                              <span>Time:</span>
-                              <div className="flex items-center gap-1">
-                                <span className="font-bold text-ink-900 dark:text-white">
-                                  {timeframe === "1D" ? `${activeBar.time} EST` : activeBar.time}
-                                </span>
-                                {activeBar.isLive && (
-                                  <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1 py-0.2 text-[8px] font-bold text-emerald-600 dark:text-emerald-400 animate-pulse">
-                                    LIVE
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
-                              <span>Open:</span>
-                              <span className="font-bold text-ink-900 dark:text-white">${activeBar.open.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
-                              <span>High:</span>
-                              <span className="font-bold text-emerald-600 dark:text-emerald-400">${activeBar.high.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
-                              <span>Low:</span>
-                              <span className="font-bold text-rose-600 dark:text-rose-400">${activeBar.low.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 col-span-2 sm:col-span-1 text-ink-500 dark:text-zinc-400">
-                              <span>Close:</span>
-                              <span
-                                className={cn(
-                                  "font-bold",
-                                  activeBar.isBullish ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-                                )}
-                              >
-                                ${activeBar.close.toFixed(2)} ({barChange >= 0 ? "+" : ""}{barChange.toFixed(2)}%)
-                              </span>
-                            </div>
-                          </>
-                        );
-                      })()}
+                  {/* Chart Body: Left Drawing Toolbar + Main Canvas */}
+                  <div className="flex flex-row items-stretch bg-[#131722]">
+                    {/* Left Drawing Tools Rail (TradingView signature side toolbar) */}
+                    <div className="flex flex-col items-center py-2 px-1 border-r border-[#2A2E39] bg-[#131722] gap-1 shrink-0 select-none">
+                      {[
+                        {
+                          id: "crosshair",
+                          name: "Crosshair (Cursor)",
+                          icon: (
+                            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <circle cx="8" cy="8" r="3" />
+                              <line x1="8" y1="1" x2="8" y2="4" />
+                              <line x1="8" y1="12" x2="8" y2="15" />
+                              <line x1="1" y1="8" x2="4" y2="8" />
+                              <line x1="12" y1="8" x2="15" y2="8" />
+                            </svg>
+                          ),
+                        },
+                        {
+                          id: "trendline",
+                          name: "Trend Line",
+                          icon: (
+                            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <circle cx="3" cy="13" r="1.5" fill="currentColor" />
+                              <circle cx="13" cy="3" r="1.5" fill="currentColor" />
+                              <line x1="3" y1="13" x2="13" y2="3" />
+                            </svg>
+                          ),
+                        },
+                        {
+                          id: "fib",
+                          name: "Fib Retracement",
+                          icon: (
+                            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <line x1="2" y1="3" x2="14" y2="3" />
+                              <line x1="2" y1="7" x2="14" y2="7" strokeDasharray="2 1" />
+                              <line x1="2" y1="10" x2="14" y2="10" strokeDasharray="2 1" />
+                              <line x1="2" y1="13" x2="14" y2="13" />
+                            </svg>
+                          ),
+                        },
+                        {
+                          id: "brush",
+                          name: "Brush",
+                          icon: (
+                            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path d="M12 2l2 2-7 7H4v-3l7-7Z" />
+                              <path d="M3 14c1 0 2-1 2-2" />
+                            </svg>
+                          ),
+                        },
+                        {
+                          id: "text",
+                          name: "Text Note",
+                          icon: (
+                            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M3 3h10v2H9v8H7V5H3V3Z" />
+                            </svg>
+                          ),
+                        },
+                        {
+                          id: "measure",
+                          name: "Measure Range",
+                          icon: (
+                            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <rect x="2" y="4" width="12" height="8" rx="1" />
+                              <line x1="5" y1="4" x2="5" y2="7" />
+                              <line x1="8" y1="4" x2="8" y2="8" />
+                              <line x1="11" y1="4" x2="11" y2="7" />
+                            </svg>
+                          ),
+                        },
+                        {
+                          id: "clear",
+                          name: "Clear Drawings",
+                          icon: (
+                            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                              <path d="M3 4h10M6 4V2h4v2M5 7v6a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V7" />
+                            </svg>
+                          ),
+                        },
+                      ].map((tool) => (
+                        <button
+                          key={tool.id}
+                          type="button"
+                          onClick={() => {
+                            if (tool.id === "clear") {
+                              setActiveDrawingTool("crosshair");
+                            } else {
+                              setActiveDrawingTool(tool.id);
+                            }
+                          }}
+                          className={cn(
+                            "flex h-7 w-7 items-center justify-center rounded transition-colors cursor-pointer",
+                            activeDrawingTool === tool.id
+                              ? "bg-[#2962FF] text-white"
+                              : "text-[#787B86] hover:bg-[#1E222D] hover:text-white"
+                          )}
+                          title={tool.name}
+                        >
+                          {tool.icon}
+                        </button>
+                      ))}
                     </div>
-                  )}
 
-                  {/* SVG Chart Canvas */}
-                  <div className="relative mt-4">
-                    <svg
-                      ref={chartSvgRef}
-                      viewBox={`0 0 ${width} ${height}`}
-                      className="w-full h-[180px] sm:h-[210px] overflow-visible select-none touch-none"
-                      onMouseLeave={() => {
-                        setChartHoverIndex(null);
-                        setCandleHoverIndex(null);
-                      }}
-                      onMouseMove={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const clientX = e.clientX;
-                        const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-                        const ratio = offsetX / rect.width;
+                    {/* TradingView Chart Canvas Area */}
+                    <div className="relative flex-1 bg-[#131722] p-0 select-none overflow-hidden min-w-0">
+                      {/* Background Watermark */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.035] text-7xl sm:text-9xl font-black text-white tracking-widest">
+                        {selectedStock.symbol}
+                      </div>
 
-                        if (chartType === "candle") {
-                          const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
-                          setCandleHoverIndex(Math.max(0, idx));
-                        } else {
-                          const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
-                          setChartHoverIndex(idx);
-                        }
-                      }}
-                      onTouchMove={(e) => {
-                        if (e.touches && e.touches[0]) {
+                      {/* TradingView Top-Left Legend Area */}
+                      <div className="absolute top-2 left-3 z-10 pointer-events-none flex flex-col gap-0.5 font-mono text-[10px] select-none">
+                        <div className="flex items-center gap-2 text-[#787B86]">
+                          <span className="font-bold text-gray-200">{selectedStock.symbol}</span>
+                          <span>·</span>
+                          <span>{timeframe}</span>
+                          <span>·</span>
+                          <span>OKX X Layer</span>
+                          <span>·</span>
+                          <span>Vol: <strong className="text-gray-300 font-semibold">{activeHoverBar ? `${(activeHoverBar.volume / 1000).toFixed(1)}K` : selectedStock.volume24h || "184.2K"}</strong></span>
+                        </div>
+
+                        {showIndicators && (
+                          <div className="flex items-center gap-3">
+                            <span className="text-[#2962FF]">
+                              MA (9): <strong className="font-bold">${activeMa9.toFixed(2)}</strong>
+                            </span>
+                            <span className="text-[#FF9800]">
+                              EMA (21): <strong className="font-bold">${activeEma21.toFixed(2)}</strong>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <svg
+                        ref={chartSvgRef}
+                        viewBox={`0 0 ${width} ${height}`}
+                        className="w-full h-[250px] sm:h-[290px] overflow-visible select-none touch-none"
+                        onMouseLeave={() => {
+                          setChartHoverIndex(null);
+                          setCandleHoverIndex(null);
+                          setMousePos(null);
+                        }}
+                        onMouseMove={(e) => {
                           const rect = e.currentTarget.getBoundingClientRect();
-                          const clientX = e.touches[0].clientX;
+                          const clientX = e.clientX;
+                          const clientY = e.clientY;
                           const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-                          const ratio = offsetX / rect.width;
+                          const offsetY = Math.max(0, Math.min(rect.height, clientY - rect.top));
+                          const ratioX = offsetX / rect.width;
+                          const svgX = ratioX * width;
+                          const svgY = (offsetY / rect.height) * height;
 
+                          setMousePos({ x: svgX, y: svgY });
+
+                          const plotRatio = Math.max(0, Math.min(1, svgX / plotWidth));
                           if (chartType === "candle") {
-                            const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
+                            const idx = Math.min(candleBars.length - 1, Math.floor(plotRatio * candleBars.length));
                             setCandleHoverIndex(Math.max(0, idx));
                           } else {
-                            const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
+                            const idx = Math.min(coords.length - 1, Math.round(plotRatio * (coords.length - 1)));
                             setChartHoverIndex(idx);
                           }
-                        }
-                      }}
-                      onTouchEnd={() => {
-                        setChartHoverIndex(null);
-                        setCandleHoverIndex(null);
-                      }}
-                    >
-                      <defs>
-                        <linearGradient id={chartGradId} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#FF5B3E" stopOpacity="0.28" />
-                          <stop offset="100%" stopColor="#FF5B3E" stopOpacity="0.0" />
-                        </linearGradient>
-                      </defs>
+                        }}
+                        onTouchMove={(e) => {
+                          if (e.touches && e.touches[0]) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const clientX = e.touches[0].clientX;
+                            const clientY = e.touches[0].clientY;
+                            const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+                            const offsetY = Math.max(0, Math.min(rect.height, clientY - rect.top));
+                            const ratioX = offsetX / rect.width;
+                            const svgX = ratioX * width;
+                            const svgY = (offsetY / rect.height) * height;
 
-                      {/* Subtle Gridlines */}
-                      <g className="stroke-ink-200/50 dark:stroke-zinc-800/80 stroke-dashed" strokeDasharray="3 3">
-                        <line x1="0" y1={padY} x2={width} y2={padY} />
-                        <line x1="0" y1={height / 2} x2={width} y2={height / 2} />
-                        <line x1="0" y1={height - padY} x2={width} y2={height - padY} />
-                      </g>
+                            setMousePos({ x: svgX, y: svgY });
 
-                      {/* LINE CHART MODE */}
-                      {chartType === "line" && (
-                        <>
-                          <path d={areaD} fill={`url(#${chartGradId})`} />
-                          <path
-                            d={pathD}
-                            fill="none"
-                            stroke="#FF5B3E"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          {chartHoverIndex !== null && coords[chartHoverIndex] && (
-                            <g>
-                              <line
-                                x1={coords[chartHoverIndex].x}
-                                y1={padY}
-                                x2={coords[chartHoverIndex].x}
-                                y2={height - padY}
-                                stroke="currentColor"
-                                strokeWidth="1"
-                                strokeDasharray="2 2"
-                                className="text-ink-400 dark:text-zinc-600"
-                              />
-                              <circle
-                                cx={coords[chartHoverIndex].x}
-                                cy={coords[chartHoverIndex].y}
-                                r="5"
-                                fill="#FFFFFF"
-                                stroke="#FF5B3E"
-                                strokeWidth="2.5"
-                              />
-                            </g>
-                          )}
-                        </>
-                      )}
+                            const plotRatio = Math.max(0, Math.min(1, svgX / plotWidth));
+                            if (chartType === "candle") {
+                              const idx = Math.min(candleBars.length - 1, Math.floor(plotRatio * candleBars.length));
+                              setCandleHoverIndex(Math.max(0, idx));
+                            } else {
+                              const idx = Math.min(coords.length - 1, Math.round(plotRatio * (coords.length - 1)));
+                              setChartHoverIndex(idx);
+                            }
+                          }
+                        }}
+                        onTouchEnd={() => {
+                          setChartHoverIndex(null);
+                          setCandleHoverIndex(null);
+                          setMousePos(null);
+                        }}
+                      >
+                        <defs>
+                          <linearGradient id="tv-line-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#2962FF" stopOpacity="0.32" />
+                            <stop offset="100%" stopColor="#2962FF" stopOpacity="0.0" />
+                          </linearGradient>
+                        </defs>
 
-                      {/* CANDLESTICK CHART MODE */}
-                      {chartType === "candle" && (
+                        {/* Horizontal Price Gridlines across Plot */}
+                        <g stroke="#1E222D" strokeWidth="1" strokeDasharray="3 3">
+                          {priceGridTicks.map((tick, i) => (
+                            <line key={`grid-h-${i}`} x1="0" y1={tick.y} x2={plotWidth} y2={tick.y} />
+                          ))}
+                        </g>
+
+                        {/* Vertical Time Gridlines */}
+                        <g stroke="#1E222D" strokeWidth="1" strokeDasharray="3 3">
+                          {candleBars.map((_, i) => {
+                            if (i % Math.ceil(candleBars.length / 5) === 0) {
+                              const barSpacing = plotWidth / candleBars.length;
+                              const x = (i + 0.5) * barSpacing;
+                              return <line key={`grid-v-${i}`} x1={x} y1="0" x2={x} y2={plotHeight} />;
+                            }
+                            return null;
+                          })}
+                        </g>
+
+                        {/* Right Price Scale Divider Line */}
+                        <line x1={plotWidth} y1="0" x2={plotWidth} y2={height} stroke="#2A2E39" strokeWidth="1" />
+
+                        {/* Bottom Time Scale Divider Line */}
+                        <line x1="0" y1={plotHeight} x2={width} y2={plotHeight} stroke="#2A2E39" strokeWidth="1" />
+
+                        {/* Volume Sub-Chart (Histogram at bottom of plot) */}
                         <g>
                           {candleBars.map((bar, idx) => {
                             const numBars = candleBars.length;
-                            const barSpacing = width / numBars;
-                            const barW = Math.max(10, barSpacing * 0.62);
+                            const barSpacing = plotWidth / numBars;
+                            const barW = Math.max(4, barSpacing * 0.65);
                             const cx = (idx + 0.5) * barSpacing;
-                            const wickY1 = height - padY - ((bar.high - candleMin) / candleRange) * chartHeight;
-                            const wickY2 = height - padY - ((bar.low - candleMin) / candleRange) * chartHeight;
-                            const openY = height - padY - ((bar.open - candleMin) / candleRange) * chartHeight;
-                            const closeY = height - padY - ((bar.close - candleMin) / candleRange) * chartHeight;
-                            const bodyTop = Math.min(openY, closeY);
-                            const bodyH = Math.max(3, Math.abs(openY - closeY));
+                            const volH = Math.max(3, ((bar.volume || 1000) / maxVolume) * volSubchartHeight);
+                            const volY = plotHeight - volH;
                             const isHovered = candleHoverIndex === idx;
-                            const candleColor = bar.isBullish ? "#10B981" : "#F43F5E";
 
                             return (
-                              <g key={`candle-${idx}`} className="transition-opacity">
-                                {isHovered && (
-                                  <rect
-                                    x={cx - barSpacing / 2}
-                                    y={0}
-                                    width={barSpacing}
-                                    height={height}
-                                    fill="currentColor"
-                                    className="text-accent-500/10 dark:text-white/[0.05]"
-                                  />
-                                )}
-                                {/* Wick line */}
-                                <line
-                                  x1={cx}
-                                  y1={wickY1}
-                                  x2={cx}
-                                  y2={wickY2}
-                                  stroke={candleColor}
-                                  strokeWidth={isHovered ? "2.2" : "1.5"}
-                                />
-                                {/* Candle body */}
-                                <rect
-                                  x={cx - barW / 2}
-                                  y={bodyTop}
-                                  width={barW}
-                                  height={bodyH}
-                                  rx="1.5"
-                                  fill={candleColor}
-                                  stroke={candleColor}
-                                  strokeWidth="1"
-                                />
-                                {/* Live candle real-time pulse indicator on OKX X Layer */}
-                                {bar.isLive && (
-                                  <g>
-                                    <circle
-                                      cx={cx}
-                                      cy={closeY}
-                                      r="6"
-                                      fill={candleColor}
-                                      opacity="0.35"
-                                      className="animate-ping"
-                                    />
-                                    <circle
-                                      cx={cx}
-                                      cy={closeY}
-                                      r="3"
-                                      fill="#FFFFFF"
-                                      stroke={candleColor}
-                                      strokeWidth="1.5"
-                                    />
-                                  </g>
-                                )}
-                              </g>
+                              <rect
+                                key={`vol-${idx}`}
+                                x={cx - barW / 2}
+                                y={volY}
+                                width={barW}
+                                height={volH}
+                                fill={bar.isBullish ? "#089981" : "#F23645"}
+                                opacity={isHovered ? 0.75 : 0.35}
+                                rx="0.5"
+                              />
                             );
                           })}
                         </g>
-                      )}
-                    </svg>
 
-                    <div className="mt-2 flex justify-between font-mono text-[10px] text-ink-400 dark:text-zinc-500">
-                      <span>
-                        {timeframe === "1D"
-                          ? "09:30 AM EST"
-                          : timeframe === "1W"
-                          ? "7 Days Ago"
-                          : timeframe === "1M"
-                          ? "30 Days Ago"
-                          : timeframe === "1Y"
-                          ? "12 Months Ago"
-                          : "Start"}
+                        {/* Technical Indicators: Moving Average 9 & EMA 21 */}
+                        {showIndicators && (
+                          <g>
+                            {/* EMA 21 Orange Line */}
+                            {ema21PathD && (
+                              <path
+                                d={ema21PathD}
+                                fill="none"
+                                stroke="#FF9800"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                opacity="0.85"
+                              />
+                            )}
+                            {/* MA 9 Blue Line */}
+                            {ma9PathD && (
+                              <path
+                                d={ma9PathD}
+                                fill="none"
+                                stroke="#2962FF"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                opacity="0.9"
+                              />
+                            )}
+                          </g>
+                        )}
+
+                        {/* LINE CHART MODE */}
+                        {chartType === "line" && (
+                          <>
+                            <path d={areaD} fill="url(#tv-line-grad)" />
+                            <path
+                              d={pathD}
+                              fill="none"
+                              stroke="#2962FF"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </>
+                        )}
+
+                        {/* CANDLESTICK CHART MODE */}
+                        {chartType === "candle" && (
+                          <g>
+                            {candleBars.map((bar, idx) => {
+                              const numBars = candleBars.length;
+                              const barSpacing = plotWidth / numBars;
+                              const barW = Math.max(5, barSpacing * 0.68);
+                              const cx = (idx + 0.5) * barSpacing;
+                              const wickY1 = plotHeight - padY - ((bar.high - candleMin) / candleRange) * chartHeight;
+                              const wickY2 = plotHeight - padY - ((bar.low - candleMin) / candleRange) * chartHeight;
+                              const openY = plotHeight - padY - ((bar.open - candleMin) / candleRange) * chartHeight;
+                              const closeY = plotHeight - padY - ((bar.close - candleMin) / candleRange) * chartHeight;
+                              const bodyTop = Math.min(openY, closeY);
+                              const bodyH = Math.max(2, Math.abs(openY - closeY));
+                              const candleColor = bar.isBullish ? "#089981" : "#F23645";
+
+                              return (
+                                <g key={`candle-${idx}`}>
+                                  {/* Candle Wick */}
+                                  <line
+                                    x1={cx}
+                                    y1={wickY1}
+                                    x2={cx}
+                                    y2={wickY2}
+                                    stroke={candleColor}
+                                    strokeWidth="1.5"
+                                  />
+                                  {/* Candle Body */}
+                                  <rect
+                                    x={cx - barW / 2}
+                                    y={bodyTop}
+                                    width={barW}
+                                    height={bodyH}
+                                    fill={candleColor}
+                                    stroke={candleColor}
+                                    strokeWidth="1"
+                                    rx="0.5"
+                                  />
+                                  {/* Real-Time Live Candle Pulse Indicator */}
+                                  {bar.isLive && (
+                                    <g>
+                                      <circle
+                                        cx={cx}
+                                        cy={closeY}
+                                        r="6"
+                                        fill={candleColor}
+                                        opacity="0.35"
+                                        className="animate-ping"
+                                      />
+                                      <circle
+                                        cx={cx}
+                                        cy={closeY}
+                                        r="2.5"
+                                        fill="#FFFFFF"
+                                        stroke={candleColor}
+                                        strokeWidth="1.5"
+                                      />
+                                    </g>
+                                  )}
+                                </g>
+                              );
+                            })}
+                          </g>
+                        )}
+
+                        {/* Active Live Horizontal Price Track Line across plot */}
+                        <line
+                          x1="0"
+                          y1={livePriceY}
+                          x2={plotWidth}
+                          y2={livePriceY}
+                          stroke={livePriceColor}
+                          strokeWidth="1"
+                          strokeDasharray="4 3"
+                          opacity="0.85"
+                        />
+
+                        {/* Interactive Crosshair (Tracking cursor) */}
+                        {mousePos && mousePos.x < plotWidth && mousePos.y < plotHeight && (
+                          <g pointerEvents="none">
+                            {/* Vertical cursor line */}
+                            <line
+                              x1={
+                                candleHoverIndex !== null
+                                  ? (candleHoverIndex + 0.5) * (plotWidth / candleBars.length)
+                                  : mousePos.x
+                              }
+                              y1="0"
+                              x2={
+                                candleHoverIndex !== null
+                                  ? (candleHoverIndex + 0.5) * (plotWidth / candleBars.length)
+                                  : mousePos.x
+                              }
+                              y2={plotHeight}
+                              stroke="#787B86"
+                              strokeWidth="1"
+                              strokeDasharray="2 2"
+                            />
+                            {/* Horizontal cursor line */}
+                            <line
+                              x1="0"
+                              y1={mousePos.y}
+                              x2={plotWidth}
+                              y2={mousePos.y}
+                              stroke="#787B86"
+                              strokeWidth="1"
+                              strokeDasharray="2 2"
+                            />
+                            {/* Crosshair Price Badge on Right Scale */}
+                            {(() => {
+                              const hoveredPrice =
+                                candleMin + ((plotHeight - padY - mousePos.y) / chartHeight) * candleRange;
+                              return (
+                                <g>
+                                  <rect
+                                    x={plotWidth + 1}
+                                    y={Math.max(2, Math.min(plotHeight - 18, mousePos.y - 9))}
+                                    width={priceScaleWidth - 2}
+                                    height="18"
+                                    rx="2"
+                                    fill="#2A2E39"
+                                  />
+                                  <text
+                                    x={plotWidth + priceScaleWidth / 2}
+                                    y={Math.max(14, Math.min(plotHeight - 6, mousePos.y + 3.5))}
+                                    textAnchor="middle"
+                                    fill="#FFFFFF"
+                                    fontSize="10"
+                                    fontFamily="monospace"
+                                    fontWeight="bold"
+                                  >
+                                    {hoveredPrice.toFixed(2)}
+                                  </text>
+                                </g>
+                              );
+                            })()}
+
+                            {/* Crosshair Timestamp Badge on Bottom Scale */}
+                            {candleHoverIndex !== null && candleBars[candleHoverIndex] && (
+                              <g>
+                                <rect
+                                  x={Math.max(
+                                    0,
+                                    Math.min(
+                                      plotWidth - 52,
+                                      (candleHoverIndex + 0.5) * (plotWidth / candleBars.length) - 26
+                                    )
+                                  )}
+                                  y={plotHeight + 2}
+                                  width="52"
+                                  height="18"
+                                  rx="2"
+                                  fill="#2A2E39"
+                                />
+                                <text
+                                  x={Math.max(
+                                    26,
+                                    Math.min(
+                                      plotWidth - 26,
+                                      (candleHoverIndex + 0.5) * (plotWidth / candleBars.length)
+                                    )
+                                  )}
+                                  y={plotHeight + 14}
+                                  textAnchor="middle"
+                                  fill="#FFFFFF"
+                                  fontSize="9"
+                                  fontFamily="monospace"
+                                  fontWeight="bold"
+                                >
+                                  {candleBars[candleHoverIndex].time}
+                                </text>
+                              </g>
+                            )}
+                          </g>
+                        )}
+
+                        {/* Right-Hand Y-Axis Price Scale */}
+                        <g>
+                          {/* Currency header on right axis */}
+                          <text
+                            x={plotWidth + priceScaleWidth - 8}
+                            y="12"
+                            textAnchor="end"
+                            fill="#787B86"
+                            fontSize="9"
+                            fontFamily="monospace"
+                            fontWeight="bold"
+                          >
+                            USDG
+                          </text>
+
+                          {priceGridTicks.map((tick, i) => (
+                            <text
+                              key={`scale-p-${i}`}
+                              x={plotWidth + priceScaleWidth - 8}
+                              y={tick.y + 3.5}
+                              textAnchor="end"
+                              fill="#787B86"
+                              fontSize="10"
+                              fontFamily="monospace"
+                            >
+                              {tick.price.toFixed(2)}
+                            </text>
+                          ))}
+
+                          {/* Live Price Tag on Right Axis with countdown */}
+                          <g>
+                            <rect
+                              x={plotWidth + 1}
+                              y={Math.max(2, Math.min(plotHeight - 18, livePriceY - 9))}
+                              width={priceScaleWidth - 2}
+                              height="18"
+                              rx="2"
+                              fill={livePriceColor}
+                            />
+                            <text
+                              x={plotWidth + priceScaleWidth / 2}
+                              y={Math.max(14, Math.min(plotHeight - 6, livePriceY + 3.5))}
+                              textAnchor="middle"
+                              fill="#FFFFFF"
+                              fontSize="10"
+                              fontFamily="monospace"
+                              fontWeight="bold"
+                            >
+                              {livePrice.toFixed(2)}
+                            </text>
+                          </g>
+                        </g>
+
+                        {/* Bottom X-Axis Time Labels */}
+                        <g>
+                          {candleBars.map((bar, i) => {
+                            const step = Math.ceil(candleBars.length / 5);
+                            if (i % step === 0 || i === candleBars.length - 1) {
+                              const barSpacing = plotWidth / candleBars.length;
+                              const x = (i + 0.5) * barSpacing;
+                              return (
+                                <text
+                                  key={`time-${i}`}
+                                  x={x}
+                                  y={plotHeight + 15}
+                                  textAnchor="middle"
+                                  fill={bar.isLive ? "#089981" : "#787B86"}
+                                  fontSize="9"
+                                  fontFamily="monospace"
+                                  fontWeight={bar.isLive ? "bold" : "normal"}
+                                >
+                                  {bar.time}
+                                </text>
+                              );
+                            }
+                            return null;
+                          })}
+                        </g>
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* TradingView Bottom Interval / Status Bar */}
+                  <div className="flex flex-wrap items-center justify-between border-t border-[#2A2E39] bg-[#131722] px-3 py-1.5 text-[10px] font-mono text-[#787B86] select-none gap-2">
+                    {/* Left: Range Selectors */}
+                    <div className="flex items-center gap-1">
+                      {["1D", "5D", "1M", "3M", "6M", "YTD", "1Y", "ALL"].map((range) => (
+                        <button
+                          key={range}
+                          type="button"
+                          onClick={() => {
+                            if (range === "1D") setTimeframe("1D");
+                            else if (range === "5D") setTimeframe("1W");
+                            else if (range === "1M" || range === "3M" || range === "6M") setTimeframe("1M");
+                            else if (range === "YTD" || range === "1Y") setTimeframe("1Y");
+                            else setTimeframe("ALL");
+                          }}
+                          className={cn(
+                            "px-1.5 py-0.5 rounded transition-colors cursor-pointer font-bold",
+                            (timeframe === "1D" && range === "1D") ||
+                            (timeframe === "1W" && range === "5D") ||
+                            (timeframe === "1M" && range === "1M") ||
+                            (timeframe === "1Y" && range === "1Y") ||
+                            (timeframe === "ALL" && range === "ALL")
+                              ? "text-white bg-[#1E222D]"
+                              : "hover:text-white"
+                          )}
+                        >
+                          {range}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Right: Scale Toggles & Timezone */}
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 text-[#089981]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#089981] animate-pulse" />
+                        OKX Chain 196
                       </span>
-                      <span>
-                        {timeframe === "1D"
-                          ? "12:30 PM EST"
-                          : timeframe === "1W"
-                          ? "Midweek"
-                          : timeframe === "1M"
-                          ? "15 Days Ago"
-                          : timeframe === "1Y"
-                          ? "6 Months Ago"
-                          : "Midpoint"}
+                      <span>|</span>
+                      <span className="text-gray-400">UTC</span>
+                      <span className="px-1 py-0.2 rounded bg-[#1E222D] text-gray-300 font-semibold cursor-pointer">
+                        auto
                       </span>
-                      <span className="flex items-center gap-1 font-semibold text-accent-600 dark:text-accent-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <span>
-                          {timeframe === "1D"
-                            ? "04:00 PM (Live)"
-                            : "Today (Live X Layer)"}
-                        </span>
+                      <span className="px-1 py-0.2 rounded bg-[#1E222D] text-gray-300 font-semibold cursor-pointer">
+                        %
+                      </span>
+                      <span className="px-1 py-0.2 rounded bg-[#1E222D] text-gray-300 font-semibold cursor-pointer">
+                        log
                       </span>
                     </div>
                   </div>
@@ -2582,14 +3113,15 @@ export default function AppDashboardPage() {
                 <p className="font-mono text-3xl font-bold tracking-tight text-ink-900 dark:text-white">
                   ${profile.portfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </p>
-                <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-400">
-                  +4.18% past 7 days across allowlisted equities
-                </p>
+                <div className="mt-1 flex items-center justify-between text-xs text-ink-600 dark:text-zinc-400">
+                  <span>Cash: <strong className="font-mono text-ink-900 dark:text-white">${profile.usdgBalance.toFixed(2)} USDG</strong></span>
+                  <span>Equities: <strong className="font-mono text-ink-900 dark:text-white">${Math.max(0, profile.portfolioValue - profile.usdgBalance).toFixed(2)} USDG</strong></span>
+                </div>
 
                 {/* Spending Cap Telemetry */}
                 <div className="mt-3 flex items-center justify-between border-t border-ink-100 dark:border-zinc-800 pt-2 text-[11px] text-ink-500 dark:text-zinc-400">
-                  <span>Daily Spending Cap:</span>
-                  <span className="font-mono font-semibold text-ink-800 dark:text-zinc-200">$0.00 / $25,000 USDG</span>
+                  <span>OKX X Layer (Chain 196):</span>
+                  <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">On-Chain Verified</span>
                 </div>
               </div>
 
@@ -2666,42 +3198,51 @@ export default function AppDashboardPage() {
               </div>
 
               <div className="mt-3.5 space-y-2.5">
-                {profile.holdings
-                  .filter((h) => h.symbol !== "USDG")
-                  .map((h) => {
-                    const livePrice = stockPrices[h.symbol];
-                    const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
-                    const stockItem = STOCKS.find((s) => s.symbol === h.symbol);
+                {profile.holdings.filter((h) => h.symbol !== "USDG").length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-4 text-center">
+                    <p className="text-xs font-semibold text-ink-800 dark:text-zinc-200">No active stock positions</p>
+                    <p className="mt-1 text-[11px] text-ink-500 dark:text-zinc-400 leading-relaxed">
+                      You currently hold 0 stock tokens on OKX X Layer. Use the trade console or Meirei AI chat to execute an order.
+                    </p>
+                  </div>
+                ) : (
+                  profile.holdings
+                    .filter((h) => h.symbol !== "USDG")
+                    .map((h) => {
+                      const livePrice = stockPrices[h.symbol];
+                      const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
+                      const stockItem = STOCKS.find((s) => s.symbol === h.symbol);
 
-                    return (
-                      <div
-                        key={h.symbol}
-                        className="rounded-xl border border-ink-100 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-3 text-xs"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="h-2.5 w-2.5 rounded-full shrink-0"
-                              style={{ backgroundColor: h.color }}
-                            />
-                            <span className="font-bold text-ink-900 dark:text-white">{h.symbol}</span>
-                            <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
-                              Active
+                      return (
+                        <div
+                          key={h.symbol}
+                          className="rounded-xl border border-ink-100 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-3 text-xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="h-2.5 w-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: h.color }}
+                              />
+                              <span className="font-bold text-ink-900 dark:text-white">{h.symbol}</span>
+                              <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                                Active
+                              </span>
+                            </div>
+                            <span className="font-mono font-bold text-ink-900 dark:text-white">
+                              ${currentVal.toFixed(2)}
                             </span>
                           </div>
-                          <span className="font-mono font-bold text-ink-900 dark:text-white">
-                            ${currentVal.toFixed(2)}
-                          </span>
+                          <div className="mt-1.5 flex items-center justify-between text-[11px] text-ink-500 dark:text-zinc-400 font-mono">
+                            <span>Holding: {h.amount.toFixed(2)} units</span>
+                            <span>
+                              Spot: {livePrice ? `$${livePrice.toFixed(2)}` : stockItem?.price || "--"}
+                            </span>
+                          </div>
                         </div>
-                        <div className="mt-1.5 flex items-center justify-between text-[11px] text-ink-500 dark:text-zinc-400 font-mono">
-                          <span>Holding: {h.amount.toFixed(2)} units</span>
-                          <span>
-                            Spot: {livePrice ? `$${livePrice.toFixed(2)}` : stockItem?.price || "--"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                )}
               </div>
             </div>
           </div>
@@ -3069,9 +3610,13 @@ export default function AppDashboardPage() {
                     <SimpleTelegramLogo className="w-3.5 h-3.5" />
                     <span>Telegram Bot (@MeireiXLayerBot)</span>
                   </a>
-                  <Link href="/connect" className="text-[#FF6B4E] hover:underline">
-                    Open Full Connect Page ↗
-                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginModal(false)}
+                    className="text-gray-400 hover:text-white transition-colors cursor-pointer text-[11px]"
+                  >
+                    Done &amp; Close
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -3196,6 +3741,13 @@ export default function AppDashboardPage() {
         onConnect={(address, walletName) => {
           setConnectAddress(address);
           setConnectWalletName(walletName);
+          setProfile((prev) => ({
+            ...prev,
+            address,
+            handle: formatShortAddress(address),
+            email: `${address.slice(2, 8)}@xlayer.wallet`,
+            botStatus: `Connected via ${walletName} on OKX X Layer`,
+          }));
           setConnectInfoMsg(`Connected ${walletName} (${formatShortAddress(address)}) on OKX X Layer.`);
           setShowWalletConnectModal(false);
         }}

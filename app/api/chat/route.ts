@@ -658,6 +658,15 @@ export async function POST(req: NextRequest) {
       const legs = delivery.plan.legs;
 
       if (legs.length === 0) {
+        if (delivery.portfolio.totalUsd === 0) {
+          const shortAddr = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+          const targetsDesc = delivery.mandate.targets.map((t) => `${(t.weight * 100).toFixed(0)}% ${t.symbol}`).join(", ");
+          return NextResponse.json({
+            reply: `Mandate parsed (${targetsDesc || message}). Connected wallet (${shortAddr}) has an on-chain balance of $0.00 USDG on OKX X Layer. To execute rebalancing trades, please deposit or bridge USDG to this address.`,
+            type: "mandate",
+            delivery,
+          });
+        }
         return NextResponse.json({
           reply: `Mandate parsed successfully. Portfolio is already aligned with targets. Zero rebalance drift detected on X Layer.`,
           type: "mandate",
