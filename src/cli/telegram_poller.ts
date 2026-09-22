@@ -67,9 +67,35 @@ async function startPolling() {
   let offset = 0;
   let running = true;
 
-  process.on("SIGINT", () => {
+  const restoreProductionWebhook = async () => {
+    try {
+      console.log("\nRestoring Telegram production webhook...");
+      const prodUrl = "https://meirei-rho.vercel.app/api/webhooks/telegram";
+      const res = await fetch(`https://api.telegram.org/bot${TOKEN}/setWebhook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: prodUrl,
+          allowed_updates: ["message", "edited_message", "callback_query"],
+        }),
+      });
+      const data = await res.json();
+      console.log("Production webhook restored on exit:", data.description || "OK");
+    } catch (err) {
+      console.warn("Notice restoring webhook on exit:", err);
+    }
+  };
+
+  process.on("SIGINT", async () => {
     console.log("\nStopping Telegram Poller. Goodbye!");
     running = false;
+    await restoreProductionWebhook();
+    process.exit(0);
+  });
+
+  process.on("SIGTERM", async () => {
+    running = false;
+    await restoreProductionWebhook();
     process.exit(0);
   });
 

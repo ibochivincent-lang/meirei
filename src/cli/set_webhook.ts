@@ -42,22 +42,17 @@ async function main() {
   }
 
   if (!targetBaseUrl) {
-    targetBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+    targetBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://meirei-rho.vercel.app";
+  }
+
+  // Canonical domain enforcement
+  if (targetBaseUrl.includes("meirei.vercel.app")) {
+    targetBaseUrl = "https://meirei-rho.vercel.app";
   }
 
   // Detect literal placeholder in URL
   if (targetBaseUrl.includes("<") || targetBaseUrl.includes("your-vercel-domain")) {
-    console.error("\n[Meirei Notice] Please replace '<your-vercel-domain>' with your actual deployment URL.");
-    console.error("Example: npm run bot:webhook https://meirei.vercel.app");
-    process.exit(1);
-  }
-
-  if (!targetBaseUrl) {
-    console.error("\n[Meirei Notice] Deployment URL is required.");
-    console.error("Usage:");
-    console.error("  npm run bot:webhook <URL> [BOT_TOKEN]");
-    console.error("  npm run bot:webhook https://meirei.vercel.app 123456789:ABCdefGhIJK...");
-    process.exit(1);
+    targetBaseUrl = "https://meirei-rho.vercel.app";
   }
 
   if (!token) {
