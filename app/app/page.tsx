@@ -256,10 +256,12 @@ export default function AppDashboardPage() {
   // Trading mode state: strictly TWO MODES: "simple" | "advanced"
   const [mode, setMode] = useState<Mode>("simple");
 
-  // Stock selection state
+  // Stock selection & chart state
   const [selectedStock, setSelectedStock] = useState<StockItem>(STOCKS[0]);
   const [timeframe, setTimeframe] = useState<string>("1D");
+  const [chartType, setChartType] = useState<"line" | "candle">("candle");
   const [chartHoverIndex, setChartHoverIndex] = useState<number | null>(null);
+  const [candleHoverIndex, setCandleHoverIndex] = useState<number | null>(null);
 
   // Mandate chat prompt state
   const [promptText, setPromptText] = useState<string>("");
@@ -820,7 +822,7 @@ export default function AppDashboardPage() {
     }
   };
 
-  // Chart coordinate calculations
+  // Chart coordinate calculations (Line mode)
   const points = selectedStock.chartPoints || [100, 102, 101, 103, 104, 103.5, 105];
   const minVal = Math.min(...points);
   const maxVal = Math.max(...points);
@@ -852,6 +854,68 @@ export default function AppDashboardPage() {
   }
   const areaD = `${pathD} L ${width} ${height} L 0 ${height} Z`;
 
+  // Candlestick OHLC calculation
+  interface CandleBar {
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    isBullish: boolean;
+  }
+
+  const candleBars: CandleBar[] = useMemo(() => {
+    const rawPoints = selectedStock.chartPoints && selectedStock.chartPoints.length >= 4
+      ? selectedStock.chartPoints
+      : [211.2, 211.8, 212.5, 212.1, 213.4, 212.9, 214.2, 215.1, 214.6, 216.5, 215.8, 213.9];
+
+    const livePrice = stockPrices[selectedStock.symbol];
+    const baseMult = livePrice && rawPoints[rawPoints.length - 1] > 0
+      ? livePrice / rawPoints[rawPoints.length - 1]
+      : 1;
+
+    const timestamps = [
+      "09:30", "09:55", "10:20", "10:45",
+      "11:10", "11:35", "12:00", "12:25",
+      "12:50", "01:15", "01:40", "02:05",
+      "02:30", "02:55", "03:20", "03:45",
+    ];
+
+    const bars: CandleBar[] = [];
+    const totalBars = timestamps.length;
+
+    for (let i = 0; i < totalBars; i++) {
+      const pointPos = (i / (totalBars - 1)) * (rawPoints.length - 1);
+      const lowIdx = Math.floor(pointPos);
+      const highIdx = Math.min(rawPoints.length - 1, Math.ceil(pointPos));
+      const frac = pointPos - lowIdx;
+      const baseVal = (rawPoints[lowIdx] * (1 - frac) + rawPoints[highIdx] * frac) * baseMult;
+
+      const seed = ((i + 1) * 37 + selectedStock.symbol.charCodeAt(0) * 17) % 100;
+      const variance = (seed / 100 - 0.48) * (baseVal * 0.008);
+      const spread = Math.max(0.2, (seed % 15) * 0.001 * baseVal + 0.15);
+
+      const open = Number((baseVal - variance).toFixed(2));
+      const close = Number((baseVal + variance).toFixed(2));
+      const high = Number((Math.max(open, close) + spread).toFixed(2));
+      const low = Number((Math.min(open, close) - spread).toFixed(2));
+
+      bars.push({
+        time: timestamps[i],
+        open,
+        high,
+        low,
+        close,
+        isBullish: close >= open,
+      });
+    }
+    return bars;
+  }, [selectedStock, stockPrices]);
+
+  const candleMin = Math.min(...candleBars.map((b) => b.low));
+  const candleMax = Math.max(...candleBars.map((b) => b.high));
+  const candleRange = candleMax - candleMin || 1;
+
   const getFormattedPrice = (stock: StockItem): string => {
     const live = stockPrices[stock.symbol];
     if (typeof live === "number" && live > 0) {
@@ -861,7 +925,11 @@ export default function AppDashboardPage() {
   };
 
   const currentDisplayPrice =
-    chartHoverIndex !== null ? `$${coords[chartHoverIndex].val.toFixed(2)}` : getFormattedPrice(selectedStock);
+    chartType === "candle" && candleHoverIndex !== null && candleBars[candleHoverIndex]
+      ? `$${candleBars[candleHoverIndex].close.toFixed(2)}`
+      : chartHoverIndex !== null && coords[chartHoverIndex]
+      ? `$${coords[chartHoverIndex].val.toFixed(2)}`
+      : getFormattedPrice(selectedStock);
 
   // Numerical price helper for price comparison & units calculator (using live ticks if available)
   const getNumericPrice = (stock: StockItem): number => {
@@ -891,8 +959,8 @@ export default function AppDashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Cookies Trigger */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            {/* Cookies Trigger (hidden on small mobile to conserve space) */}
             <button
               type="button"
               onClick={() => {
@@ -902,7 +970,7 @@ export default function AppDashboardPage() {
               }}
               aria-label="Manage Cookies"
               title="Manage Cookies"
-              className="flex items-center gap-1.5 rounded-full border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3 py-1.5 text-xs font-semibold text-ink-700 dark:text-zinc-200 hover:border-accent-500 hover:text-accent-600 dark:hover:text-accent-400 transition-colors cursor-pointer"
+              className="hidden sm:flex items-center gap-1.5 rounded-full border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3 py-1.5 text-xs font-semibold text-ink-700 dark:text-zinc-200 hover:border-accent-500 hover:text-accent-600 dark:hover:text-accent-400 transition-colors cursor-pointer"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               <span>Cookies</span>
@@ -914,9 +982,9 @@ export default function AppDashboardPage() {
               onClick={toggleTheme}
               aria-label={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
               title={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
-              className="grid h-8 w-8 place-items-center rounded-full border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] text-ink-900 dark:text-white hover:bg-surface-200 dark:hover:bg-[#202736] transition-colors cursor-pointer"
+              className="grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] text-ink-900 dark:text-white hover:bg-surface-200 dark:hover:bg-[#202736] transition-colors cursor-pointer"
             >
-              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-current">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z" />
               </svg>
             </button>
@@ -927,20 +995,20 @@ export default function AppDashboardPage() {
               <span>{otpToken ? "2FA OTP Verified" : "2FA Protected"}</span>
             </div>
 
-            {/* Account Status & Identity Badge */}
+            {/* Account Status & Identity Badge (Optimized for mobile) */}
             {isLoggedIn ? (
-              <div className="flex items-center gap-2.5 rounded-full border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-1.5 pr-4 shadow-xs">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-500 text-xs font-bold text-white shadow-xs uppercase">
+              <div className="flex items-center gap-1.5 sm:gap-2.5 rounded-full border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-1 sm:p-1.5 sm:pr-3.5 shadow-xs">
+                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-accent-500 text-[10px] sm:text-xs font-bold text-white shadow-xs uppercase shrink-0">
                   {profile.platform === "whatsapp" && "WA"}
                   {profile.platform === "telegram" && "TG"}
                   {profile.platform === "instagram" && "IG"}
                   {profile.platform === "web" && "WEB"}
                   {profile.platform === "okx_wallet" && "OKX"}
                 </div>
-                <div className="text-left">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold text-ink-900 dark:text-white">{profile.handle}</span>
-                    <span className="rounded bg-emerald-100 dark:bg-emerald-950/80 dark:border dark:border-emerald-800 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800 dark:text-emerald-300">
+                <div className="text-left max-w-[70px] sm:max-w-none">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-semibold text-ink-900 dark:text-white truncate">{profile.handle}</span>
+                    <span className="hidden sm:inline-block rounded bg-emerald-100 dark:bg-emerald-950/80 dark:border dark:border-emerald-800 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800 dark:text-emerald-300">
                       Non-Custodial
                     </span>
                   </div>
@@ -951,7 +1019,7 @@ export default function AppDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(true)}
-                  className="ml-2 rounded p-1 text-xs text-ink-400 hover:text-accent-600 dark:hover:text-accent-400 cursor-pointer"
+                  className="rounded p-1 text-xs text-ink-400 hover:text-accent-600 dark:hover:text-accent-400 cursor-pointer"
                   title="Switch identity or channel"
                 >
                   <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-current">
@@ -971,7 +1039,7 @@ export default function AppDashboardPage() {
                       portfolioValue: 0,
                     });
                   }}
-                  className="ml-1 rounded p-1 text-xs text-ink-400 hover:text-red-500 dark:hover:text-red-400 cursor-pointer"
+                  className="rounded p-1 text-xs text-ink-400 hover:text-red-500 dark:hover:text-red-400 cursor-pointer"
                   title="Disconnect wallet"
                 >
                   <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 stroke-current stroke-2 fill-none">
@@ -983,15 +1051,15 @@ export default function AppDashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowLoginModal(true)}
-                className="rounded-full bg-accent-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-accent-600 cursor-pointer"
+                className="rounded-full bg-accent-500 px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-accent-600 cursor-pointer"
               >
-                Connect Identity
+                Connect
               </button>
             )}
 
             <Link
               href="/"
-              className="rounded-full border border-ink-200 dark:border-zinc-700 px-3.5 py-2 text-xs font-medium text-ink-700 dark:text-zinc-300 transition-colors hover:bg-surface-100 dark:hover:bg-[#161B26] dark:hover:text-white"
+              className="rounded-full border border-ink-200 dark:border-zinc-700 px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs font-medium text-ink-700 dark:text-zinc-300 transition-colors hover:bg-surface-100 dark:hover:bg-[#161B26] dark:hover:text-white"
             >
               Overview
             </Link>
@@ -1000,15 +1068,15 @@ export default function AppDashboardPage() {
       </header>
 
       {/* Main Terminal Container */}
-      <main className="mx-auto max-w-[1440px] px-4 py-6 sm:px-8">
+      <main className="mx-auto max-w-[1440px] px-3.5 py-4 sm:px-8 sm:py-6">
         {/* Terminal Subheader & CONSOLIDATED TWO-MODE SWITCHER */}
-        <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-4 shadow-xs sm:flex-row sm:items-center sm:p-5">
+        <div className="mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-display text-xl font-bold tracking-tight text-ink-900 dark:text-white sm:text-2xl">
+              <h1 className="font-display text-lg font-bold tracking-tight text-ink-900 dark:text-white sm:text-2xl">
                 Trading &amp; Mandate Terminal
               </h1>
-              <span className="rounded-full bg-surface-100 dark:bg-[#161B26] border border-ink-200 dark:border-zinc-700 px-2.5 py-0.5 font-mono text-[11px] font-bold text-ink-600 dark:text-zinc-300">
+              <span className="rounded-full bg-surface-100 dark:bg-[#161B26] border border-ink-200 dark:border-zinc-700 px-2.5 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold text-ink-600 dark:text-zinc-300">
                 OKX Chain (X Layer)
               </span>
             </div>
@@ -1155,26 +1223,26 @@ export default function AppDashboardPage() {
                 </div>
 
                 {/* Interactive Chart Canvas Card */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
+                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-3.5 sm:p-5 shadow-xs">
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                     <div className="flex items-center gap-3">
                       <div
-                        className="flex h-10 w-10 items-center justify-center rounded-xl shadow-xs shrink-0"
+                        className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl shadow-xs shrink-0"
                         style={{ backgroundColor: selectedStock.color }}
                       >
                         {selectedStock.logo}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white">
+                          <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 dark:text-white">
                             {selectedStock.name} ({selectedStock.symbol})
                           </h2>
-                          <span className="rounded bg-surface-100 dark:bg-[#161B26] border border-ink-200 dark:border-zinc-700 px-2 py-0.5 text-[10px] font-bold text-ink-600 dark:text-zinc-300">
-                            {selectedStock.isLive ? "X Layer Live" : "Planned Asset"}
+                          <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                            X Layer Live
                           </span>
                         </div>
                         <div className="flex items-center gap-2 pt-0.5">
-                          <span className="font-mono text-2xl font-bold tracking-tight text-ink-900 dark:text-white">
+                          <span className="font-mono text-xl sm:text-2xl font-bold tracking-tight text-ink-900 dark:text-white">
                             {currentDisplayPrice}
                           </span>
                           <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
@@ -1184,39 +1252,157 @@ export default function AppDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Timeframe Selector */}
-                    <div className="flex items-center gap-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-1">
-                      {["1D", "1W", "1M", "1Y", "ALL"].map((tf) => (
+                    {/* Controls: Chart Type Toggle (Line | Candles) & Timeframe Selector */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Chart Type Toggle */}
+                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-1">
                         <button
-                          key={tf}
                           type="button"
-                          onClick={() => setTimeframe(tf)}
+                          onClick={() => {
+                            setChartType("line");
+                            setCandleHoverIndex(null);
+                          }}
                           className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
-                            timeframe === tf
+                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                            chartType === "line"
                               ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
                               : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
                           )}
                         >
-                          {tf}
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M2 11l4-5 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span>Line</span>
                         </button>
-                      ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChartType("candle");
+                            setChartHoverIndex(null);
+                          }}
+                          className={cn(
+                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                            chartType === "candle"
+                              ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
+                              : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                          )}
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+                            <rect x="3" y="4" width="3" height="7" rx="0.5" />
+                            <line x1="4.5" y1="2" x2="4.5" y2="4" stroke="currentColor" strokeWidth="1.5" />
+                            <line x1="4.5" y1="11" x2="4.5" y2="14" stroke="currentColor" strokeWidth="1.5" />
+                            <rect x="10" y="6" width="3" height="6" rx="0.5" />
+                            <line x1="11.5" y1="3" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1.5" />
+                            <line x1="11.5" y1="12" x2="11.5" y2="15" stroke="currentColor" strokeWidth="1.5" />
+                          </svg>
+                          <span>Candles</span>
+                        </button>
+                      </div>
+
+                      {/* Timeframe Selector */}
+                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-1">
+                        {["1D", "1W", "1M", "1Y", "ALL"].map((tf) => (
+                          <button
+                            key={tf}
+                            type="button"
+                            onClick={() => setTimeframe(tf)}
+                            className={cn(
+                              "rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
+                              timeframe === tf
+                                ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
+                                : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                            )}
+                          >
+                            {tf}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Candlestick OHLC Telemetry Bar (active in Candle mode) */}
+                  {chartType === "candle" && (
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 rounded-xl bg-surface-50 dark:bg-[#161B26] border border-ink-100 dark:border-zinc-800 p-2.5 text-xs font-mono">
+                      {(() => {
+                        const activeBar =
+                          candleHoverIndex !== null && candleBars[candleHoverIndex]
+                            ? candleBars[candleHoverIndex]
+                            : candleBars[candleBars.length - 1];
+                        const barChange = ((activeBar.close - activeBar.open) / activeBar.open) * 100;
+                        return (
+                          <>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
+                              <span>Time:</span>
+                              <span className="font-bold text-ink-900 dark:text-white">{activeBar.time} EST</span>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
+                              <span>Open:</span>
+                              <span className="font-bold text-ink-900 dark:text-white">${activeBar.open.toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
+                              <span>High:</span>
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400">${activeBar.high.toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
+                              <span>Low:</span>
+                              <span className="font-bold text-rose-600 dark:text-rose-400">${activeBar.low.toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 col-span-2 sm:col-span-1 text-ink-500 dark:text-zinc-400">
+                              <span>Close:</span>
+                              <span
+                                className={cn(
+                                  "font-bold",
+                                  activeBar.isBullish ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                                )}
+                              >
+                                ${activeBar.close.toFixed(2)} ({barChange >= 0 ? "+" : ""}{barChange.toFixed(2)}%)
+                              </span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
 
                   {/* SVG Chart Canvas */}
                   <div className="relative mt-4">
                     <svg
                       ref={chartSvgRef}
                       viewBox={`0 0 ${width} ${height}`}
-                      className="w-full h-[180px] overflow-visible select-none"
-                      onMouseLeave={() => setChartHoverIndex(null)}
+                      className="w-full h-[180px] sm:h-[210px] overflow-visible select-none touch-none"
+                      onMouseLeave={() => {
+                        setChartHoverIndex(null);
+                        setCandleHoverIndex(null);
+                      }}
                       onMouseMove={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         const clientX = e.clientX - rect.left;
                         const ratio = Math.max(0, Math.min(1, clientX / rect.width));
-                        const idx = Math.round(ratio * (points.length - 1));
-                        setChartHoverIndex(idx);
+                        if (chartType === "candle") {
+                          const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
+                          setCandleHoverIndex(idx);
+                        } else {
+                          const idx = Math.round(ratio * (points.length - 1));
+                          setChartHoverIndex(idx);
+                        }
+                      }}
+                      onTouchMove={(e) => {
+                        if (e.touches && e.touches[0]) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const clientX = e.touches[0].clientX - rect.left;
+                          const ratio = Math.max(0, Math.min(1, clientX / rect.width));
+                          if (chartType === "candle") {
+                            const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
+                            setCandleHoverIndex(idx);
+                          } else {
+                            const idx = Math.round(ratio * (points.length - 1));
+                            setChartHoverIndex(idx);
+                          }
+                        }
+                      }}
+                      onTouchEnd={() => {
+                        setChartHoverIndex(null);
+                        setCandleHoverIndex(null);
                       }}
                     >
                       <defs>
@@ -1231,32 +1417,87 @@ export default function AppDashboardPage() {
                       <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="currentColor" className="text-ink-200/60 dark:text-zinc-800" strokeDasharray="3 3" />
                       <line x1="0" y1={height - padY} x2={width} y2={height - padY} stroke="currentColor" className="text-ink-200/60 dark:text-zinc-800" strokeDasharray="3 3" />
 
-                      {/* Area Fill */}
-                      <path d={areaD} fill={`url(#${chartGradId})`} />
+                      {/* LINE CHART MODE */}
+                      {chartType === "line" && (
+                        <>
+                          <path d={areaD} fill={`url(#${chartGradId})`} />
+                          <path d={pathD} fill="none" stroke="#FF5B3E" strokeWidth="2.5" strokeLinecap="round" />
+                          {chartHoverIndex !== null && coords[chartHoverIndex] && (
+                            <g>
+                              <line
+                                x1={coords[chartHoverIndex].x}
+                                y1={0}
+                                x2={coords[chartHoverIndex].x}
+                                y2={height}
+                                stroke="#FF5B3E"
+                                strokeWidth="1"
+                                strokeDasharray="2 2"
+                              />
+                              <circle
+                                cx={coords[chartHoverIndex].x}
+                                cy={coords[chartHoverIndex].y}
+                                r="5"
+                                fill="#FFFFFF"
+                                stroke="#FF5B3E"
+                                strokeWidth="2.5"
+                              />
+                            </g>
+                          )}
+                        </>
+                      )}
 
-                      {/* Stroke Line */}
-                      <path d={pathD} fill="none" stroke="#FF5B3E" strokeWidth="2.5" strokeLinecap="round" />
-
-                      {/* Hover Indicator Crosshair */}
-                      {chartHoverIndex !== null && (
+                      {/* CANDLESTICK CHART MODE */}
+                      {chartType === "candle" && (
                         <g>
-                          <line
-                            x1={coords[chartHoverIndex].x}
-                            y1={0}
-                            x2={coords[chartHoverIndex].x}
-                            y2={height}
-                            stroke="#FF5B3E"
-                            strokeWidth="1"
-                            strokeDasharray="2 2"
-                          />
-                          <circle
-                            cx={coords[chartHoverIndex].x}
-                            cy={coords[chartHoverIndex].y}
-                            r="5"
-                            fill="#FFFFFF"
-                            stroke="#FF5B3E"
-                            strokeWidth="2.5"
-                          />
+                          {candleBars.map((bar, idx) => {
+                            const numBars = candleBars.length;
+                            const barSpacing = width / numBars;
+                            const barW = Math.max(12, barSpacing * 0.62);
+                            const cx = (idx + 0.5) * barSpacing;
+                            const wickY1 = height - padY - ((bar.high - candleMin) / candleRange) * chartHeight;
+                            const wickY2 = height - padY - ((bar.low - candleMin) / candleRange) * chartHeight;
+                            const openY = height - padY - ((bar.open - candleMin) / candleRange) * chartHeight;
+                            const closeY = height - padY - ((bar.close - candleMin) / candleRange) * chartHeight;
+                            const bodyTop = Math.min(openY, closeY);
+                            const bodyH = Math.max(3, Math.abs(openY - closeY));
+                            const isHovered = candleHoverIndex === idx;
+                            const candleColor = bar.isBullish ? "#10B981" : "#F43F5E";
+
+                            return (
+                              <g key={`candle-${idx}`} className="transition-opacity">
+                                {isHovered && (
+                                  <rect
+                                    x={cx - barSpacing / 2}
+                                    y={0}
+                                    width={barSpacing}
+                                    height={height}
+                                    fill="currentColor"
+                                    className="text-accent-500/10 dark:text-white/[0.05]"
+                                  />
+                                )}
+                                {/* Wick line */}
+                                <line
+                                  x1={cx}
+                                  y1={wickY1}
+                                  x2={cx}
+                                  y2={wickY2}
+                                  stroke={candleColor}
+                                  strokeWidth={isHovered ? "2.2" : "1.5"}
+                                />
+                                {/* Candle body */}
+                                <rect
+                                  x={cx - barW / 2}
+                                  y={bodyTop}
+                                  width={barW}
+                                  height={bodyH}
+                                  rx="1.5"
+                                  fill={candleColor}
+                                  stroke={candleColor}
+                                  strokeWidth="1"
+                                />
+                              </g>
+                            );
+                          })}
                         </g>
                       )}
                     </svg>
@@ -1272,7 +1513,7 @@ export default function AppDashboardPage() {
                 {/* ========================================================================= */}
                 {/* LIVE CONVERSATIONAL CHAT CONSOLE (WhatsApp & Telegram Experience)        */}
                 {/* ========================================================================= */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
+                <div id="conversational-chat" className="scroll-mt-24 rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-3.5 sm:p-5 shadow-xs">
                   {/* Chat Header */}
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 dark:border-zinc-800 pb-3">
                     <div className="flex items-center gap-2.5">
@@ -1406,6 +1647,7 @@ export default function AppDashboardPage() {
                     className="mt-2.5 flex items-center gap-2"
                   >
                     <input
+                      id="conversational-chat-input"
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
@@ -2050,218 +2292,72 @@ export default function AppDashboardPage() {
 
           {/* Right Sidebar: Portfolio Summary & Identity (Cols 9 to 12) */}
           <div className="space-y-6 lg:col-span-4">
-            {/* Transparent Embedded Connect & Channel Linkage Portal (from /connect) */}
-            <div className="rounded-2xl border border-white/[0.12] bg-black/60 dark:bg-black/75 backdrop-blur-xl p-5 shadow-2xl text-white">
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="font-display text-xs font-bold uppercase tracking-wider text-white">
-                    Connect &amp; Manage Wallet
-                  </span>
-                  <span className="rounded bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-400">
-                    X Layer (196)
+            {/* Account Identity Box */}
+            <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
+              <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-3">
+                <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500 dark:text-zinc-400">
+                  Account Identity
+                </span>
+                <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 border border-transparent dark:border-emerald-800/40 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                  Non-Custodial
+                </span>
+              </div>
+
+              <div className="mt-3.5 space-y-2.5 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-ink-600 dark:text-zinc-400">Universal Signature:</span>
+                  <span className="font-semibold text-ink-900 dark:text-white">{profile.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-600 dark:text-zinc-400">Connected Channel:</span>
+                  <span className="font-semibold text-ink-900 dark:text-white capitalize">
+                    {profile.platform} ({profile.handle})
                   </span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-600 dark:text-zinc-400">X Layer Smart Wallet:</span>
+                  <span className="font-mono text-[11px] text-accent-700 dark:text-accent-400">
+                    {profile.address.slice(0, 8)}...{profile.address.slice(-6)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-600 dark:text-zinc-400">Security Gate:</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">2FA OTP Protected</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-600 dark:text-zinc-400">Private Keys:</span>
+                  <span className="font-semibold text-ink-700 dark:text-zinc-300">Never Stored in Database</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-600 dark:text-zinc-400">Gas Sponsorship:</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">100% Covered by OKX</span>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(true)}
-                  className="text-[11px] font-medium text-accent-400 hover:text-accent-300 hover:underline cursor-pointer"
-                  title="Open full expanded modal"
+                  className="w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] py-2 text-center text-xs font-semibold text-ink-800 dark:text-zinc-200 transition-colors hover:bg-surface-100 dark:hover:bg-[#202736] cursor-pointer"
                 >
-                  Expand ↗
+                  Manage Channels
                 </button>
-              </div>
-
-              <p className="mt-2.5 text-[11px] text-gray-400 leading-relaxed">
-                Select your preferred platform to interface with, then anchor your Web3 wallet for autonomous execution on OKX X Layer.
-              </p>
-
-              {/* 4 Social Platforms with Simple Vector Logos */}
-              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {[
-                  {
-                    id: "whatsapp" as Platform,
-                    name: "WhatsApp",
-                    icon: SimpleWhatsAppLogo,
-                    color: "text-emerald-400",
-                    border: "border-emerald-500",
-                    bg: "bg-emerald-500/10",
-                  },
-                  {
-                    id: "telegram" as Platform,
-                    name: "Telegram",
-                    icon: SimpleTelegramLogo,
-                    color: "text-sky-400",
-                    border: "border-sky-500",
-                    bg: "bg-sky-500/10",
-                  },
-                  {
-                    id: "instagram" as Platform,
-                    name: "Instagram",
-                    icon: SimpleInstagramLogo,
-                    color: "text-pink-400",
-                    border: "border-pink-500",
-                    bg: "bg-pink-500/10",
-                  },
-                  {
-                    id: "web" as Platform,
-                    name: "Web",
-                    icon: SimpleWebLogo,
-                    color: "text-[#FF6B4E]",
-                    border: "border-[#FF6B4E]",
-                    bg: "bg-[#FF6B4E]/10",
-                  },
-                ].map((p) => {
-                  const isSelected = connectChannel === p.id;
-                  const Icon = p.icon;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => {
-                        setConnectChannel(p.id);
-                        if (p.id === "whatsapp" && (!connectHandle || connectHandle.includes("@"))) {
-                          setConnectHandle("+234 902 827 9382");
-                        } else if (p.id === "telegram" && (!connectHandle || connectHandle.includes("+"))) {
-                          setConnectHandle("@MeireiXLayerBot");
-                        } else if (p.id === "instagram" && (!connectHandle || connectHandle.includes("+"))) {
-                          setConnectHandle("@meirei_investor");
-                        } else if (p.id === "web" && (!connectHandle || connectHandle.includes("+"))) {
-                          setConnectHandle("investor@meirei.app");
-                        }
-                      }}
-                      className={cn(
-                        "rounded-xl border p-2 text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1",
-                        isSelected
-                          ? `${p.border} ${p.bg} ${p.color} shadow-md shadow-black/40`
-                          : "border-white/[0.08] bg-white/[0.02] text-gray-400 hover:bg-white/[0.05] hover:text-white"
-                      )}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      <span className="text-[10px]">{p.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Handle Input */}
-              <div className="mt-3">
-                <div className="flex items-center justify-between mb-1 text-[10px]">
-                  <label className="font-semibold text-gray-300 uppercase tracking-wider">
-                    {connectChannel === "whatsapp" && "WhatsApp Number"}
-                    {connectChannel === "telegram" && "Telegram Handle"}
-                    {connectChannel === "instagram" && "Instagram Handle"}
-                    {connectChannel === "web" && "Account Email"}
-                  </label>
-                  <span className="font-mono text-gray-400">
-                    {connectChannel === "telegram" ? "@MeireiXLayerBot" : "Channel Identity"}
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  value={connectHandle}
-                  onChange={(e) => setConnectHandle(e.target.value)}
-                  placeholder={
-                    connectChannel === "whatsapp"
-                      ? "+234 902 827 9382"
-                      : connectChannel === "telegram"
-                      ? "@MeireiXLayerBot"
-                      : connectChannel === "instagram"
-                      ? "@your_instagram"
-                      : "user@meirei.app"
-                  }
-                  className="w-full rounded-xl border border-white/[0.1] bg-black/60 p-2.5 text-xs font-mono text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E] transition-colors"
-                />
-              </div>
-
-              {/* Wallet Status Box */}
-              <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-1.5 text-xs">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400 text-[11px]">X Layer Smart Wallet:</span>
-                  {connectAddress ? (
-                    <div className="flex items-center gap-1 font-mono text-emerald-400 font-semibold text-[11px]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                      <span>{formatShortAddress(connectAddress)}</span>
-                    </div>
-                  ) : (
-                    <span className="font-mono text-amber-400 text-[11px]">Not Connected</span>
-                  )}
-                </div>
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-gray-400">Target Channel:</span>
-                  <span className="font-semibold text-white capitalize">{connectChannel} ({connectHandle})</span>
-                </div>
-              </div>
-
-              {/* Wallet Buttons */}
-              <div className="mt-3 space-y-2">
-                {!connectAddress ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleConnectWalletType("okx")}
-                      disabled={isWalletConnecting}
-                      className="p-2.5 rounded-xl border border-[#FF6B4E]/30 bg-[#FF6B4E]/10 hover:bg-[#FF6B4E]/20 text-white font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-                    >
-                      <span>OKX Wallet</span>
-                      <span className="text-[9px] bg-[#FF6B4E]/30 text-[#FF6B4E] font-bold px-1 rounded">TOP</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleConnectWalletType("metamask")}
-                      disabled={isWalletConnecting}
-                      className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
-                    >
-                      MetaMask
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handleConfirmChannelLink}
-                      disabled={isChannelLinking}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-colors"
-                    >
-                      {isChannelLinking ? "Anchoring..." : `Anchor to ${connectChannel.toUpperCase()}`}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDisconnectChannelWallet}
-                      disabled={isWalletConnecting}
-                      className="py-2.5 px-3 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-semibold cursor-pointer transition-colors"
-                    >
-                      Unlink
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Feedback messages */}
-              {connectInfoMsg && (
-                <div className="mt-2.5 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[11px]">
-                  {connectInfoMsg}
-                </div>
-              )}
-              {connectErrorMsg && (
-                <div className="mt-2.5 p-2.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-[11px]">
-                  {connectErrorMsg}
-                </div>
-              )}
-
-              {/* Telegram bot direct link */}
-              <div className="mt-3 pt-2.5 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-gray-400">
-                <a
-                  href="https://t.me/MeireiXLayerBot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-sky-400 flex items-center gap-1 transition-colors"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfile({
+                      ...DEFAULT_PROFILE,
+                      handle: "Disconnected",
+                      email: "disconnected@meirei.app",
+                      address: "0x0000000000000000000000000000000000000000",
+                      holdings: [],
+                      portfolioValue: 0,
+                    });
+                  }}
+                  className="w-full rounded-xl border border-red-500/30 bg-red-500/10 py-2 text-center text-xs font-semibold text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
                 >
-                  <SimpleTelegramLogo className="w-3.5 h-3.5" />
-                  <span>@MeireiXLayerBot</span>
-                </a>
-                <Link href="/connect" className="text-[#FF6B4E] hover:underline">
-                  Full Page ↗
-                </Link>
+                  Disconnect
+                </button>
               </div>
             </div>
 
@@ -2563,159 +2659,200 @@ export default function AppDashboardPage() {
                   </div>
                 </div>
 
-                {/* Handle Input */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="font-bold text-white uppercase text-[10px] tracking-wider">
-                      {connectChannel === "whatsapp" && "WhatsApp Phone Number"}
-                      {connectChannel === "telegram" && "Telegram Handle or ID"}
-                      {connectChannel === "instagram" && "Instagram Username"}
-                      {connectChannel === "web" && "Account Email or Handle"}
-                    </label>
-                    <span className="font-mono text-[10px] text-gray-400">
-                      {connectChannel === "telegram" ? "@MeireiXLayerBot" : "Channel Identity"}
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    value={connectHandle}
-                    onChange={(e) => setConnectHandle(e.target.value)}
-                    placeholder={
-                      connectChannel === "whatsapp"
-                        ? "+234 902 827 9382"
-                        : connectChannel === "telegram"
-                        ? "@MeireiXLayerBot or username"
-                        : connectChannel === "instagram"
-                        ? "@your_instagram"
-                        : "user@meirei.app"
-                    }
-                    className="w-full rounded-xl border border-white/[0.1] bg-black/60 p-3 text-xs font-mono text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E] transition-colors"
-                  />
-                </div>
+                {connectChannel === "web" ? (
+                  <div className="rounded-2xl border border-[#FF6B4E]/30 bg-gradient-to-b from-[#FF6B4E]/15 to-[#FF6B4E]/5 p-5 space-y-3.5 shadow-lg shadow-[#FF6B4E]/5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-[#FF6B4E]/20 text-[#FF6B4E]">
+                          <SimpleWebLogo className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white">Meirei Conversational Chat</h4>
+                          <p className="text-[11px] text-gray-400 font-mono">Website Direct Access · Chain 196</p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                        Live Web3 Console
+                      </span>
+                    </div>
 
-                {/* Wallet Status Box */}
-                <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3.5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-400 text-[11px]">OKX X Layer Wallet:</span>
-                    {connectAddress ? (
-                      <div className="flex items-center gap-1.5 font-mono text-emerald-400 font-semibold text-[11px]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        <span>{formatShortAddress(connectAddress)}</span>
-                        <span className="text-gray-500 font-normal">({connectWalletName || "Connected"})</span>
+                    <p className="text-xs text-gray-300 leading-relaxed">
+                      You are interacting directly on the website. Use the built-in Conversational Chat Console on this page to query real-time stock prices, inspect your smart wallet balance, or execute natural-language trades with 100% gas sponsorship.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLoginModal(false);
+                        const chatElem = document.getElementById("conversational-chat");
+                        if (chatElem) {
+                          chatElem.scrollIntoView({ behavior: "smooth" });
+                        }
+                        const chatInput = document.getElementById("conversational-chat-input");
+                        if (chatInput) {
+                          setTimeout(() => chatInput.focus(), 350);
+                        }
+                      }}
+                      className="w-full py-3 px-4 rounded-xl bg-[#FF6B4E] hover:bg-[#ff5533] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B4E]/25 transition-all cursor-pointer group"
+                    >
+                      <span>Open Meirei Conversational Chat</span>
+                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Handle Input */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="font-bold text-white uppercase text-[10px] tracking-wider">
+                          {connectChannel === "whatsapp" && "WhatsApp Phone Number"}
+                          {connectChannel === "telegram" && "Telegram Handle or ID"}
+                          {connectChannel === "instagram" && "Instagram Username"}
+                        </label>
+                        <span className="font-mono text-[10px] text-gray-400">
+                          {connectChannel === "telegram" ? "@MeireiXLayerBot" : "Channel Identity"}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={connectHandle}
+                        onChange={(e) => setConnectHandle(e.target.value)}
+                        placeholder={
+                          connectChannel === "whatsapp"
+                            ? "+234 902 827 9382"
+                            : connectChannel === "telegram"
+                            ? "@MeireiXLayerBot or username"
+                            : "@your_instagram"
+                        }
+                        className="w-full rounded-xl border border-white/[0.1] bg-black/60 p-3 text-xs font-mono text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E] transition-colors"
+                      />
+                    </div>
+
+                    {/* Wallet Status Box */}
+                    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-[11px]">OKX X Layer Wallet:</span>
+                        {connectAddress ? (
+                          <div className="flex items-center gap-1.5 font-mono text-emerald-400 font-semibold text-[11px]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            <span>{formatShortAddress(connectAddress)}</span>
+                            <span className="text-gray-500 font-normal">({connectWalletName || "Connected"})</span>
+                          </div>
+                        ) : (
+                          <span className="font-mono text-amber-400 text-[11px]">Not Connected</span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-gray-400">Network:</span>
+                        <span className="font-mono text-emerald-400">OKX X Layer (196)</span>
+                      </div>
+                    </div>
+
+                    {/* Wallet Selection Buttons */}
+                    {!connectAddress ? (
+                      <div className="space-y-2">
+                        <label className="font-bold text-white uppercase text-[10px] tracking-wider block">
+                          Connect Web3 Wallet
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleConnectWalletType("okx")}
+                            disabled={isWalletConnecting}
+                            className="p-2.5 rounded-xl border border-[#FF6B4E]/30 bg-[#FF6B4E]/10 hover:bg-[#FF6B4E]/20 text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                          >
+                            <span>OKX Wallet</span>
+                            <span className="text-[9px] bg-[#FF6B4E]/30 text-[#FF6B4E] font-bold px-1 py-0.2 rounded">TOP</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleConnectWalletType("metamask")}
+                            disabled={isWalletConnecting}
+                            className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                          >
+                            MetaMask
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleConnectWalletType("injected")}
+                            disabled={isWalletConnecting}
+                            className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-400 hover:text-white text-[11px] cursor-pointer"
+                          >
+                            Browser Injected
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowConnectManualInput(!showConnectManualInput)}
+                            className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-400 hover:text-white text-[11px] cursor-pointer"
+                          >
+                            {showConnectManualInput ? "Hide Manual" : "Paste 0x Address"}
+                          </button>
+                        </div>
+
+                        {showConnectManualInput && (
+                          <div className="p-3 rounded-xl border border-white/[0.08] bg-black/50 space-y-2">
+                            <input
+                              type="text"
+                              value={connectManualAddress}
+                              onChange={(e) => setConnectManualAddress(e.target.value)}
+                              placeholder="0x7f17d6224e7d48606598732c3f511412b5c1e922"
+                              className="w-full p-2 text-xs font-mono rounded-lg bg-black border border-white/[0.1] text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E]"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!isValidEvmAddress(connectManualAddress.trim())) {
+                                  setConnectErrorMsg("Please enter a valid 42-character 0x EVM address.");
+                                  return;
+                                }
+                                setConnectAddress(connectManualAddress.trim().toLowerCase());
+                                setConnectWalletName("Manual Address");
+                                setShowConnectManualInput(false);
+                                setConnectInfoMsg(`Configured address ${formatShortAddress(connectManualAddress.trim())}`);
+                              }}
+                              className="w-full py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-medium cursor-pointer"
+                            >
+                              Set Manual Address
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      <span className="font-mono text-amber-400 text-[11px]">Not Connected</span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-gray-400">Network:</span>
-                    <span className="font-mono text-emerald-400">OKX X Layer (196)</span>
-                  </div>
-                </div>
-
-                {/* Wallet Selection Buttons */}
-                {!connectAddress ? (
-                  <div className="space-y-2">
-                    <label className="font-bold text-white uppercase text-[10px] tracking-wider block">
-                      Connect Web3 Wallet
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleConnectWalletType("okx")}
-                        disabled={isWalletConnecting}
-                        className="p-2.5 rounded-xl border border-[#FF6B4E]/30 bg-[#FF6B4E]/10 hover:bg-[#FF6B4E]/20 text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                      >
-                        <span>OKX Wallet</span>
-                        <span className="text-[9px] bg-[#FF6B4E]/30 text-[#FF6B4E] font-bold px-1 py-0.2 rounded">TOP</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleConnectWalletType("metamask")}
-                        disabled={isWalletConnecting}
-                        className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                      >
-                        MetaMask
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleConnectWalletType("injected")}
-                        disabled={isWalletConnecting}
-                        className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-400 hover:text-white text-[11px] cursor-pointer"
-                      >
-                        Browser Injected
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowConnectManualInput(!showConnectManualInput)}
-                        className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-400 hover:text-white text-[11px] cursor-pointer"
-                      >
-                        {showConnectManualInput ? "Hide Manual" : "Paste 0x Address"}
-                      </button>
-                    </div>
-
-                    {showConnectManualInput && (
-                      <div className="p-3 rounded-xl border border-white/[0.08] bg-black/50 space-y-2">
-                        <input
-                          type="text"
-                          value={connectManualAddress}
-                          onChange={(e) => setConnectManualAddress(e.target.value)}
-                          placeholder="0x7f17d6224e7d48606598732c3f511412b5c1e922"
-                          className="w-full p-2 text-xs font-mono rounded-lg bg-black border border-white/[0.1] text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E]"
-                        />
+                      <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => {
-                            if (!isValidEvmAddress(connectManualAddress.trim())) {
-                              setConnectErrorMsg("Please enter a valid 42-character 0x EVM address.");
-                              return;
-                            }
-                            setConnectAddress(connectManualAddress.trim().toLowerCase());
-                            setConnectWalletName("Manual Address");
-                            setShowConnectManualInput(false);
-                            setConnectInfoMsg(`Configured address ${formatShortAddress(connectManualAddress.trim())}`);
-                          }}
-                          className="w-full py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-medium cursor-pointer"
+                          onClick={handleConfirmChannelLink}
+                          disabled={isChannelLinking}
+                          className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 cursor-pointer transition-colors"
                         >
-                          Set Manual Address
+                          {isChannelLinking ? "Anchoring..." : `Anchor Wallet to ${connectChannel.toUpperCase()}`}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDisconnectChannelWallet}
+                          disabled={isWalletConnecting}
+                          className="py-3 px-3 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                          Disconnect
                         </button>
                       </div>
                     )}
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handleConfirmChannelLink}
-                      disabled={isChannelLinking}
-                      className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 cursor-pointer transition-colors"
-                    >
-                      {isChannelLinking ? "Anchoring..." : `Anchor Wallet to ${connectChannel.toUpperCase()}`}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDisconnectChannelWallet}
-                      disabled={isWalletConnecting}
-                      className="py-3 px-3 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-semibold cursor-pointer transition-colors"
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                )}
 
-                {/* Feedback messages */}
-                {connectInfoMsg && (
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs">
-                    {connectInfoMsg}
-                  </div>
-                )}
-                {connectErrorMsg && (
-                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs">
-                    {connectErrorMsg}
-                  </div>
+                    {/* Feedback messages */}
+                    {connectInfoMsg && (
+                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs">
+                        {connectInfoMsg}
+                      </div>
+                    )}
+                    {connectErrorMsg && (
+                      <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs">
+                        {connectErrorMsg}
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* External links */}

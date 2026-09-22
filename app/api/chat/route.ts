@@ -186,12 +186,7 @@ export async function POST(req: NextRequest) {
       lower.includes("rate")
     ) {
       if (lower.includes("coin") || lower.includes("coinx")) {
-        return NextResponse.json({
-          reply: `COINx (Coinbase) is scheduled for X Layer listing as liquidity deepens. Currently live allowlisted xStocks: NVDAx ($213.90), AAPLx ($332.41), MSFTx ($490.30), METAx ($673.31), GOOGLx ($303.11), AMZNx ($215.42), TSLAx ($414.28).`,
-          type: "price",
-          symbol: "COINx",
-          priceUsd: 0,
-        });
+        matchedSymbol = "COINx";
       }
 
       if (matchedSymbol) {

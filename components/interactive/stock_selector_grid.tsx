@@ -93,14 +93,14 @@ export const STOCKS: StockItem[] = [
   {
     symbol: "TSLAx",
     name: "Tesla",
-    price: "Coming soon",
-    isLive: false,
+    price: "$358.42",
+    isLive: true,
     color: "#E82127",
-    change24h: "Planned",
-    high24h: "$360.00",
-    low24h: "$350.00",
-    volume24h: "Seeding Target: $5M",
-    chartPoints: [350, 351, 353, 352, 354, 355, 357, 356, 358, 360, 359, 358],
+    change24h: "+2.18%",
+    high24h: "$364.50",
+    low24h: "$352.10",
+    volume24h: "$1.85M USDG",
+    chartPoints: [350, 351.4, 353.2, 352.0, 354.8, 355.5, 357.2, 356.1, 358.9, 360.4, 359.2, 358.42],
     logo: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
         <path d="M12 4.5C9.8 4.5 4.5 5 2 6.5l.5 1.5c2-.9 5.8-1.4 9.5-1.4 3.7 0 7.5.5 9.5 1.4l.5-1.5c-2.5-1.5-7.8-2-10-2zm0 3.8c-2.5 0-4.6.4-6.2 1.1L7 11.2c1.3-.5 3-.8 5-.8s3.7.3 5 .8l1.2-1.8c-1.6-.7-3.7-1.1-6.2-1.1zm-1.2 5v7.2h2.4v-7.2c2.1-.3 4.2-.8 5.8-1.6L18 10.4c-1.6.8-3.8 1.3-6 1.3s-4.4-.5-6-1.3l-1 1.3c1.6.8 3.7 1.3 5.8 1.6z" />
@@ -110,14 +110,14 @@ export const STOCKS: StockItem[] = [
   {
     symbol: "AMZNx",
     name: "Amazon",
-    price: "Coming soon",
-    isLive: false,
+    price: "$246.85",
+    isLive: true,
     color: "#111111",
-    change24h: "Planned",
-    high24h: "$248.00",
-    low24h: "$242.00",
-    volume24h: "Seeding Target: $5M",
-    chartPoints: [242, 243, 244, 243.5, 245, 246, 245.5, 247, 248, 247.2, 246.5, 246],
+    change24h: "+1.35%",
+    high24h: "$249.20",
+    low24h: "$243.60",
+    volume24h: "$1.42M USDG",
+    chartPoints: [242.0, 243.1, 244.5, 243.8, 245.2, 246.0, 245.6, 247.4, 248.8, 247.6, 246.2, 246.85],
     logo: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
         <path d="M14.6 14.8c-.8 0-1.5-.2-2-.6-.5-.4-.8-1-.8-1.7 0-.8.3-1.4.9-1.8.6-.4 1.4-.6 2.4-.6h1.2v.9c0 .7-.3 1.3-.7 1.8-.4.7-1.1 1-1.9 1.1l.9.9zm-8.8 3.8c4.6 3.4 11 .3 12.4-1.2.2-.2.2-.5 0-.7-.2-.2-.5-.1-.7.1-1.3 1.2-7.1 4-11.2 1.1-.3-.2-.6 0-.7.3-.1.2 0 .4.2.4zm14.3-1.6c-.3-.4-1.8-.2-2.7.2-.3.1-.3.4-.1.6.8.6 1.7 1.2 2.3 1.4.3.1.5 0 .6-.2.2-.5.2-1.6-.1-2z" />
@@ -127,14 +127,14 @@ export const STOCKS: StockItem[] = [
   {
     symbol: "GOOGLx",
     name: "Alphabet",
-    price: "Coming soon",
-    isLive: false,
+    price: "$344.18",
+    isLive: true,
     color: "#4285F4",
-    change24h: "Planned",
-    high24h: "$346.00",
-    low24h: "$340.00",
-    volume24h: "Seeding Target: $5M",
-    chartPoints: [340, 341, 342.5, 341.8, 343, 344.2, 343.8, 345, 346, 345.2, 344, 343.2],
+    change24h: "+0.85%",
+    high24h: "$347.50",
+    low24h: "$341.20",
+    volume24h: "$1.62M USDG",
+    chartPoints: [340.2, 341.5, 342.8, 341.9, 343.4, 344.5, 343.9, 345.6, 346.8, 345.5, 344.0, 344.18],
     logo: (
       <svg viewBox="0 0 24 24" className="h-5 w-5">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -147,14 +147,14 @@ export const STOCKS: StockItem[] = [
   {
     symbol: "COINx",
     name: "Coinbase",
-    price: "Coming soon",
-    isLive: false,
+    price: "$286.70",
+    isLive: true,
     color: "#0052FF",
-    change24h: "Planned",
-    high24h: "$290.00",
-    low24h: "$280.00",
-    volume24h: "Seeding Target: $5M",
-    chartPoints: [280, 281, 283, 282.5, 284, 285.5, 286, 288, 290, 289, 287, 285],
+    change24h: "+4.15%",
+    high24h: "$291.80",
+    low24h: "$278.40",
+    volume24h: "$2.05M USDG",
+    chartPoints: [278.4, 280.2, 282.5, 281.8, 284.1, 285.8, 286.4, 288.9, 291.8, 289.4, 287.1, 286.7],
     logo: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
         <circle cx="12" cy="12" r="10" />
@@ -222,9 +222,7 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
   // Currently displayed price (either hovered or spot)
   const currentDisplayPrice = hoverIndex !== null && coords[hoverIndex]
     ? `$${coords[hoverIndex].val.toFixed(2)}`
-    : activeStock.isLive
-    ? activeStock.price
-    : "Coming soon";
+    : activeStock.price;
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!chartSvgRef.current) return;

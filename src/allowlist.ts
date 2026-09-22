@@ -15,6 +15,7 @@ export const ALLOWLIST: AllowlistEntry[] = [
   { symbol: "AMZNx", address: "0x3557ba345b01efa20a1bddc61f573bfd87195081", decimals: 18, name: "Amazon.com xStock" },
   { symbol: "METAx", address: "0x96702be57cd9777f835117a809c7124fe4ec989a", decimals: 18, name: "Meta xStock" },
   { symbol: "TSLAx", address: "0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0", decimals: 18, name: "Tesla xStock" },
+  { symbol: "COINx", address: "0x1d5338302f3dd78f7aa9580bc53c4d445ec6ba25", decimals: 18, name: "Coinbase xStock" },
   { symbol: "USDG", address: "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8", decimals: 6, name: "Global Dollar" },
   { symbol: "USDC", address: "0xb6ceceab302e2e4948951ee7843fc24e92933061", decimals: 6, name: "USD Coin" },
 ];
@@ -41,6 +42,9 @@ const SYMBOL_ALIASES: Record<string, string> = {
   META: "METAx",
   TSLA: "TSLAx",
   TESLA: "TSLAx",
+  COIN: "COINx",
+  COINBASE: "COINx",
+  COINX: "COINx",
 };
 
 export const CHAIN_INDEX = 196;

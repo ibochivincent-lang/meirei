@@ -324,6 +324,7 @@ export const MOCK_PRICES: Record<string, number> = {
   AMZNx: 228.7,
   METAx: 742.3,
   TSLAx: 412.6,
+  COINx: 286.7,
   USDG: 1,
   USDC: 1,
 };

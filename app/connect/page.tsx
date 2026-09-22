@@ -211,25 +211,25 @@ const PLATFORM_CONFIGS: Record<SocialPlatform, PlatformConfig> = {
   web: {
     id: "web",
     name: "Web Platform",
-    tagline: "Browser Terminal",
-    badge: "Web3 Console",
-    handleLabel: "Account Email or Handle",
-    handlePlaceholder: "investor@meirei.app or handle",
-    defaultHandle: "investor@meirei.app",
-    helperText: "Enter your email or identifier for direct browser terminal execution.",
+    tagline: "Conversational Chat",
+    badge: "Direct Web Chat",
+    handleLabel: "Web Chat Session",
+    handlePlaceholder: "Direct browser chat session",
+    defaultHandle: "web_conversational_chat",
+    helperText: "Directly chat with Meirei on the website to query stocks, inspect balance, and execute mandates.",
     themeColor: "#FF6B4E",
     activeBorder: "border-[#FF6B4E]",
     activeBg: "bg-[#FF6B4E]/10",
     activeGlow: "shadow-[#FF6B4E]/20",
     activeBadge: "bg-[#FF6B4E]/20 text-[#FF6B4E] border-[#FF6B4E]/30",
     logo: SimpleWebLogo,
-    returnCtaText: "Launch Web Terminal",
-    getReturnUrl: () => "/app",
+    returnCtaText: "Open Meirei Conversational Chat",
+    getReturnUrl: () => "/app#conversational-chat",
     nextSteps: [
-      "1. Launch the Meirei Web Terminal directly in your browser.",
-      "2. View real-time tokenized equity pricing (AAPLx, NVDAx, MSFTx, GOOGLx).",
-      "3. Execute mandates with live on-chain simulation and instant confirmation.",
-      "4. Enjoy zero-gas sponsorship with non-custodial smart accounts.",
+      "1. Launch the Meirei Conversational Chat directly on the website.",
+      "2. Send 'stocks' to view real-time OKX X Layer allowlisted equities.",
+      "3. Send 'balance' to view synchronized smart wallet holdings.",
+      "4. Execute natural-language tokenized stock trades with zero gas fees.",
     ],
   },
 };
@@ -588,30 +588,63 @@ function ConnectWalletContent() {
             </div>
           </div>
 
-          {/* Account Identifier Input */}
-          <div className="mb-6 p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-gray-300">
-                {activeConfig.handleLabel}
-              </label>
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-mono">
-                <ActiveLogo className="w-3.5 h-3.5 text-gray-400" />
-                <span>{activeConfig.name}</span>
+          {/* Account Identifier Input OR Direct Web Chat Routing */}
+          {selectedChannel === "web" ? (
+            <div className="mb-6 p-5 rounded-2xl bg-gradient-to-b from-[#FF6B4E]/15 to-[#FF6B4E]/5 border border-[#FF6B4E]/30 space-y-3 shadow-lg shadow-[#FF6B4E]/5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-[#FF6B4E]/20 text-[#FF6B4E]">
+                    <SimpleWebLogo className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Meirei Conversational Chat</h3>
+                    <p className="text-[11px] text-gray-400 font-mono">Direct Browser Access · OKX X Layer</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                  Active Web3 Session
+                </span>
+              </div>
+
+              <p className="text-xs text-gray-300 leading-relaxed">
+                You are accessing Meirei directly on the website. Launch the conversational chat to query real-time stock prices, inspect your non-custodial smart wallet balance, or execute natural-language portfolio rebalancing mandates with 100% gas sponsorship.
+              </p>
+
+              <div className="pt-1">
+                <Link
+                  href="/app#conversational-chat"
+                  className="w-full py-3 px-4 rounded-xl bg-[#FF6B4E] hover:bg-[#ff5733] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B4E]/25 transition-all cursor-pointer group"
+                >
+                  <span>Open Meirei Conversational Chat on Website</span>
+                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                </Link>
               </div>
             </div>
+          ) : (
+            <div className="mb-6 p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-gray-300">
+                  {activeConfig.handleLabel}
+                </label>
+                <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-mono">
+                  <ActiveLogo className="w-3.5 h-3.5 text-gray-400" />
+                  <span>{activeConfig.name}</span>
+                </div>
+              </div>
 
-            <input
-              type="text"
-              value={channelHandle}
-              onChange={(e) => setChannelHandle(e.target.value)}
-              placeholder={activeConfig.handlePlaceholder}
-              className="w-full py-2.5 px-3 rounded-lg bg-black/60 border border-white/[0.1] text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-[#FF6B4E] transition"
-            />
+              <input
+                type="text"
+                value={channelHandle}
+                onChange={(e) => setChannelHandle(e.target.value)}
+                placeholder={activeConfig.handlePlaceholder}
+                className="w-full py-2.5 px-3 rounded-lg bg-black/60 border border-white/[0.1] text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-[#FF6B4E] transition"
+              />
 
-            <p className="text-[11px] text-gray-500 leading-relaxed">
-              {activeConfig.helperText}
-            </p>
-          </div>
+              <p className="text-[11px] text-gray-500 leading-relaxed">
+                {activeConfig.helperText}
+              </p>
+            </div>
+          )}
 
           {infoMessage && (
             <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs text-emerald-300 leading-relaxed flex items-center gap-2">
