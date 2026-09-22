@@ -1,0 +1,146 @@
+{
+  "schema_version": "v1",
+  "name_for_model": "meirei_investment_agent",
+  "name_for_human": "Meirei Investment Mandate Agent",
+  "description_for_model": "Autonomous non-custodial investment mandate agent for tokenized equities (xStocks) on OKX X Layer (Chain ID 196). Provides real-time USDG spot pricing, autonomous portfolio drift rebalancing, dollar-cost averaging (DCA) schedules, emergency circuit breaker halts, and intent-to-sign calldata generation via OKX Exchange OS.",
+  "description_for_human": "AI-native investment mandate agent for tokenized equities on OKX X Layer.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://meirei-rho.vercel.app/api/mcp"
+  },
+  "chain": {
+    "name": "OKX X Layer",
+    "chain_id": 196,
+    "testnet_chain_id": 195,
+    "rpc": "https://rpc.xlayer.tech",
+    "explorer": "https://www.okx.com/web3/explorer/xlayer",
+    "settlement_asset": "USDG"
+  },
+  "service_provider": {
+    "protocol": "OKX AI Agent Service Provider (ASP)",
+    "version": "2.4.0",
+    "author": "IboTV",
+    "execution_mode": "non-custodial-intent-solver"
+  },
+  "tools": [
+    {
+      "name": "meirei_xstock_quote",
+      "description": "Fetch real-time USDG pricing and unit allocations for tokenized equities on OKX X Layer.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "enum": ["NVDAx", "AAPLx", "MSFTx", "GOOGLx", "AMZNx", "METAx", "TSLAx", "COINx", "USDG", "USDC"]
+          },
+          "amount_usdg": {
+            "type": "number",
+            "description": "Allocation in USDG to compute share units for"
+          }
+        },
+        "required": ["ticker"]
+      }
+    },
+    {
+      "name": "meirei_create_mandate",
+      "description": "Construct an autonomous onchain investment mandate on OKX X Layer Chain 196.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "enum": ["drift_rebalance", "dca_recurring", "circuit_breaker"]
+          },
+          "target_weights": {
+            "type": "object",
+            "description": "Asset tickers mapped to target percentage weights (e.g. {\"NVDAx\": 60, \"AAPLx\": 40})"
+          },
+          "threshold_pct": {
+            "type": "number",
+            "description": "Drift threshold percentage trigger (default: 5.0%)"
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Recurrence interval for DCA mandates (e.g. 'weekly_monday_0800_utc')"
+          },
+          "max_drawdown_pct": {
+            "type": "number",
+            "description": "Drawdown threshold percentage for circuit breaker halt"
+          }
+        },
+        "required": ["strategy"]
+      }
+    },
+    {
+      "name": "meirei_check_drift",
+      "description": "Calculate current portfolio asset weights against target mandate weights to evaluate rebalancing necessity.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "wallet_address": {
+            "type": "string",
+            "description": "EVM wallet address on X Layer"
+          },
+          "target_weights": {
+            "type": "object",
+            "description": "Target percentage weight distribution"
+          }
+        },
+        "required": ["wallet_address", "target_weights"]
+      }
+    },
+    {
+      "name": "meirei_execute_rebalance",
+      "description": "Formulate atomic rebalancing swap calldata via OKX Exchange OS router for client-side signing.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "wallet_address": {
+            "type": "string",
+            "description": "User EVM wallet address"
+          },
+          "trades": {
+            "type": "array",
+            "description": "List of trade diffs needed to realign portfolio"
+          }
+        },
+        "required": ["wallet_address", "trades"]
+      }
+    },
+    {
+      "name": "meirei_circuit_breaker",
+      "description": "Evaluate 24h portfolio drawdown and trigger emergency circuit breaker hold if threshold breached.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "wallet_address": {
+            "type": "string",
+            "description": "User EVM wallet address"
+          },
+          "max_drawdown_pct": {
+            "type": "number",
+            "description": "Maximum allowable drawdown percentage before halt"
+          }
+        },
+        "required": ["wallet_address"]
+      }
+    },
+    {
+      "name": "meirei_get_portfolio",
+      "description": "Query authentic on-chain USDG and xStock token balances on OKX X Layer (Chain 196).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "wallet_address": {
+            "type": "string",
+            "description": "EVM wallet address to inspect"
+          }
+        },
+        "required": ["wallet_address"]
+      }
+    }
+  ]
+}

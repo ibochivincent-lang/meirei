@@ -68,6 +68,60 @@ Meirei utilizes an Intent-Based Architecture. The AI bot acts as a solver, struc
 
 ---
 
+## OKX AI Agent Service Provider (ASP) & MCP Interoperability
+
+Meirei implements standardized machine-to-machine agent interoperability under the OKX AI Agent Service Provider (ASP) protocol and Model Context Protocol (MCP). Any external agent, script, or evaluator in the OKX ecosystem can discover and invoke Meirei's capabilities via machine-readable endpoints:
+
+- **Agent Discovery Manifest**: [`/.well-known/agent.json`](file:///app/.well-known/agent.json/route.ts) (`https://meirei-rho.vercel.app/.well-known/agent.json`)
+- **JSON-RPC MCP Server**: [`/api/mcp`](file:///app/api/mcp/route.ts) (`https://meirei-rho.vercel.app/api/mcp`)
+
+### Machine-Readable Tools Catalog
+
+```json
+[
+  {
+    "name": "meirei_xstock_quote",
+    "description": "Fetch real-time USDG pricing and unit allocations for tokenized equities on X Layer",
+    "parameters": { "ticker": "string", "amount_usdg": "number" }
+  },
+  {
+    "name": "meirei_create_mandate",
+    "description": "Construct an onchain investment mandate on X Layer Chain 196",
+    "parameters": { "strategy": "string", "target_weights": "object" }
+  },
+  {
+    "name": "meirei_check_drift",
+    "description": "Calculate portfolio drift against target weights to determine rebalancing necessity",
+    "parameters": { "wallet_address": "string", "target_weights": "object" }
+  },
+  {
+    "name": "meirei_execute_rebalance",
+    "description": "Formulate atomic rebalancing swap calldata via OKX Exchange OS router for client-side signing",
+    "parameters": { "wallet_address": "string", "trades": "array" }
+  },
+  {
+    "name": "meirei_circuit_breaker",
+    "description": "Evaluate 24h portfolio drawdown and trigger emergency circuit breaker hold if threshold breached",
+    "parameters": { "wallet_address": "string", "max_drawdown_pct": "number" }
+  },
+  {
+    "name": "meirei_get_portfolio",
+    "description": "Query authentic on-chain USDG and xStock token balances on OKX X Layer (Chain 196)",
+    "parameters": { "wallet_address": "string" }
+  }
+]
+```
+
+#### Example Tool Invocation (`POST /api/mcp`)
+
+```bash
+curl -X POST https://meirei-rho.vercel.app/api/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc": "2.0", "method": "tools/call", "params": {"name": "meirei_xstock_quote", "arguments": {"ticker": "NVDAx", "amount_usdg": 100}}, "id": 1}'
+```
+
+---
+
 ## Ephemeral State & Serverless Architecture
 
 To prevent the serverless "in-memory" state loss trap on platforms like Vercel, Meirei handles temporary 2FA OTP state using serverless **Upstash Redis**:

@@ -192,10 +192,12 @@ export function Hero() {
           {/* Trust strip — staggered, desktop */}
           <motion.div
             variants={stagger(0.08, 0.85)}
-            className="mt-12 hidden lg:flex flex-wrap items-center gap-x-6 gap-y-3 text-[15px] md:text-base text-ink-700 dark:text-ink-300"
+            className="mt-12 hidden lg:flex flex-wrap items-center gap-x-4 gap-y-3 text-[15px] md:text-base text-ink-700 dark:text-ink-300"
           >
             <TrustItem icon={lockIcon} height={16} ratio={18 / 21} label="OKX AI Powered" />
+            <span aria-hidden="true" className="inline-block h-3.5 w-px shrink-0 self-center bg-ink-300 dark:bg-zinc-700" />
             <TrustItem icon={coinIcon} height={16} ratio={1} label="xStocks & USDG native" />
+            <span aria-hidden="true" className="inline-block h-3.5 w-px shrink-0 self-center bg-ink-300 dark:bg-zinc-700" />
             <TrustItem icon={lightIcon} height={14} ratio={17 / 23} label="Sub second finality" />
           </motion.div>
         </motion.div>
@@ -216,10 +218,12 @@ export function Hero() {
           variants={stagger(0.08, 0.2)}
           initial="hidden"
           animate="visible"
-          className="lg:hidden flex flex-wrap justify-center items-center text-center gap-4 text-[15px] text-ink-700 dark:text-ink-300"
+          className="lg:hidden flex flex-wrap justify-center items-center text-center gap-x-3 gap-y-2 text-[14px] text-ink-700 dark:text-ink-300"
         >
           <TrustItem icon={lockIcon} height={16} ratio={18 / 21} label="OKX AI Powered" />
+          <span aria-hidden="true" className="inline-block h-3.5 w-px shrink-0 self-center bg-ink-300 dark:bg-zinc-700" />
           <TrustItem icon={coinIcon} height={16} ratio={1} label="xStocks & USDG native" />
+          <span aria-hidden="true" className="inline-block h-3.5 w-px shrink-0 self-center bg-ink-300 dark:bg-zinc-700" />
           <TrustItem icon={lightIcon} height={14} ratio={17 / 23} label="Sub second finality" />
         </motion.div>
       </div>

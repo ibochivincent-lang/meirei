@@ -1,7 +1,19 @@
 import { Holding } from "../types";
 import { fetchBalances as fetchBalancesOS } from "../onchainos";
 
+export const DEMO_SANDBOX_ADDRESS = "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d";
+
+export const DEMO_SANDBOX_HOLDINGS: Holding[] = [
+  { symbol: "USDG", amount: 1000.0, valueUsd: 1000.0 },
+  { symbol: "NVDAx", amount: 3.5, valueUsd: 602.0 },
+  { symbol: "AAPLx", amount: 5.0, valueUsd: 1165.0 },
+  { symbol: "TSLAx", amount: 2.0, valueUsd: 496.0 },
+];
+
 export async function fetchBalances(walletAddress: string): Promise<Holding[]> {
+  if (walletAddress && walletAddress.toLowerCase() === DEMO_SANDBOX_ADDRESS.toLowerCase()) {
+    return DEMO_SANDBOX_HOLDINGS;
+  }
   return fetchBalancesOS(walletAddress);
 }
 
