@@ -9,9 +9,109 @@ import { cn } from "@/lib/utils/cn";
 import { generateAdvisoryPlan, AdvisoryHorizon, RiskProfile, AdvisoryPlan } from "@/src/agent/advisor";
 import { NewsCatalyst } from "@/app/api/news/route";
 import { Web3SigningModal } from "@/components/wallet/web3_signing_modal";
+import {
+  XLAYER_CHAIN_ID_DECIMAL,
+  XLAYER_CHAIN_ID_HEX,
+  XLAYER_NETWORK_PARAMS,
+  formatShortAddress,
+  isValidEvmAddress,
+} from "@/lib/wallet/xlayer";
+import {
+  getSpecificProvider,
+  getAvailableWallets,
+  WalletType,
+  WalletOption,
+} from "@/lib/wallet/xlayer_signer";
+import { SITE } from "@/lib/data/site";
 
 type Platform = "whatsapp" | "telegram" | "instagram" | "web" | "okx_wallet";
 type Mode = "simple" | "advanced";
+
+// Simple Vector SVG Logos for Social Platforms
+function SimpleWhatsAppLogo({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+      <path
+        d="M9.5 9a.5.5 0 0 0-.5.5v.1c.1 1.2.7 2.6 1.8 3.7s2.5 1.7 3.7 1.8h.1a.5.5 0 0 0 .5-.5v-1.2a.5.5 0 0 0-.3-.5l-1.5-.6a.5.5 0 0 0-.6.2l-.5.7a6.2 6.2 0 0 1-2.2-2.2l.7-.5a.5.5 0 0 0 .2-.6l-.6-1.5a.5.5 0 0 0-.5-.3H9.5z"
+        fill="currentColor"
+        stroke="none"
+      />
+    </svg>
+  );
+}
+
+function SimpleTelegramLogo({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m22 2-11 13" />
+      <path d="m22 2-7 20-4-9-9-4 20-7z" />
+    </svg>
+  );
+}
+
+function SimpleInstagramLogo({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function SimpleWebLogo({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+      <line x1="8" y1="21" x2="16" y2="21" />
+      <line x1="12" y1="17" x2="12" y2="21" />
+      <path d="m7 8 2 2-2 2" />
+      <line x1="11" y1="12" x2="15" y2="12" />
+    </svg>
+  );
+}
+
+interface ChatMessage {
+  id: string;
+  sender: "user" | "bot";
+  text: string;
+  timestamp: string;
+  reference?: string;
+  type?: string;
+}
 
 interface UserProfile {
   email: string;
@@ -102,10 +202,32 @@ export default function AppDashboardPage() {
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
-  const [loginEmail, setLoginEmail] = useState<string>(DEFAULT_PROFILE.email);
-  const [loginPlatform, setLoginPlatform] = useState<Platform>("whatsapp");
-  const [loginHandle, setLoginHandle] = useState<string>(DEFAULT_PROFILE.handle);
-  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+
+  // Transparent Connect Portal state inside /app
+  const [connectChannel, setConnectChannel] = useState<Platform>("whatsapp");
+  const [connectHandle, setConnectHandle] = useState<string>(DEFAULT_PROFILE.handle);
+  const [connectAddress, setConnectAddress] = useState<string | null>(DEFAULT_PROFILE.address);
+  const [connectWalletName, setConnectWalletName] = useState<string | null>("OKX Wallet");
+  const [isWalletConnecting, setIsWalletConnecting] = useState<boolean>(false);
+  const [isChannelLinking, setIsChannelLinking] = useState<boolean>(false);
+  const [connectSuccess, setConnectSuccess] = useState<boolean>(false);
+  const [connectInfoMsg, setConnectInfoMsg] = useState<string | null>(null);
+  const [connectErrorMsg, setConnectErrorMsg] = useState<string | null>(null);
+  const [showConnectManualInput, setShowConnectManualInput] = useState<boolean>(false);
+  const [connectManualAddress, setConnectManualAddress] = useState<string>("");
+  const [availableConnectWallets, setAvailableConnectWallets] = useState<WalletOption[]>([]);
+
+  // Conversational Chat Console State (Just like Telegram and WhatsApp)
+  const INITIAL_CHAT_MESSAGE: ChatMessage = {
+    id: "welcome-1",
+    sender: "bot",
+    text: "Welcome to Meirei on OKX X Layer Mainnet. You can chat here just like on WhatsApp or Telegram (@MeireiXLayerBot).\n\nSend 'stocks' for 24/7 equity price quotes, 'balance' to view your wallet holdings, or type any trade like 'Buy 100 USDG NVDAx'.",
+    timestamp: "Just now",
+  };
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([INITIAL_CHAT_MESSAGE]);
+  const [chatInput, setChatInput] = useState<string>("");
+  const [isChatSending, setIsChatSending] = useState<boolean>(false);
+  const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
   // Theme state: light / dark mode
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -318,31 +440,228 @@ export default function AppDashboardPage() {
     }
   }, []);
 
-  // Handle account login or switching with verified Email identity
-  const handleConnectProfile = (platform: Platform, handleVal: string, emailVal: string, walletVal?: string) => {
-    setIsConnecting(true);
-    setTimeout(() => {
-      const cleanEmail = emailVal.trim() || "alex.trader@meirei.app";
-      const cleanHandle = handleVal.trim() || "+1 (555) 392 1084";
-      let addr = walletVal || profile.address;
+  // Initialize available Web3 wallets
+  useEffect(() => {
+    setAvailableConnectWallets(getAvailableWallets());
+  }, []);
 
-      if (!addr || !/^0x[a-fA-F0-9]{40}$/.test(addr)) {
-        addr = "0x7f17d6224e7d48606598732c3f511412b5c1e922";
+  // Auto-scroll conversational chat to newest message
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages, isChatSending]);
+
+  // Connect Web3 wallet directly on OKX X Layer
+  const handleConnectWalletType = async (type: WalletType = "okx") => {
+    setIsWalletConnecting(true);
+    setConnectErrorMsg(null);
+    setConnectInfoMsg(null);
+
+    try {
+      const provider = getSpecificProvider(type);
+      if (!provider) {
+        throw new Error(
+          type === "okx"
+            ? "OKX Wallet extension not detected. Please install OKX Wallet from okx.com/web3."
+            : `${type} extension not detected. Please install it or use another wallet.`
+        );
+      }
+
+      const accounts: string[] = await provider.request({ method: "eth_requestAccounts" });
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No account authorized by wallet.");
+      }
+
+      const activeAddr = accounts[0].toLowerCase();
+      setConnectAddress(activeAddr);
+
+      const title =
+        type === "okx"
+          ? "OKX Wallet"
+          : type === "metamask"
+          ? "MetaMask"
+          : type === "coinbase"
+          ? "Coinbase Wallet"
+          : type === "trust"
+          ? "Trust Wallet"
+          : "Web3 Injected";
+      setConnectWalletName(title);
+
+      // Switch to X Layer (Chain ID 196)
+      try {
+        const rawChainId: string = await provider.request({ method: "eth_chainId" });
+        const chainId = parseInt(rawChainId, 16);
+        if (chainId !== XLAYER_CHAIN_ID_DECIMAL) {
+          try {
+            await provider.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: XLAYER_CHAIN_ID_HEX }],
+            });
+          } catch (switchErr: any) {
+            if (switchErr?.code === 4902) {
+              await provider.request({
+                method: "wallet_addEthereumChain",
+                params: [XLAYER_NETWORK_PARAMS],
+              });
+            }
+          }
+        }
+      } catch {}
+
+      setConnectInfoMsg(`Connected ${title} (${formatShortAddress(activeAddr)}) on OKX X Layer.`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setConnectErrorMsg(msg);
+    } finally {
+      setIsWalletConnecting(false);
+    }
+  };
+
+  // Confirm channel linkage to isolated database record
+  const handleConfirmChannelLink = async () => {
+    if (!connectAddress) {
+      setConnectErrorMsg("Please connect or paste a wallet address first.");
+      return;
+    }
+    const effectiveHandle = connectHandle.trim() || "+234 902 827 9382";
+
+    setIsChannelLinking(true);
+    setConnectErrorMsg(null);
+    setConnectInfoMsg(null);
+
+    try {
+      const res = await fetch("/api/wallet/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: connectChannel,
+          handle: effectiveHandle,
+          walletAddress: connectAddress,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Failed to persist channel linkage.");
       }
 
       setProfile((prev) => ({
         ...prev,
-        email: cleanEmail,
-        platform,
-        handle: cleanHandle,
-        address: addr,
-        botStatus: `Active on ${platform.toUpperCase()} & Web`,
+        platform: connectChannel,
+        handle: effectiveHandle,
+        address: connectAddress,
+        botStatus: `Active on ${connectChannel.toUpperCase()} & Web`,
       }));
 
-      setIsLoggedIn(true);
-      setShowLoginModal(false);
-      setIsConnecting(false);
-    }, 250);
+      setConnectSuccess(true);
+      setConnectInfoMsg(
+        `Wallet ${formatShortAddress(connectAddress)} successfully anchored to ${connectChannel.toUpperCase()} (${effectiveHandle}).`
+      );
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setConnectErrorMsg(msg);
+    } finally {
+      setIsChannelLinking(false);
+    }
+  };
+
+  // Disconnect & Unlink wallet
+  const handleDisconnectChannelWallet = async () => {
+    setIsWalletConnecting(true);
+    setConnectErrorMsg(null);
+    setConnectInfoMsg(null);
+
+    try {
+      await fetch("/api/wallet/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: connectChannel,
+          handle: connectHandle.trim(),
+          action: "unlink",
+        }),
+      }).catch(() => {});
+
+      setConnectAddress(null);
+      setConnectWalletName(null);
+      setConnectSuccess(false);
+
+      setProfile((prev) => ({
+        ...prev,
+        address: "0x0000000000000000000000000000000000000000",
+        handle: "Disconnected",
+        botStatus: "Unlinked",
+      }));
+
+      setConnectInfoMsg("Wallet disconnected and unlinked successfully.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setConnectErrorMsg(`Failed to disconnect: ${msg}`);
+    } finally {
+      setIsWalletConnecting(false);
+    }
+  };
+
+  // Conversational Chat message sender (just like Telegram and WhatsApp)
+  const handleSendChatMessage = async (textOverride?: string) => {
+    const query = (textOverride || chatInput).trim();
+    if (!query || isChatSending) return;
+
+    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const userMsg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      sender: "user",
+      text: query,
+      timestamp: now,
+    };
+
+    setChatMessages((prev) => [...prev, userMsg]);
+    setChatInput("");
+    setIsChatSending(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: query,
+          walletAddress: profile.address,
+          platform: profile.platform,
+          chatHandle: profile.handle,
+          email: profile.email,
+          otpToken: otpToken || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      const replyText =
+        data.reply ||
+        data.message ||
+        data.error ||
+        data.detail ||
+        "Message received and processed on X Layer.";
+
+      const botMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: replyText,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        reference: data.receipt?.reference || data.delivery?.txs?.[0]?.hash || undefined,
+        type: data.type,
+      };
+
+      setChatMessages((prev) => [...prev, botMsg]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const errorMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `Error connecting to Meirei chat service: ${msg}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsChatSending(false);
+    }
   };
 
   // Initiates OTP challenge before executing on-chain trades
@@ -699,19 +1018,6 @@ export default function AppDashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            {/* Connect OKX Wallet Non-Custodial Trigger */}
-            <button
-              type="button"
-              onClick={() => {
-                const p = getNumericPrice(selectedStock);
-                openWeb3Signer(selectedStock.symbol, 250, 250 / p, p);
-              }}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-ink-200 dark:border-zinc-700 bg-white dark:bg-[#161B26] px-3 py-2 text-xs font-bold text-ink-900 dark:text-white hover:border-accent-500 hover:text-accent-600 transition-colors shadow-xs cursor-pointer w-full sm:w-auto"
-            >
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>OKX Wallet Signer</span>
-            </button>
-
             {/* EXACTLY TWO MODES SWITCHER: Simple Mode vs Advanced Mode */}
             <div className="flex items-center gap-1.5 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-100 dark:bg-[#161B26] p-1 w-full sm:w-auto">
               <button
@@ -961,6 +1267,161 @@ export default function AppDashboardPage() {
                       <span>04:00 PM EST</span>
                     </div>
                   </div>
+                </div>
+
+                {/* ========================================================================= */}
+                {/* LIVE CONVERSATIONAL CHAT CONSOLE (WhatsApp & Telegram Experience)        */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
+                  {/* Chat Header */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 dark:border-zinc-800 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="relative">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-500 text-white shadow-xs">
+                          <SimpleTelegramLogo className="h-4 w-4" />
+                        </div>
+                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#11141D]" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-display text-sm font-bold text-ink-900 dark:text-white">
+                            Meirei Conversational Chat
+                          </h3>
+                          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.2 text-[9px] font-bold text-emerald-700 dark:text-emerald-400">
+                            Online · OKX X Layer
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-ink-500 dark:text-zinc-400">
+                          Chat naturally just like on WhatsApp or Telegram (
+                          <a
+                            href="https://t.me/MeireiXLayerBot"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent-600 dark:text-accent-400 hover:underline font-semibold"
+                          >
+                            @MeireiXLayerBot
+                          </a>
+                          )
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setChatMessages([INITIAL_CHAT_MESSAGE])}
+                        className="rounded-lg border border-ink-200 dark:border-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-ink-600 dark:text-zinc-400 hover:bg-surface-50 dark:hover:bg-[#161B26] hover:text-ink-900 dark:hover:text-white cursor-pointer transition-colors"
+                      >
+                        Clear Chat
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Chat Messages Log */}
+                  <div className="mt-3.5 max-h-[340px] min-h-[220px] overflow-y-auto space-y-3 pr-1">
+                    {chatMessages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={cn(
+                          "flex flex-col text-xs",
+                          msg.sender === "user" ? "items-end" : "items-start"
+                        )}
+                      >
+                        <div className="flex items-end gap-2 max-w-[88%]">
+                          {msg.sender === "bot" && (
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-500/15 text-accent-600 dark:text-accent-400 shrink-0 text-[10px] font-bold">
+                              M
+                            </div>
+                          )}
+                          <div
+                            className={cn(
+                              "rounded-2xl px-4 py-2.5 leading-relaxed shadow-xs whitespace-pre-wrap",
+                              msg.sender === "user"
+                                ? "bg-accent-500 text-white rounded-br-none"
+                                : "bg-surface-100 dark:bg-[#161B26] text-ink-800 dark:text-zinc-200 border border-ink-200/60 dark:border-zinc-800 rounded-bl-none"
+                            )}
+                          >
+                            {msg.text}
+
+                            {msg.reference && (
+                              <div className="mt-2 pt-1.5 border-t border-white/10 dark:border-zinc-700/60 font-mono text-[10px] opacity-80">
+                                Reference: {msg.reference}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <span className="mt-1 font-mono text-[9px] text-ink-400 dark:text-zinc-500 px-1">
+                          {msg.timestamp}
+                        </span>
+                      </div>
+                    ))}
+
+                    {isChatSending && (
+                      <div className="flex items-center gap-2 text-xs text-ink-500 dark:text-zinc-400">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-500/15 text-accent-600 dark:text-accent-400 shrink-0 text-[10px] font-bold">
+                          M
+                        </div>
+                        <div className="rounded-2xl rounded-bl-none border border-ink-200/60 dark:border-zinc-800 bg-surface-100 dark:bg-[#161B26] px-3.5 py-2">
+                          <div className="flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-accent-500 animate-bounce" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-accent-500 animate-bounce [animation-delay:0.15s]" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-accent-500 animate-bounce [animation-delay:0.3s]" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatBottomRef} />
+                  </div>
+
+                  {/* Quick Suggestion Chips */}
+                  <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
+                    <span className="text-[10px] uppercase font-bold text-ink-400 dark:text-zinc-500 tracking-wider shrink-0 mr-1">
+                      Try:
+                    </span>
+                    {[
+                      "stocks",
+                      "balance",
+                      `Buy 100 USDG of ${selectedStock.symbol}`,
+                      `Compare ${selectedStock.symbol} vs MSFTx`,
+                      "help",
+                    ].map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => handleSendChatMessage(chip)}
+                        disabled={isChatSending}
+                        className="rounded-full border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3 py-1 font-medium text-ink-700 dark:text-zinc-300 hover:border-accent-500 hover:text-accent-600 dark:hover:text-accent-400 whitespace-nowrap cursor-pointer transition-colors shrink-0"
+                      >
+                        {chip}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Chat Input Bar */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSendChatMessage();
+                    }}
+                    className="mt-2.5 flex items-center gap-2"
+                  >
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="Message Meirei... (e.g. 'stocks', 'balance', 'Buy 100 USDG NVDAx')"
+                      disabled={isChatSending}
+                      className="flex-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-4 py-2.5 text-xs text-ink-900 dark:text-white outline-none focus:border-accent-500 focus:bg-white dark:focus:bg-[#11141D] transition-colors"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isChatSending || !chatInput.trim()}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-500 text-white shadow-xs transition-all hover:bg-accent-600 disabled:opacity-50 cursor-pointer shrink-0"
+                      title="Send Message"
+                    >
+                      <SimpleTelegramLogo className="h-4 w-4" />
+                    </button>
+                  </form>
                 </div>
 
                 {/* 1-Sentence Natural Language Investment Mandate Console */}
@@ -1267,7 +1728,7 @@ export default function AppDashboardPage() {
                                 {units} units
                               </td>
                               <td className="p-3 text-right">
-                                <div className="flex items-center justify-end gap-1.5">
+                                <div className="flex items-center justify-end">
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -1276,19 +1737,9 @@ export default function AppDashboardPage() {
                                       setPromptText(actionText);
                                       handleSendPrompt(actionText);
                                     }}
-                                    className="rounded-lg bg-ink-900 dark:bg-white dark:text-ink-950 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs transition-colors hover:bg-accent-500 hover:text-white cursor-pointer"
+                                    className="rounded-lg bg-ink-900 dark:bg-white dark:text-ink-950 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-colors hover:bg-accent-500 hover:text-white cursor-pointer"
                                   >
                                     Quick Buy
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedStock(stk);
-                                      openWeb3Signer(stk.symbol, calcInvestmentUsdg, parseFloat(units), priceNum);
-                                    }}
-                                    className="rounded-lg border border-accent-500 bg-accent-50 dark:bg-accent-950/40 px-2.5 py-1 text-[11px] font-bold text-accent-700 dark:text-accent-300 shadow-xs transition-colors hover:bg-accent-500 hover:text-white cursor-pointer"
-                                  >
-                                    Sign in Wallet
                                   </button>
                                 </div>
                               </td>
@@ -1599,72 +2050,218 @@ export default function AppDashboardPage() {
 
           {/* Right Sidebar: Portfolio Summary & Identity (Cols 9 to 12) */}
           <div className="space-y-6 lg:col-span-4">
-            {/* Account & Identity Box */}
-            <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-3">
-                <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500 dark:text-zinc-400">
-                  Account Identity
-                </span>
-                <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 border border-transparent dark:border-emerald-800/40 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                  Non-Custodial
-                </span>
-              </div>
-
-              <div className="mt-3.5 space-y-2.5 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-ink-600 dark:text-zinc-400">Universal Signature:</span>
-                  <span className="font-semibold text-ink-900 dark:text-white">{profile.email}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-600 dark:text-zinc-400">Connected Channel:</span>
-                  <span className="font-semibold text-ink-900 dark:text-white capitalize">
-                    {profile.platform} ({profile.handle})
+            {/* Transparent Embedded Connect & Channel Linkage Portal (from /connect) */}
+            <div className="rounded-2xl border border-white/[0.12] bg-black/60 dark:bg-black/75 backdrop-blur-xl p-5 shadow-2xl text-white">
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-xs font-bold uppercase tracking-wider text-white">
+                    Connect &amp; Manage Wallet
+                  </span>
+                  <span className="rounded bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-400">
+                    X Layer (196)
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-600 dark:text-zinc-400">X Layer Smart Wallet:</span>
-                  <span className="font-mono text-[11px] text-accent-700 dark:text-accent-400">
-                    {profile.address.slice(0, 8)}...{profile.address.slice(-6)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-600 dark:text-zinc-400">Security Gate:</span>
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">2FA OTP Protected</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-600 dark:text-zinc-400">Private Keys:</span>
-                  <span className="font-semibold text-ink-700 dark:text-zinc-300">Never Stored in Database</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-600 dark:text-zinc-400">Gas Sponsorship:</span>
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">100% Covered by OKX</span>
-                </div>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(true)}
-                  className="w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] py-2 text-center text-xs font-semibold text-ink-800 dark:text-zinc-200 transition-colors hover:bg-surface-100 dark:hover:bg-[#202736] cursor-pointer"
+                  className="text-[11px] font-medium text-accent-400 hover:text-accent-300 hover:underline cursor-pointer"
+                  title="Open full expanded modal"
                 >
-                  Switch Profile
+                  Expand ↗
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfile({
-                      ...DEFAULT_PROFILE,
-                      handle: "Disconnected",
-                      email: "disconnected@meirei.app",
-                      address: "0x0000000000000000000000000000000000000000",
-                      holdings: [],
-                      portfolioValue: 0,
-                    });
-                  }}
-                  className="w-full rounded-xl border border-red-500/30 bg-red-500/10 py-2 text-center text-xs font-semibold text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
+              </div>
+
+              <p className="mt-2.5 text-[11px] text-gray-400 leading-relaxed">
+                Select your preferred platform to interface with, then anchor your Web3 wallet for autonomous execution on OKX X Layer.
+              </p>
+
+              {/* 4 Social Platforms with Simple Vector Logos */}
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  {
+                    id: "whatsapp" as Platform,
+                    name: "WhatsApp",
+                    icon: SimpleWhatsAppLogo,
+                    color: "text-emerald-400",
+                    border: "border-emerald-500",
+                    bg: "bg-emerald-500/10",
+                  },
+                  {
+                    id: "telegram" as Platform,
+                    name: "Telegram",
+                    icon: SimpleTelegramLogo,
+                    color: "text-sky-400",
+                    border: "border-sky-500",
+                    bg: "bg-sky-500/10",
+                  },
+                  {
+                    id: "instagram" as Platform,
+                    name: "Instagram",
+                    icon: SimpleInstagramLogo,
+                    color: "text-pink-400",
+                    border: "border-pink-500",
+                    bg: "bg-pink-500/10",
+                  },
+                  {
+                    id: "web" as Platform,
+                    name: "Web",
+                    icon: SimpleWebLogo,
+                    color: "text-[#FF6B4E]",
+                    border: "border-[#FF6B4E]",
+                    bg: "bg-[#FF6B4E]/10",
+                  },
+                ].map((p) => {
+                  const isSelected = connectChannel === p.id;
+                  const Icon = p.icon;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setConnectChannel(p.id);
+                        if (p.id === "whatsapp" && (!connectHandle || connectHandle.includes("@"))) {
+                          setConnectHandle("+234 902 827 9382");
+                        } else if (p.id === "telegram" && (!connectHandle || connectHandle.includes("+"))) {
+                          setConnectHandle("@MeireiXLayerBot");
+                        } else if (p.id === "instagram" && (!connectHandle || connectHandle.includes("+"))) {
+                          setConnectHandle("@meirei_investor");
+                        } else if (p.id === "web" && (!connectHandle || connectHandle.includes("+"))) {
+                          setConnectHandle("investor@meirei.app");
+                        }
+                      }}
+                      className={cn(
+                        "rounded-xl border p-2 text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1",
+                        isSelected
+                          ? `${p.border} ${p.bg} ${p.color} shadow-md shadow-black/40`
+                          : "border-white/[0.08] bg-white/[0.02] text-gray-400 hover:bg-white/[0.05] hover:text-white"
+                      )}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span className="text-[10px]">{p.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Handle Input */}
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-1 text-[10px]">
+                  <label className="font-semibold text-gray-300 uppercase tracking-wider">
+                    {connectChannel === "whatsapp" && "WhatsApp Number"}
+                    {connectChannel === "telegram" && "Telegram Handle"}
+                    {connectChannel === "instagram" && "Instagram Handle"}
+                    {connectChannel === "web" && "Account Email"}
+                  </label>
+                  <span className="font-mono text-gray-400">
+                    {connectChannel === "telegram" ? "@MeireiXLayerBot" : "Channel Identity"}
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={connectHandle}
+                  onChange={(e) => setConnectHandle(e.target.value)}
+                  placeholder={
+                    connectChannel === "whatsapp"
+                      ? "+234 902 827 9382"
+                      : connectChannel === "telegram"
+                      ? "@MeireiXLayerBot"
+                      : connectChannel === "instagram"
+                      ? "@your_instagram"
+                      : "user@meirei.app"
+                  }
+                  className="w-full rounded-xl border border-white/[0.1] bg-black/60 p-2.5 text-xs font-mono text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E] transition-colors"
+                />
+              </div>
+
+              {/* Wallet Status Box */}
+              <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-3 space-y-1.5 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400 text-[11px]">X Layer Smart Wallet:</span>
+                  {connectAddress ? (
+                    <div className="flex items-center gap-1 font-mono text-emerald-400 font-semibold text-[11px]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      <span>{formatShortAddress(connectAddress)}</span>
+                    </div>
+                  ) : (
+                    <span className="font-mono text-amber-400 text-[11px]">Not Connected</span>
+                  )}
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-gray-400">Target Channel:</span>
+                  <span className="font-semibold text-white capitalize">{connectChannel} ({connectHandle})</span>
+                </div>
+              </div>
+
+              {/* Wallet Buttons */}
+              <div className="mt-3 space-y-2">
+                {!connectAddress ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleConnectWalletType("okx")}
+                      disabled={isWalletConnecting}
+                      className="p-2.5 rounded-xl border border-[#FF6B4E]/30 bg-[#FF6B4E]/10 hover:bg-[#FF6B4E]/20 text-white font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <span>OKX Wallet</span>
+                      <span className="text-[9px] bg-[#FF6B4E]/30 text-[#FF6B4E] font-bold px-1 rounded">TOP</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleConnectWalletType("metamask")}
+                      disabled={isWalletConnecting}
+                      className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      MetaMask
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleConfirmChannelLink}
+                      disabled={isChannelLinking}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-emerald-600/20 cursor-pointer transition-colors"
+                    >
+                      {isChannelLinking ? "Anchoring..." : `Anchor to ${connectChannel.toUpperCase()}`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDisconnectChannelWallet}
+                      disabled={isWalletConnecting}
+                      className="py-2.5 px-3 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-semibold cursor-pointer transition-colors"
+                    >
+                      Unlink
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Feedback messages */}
+              {connectInfoMsg && (
+                <div className="mt-2.5 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[11px]">
+                  {connectInfoMsg}
+                </div>
+              )}
+              {connectErrorMsg && (
+                <div className="mt-2.5 p-2.5 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-[11px]">
+                  {connectErrorMsg}
+                </div>
+              )}
+
+              {/* Telegram bot direct link */}
+              <div className="mt-3 pt-2.5 border-t border-white/[0.08] flex items-center justify-between text-[11px] text-gray-400">
+                <a
+                  href="https://t.me/MeireiXLayerBot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-sky-400 flex items-center gap-1 transition-colors"
                 >
-                  Disconnect
-                </button>
+                  <SimpleTelegramLogo className="w-3.5 h-3.5" />
+                  <span>@MeireiXLayerBot</span>
+                </a>
+                <Link href="/connect" className="text-[#FF6B4E] hover:underline">
+                  Full Page ↗
+                </Link>
               </div>
             </div>
 
@@ -1852,29 +2449,29 @@ export default function AppDashboardPage() {
         </div>
       </footer>
 
-      {/* Account Login & Multi-Channel Channel Linkage Modal */}
+      {/* Transparent Non-Custodial Multi-Channel Connect Portal */}
       <AnimatePresence>
         {showLoginModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xl p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-6 shadow-2xl md:p-8"
+              className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl border border-white/[0.12] bg-[#07090E]/90 p-6 shadow-2xl backdrop-blur-2xl text-white relative selection:bg-[#FF6B4E]/30"
             >
-              <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-3.5">
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3.5">
                 <div>
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600 dark:text-accent-400">
-                    Non-Custodial Account Access
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-400">
+                    OKX X Layer (Chain 196)
                   </span>
-                  <h3 className="font-display text-lg font-bold text-ink-900 dark:text-white">
-                    Universal Identity &amp; Channel Link
+                  <h3 className="font-display text-lg font-bold text-white">
+                    Connect &amp; Manage Wallet
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(false)}
-                  className="rounded-full p-1.5 text-ink-400 dark:text-zinc-400 hover:bg-surface-100 dark:hover:bg-[#161B26] hover:text-ink-700 dark:hover:text-white cursor-pointer"
+                  className="rounded-full p-1.5 text-gray-400 hover:bg-white/[0.08] hover:text-white cursor-pointer transition-colors"
                 >
                   <svg viewBox="0 0 16 16" className="h-4 w-4 stroke-current stroke-2 fill-none">
                     <path d="M4 4l8 8M12 4l-8 8" />
@@ -1882,100 +2479,259 @@ export default function AppDashboardPage() {
                 </button>
               </div>
 
-              <div className="mt-4 space-y-4 text-xs text-ink-700 dark:text-zinc-300">
-                <div className="rounded-xl border border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-3 leading-relaxed">
-                  <p className="font-semibold text-ink-900 dark:text-white">Zero Private Key Storage Guarantee:</p>
-                  <p className="mt-1 text-ink-600 dark:text-zinc-400">
-                    Your email is your universal signature anchor across WhatsApp, Telegram, and Web.
-                    Signing keys reside exclusively in your OKX Layer smart wallet or Passkey.
-                  </p>
-                </div>
+              <div className="mt-4 space-y-4 text-xs text-gray-300">
+                <p className="text-gray-400 leading-relaxed text-[11px]">
+                  Select your preferred social platform to interface with, then anchor your Web3
+                  wallet for autonomous execution on OKX X Layer.
+                </p>
 
-                {/* Email input */}
+                {/* 4 Social Platforms */}
                 <div>
-                  <label className="font-bold text-ink-900 dark:text-white uppercase text-[10px] tracking-wider">
-                    Verified Email Address (Identity Anchor)
+                  <label className="font-bold text-white uppercase text-[10px] tracking-wider mb-2 block">
+                    Preferred Interface Platform
                   </label>
-                  <input
-                    type="email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="mt-1.5 w-full rounded-xl border border-ink-300 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-3 text-xs text-ink-900 dark:text-white outline-none focus:border-accent-500 focus:bg-white dark:focus:bg-[#11141D]"
-                  />
-                </div>
-
-                {/* Channel selection */}
-                <div>
-                  <label className="font-bold text-ink-900 dark:text-white uppercase text-[10px] tracking-wider">
-                    Messaging Channel Platform
-                  </label>
-                  <div className="mt-1.5 grid grid-cols-3 gap-2">
-                    {(["whatsapp", "telegram", "web"] as Platform[]).map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setLoginPlatform(p)}
-                        className={cn(
-                          "rounded-xl border p-2 text-center font-bold capitalize transition-all cursor-pointer",
-                          loginPlatform === p
-                            ? "border-accent-500 bg-accent-50 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300"
-                            : "border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] text-ink-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-[#202736]"
-                        )}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      {
+                        id: "whatsapp" as Platform,
+                        name: "WhatsApp",
+                        icon: SimpleWhatsAppLogo,
+                        color: "text-emerald-400",
+                        border: "border-emerald-500",
+                        bg: "bg-emerald-500/10",
+                        tagline: "Messaging Bot",
+                      },
+                      {
+                        id: "telegram" as Platform,
+                        name: "Telegram",
+                        icon: SimpleTelegramLogo,
+                        color: "text-sky-400",
+                        border: "border-sky-500",
+                        bg: "bg-sky-500/10",
+                        tagline: "Direct Bot",
+                      },
+                      {
+                        id: "instagram" as Platform,
+                        name: "Instagram",
+                        icon: SimpleInstagramLogo,
+                        color: "text-pink-400",
+                        border: "border-pink-500",
+                        bg: "bg-pink-500/10",
+                        tagline: "DM Assistant",
+                      },
+                      {
+                        id: "web" as Platform,
+                        name: "Web Platform",
+                        icon: SimpleWebLogo,
+                        color: "text-[#FF6B4E]",
+                        border: "border-[#FF6B4E]",
+                        bg: "bg-[#FF6B4E]/10",
+                        tagline: "Browser Console",
+                      },
+                    ].map((p) => {
+                      const isSelected = connectChannel === p.id;
+                      const Icon = p.icon;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setConnectChannel(p.id);
+                            if (p.id === "whatsapp" && (!connectHandle || connectHandle.includes("@"))) {
+                              setConnectHandle("+234 902 827 9382");
+                            } else if (p.id === "telegram" && (!connectHandle || connectHandle.includes("+"))) {
+                              setConnectHandle("@MeireiXLayerBot");
+                            } else if (p.id === "instagram" && (!connectHandle || connectHandle.includes("+"))) {
+                              setConnectHandle("@meirei_investor");
+                            } else if (p.id === "web" && (!connectHandle || connectHandle.includes("+"))) {
+                              setConnectHandle("investor@meirei.app");
+                            }
+                          }}
+                          className={cn(
+                            "rounded-xl border p-2.5 text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5",
+                            isSelected
+                              ? `${p.border} ${p.bg} ${p.color} shadow-lg shadow-black/40`
+                              : "border-white/[0.08] bg-white/[0.02] text-gray-400 hover:bg-white/[0.05] hover:text-white"
+                          )}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span className="text-[11px]">{p.name}</span>
+                          <span className="text-[9px] text-gray-500 font-normal">{p.tagline}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Handle input */}
+                {/* Handle Input */}
                 <div>
-                  <label className="font-bold text-ink-900 dark:text-white uppercase text-[10px] tracking-wider">
-                    Channel Identifier (Phone Number / Bot Handle)
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="font-bold text-white uppercase text-[10px] tracking-wider">
+                      {connectChannel === "whatsapp" && "WhatsApp Phone Number"}
+                      {connectChannel === "telegram" && "Telegram Handle or ID"}
+                      {connectChannel === "instagram" && "Instagram Username"}
+                      {connectChannel === "web" && "Account Email or Handle"}
+                    </label>
+                    <span className="font-mono text-[10px] text-gray-400">
+                      {connectChannel === "telegram" ? "@MeireiXLayerBot" : "Channel Identity"}
+                    </span>
+                  </div>
                   <input
                     type="text"
-                    value={loginHandle}
-                    onChange={(e) => setLoginHandle(e.target.value)}
-                    placeholder="+1 (555) 392 1084 or @username"
-                    className="mt-1.5 w-full rounded-xl border border-ink-300 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-3 text-xs text-ink-900 dark:text-white outline-none focus:border-accent-500 focus:bg-white dark:focus:bg-[#11141D]"
+                    value={connectHandle}
+                    onChange={(e) => setConnectHandle(e.target.value)}
+                    placeholder={
+                      connectChannel === "whatsapp"
+                        ? "+234 902 827 9382"
+                        : connectChannel === "telegram"
+                        ? "@MeireiXLayerBot or username"
+                        : connectChannel === "instagram"
+                        ? "@your_instagram"
+                        : "user@meirei.app"
+                    }
+                    className="w-full rounded-xl border border-white/[0.1] bg-black/60 p-3 text-xs font-mono text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E] transition-colors"
                   />
                 </div>
 
-                {/* Quick Presets */}
-                <div>
-                  <p className="text-[11px] text-ink-500 dark:text-zinc-400">Or pick a demo profile:</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {SAMPLE_LOGINS.map((s) => (
-                      <button
-                        key={s.email}
-                        type="button"
-                        onClick={() => handleConnectProfile(s.platform, s.handle, s.email, s.address)}
-                        className="rounded-lg border border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] px-2.5 py-1 text-[11px] font-medium text-ink-700 dark:text-zinc-300 hover:border-accent-500 hover:bg-accent-50 dark:hover:bg-accent-950/40 cursor-pointer"
-                      >
-                        {s.label} ({s.platform})
-                      </button>
-                    ))}
+                {/* Wallet Status Box */}
+                <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 text-[11px]">OKX X Layer Wallet:</span>
+                    {connectAddress ? (
+                      <div className="flex items-center gap-1.5 font-mono text-emerald-400 font-semibold text-[11px]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        <span>{formatShortAddress(connectAddress)}</span>
+                        <span className="text-gray-500 font-normal">({connectWalletName || "Connected"})</span>
+                      </div>
+                    ) : (
+                      <span className="font-mono text-amber-400 text-[11px]">Not Connected</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-gray-400">Network:</span>
+                    <span className="font-mono text-emerald-400">OKX X Layer (196)</span>
                   </div>
                 </div>
 
-                <div className="mt-5 flex gap-2.5 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginModal(false)}
-                    className="flex-1 rounded-xl border border-ink-200 dark:border-zinc-700 py-2.5 text-center text-xs font-semibold text-ink-700 dark:text-zinc-300 hover:bg-surface-100 dark:hover:bg-[#161B26] cursor-pointer"
+                {/* Wallet Selection Buttons */}
+                {!connectAddress ? (
+                  <div className="space-y-2">
+                    <label className="font-bold text-white uppercase text-[10px] tracking-wider block">
+                      Connect Web3 Wallet
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleConnectWalletType("okx")}
+                        disabled={isWalletConnecting}
+                        className="p-2.5 rounded-xl border border-[#FF6B4E]/30 bg-[#FF6B4E]/10 hover:bg-[#FF6B4E]/20 text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                      >
+                        <span>OKX Wallet</span>
+                        <span className="text-[9px] bg-[#FF6B4E]/30 text-[#FF6B4E] font-bold px-1 py-0.2 rounded">TOP</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleConnectWalletType("metamask")}
+                        disabled={isWalletConnecting}
+                        className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                      >
+                        MetaMask
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleConnectWalletType("injected")}
+                        disabled={isWalletConnecting}
+                        className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-400 hover:text-white text-[11px] cursor-pointer"
+                      >
+                        Browser Injected
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowConnectManualInput(!showConnectManualInput)}
+                        className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-400 hover:text-white text-[11px] cursor-pointer"
+                      >
+                        {showConnectManualInput ? "Hide Manual" : "Paste 0x Address"}
+                      </button>
+                    </div>
+
+                    {showConnectManualInput && (
+                      <div className="p-3 rounded-xl border border-white/[0.08] bg-black/50 space-y-2">
+                        <input
+                          type="text"
+                          value={connectManualAddress}
+                          onChange={(e) => setConnectManualAddress(e.target.value)}
+                          placeholder="0x7f17d6224e7d48606598732c3f511412b5c1e922"
+                          className="w-full p-2 text-xs font-mono rounded-lg bg-black border border-white/[0.1] text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!isValidEvmAddress(connectManualAddress.trim())) {
+                              setConnectErrorMsg("Please enter a valid 42-character 0x EVM address.");
+                              return;
+                            }
+                            setConnectAddress(connectManualAddress.trim().toLowerCase());
+                            setConnectWalletName("Manual Address");
+                            setShowConnectManualInput(false);
+                            setConnectInfoMsg(`Configured address ${formatShortAddress(connectManualAddress.trim())}`);
+                          }}
+                          className="w-full py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-medium cursor-pointer"
+                        >
+                          Set Manual Address
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleConfirmChannelLink}
+                      disabled={isChannelLinking}
+                      className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 cursor-pointer transition-colors"
+                    >
+                      {isChannelLinking ? "Anchoring..." : `Anchor Wallet to ${connectChannel.toUpperCase()}`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDisconnectChannelWallet}
+                      disabled={isWalletConnecting}
+                      className="py-3 px-3 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-semibold cursor-pointer transition-colors"
+                    >
+                      Disconnect
+                    </button>
+                  </div>
+                )}
+
+                {/* Feedback messages */}
+                {connectInfoMsg && (
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs">
+                    {connectInfoMsg}
+                  </div>
+                )}
+                {connectErrorMsg && (
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs">
+                    {connectErrorMsg}
+                  </div>
+                )}
+
+                {/* External links */}
+                <div className="border-t border-white/[0.08] pt-3 flex items-center justify-between text-[11px] text-gray-400">
+                  <a
+                    href="https://t.me/MeireiXLayerBot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-sky-400 flex items-center gap-1.5 transition-colors"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isConnecting || !loginEmail.trim()}
-                    onClick={() => handleConnectProfile(loginPlatform, loginHandle, loginEmail)}
-                    className="flex-1 rounded-xl bg-accent-500 py-2.5 text-center text-xs font-bold text-white shadow-md transition-all hover:bg-accent-600 disabled:opacity-50 cursor-pointer"
-                  >
-                    {isConnecting ? "Connecting..." : "Link & Access"}
-                  </button>
+                    <SimpleTelegramLogo className="w-3.5 h-3.5" />
+                    <span>Telegram Bot (@MeireiXLayerBot)</span>
+                  </a>
+                  <Link href="/connect" className="text-[#FF6B4E] hover:underline">
+                    Open Full Connect Page ↗
+                  </Link>
                 </div>
               </div>
             </motion.div>

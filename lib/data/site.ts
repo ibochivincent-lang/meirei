@@ -11,7 +11,7 @@ const CONTACT_EMAIL = "privacy@meirei.app";
 // to make it into the browser bundle. Until it's set, telegramLink is null
 // and callers skip rendering the Telegram CTA rather than link to nothing.
 const TELEGRAM_BOT_USERNAME = (
-  process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? ""
+  process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? "MeireiXLayerBot"
 ).replace(/^@/, "");
 
 export const SITE = {
@@ -20,9 +20,7 @@ export const SITE = {
   whatsappNumber: "2349043580863",
   whatsappLink:
     "https://wa.me/2349043580863?text=" + encodeURIComponent("Hi meirei"),
-  telegramLink: TELEGRAM_BOT_USERNAME
-    ? `https://t.me/${TELEGRAM_BOT_USERNAME}`
-    : (null as string | null),
+  telegramLink: `https://t.me/${TELEGRAM_BOT_USERNAME || "MeireiXLayerBot"}`,
   instagramLink: "https://instagram.com/meirei.agent",
 
   privacyEmail: CONTACT_EMAIL,
