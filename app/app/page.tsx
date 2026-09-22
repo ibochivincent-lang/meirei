@@ -892,8 +892,167 @@ export default function AppDashboardPage() {
     }
   };
 
-  // Chart coordinate calculations (Line mode)
-  const points = selectedStock.chartPoints || [100, 102, 101, 103, 104, 103.5, 105];
+  // Numerical and formatted price helpers (using live ticks if available)
+  const getFormattedPrice = (stock: StockItem): string => {
+    const live = stockPrices[stock.symbol];
+    if (typeof live === "number" && live > 0) {
+      return `$${live.toFixed(2)}`;
+    }
+    return stock.price;
+  };
+
+  const getNumericPrice = (stock: StockItem): number => {
+    const live = stockPrices[stock.symbol];
+    if (typeof live === "number" && live > 0) {
+      return live;
+    }
+    const cleaned = parseFloat(stock.price.replace(/[^0-9.]/g, ""));
+    return isNaN(cleaned) || cleaned <= 0 ? 1.0 : cleaned;
+  };
+
+  // Candlestick OHLC calculation with Live Timeframe Rendering
+  interface CandleBar {
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    isBullish: boolean;
+    isLive?: boolean;
+  }
+
+  const candleBars: CandleBar[] = useMemo(() => {
+    const rawPoints =
+      selectedStock.chartPoints && selectedStock.chartPoints.length >= 4
+        ? selectedStock.chartPoints
+        : [211.2, 211.8, 212.5, 212.1, 213.4, 212.9, 214.2, 215.1, 214.6, 216.5, 215.8, 213.9];
+
+    const currentNumeric = getNumericPrice(selectedStock);
+    const livePrice =
+      stockPrices[selectedStock.symbol] !== undefined && stockPrices[selectedStock.symbol] > 0
+        ? stockPrices[selectedStock.symbol]
+        : currentNumeric;
+
+    const changeStr = selectedStock.change24h || "+1.5%";
+    const changeRate = parseFloat(changeStr.replace(/[^0-9.-]/g, "")) || 1.5;
+    const isOverallBullish = !changeStr.startsWith("-");
+
+    interface TimeframeConfig {
+      timestamps: string[];
+      totalBars: number;
+      volatility: number;
+    }
+
+    let config: TimeframeConfig;
+
+    if (timeframe === "1W") {
+      config = {
+        timestamps: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Today (Live)"],
+        totalBars: 7,
+        volatility: 0.016,
+      };
+    } else if (timeframe === "1M") {
+      config = {
+        timestamps: [
+          "Aug 24", "Aug 26", "Aug 28", "Aug 30",
+          "Sep 02", "Sep 05", "Sep 08", "Sep 11",
+          "Sep 13", "Sep 15", "Sep 17", "Sep 19",
+          "Sep 21", "Live",
+        ],
+        totalBars: 14,
+        volatility: 0.024,
+      };
+    } else if (timeframe === "1Y") {
+      config = {
+        timestamps: [
+          "Oct '25", "Nov '25", "Dec '25", "Jan '26",
+          "Feb '26", "Mar '26", "Apr '26", "May '26",
+          "Jun '26", "Jul '26", "Aug '26", "Sep '26 (Live)",
+        ],
+        totalBars: 12,
+        volatility: 0.045,
+      };
+    } else if (timeframe === "ALL") {
+      config = {
+        timestamps: [
+          "Q2 '23", "Q3 '23", "Q4 '23", "Q1 '24",
+          "Q2 '24", "Q3 '24", "Q4 '24", "Q1 '25",
+          "Q2 '25", "Q3 '25", "Q4 '25", "Q1 '26",
+          "Q2 '26", "Current",
+        ],
+        totalBars: 14,
+        volatility: 0.06,
+      };
+    } else {
+      // 1D (Intraday)
+      config = {
+        timestamps: [
+          "09:30", "09:55", "10:20", "10:45",
+          "11:10", "11:35", "12:00", "12:25",
+          "12:50", "01:15", "01:40", "02:05",
+          "02:30", "02:55", "03:20", "03:45",
+        ],
+        totalBars: 16,
+        volatility: 0.006,
+      };
+    }
+
+    const { timestamps, totalBars, volatility } = config;
+    const bars: CandleBar[] = [];
+
+    const trendMultiplier = (isOverallBullish ? 1 : -1) * (changeRate / 100);
+    const startPrice = livePrice / (1 + trendMultiplier);
+
+    let currentOpen = startPrice;
+
+    for (let i = 0; i < totalBars; i++) {
+      const isLast = i === totalBars - 1;
+      const progress = i / (totalBars - 1 || 1);
+
+      // Deterministic noise seeded by stock symbol, bar index, and timeframe
+      const seed = Math.sin(
+        (i + 1) * 17 +
+          selectedStock.symbol.charCodeAt(0) * 11 +
+          timeframe.charCodeAt(0) * 5
+      );
+      const randomNoise = seed * volatility * livePrice;
+
+      const open = Number(currentOpen.toFixed(2));
+      let close: number;
+
+      if (isLast) {
+        // Real-time live candle actively tracking OKX X Layer spot tick
+        close = Number(livePrice.toFixed(2));
+      } else {
+        const intermediate = startPrice + (livePrice - startPrice) * progress;
+        close = Number((intermediate + randomNoise).toFixed(2));
+      }
+
+      const spread = Math.max(0.2, Math.abs(seed) * volatility * livePrice * 1.35 + 0.15);
+      const high = Number((Math.max(open, close) + spread).toFixed(2));
+      const low = Number(Math.max(0.05, Math.min(open, close) - spread).toFixed(2));
+
+      bars.push({
+        time: timestamps[i] || `Bar ${i + 1}`,
+        open,
+        high,
+        low,
+        close,
+        isBullish: close >= open,
+        isLive: isLast,
+      });
+
+      currentOpen = close;
+    }
+
+    return bars;
+  }, [selectedStock, stockPrices, timeframe]);
+
+  // Chart coordinate calculations (Line mode synced with candles)
+  const points = useMemo(() => {
+    return candleBars.map((b) => b.close);
+  }, [candleBars]);
+
   const minVal = Math.min(...points);
   const maxVal = Math.max(...points);
   const range = maxVal - minVal || 1;
@@ -904,7 +1063,7 @@ export default function AppDashboardPage() {
   const chartHeight = height - padY * 2;
 
   const coords = points.map((p, idx) => {
-    const x = (idx / (points.length - 1)) * width;
+    const x = (idx / (points.length - 1 || 1)) * width;
     const y = height - padY - ((p - minVal) / range) * chartHeight;
     return { x, y, val: p };
   });
@@ -924,75 +1083,9 @@ export default function AppDashboardPage() {
   }
   const areaD = `${pathD} L ${width} ${height} L 0 ${height} Z`;
 
-  // Candlestick OHLC calculation
-  interface CandleBar {
-    time: string;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    isBullish: boolean;
-  }
-
-  const candleBars: CandleBar[] = useMemo(() => {
-    const rawPoints = selectedStock.chartPoints && selectedStock.chartPoints.length >= 4
-      ? selectedStock.chartPoints
-      : [211.2, 211.8, 212.5, 212.1, 213.4, 212.9, 214.2, 215.1, 214.6, 216.5, 215.8, 213.9];
-
-    const livePrice = stockPrices[selectedStock.symbol];
-    const baseMult = livePrice && rawPoints[rawPoints.length - 1] > 0
-      ? livePrice / rawPoints[rawPoints.length - 1]
-      : 1;
-
-    const timestamps = [
-      "09:30", "09:55", "10:20", "10:45",
-      "11:10", "11:35", "12:00", "12:25",
-      "12:50", "01:15", "01:40", "02:05",
-      "02:30", "02:55", "03:20", "03:45",
-    ];
-
-    const bars: CandleBar[] = [];
-    const totalBars = timestamps.length;
-
-    for (let i = 0; i < totalBars; i++) {
-      const pointPos = (i / (totalBars - 1)) * (rawPoints.length - 1);
-      const lowIdx = Math.floor(pointPos);
-      const highIdx = Math.min(rawPoints.length - 1, Math.ceil(pointPos));
-      const frac = pointPos - lowIdx;
-      const baseVal = (rawPoints[lowIdx] * (1 - frac) + rawPoints[highIdx] * frac) * baseMult;
-
-      const seed = ((i + 1) * 37 + selectedStock.symbol.charCodeAt(0) * 17) % 100;
-      const variance = (seed / 100 - 0.48) * (baseVal * 0.008);
-      const spread = Math.max(0.2, (seed % 15) * 0.001 * baseVal + 0.15);
-
-      const open = Number((baseVal - variance).toFixed(2));
-      const close = Number((baseVal + variance).toFixed(2));
-      const high = Number((Math.max(open, close) + spread).toFixed(2));
-      const low = Number((Math.min(open, close) - spread).toFixed(2));
-
-      bars.push({
-        time: timestamps[i],
-        open,
-        high,
-        low,
-        close,
-        isBullish: close >= open,
-      });
-    }
-    return bars;
-  }, [selectedStock, stockPrices]);
-
   const candleMin = Math.min(...candleBars.map((b) => b.low));
   const candleMax = Math.max(...candleBars.map((b) => b.high));
   const candleRange = candleMax - candleMin || 1;
-
-  const getFormattedPrice = (stock: StockItem): string => {
-    const live = stockPrices[stock.symbol];
-    if (typeof live === "number" && live > 0) {
-      return `$${live.toFixed(2)}`;
-    }
-    return stock.price;
-  };
 
   const currentDisplayPrice =
     chartType === "candle" && candleHoverIndex !== null && candleBars[candleHoverIndex]
@@ -1000,16 +1093,6 @@ export default function AppDashboardPage() {
       : chartHoverIndex !== null && coords[chartHoverIndex]
       ? `$${coords[chartHoverIndex].val.toFixed(2)}`
       : getFormattedPrice(selectedStock);
-
-  // Numerical price helper for price comparison & units calculator (using live ticks if available)
-  const getNumericPrice = (stock: StockItem): number => {
-    const live = stockPrices[stock.symbol];
-    if (typeof live === "number" && live > 0) {
-      return live;
-    }
-    const cleaned = parseFloat(stock.price.replace(/[^0-9.]/g, ""));
-    return isNaN(cleaned) || cleaned <= 0 ? 1.0 : cleaned;
-  };
 
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-[#0B0E14] text-ink-900 dark:text-zinc-100 transition-colors">
@@ -1398,12 +1481,21 @@ export default function AppDashboardPage() {
                           candleHoverIndex !== null && candleBars[candleHoverIndex]
                             ? candleBars[candleHoverIndex]
                             : candleBars[candleBars.length - 1];
-                        const barChange = ((activeBar.close - activeBar.open) / activeBar.open) * 100;
+                        const barChange = ((activeBar.close - activeBar.open) / (activeBar.open || 1)) * 100;
                         return (
                           <>
                             <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
                               <span>Time:</span>
-                              <span className="font-bold text-ink-900 dark:text-white">{activeBar.time} EST</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-bold text-ink-900 dark:text-white">
+                                  {timeframe === "1D" ? `${activeBar.time} EST` : activeBar.time}
+                                </span>
+                                {activeBar.isLive && (
+                                  <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1 py-0.2 text-[8px] font-bold text-emerald-600 dark:text-emerald-400 animate-pulse">
+                                    LIVE
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
                               <span>Open:</span>
@@ -1446,26 +1538,30 @@ export default function AppDashboardPage() {
                       }}
                       onMouseMove={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
-                        const clientX = e.clientX - rect.left;
-                        const ratio = Math.max(0, Math.min(1, clientX / rect.width));
+                        const clientX = e.clientX;
+                        const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+                        const ratio = offsetX / rect.width;
+
                         if (chartType === "candle") {
                           const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
-                          setCandleHoverIndex(idx);
+                          setCandleHoverIndex(Math.max(0, idx));
                         } else {
-                          const idx = Math.round(ratio * (points.length - 1));
+                          const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
                           setChartHoverIndex(idx);
                         }
                       }}
                       onTouchMove={(e) => {
                         if (e.touches && e.touches[0]) {
                           const rect = e.currentTarget.getBoundingClientRect();
-                          const clientX = e.touches[0].clientX - rect.left;
-                          const ratio = Math.max(0, Math.min(1, clientX / rect.width));
+                          const clientX = e.touches[0].clientX;
+                          const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+                          const ratio = offsetX / rect.width;
+
                           if (chartType === "candle") {
                             const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
-                            setCandleHoverIndex(idx);
+                            setCandleHoverIndex(Math.max(0, idx));
                           } else {
-                            const idx = Math.round(ratio * (points.length - 1));
+                            const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
                             setChartHoverIndex(idx);
                           }
                         }
@@ -1482,26 +1578,36 @@ export default function AppDashboardPage() {
                         </linearGradient>
                       </defs>
 
-                      {/* Subtle grid lines */}
-                      <line x1="0" y1={padY} x2={width} y2={padY} stroke="currentColor" className="text-ink-200/60 dark:text-zinc-800" strokeDasharray="3 3" />
-                      <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="currentColor" className="text-ink-200/60 dark:text-zinc-800" strokeDasharray="3 3" />
-                      <line x1="0" y1={height - padY} x2={width} y2={height - padY} stroke="currentColor" className="text-ink-200/60 dark:text-zinc-800" strokeDasharray="3 3" />
+                      {/* Subtle Gridlines */}
+                      <g className="stroke-ink-200/50 dark:stroke-zinc-800/80 stroke-dashed" strokeDasharray="3 3">
+                        <line x1="0" y1={padY} x2={width} y2={padY} />
+                        <line x1="0" y1={height / 2} x2={width} y2={height / 2} />
+                        <line x1="0" y1={height - padY} x2={width} y2={height - padY} />
+                      </g>
 
                       {/* LINE CHART MODE */}
                       {chartType === "line" && (
                         <>
                           <path d={areaD} fill={`url(#${chartGradId})`} />
-                          <path d={pathD} fill="none" stroke="#FF5B3E" strokeWidth="2.5" strokeLinecap="round" />
+                          <path
+                            d={pathD}
+                            fill="none"
+                            stroke="#FF5B3E"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
                           {chartHoverIndex !== null && coords[chartHoverIndex] && (
                             <g>
                               <line
                                 x1={coords[chartHoverIndex].x}
-                                y1={0}
+                                y1={padY}
                                 x2={coords[chartHoverIndex].x}
-                                y2={height}
-                                stroke="#FF5B3E"
+                                y2={height - padY}
+                                stroke="currentColor"
                                 strokeWidth="1"
                                 strokeDasharray="2 2"
+                                className="text-ink-400 dark:text-zinc-600"
                               />
                               <circle
                                 cx={coords[chartHoverIndex].x}
@@ -1522,7 +1628,7 @@ export default function AppDashboardPage() {
                           {candleBars.map((bar, idx) => {
                             const numBars = candleBars.length;
                             const barSpacing = width / numBars;
-                            const barW = Math.max(12, barSpacing * 0.62);
+                            const barW = Math.max(10, barSpacing * 0.62);
                             const cx = (idx + 0.5) * barSpacing;
                             const wickY1 = height - padY - ((bar.high - candleMin) / candleRange) * chartHeight;
                             const wickY2 = height - padY - ((bar.low - candleMin) / candleRange) * chartHeight;
@@ -1565,6 +1671,27 @@ export default function AppDashboardPage() {
                                   stroke={candleColor}
                                   strokeWidth="1"
                                 />
+                                {/* Live candle real-time pulse indicator on OKX X Layer */}
+                                {bar.isLive && (
+                                  <g>
+                                    <circle
+                                      cx={cx}
+                                      cy={closeY}
+                                      r="6"
+                                      fill={candleColor}
+                                      opacity="0.35"
+                                      className="animate-ping"
+                                    />
+                                    <circle
+                                      cx={cx}
+                                      cy={closeY}
+                                      r="3"
+                                      fill="#FFFFFF"
+                                      stroke={candleColor}
+                                      strokeWidth="1.5"
+                                    />
+                                  </g>
+                                )}
                               </g>
                             );
                           })}
@@ -1573,9 +1700,36 @@ export default function AppDashboardPage() {
                     </svg>
 
                     <div className="mt-2 flex justify-between font-mono text-[10px] text-ink-400 dark:text-zinc-500">
-                      <span>09:30 AM EST</span>
-                      <span>12:00 PM EST</span>
-                      <span>04:00 PM EST</span>
+                      <span>
+                        {timeframe === "1D"
+                          ? "09:30 AM EST"
+                          : timeframe === "1W"
+                          ? "7 Days Ago"
+                          : timeframe === "1M"
+                          ? "30 Days Ago"
+                          : timeframe === "1Y"
+                          ? "12 Months Ago"
+                          : "Start"}
+                      </span>
+                      <span>
+                        {timeframe === "1D"
+                          ? "12:30 PM EST"
+                          : timeframe === "1W"
+                          ? "Midweek"
+                          : timeframe === "1M"
+                          ? "15 Days Ago"
+                          : timeframe === "1Y"
+                          ? "6 Months Ago"
+                          : "Midpoint"}
+                      </span>
+                      <span className="flex items-center gap-1 font-semibold text-accent-600 dark:text-accent-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>
+                          {timeframe === "1D"
+                            ? "04:00 PM (Live)"
+                            : "Today (Live X Layer)"}
+                        </span>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1839,255 +1993,125 @@ export default function AppDashboardPage() {
                   </form>
                 </div>
 
-                {/* 1-Sentence Natural Language Investment Mandate Console */}
+                {/* Integrated Price Comparison & Units Calculator */}
                 <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
-                  <div className="flex items-center justify-between pb-3">
-                    <div>
-                      <h3 className="font-display text-sm font-bold text-ink-900 dark:text-white">
-                        1-Sentence Investment Mandate Console
-                      </h3>
-                      <p className="text-xs text-ink-500 dark:text-zinc-400">
-                        Enter any trade, price comparison, or mandate in natural language. Powered by OKX Onchain OS.
-                      </p>
-                    </div>
-                    <span className="rounded bg-surface-100 dark:bg-[#161B26] border border-ink-200 dark:border-zinc-700 px-2 py-0.5 font-mono text-[10px] text-ink-600 dark:text-zinc-300">
-                      A2A Mandate Engine
-                    </span>
-                  </div>
-
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSendPrompt();
-                    }}
-                    className="relative"
-                  >
-                    <textarea
-                      rows={2}
-                      value={promptText}
-                      onChange={(e) => setPromptText(e.target.value)}
-                      placeholder={`e.g. "Buy 250 USDG of ${selectedStock.symbol}", "Compare ${selectedStock.symbol} vs MSFTx", or "60% mag7, 20% USDG"`}
-                      className="w-full resize-none rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-3.5 text-sm text-ink-900 dark:text-white outline-none focus:border-accent-500 focus:bg-white dark:focus:bg-[#11141D] focus:ring-1 focus:ring-accent-500"
-                    />
-
-                    <div className="mt-2.5 flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={isSubmitting || !promptText.trim()}
-                        className="rounded-xl bg-accent-500 px-5 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-accent-600 disabled:opacity-50 cursor-pointer"
-                      >
-                        {isSubmitting ? "Routing on X Layer..." : "Submit Mandate"}
-                      </button>
-                    </div>
-                  </form>
-
-                  {/* Loading State Feedback */}
-                  {isSubmitting && !mandateResult && (
-                    <div className="mt-4 flex items-center gap-3 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-4 text-xs">
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent-500 border-t-transparent shrink-0" />
-                      <div>
-                        <p className="font-semibold text-ink-900 dark:text-white">Routing mandate through OKX DEX on X Layer...</p>
-                        <p className="text-[11px] text-ink-500 dark:text-zinc-400">Checking price impact, spending limits, and non-custodial 2FA authorization.</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Result & Execution Feedback */}
-                  {mandateResult && (
-                    <div
-                      className={cn(
-                        "mt-4 rounded-xl border p-4 text-xs leading-relaxed",
-                        mandateResult.type === "error"
-                          ? "border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-red-900 dark:text-red-200"
-                          : mandateResult.statusTone === "confirmed"
-                          ? "border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-200"
-                          : "border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] text-ink-800 dark:text-zinc-200"
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-1">
-                          <p className="font-semibold">{mandateResult.reply}</p>
-                          {mandateResult.hash && (
-                            <p className="font-mono text-[11px] text-ink-600 dark:text-zinc-400">
-                              Reference / Hash:{" "}
-                              <span className="font-bold text-ink-900 dark:text-white">
-                                {mandateResult.hash}
-                              </span>
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          {mandateResult.type === "error" && (
-                            <button
-                              type="button"
-                              onClick={() => handleSendPrompt()}
-                              className="rounded-lg bg-ink-900 dark:bg-white px-3 py-1.5 font-bold text-white dark:text-ink-950 shadow-xs hover:bg-ink-800 cursor-pointer"
-                            >
-                              Retry
-                            </button>
-                          )}
-
-                          {mandateResult.type === "mandate" && !mandateResult.statusTone && (
-                            <button
-                              type="button"
-                              onClick={() => handleSendPrompt("confirm")}
-                              className="rounded-lg bg-emerald-600 px-3 py-1.5 font-bold text-white shadow-xs hover:bg-emerald-700 cursor-pointer"
-                            >
-                              Confirm Trade
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Categorized Question & Prompt Library (Under One-Sentence Mandate) */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
-                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center pb-3">
-                    <div>
-                      <h3 className="font-display text-sm font-bold text-ink-900 dark:text-white">
-                        Interactive Prompt &amp; Question Assistant
-                      </h3>
-                      <p className="text-xs text-ink-500 dark:text-zinc-400">
-                        Click any question or trade instruction below to instantly populate and run.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-1">
-                      {(["trades", "questions", "rules"] as const).map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => setPromptAssistantCategory(cat)}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-semibold capitalize transition-all cursor-pointer",
-                            promptAssistantCategory === cat
-                              ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
-                              : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
-                          )}
-                        >
-                          {cat === "trades" && "Quick Trades"}
-                          {cat === "questions" && "Price & Units"}
-                          {cat === "rules" && "Portfolio Rules"}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {promptAssistantCategory === "trades" && (
-                      <>
-                        {[
-                          `Buy 250 USDG of ${selectedStock.symbol}`,
-                          `Buy 100 USDG of AAPLx`,
-                          `Sell 1 TSLAx`,
-                          `Exit 50% ${selectedStock.symbol} into USDG`,
-                        ].map((prompt) => (
-                          <button
-                            key={prompt}
-                            type="button"
-                            onClick={() => {
-                              setPromptText(prompt);
-                              handleSendPrompt(prompt);
-                            }}
-                            className="flex items-center justify-between rounded-xl border border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-3 text-left text-xs font-medium text-ink-800 dark:text-zinc-200 transition-colors hover:border-accent-500 hover:bg-accent-50/50 dark:hover:bg-accent-950/30 hover:text-accent-900 dark:hover:text-accent-300 cursor-pointer"
-                          >
-                            <span>{prompt}</span>
-                            <span className="font-mono text-[10px] text-accent-600 dark:text-accent-400 font-bold shrink-0">Execute ↗</span>
-                          </button>
-                        ))}
-                      </>
-                    )}
-
-                    {promptAssistantCategory === "questions" && (
-                      <>
-                        {[
-                          `How many units of ${selectedStock.symbol} for 250 USDG?`,
-                          `Compare ${selectedStock.symbol} vs MSFTx spot price`,
-                          "What is my current USDG balance and holdings?",
-                          "Show my active mandates running on X Layer",
-                        ].map((prompt) => (
-                          <button
-                            key={prompt}
-                            type="button"
-                            onClick={() => {
-                              setPromptText(prompt);
-                              handleSendPrompt(prompt);
-                            }}
-                            className="flex items-center justify-between rounded-xl border border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-3 text-left text-xs font-medium text-ink-800 dark:text-zinc-200 transition-colors hover:border-accent-500 hover:bg-accent-50/50 dark:hover:bg-accent-950/30 hover:text-accent-900 dark:hover:text-accent-300 cursor-pointer"
-                          >
-                            <span>{prompt}</span>
-                            <span className="font-mono text-[10px] text-ink-500 dark:text-zinc-400 shrink-0">Ask AI ?</span>
-                          </button>
-                        ))}
-                      </>
-                    )}
-
-                    {promptAssistantCategory === "rules" && (
-                      <>
-                        {[
-                          "60% mag7, 20% USDG, max 8% single asset",
-                          "DCA 50 USDG into NVDAx and MSFTx weekly",
-                          "Rebalance portfolio when any stock drifts by 3%",
-                          "Harvest profit if NVDAx gains exceed 15%",
-                        ].map((prompt) => (
-                          <button
-                            key={prompt}
-                            type="button"
-                            onClick={() => {
-                              setPromptText(prompt);
-                              handleSendPrompt(prompt);
-                            }}
-                            className="flex items-center justify-between rounded-xl border border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-3 text-left text-xs font-medium text-ink-800 dark:text-zinc-200 transition-colors hover:border-accent-500 hover:bg-accent-50/50 dark:hover:bg-accent-950/30 hover:text-accent-900 dark:hover:text-accent-300 cursor-pointer"
-                          >
-                            <span>{prompt}</span>
-                            <span className="font-mono text-[10px] text-ink-500 dark:text-zinc-400 shrink-0">Deploy Rule ↗</span>
-                          </button>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Price Comparison & Units Calculator (Breaks complexity into simplicity) */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
-                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 dark:border-zinc-800 pb-4 sm:flex-row sm:items-center">
+                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 dark:border-zinc-800 pb-4 md:flex-row md:items-center">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600 dark:text-accent-400">
-                          Interactive Calculator
+                          Integrated Calculator
                         </span>
                         <span className="rounded bg-emerald-100 dark:bg-emerald-950/80 dark:border dark:border-emerald-800 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800 dark:text-emerald-300">
-                          Zero Math Required
+                          Real-Time USDG Estimator
                         </span>
                       </div>
                       <h3 className="font-display text-base font-bold text-ink-900 dark:text-white sm:text-lg">
                         Price Comparison &amp; Units Calculator
                       </h3>
                       <p className="text-xs text-ink-500 dark:text-zinc-400">
-                        See exactly how many units your USDG buys across every allowlisted stock on X Layer.
+                        Input any USDG amount to calculate precise unit allocations across all 8 allowlisted stocks on OKX X Layer.
                       </p>
                     </div>
 
-                    {/* Capital Preset Selectors */}
-                    <div className="flex items-center gap-1.5">
-                      {[100, 250, 500, 1000].map((amt) => (
-                        <button
-                          key={amt}
-                          type="button"
-                          onClick={() => setCalcInvestmentUsdg(amt)}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
-                            calcInvestmentUsdg === amt
-                              ? "bg-accent-500 text-white shadow-xs"
-                              : "border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] text-ink-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-[#202736]"
-                          )}
+                    {/* Capital Preset Selectors & Custom Input */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3 font-mono text-xs font-bold text-ink-400 dark:text-zinc-500">$</span>
+                        <input
+                          id="calculator-investment-input"
+                          type="number"
+                          min={1}
+                          max={1000000}
+                          value={calcInvestmentUsdg || ""}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            setCalcInvestmentUsdg(isNaN(val) ? 0 : val);
+                          }}
+                          placeholder="250"
+                          className="w-28 sm:w-32 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] py-1.5 pl-7 pr-3 font-mono text-xs font-bold text-ink-900 dark:text-white outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
+                        />
+                        <span className="ml-1.5 font-mono text-[11px] font-bold text-ink-500 dark:text-zinc-400">USDG</span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        {[100, 250, 500, 1000, 2500].map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => setCalcInvestmentUsdg(amt)}
+                            className={cn(
+                              "rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
+                              calcInvestmentUsdg === amt
+                                ? "bg-accent-500 text-white shadow-xs"
+                                : "border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] text-ink-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-[#202736]"
+                            )}
+                          >
+                            ${amt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Selected Stock Live Breakdown Card */}
+                  <div className="mt-4 rounded-xl border border-accent-500/20 bg-accent-50/40 dark:bg-accent-950/20 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-xl shadow-xs shrink-0"
+                          style={{ backgroundColor: selectedStock.color }}
                         >
-                          ${amt}
+                          {selectedStock.logo}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm font-bold text-ink-900 dark:text-white">
+                              {selectedStock.symbol}
+                            </span>
+                            <span className="text-xs text-ink-500 dark:text-zinc-400">
+                              {selectedStock.name}
+                            </span>
+                            <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                              Live on X Layer
+                            </span>
+                          </div>
+                          <div className="mt-0.5 text-xs text-ink-600 dark:text-zinc-300">
+                            Spot Price:{" "}
+                            <span className="font-mono font-bold text-ink-900 dark:text-white">
+                              {getFormattedPrice(selectedStock)}
+                            </span>
+                            {" · "}
+                            Gas: <span className="font-semibold text-emerald-600 dark:text-emerald-400">100% Sponsored (OKX Paymaster)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <span className="block text-[10px] font-bold uppercase tracking-wider text-ink-400 dark:text-zinc-500">
+                            Estimated Units
+                          </span>
+                          <span className="font-mono text-base font-bold text-accent-600 dark:text-accent-400 sm:text-lg">
+                            {(calcInvestmentUsdg / getNumericPrice(selectedStock)).toFixed(4)} {selectedStock.symbol}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const units = calcInvestmentUsdg / getNumericPrice(selectedStock);
+                            openWeb3Signer(
+                              selectedStock.symbol,
+                              calcInvestmentUsdg,
+                              units,
+                              getNumericPrice(selectedStock)
+                            );
+                          }}
+                          className="rounded-xl bg-accent-500 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-accent-600 cursor-pointer shrink-0"
+                        >
+                          Trade {selectedStock.symbol} ↗
                         </button>
-                      ))}
+                      </div>
                     </div>
                   </div>
 
@@ -2098,7 +2122,7 @@ export default function AppDashboardPage() {
                         <tr>
                           <th className="p-3">Asset</th>
                           <th className="p-3">Spot Price</th>
-                          <th className="p-3 font-mono">${calcInvestmentUsdg} USDG Buys</th>
+                          <th className="p-3 font-mono">${calcInvestmentUsdg || 0} USDG Buys</th>
                           <th className="p-3 text-right">Instant Action</th>
                         </tr>
                       </thead>
@@ -2143,18 +2167,29 @@ export default function AppDashboardPage() {
                                 {units} units
                               </td>
                               <td className="p-3 text-right">
-                                <div className="flex items-center justify-end">
+                                <div className="flex items-center justify-end gap-1.5">
                                   <button
                                     type="button"
                                     onClick={() => {
                                       setSelectedStock(stk);
-                                      const actionText = `Buy ${calcInvestmentUsdg} USDG of ${stk.symbol}`;
-                                      setPromptText(actionText);
-                                      handleSendPrompt(actionText);
+                                      const u = calcInvestmentUsdg / priceNum;
+                                      openWeb3Signer(stk.symbol, calcInvestmentUsdg, u, priceNum);
                                     }}
                                     className="rounded-lg bg-ink-900 dark:bg-white dark:text-ink-950 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-colors hover:bg-accent-500 hover:text-white cursor-pointer"
                                   >
                                     Quick Buy
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleSendChatMessage(`Buy ${calcInvestmentUsdg} USDG of ${stk.symbol}`);
+                                      const el = document.getElementById("conversational-chat");
+                                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                                    }}
+                                    className="rounded-lg border border-ink-200 dark:border-zinc-700 px-2 py-1 text-[11px] font-semibold text-ink-600 dark:text-zinc-400 hover:bg-surface-50 dark:hover:bg-[#161B26] cursor-pointer"
+                                    title="Send trade instruction to Meirei Conversational Chat"
+                                  >
+                                    Chat
                                   </button>
                                 </div>
                               </td>
@@ -2619,32 +2654,54 @@ export default function AppDashboardPage() {
               )}
             </div>
 
-            {/* Active Mandates on Chain 196 */}
+            {/* Active stocks on this account */}
             <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
               <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-3">
                 <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500 dark:text-zinc-400">
-                  Active Mandates
+                  Active stocks on this account
                 </span>
-                <span className="rounded bg-accent-50 dark:bg-accent-950/60 border border-transparent dark:border-accent-800/40 px-2 py-0.5 text-[10px] font-bold text-accent-700 dark:text-accent-300">
-                  {profile.activeMandates.length} Running
+                <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                  {profile.holdings.filter((h) => h.symbol !== "USDG").length} Active Stocks
                 </span>
               </div>
 
               <div className="mt-3.5 space-y-2.5">
-                {profile.activeMandates.map((m) => (
-                  <div
-                    key={m.id}
-                    className="rounded-xl border border-ink-100 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-3 text-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-ink-900 dark:text-white">{m.status}</span>
-                      <span className="font-mono text-[10px] text-ink-500 dark:text-zinc-400">{m.frequency}</span>
-                    </div>
-                    <p className="mt-1 text-[11px] leading-relaxed text-ink-700 dark:text-zinc-300">
-                      {m.rule}
-                    </p>
-                  </div>
-                ))}
+                {profile.holdings
+                  .filter((h) => h.symbol !== "USDG")
+                  .map((h) => {
+                    const livePrice = stockPrices[h.symbol];
+                    const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
+                    const stockItem = STOCKS.find((s) => s.symbol === h.symbol);
+
+                    return (
+                      <div
+                        key={h.symbol}
+                        className="rounded-xl border border-ink-100 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-3 text-xs"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="h-2.5 w-2.5 rounded-full shrink-0"
+                              style={{ backgroundColor: h.color }}
+                            />
+                            <span className="font-bold text-ink-900 dark:text-white">{h.symbol}</span>
+                            <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                              Active
+                            </span>
+                          </div>
+                          <span className="font-mono font-bold text-ink-900 dark:text-white">
+                            ${currentVal.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 flex items-center justify-between text-[11px] text-ink-500 dark:text-zinc-400 font-mono">
+                          <span>Holding: {h.amount.toFixed(2)} units</span>
+                          <span>
+                            Spot: {livePrice ? `$${livePrice.toFixed(2)}` : stockItem?.price || "--"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           </div>
