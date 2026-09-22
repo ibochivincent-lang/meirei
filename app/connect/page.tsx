@@ -27,6 +27,10 @@ import {
   WalletType,
   WalletOption,
 } from "@/lib/wallet/xlayer_signer";
+import {
+  WalletConnectModal,
+  WalletConnectIcon,
+} from "@/components/wallet/wallet_connect_modal";
 
 export type SocialPlatform = "whatsapp" | "telegram" | "instagram" | "web";
 
@@ -261,10 +265,9 @@ function ConnectWalletContent() {
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Modal & Manual Link State
+  // Modal State
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const [showManualInput, setShowManualInput] = useState(false);
-  const [manualAddress, setManualAddress] = useState("");
+  const [showWalletConnectModal, setShowWalletConnectModal] = useState(false);
   const [availableWallets, setAvailableWallets] = useState<WalletOption[]>([]);
 
   const activeConfig = PLATFORM_CONFIGS[selectedChannel];
@@ -323,6 +326,12 @@ function ConnectWalletContent() {
   };
 
   const handleConnectWallet = async (type: WalletType = "okx") => {
+    if (type === "walletconnect") {
+      setShowWalletConnectModal(true);
+      setShowWalletModal(false);
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
     setInfoMessage(null);
@@ -348,7 +357,7 @@ function ConnectWalletContent() {
           );
         } else {
           throw new Error(
-            "No Web3 wallet extension found. Please install a compatible Web3 wallet or enter your address manually."
+            "No Web3 wallet extension found. Please install a compatible Web3 wallet or connect with WalletConnect."
           );
         }
       }
@@ -409,20 +418,6 @@ function ConnectWalletContent() {
     }
   };
 
-  const handleManualLink = () => {
-    const addr = manualAddress.trim().toLowerCase();
-    if (!isValidEvmAddress(addr)) {
-      setErrorMessage("Please enter a valid 42-character 0x EVM wallet address.");
-      return;
-    }
-
-    setConnectedAddress(addr);
-    setActiveWalletName("Manual Address");
-    setShowManualInput(false);
-    setShowWalletModal(false);
-    setInfoMessage(`Configured address ${formatShortAddress(addr)} for OKX X Layer.`);
-  };
-
   const handleDisconnectWallet = async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -455,7 +450,7 @@ function ConnectWalletContent() {
 
   const handleLinkToChannel = async () => {
     if (!connectedAddress) {
-      setErrorMessage("Please connect or enter a wallet address first.");
+      setErrorMessage("Please connect a wallet first.");
       return;
     }
 
@@ -787,47 +782,25 @@ function ConnectWalletContent() {
                   </button>
 
                   <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowWalletConnectModal(true)}
+                      className="py-2.5 px-3 rounded-xl bg-[#3B99FC]/10 hover:bg-[#3B99FC]/20 text-[#3B99FC] text-xs font-semibold text-center transition border border-[#3B99FC]/30 cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <WalletConnectIcon className="w-3.5 h-3.5" />
+                      <span>WalletConnect</span>
+                    </button>
                     <a
                       href={`okx://wallet/dapp/url?dappUrl=${encodeURIComponent(
                         typeof window !== "undefined"
                           ? window.location.href
                           : "https://meirei-rho.vercel.app/connect"
                       )}`}
-                      className="py-2.5 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-gray-300 text-xs font-medium text-center transition border border-white/[0.06]"
+                      className="py-2.5 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-gray-300 text-xs font-medium text-center transition border border-white/[0.06] flex items-center justify-center gap-1.5"
                     >
-                      Open in OKX App
+                      <span>Open in OKX App</span>
                     </a>
-                    <button
-                      type="button"
-                      onClick={() => setShowManualInput(!showManualInput)}
-                      className="py-2.5 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-gray-300 text-xs font-medium text-center transition border border-white/[0.06] cursor-pointer"
-                    >
-                      {showManualInput ? "Hide Manual" : "Paste Address"}
-                    </button>
                   </div>
-
-                  {/* Manual Address Input Tray */}
-                  {showManualInput && (
-                    <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.08] space-y-2.5">
-                      <div className="text-[11px] text-gray-400">
-                        Paste any public 0x EVM wallet address on OKX X Layer:
-                      </div>
-                      <input
-                        type="text"
-                        value={manualAddress}
-                        onChange={(e) => setManualAddress(e.target.value)}
-                        placeholder="0x7f17d6224e7d48606598732c3f511412b5c1e922"
-                        className="w-full py-2 px-3 rounded-lg bg-black/60 border border-white/[0.1] text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-[#FF6B4E]"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleManualLink}
-                        className="w-full py-2 px-3 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-medium transition cursor-pointer"
-                      >
-                        Set Address
-                      </button>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="space-y-2.5 pt-2">
@@ -906,6 +879,8 @@ function ConnectWalletContent() {
                     className={`w-full p-3.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
                       wallet.id === "okx"
                         ? "bg-[#FF6B4E]/10 border-[#FF6B4E]/30 hover:bg-[#FF6B4E]/20"
+                        : wallet.id === "walletconnect"
+                        ? "bg-[#3B99FC]/10 border-[#3B99FC]/30 hover:bg-[#3B99FC]/20"
                         : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.06]"
                     }`}
                   >
@@ -914,10 +889,16 @@ function ConnectWalletContent() {
                         className={`h-9 w-9 rounded-lg flex items-center justify-center font-bold text-xs ${
                           wallet.id === "okx"
                             ? "bg-[#FF6B4E] text-white"
+                            : wallet.id === "walletconnect"
+                            ? "bg-[#3B99FC] text-white"
                             : "bg-white/[0.08] text-gray-200"
                         }`}
                       >
-                        {wallet.icon}
+                        {wallet.id === "walletconnect" ? (
+                          <WalletConnectIcon className="w-5 h-5 text-white" />
+                        ) : (
+                          wallet.icon
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
@@ -925,6 +906,11 @@ function ConnectWalletContent() {
                           {wallet.id === "okx" && (
                             <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-[#FF6B4E]/20 text-[#FF6B4E]">
                               RECOMMENDED
+                            </span>
+                          )}
+                          {wallet.id === "walletconnect" && (
+                            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-[#3B99FC]/20 text-[#3B99FC]">
+                              UNIVERSAL
                             </span>
                           )}
                         </div>
@@ -962,6 +948,17 @@ function ConnectWalletContent() {
             </div>
           </div>
         )}
+
+        {/* Dedicated WalletConnect Modal */}
+        <WalletConnectModal
+          isOpen={showWalletConnectModal}
+          onClose={() => setShowWalletConnectModal(false)}
+          onConnect={(address, walletName) => {
+            setConnectedAddress(address);
+            setActiveWalletName(walletName);
+            setInfoMessage(`Connected ${walletName} (${formatShortAddress(address)}) on OKX X Layer.`);
+          }}
+        />
 
         {/* Bottom Helper Footer */}
         <div className="mt-6 text-center text-xs text-gray-500">

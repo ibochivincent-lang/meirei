@@ -23,6 +23,10 @@ import {
   WalletOption,
 } from "@/lib/wallet/xlayer_signer";
 import { SITE } from "@/lib/data/site";
+import {
+  WalletConnectModal,
+  WalletConnectIcon,
+} from "@/components/wallet/wallet_connect_modal";
 
 type Platform = "whatsapp" | "telegram" | "instagram" | "web" | "okx_wallet";
 type Mode = "simple" | "advanced";
@@ -111,6 +115,8 @@ interface ChatMessage {
   timestamp: string;
   reference?: string;
   type?: string;
+  status?: "preview" | "confirmed" | "failed" | "frozen" | "unfrozen";
+  explorerUrl?: string;
 }
 
 interface UserProfile {
@@ -213,9 +219,10 @@ export default function AppDashboardPage() {
   const [connectSuccess, setConnectSuccess] = useState<boolean>(false);
   const [connectInfoMsg, setConnectInfoMsg] = useState<string | null>(null);
   const [connectErrorMsg, setConnectErrorMsg] = useState<string | null>(null);
-  const [showConnectManualInput, setShowConnectManualInput] = useState<boolean>(false);
-  const [connectManualAddress, setConnectManualAddress] = useState<string>("");
+  const [showWalletConnectModal, setShowWalletConnectModal] = useState<boolean>(false);
   const [availableConnectWallets, setAvailableConnectWallets] = useState<WalletOption[]>([]);
+  const [isListeningVoice, setIsListeningVoice] = useState<boolean>(false);
+  const [isAccountFrozen, setIsAccountFrozen] = useState<boolean>(false);
 
   // Conversational Chat Console State (Just like Telegram and WhatsApp)
   const INITIAL_CHAT_MESSAGE: ChatMessage = {
@@ -228,6 +235,55 @@ export default function AppDashboardPage() {
   const [chatInput, setChatInput] = useState<string>("");
   const [isChatSending, setIsChatSending] = useState<boolean>(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
+
+  // Voice dictation microphone handler for Web Platform
+  const handleVoiceDictation = () => {
+    if (typeof window === "undefined") return;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Voice speech recognition is not supported in this browser. Please type your message.");
+      return;
+    }
+
+    if (isListeningVoice) {
+      setIsListeningVoice(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+
+      recognition.onstart = () => {
+        setIsListeningVoice(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const speechText = event.results?.[0]?.[0]?.transcript;
+        if (speechText) {
+          setChatInput(speechText);
+          handleSendChatMessage(speechText);
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListeningVoice(false);
+      };
+
+      recognition.onend = () => {
+        setIsListeningVoice(false);
+      };
+
+      recognition.start();
+    } catch (e) {
+      console.warn("[Voice Dictation] Speech recognition error:", e);
+      setIsListeningVoice(false);
+    }
+  };
 
   // Theme state: light / dark mode
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -454,6 +510,10 @@ export default function AppDashboardPage() {
 
   // Connect Web3 wallet directly on OKX X Layer
   const handleConnectWalletType = async (type: WalletType = "okx") => {
+    if (type === "walletconnect") {
+      setShowWalletConnectModal(true);
+      return;
+    }
     setIsWalletConnecting(true);
     setConnectErrorMsg(null);
     setConnectInfoMsg(null);
@@ -521,7 +581,7 @@ export default function AppDashboardPage() {
   // Confirm channel linkage to isolated database record
   const handleConfirmChannelLink = async () => {
     if (!connectAddress) {
-      setConnectErrorMsg("Please connect or paste a wallet address first.");
+      setConnectErrorMsg("Please connect your Web3 wallet or use WalletConnect first.");
       return;
     }
     const effectiveHandle = connectHandle.trim() || "+234 902 827 9382";
@@ -642,6 +702,12 @@ export default function AppDashboardPage() {
         data.detail ||
         "Message received and processed on X Layer.";
 
+      if (data.type === "freeze" || (data.status && typeof data.status === "string" && data.status.toLowerCase().includes("frozen"))) {
+        setIsAccountFrozen(true);
+      } else if (data.type === "unfreeze" || (data.status && typeof data.status === "string" && data.status.toLowerCase().includes("active"))) {
+        setIsAccountFrozen(false);
+      }
+
       const botMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
@@ -649,6 +715,10 @@ export default function AppDashboardPage() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         reference: data.receipt?.reference || data.delivery?.txs?.[0]?.hash || undefined,
         type: data.type,
+        status: data.status,
+        explorerUrl: data.delivery?.txs?.[0]?.hash
+          ? `https://www.oklink.com/xlayer/tx/${data.delivery.txs[0].hash}`
+          : undefined,
       };
 
       setChatMessages((prev) => [...prev, botMsg]);
@@ -1558,6 +1628,27 @@ export default function AppDashboardPage() {
                     </div>
                   </div>
 
+                  {/* Security Freeze Alert Banner */}
+                  {isAccountFrozen && (
+                    <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-center justify-between gap-2">
+                      <div>
+                        <span className="font-bold uppercase tracking-wider block text-[10px]">
+                          Account Security Hold Active
+                        </span>
+                        <span>
+                          Execution is paused. Send &apos;/unfreeze [OTP]&apos; or click below to restore.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleSendChatMessage("/unfreeze")}
+                        className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                      >
+                        Unfreeze
+                      </button>
+                    </div>
+                  )}
+
                   {/* Chat Messages Log */}
                   <div className="mt-3.5 max-h-[340px] min-h-[220px] overflow-y-auto space-y-3 pr-1">
                     {chatMessages.map((msg) => (
@@ -1589,6 +1680,65 @@ export default function AppDashboardPage() {
                                 Reference: {msg.reference}
                               </div>
                             )}
+
+                            {/* Bot Interactive Action Buttons */}
+                            {msg.sender === "bot" && (
+                              <div className="mt-2.5 pt-2 border-t border-ink-200/50 dark:border-zinc-800 flex flex-wrap items-center gap-1.5">
+                                {(msg.type === "execution_prompt" ||
+                                  msg.type === "rebalance" ||
+                                  msg.text.includes("Confirm Order")) && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSendChatMessage("CONFIRM")}
+                                      disabled={isChatSending}
+                                      className="rounded-md bg-accent-500 hover:bg-accent-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs transition-colors cursor-pointer"
+                                    >
+                                      Confirm Order
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSendChatMessage("CANCEL")}
+                                      disabled={isChatSending}
+                                      className="rounded-md border border-ink-200 dark:border-zinc-700 px-2.5 py-1 text-[10px] font-semibold text-ink-600 dark:text-zinc-400 hover:bg-surface-50 dark:hover:bg-[#161B26] transition-colors cursor-pointer"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </>
+                                )}
+
+                                {msg.explorerUrl ? (
+                                  <a
+                                    href={msg.explorerUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-md border border-accent-500/30 bg-accent-500/10 px-2.5 py-1 text-[10px] font-semibold text-accent-600 dark:text-accent-400 hover:underline transition-colors"
+                                  >
+                                    View on OKLink
+                                  </a>
+                                ) : msg.reference && msg.reference.startsWith("0x") ? (
+                                  <a
+                                    href={`https://www.oklink.com/xlayer/tx/${msg.reference}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-md border border-accent-500/30 bg-accent-500/10 px-2.5 py-1 text-[10px] font-semibold text-accent-600 dark:text-accent-400 hover:underline transition-colors"
+                                  >
+                                    View on OKLink
+                                  </a>
+                                ) : null}
+
+                                {msg.type === "freeze" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendChatMessage("/unfreeze")}
+                                    disabled={isChatSending}
+                                    className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                                  >
+                                    Request OTP to Unfreeze
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <span className="mt-1 font-mono text-[9px] text-ink-400 dark:text-zinc-500 px-1">
@@ -1614,17 +1764,20 @@ export default function AppDashboardPage() {
                     <div ref={chatBottomRef} />
                   </div>
 
-                  {/* Quick Suggestion Chips */}
+                  {/* Quick Suggestion Chips matching Telegram and WhatsApp commands */}
                   <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
                     <span className="text-[10px] uppercase font-bold text-ink-400 dark:text-zinc-500 tracking-wider shrink-0 mr-1">
-                      Try:
+                      Quick:
                     </span>
                     {[
-                      "stocks",
-                      "balance",
-                      `Buy 100 USDG of ${selectedStock.symbol}`,
+                      "/stocks",
+                      "/balance",
+                      `Buy 250 USDG of ${selectedStock.symbol}`,
                       `Compare ${selectedStock.symbol} vs MSFTx`,
-                      "help",
+                      `Calculate $250 in ${selectedStock.symbol}`,
+                      "/deposit",
+                      "/freeze",
+                      "/help",
                     ].map((chip) => (
                       <button
                         key={chip}
@@ -1651,10 +1804,30 @@ export default function AppDashboardPage() {
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      placeholder="Message Meirei... (e.g. 'stocks', 'balance', 'Buy 100 USDG NVDAx')"
+                      placeholder="Message Meirei... (e.g. '/stocks', '/balance', 'Buy 250 USDG NVDAx', '/help')"
                       disabled={isChatSending}
                       className="flex-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-4 py-2.5 text-xs text-ink-900 dark:text-white outline-none focus:border-accent-500 focus:bg-white dark:focus:bg-[#11141D] transition-colors"
                     />
+
+                    {/* Voice Dictation Microphone Button */}
+                    <button
+                      type="button"
+                      onClick={handleVoiceDictation}
+                      className={cn(
+                        "flex h-9 w-9 items-center justify-center rounded-xl border transition-all cursor-pointer shrink-0",
+                        isListeningVoice
+                          ? "bg-red-500 text-white border-red-600 animate-pulse"
+                          : "border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] text-ink-600 dark:text-zinc-300 hover:text-accent-500 hover:border-accent-500"
+                      )}
+                      title={isListeningVoice ? "Listening... Click to stop" : "Voice input (dictate message)"}
+                    >
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" x2="12" y1="19" y2="22" />
+                      </svg>
+                    </button>
+
                     <button
                       type="submit"
                       disabled={isChatSending || !chatInput.trim()}
@@ -2777,48 +2950,21 @@ export default function AppDashboardPage() {
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
-                            onClick={() => handleConnectWalletType("injected")}
-                            disabled={isWalletConnecting}
-                            className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-400 hover:text-white text-[11px] cursor-pointer"
+                            onClick={() => setShowWalletConnectModal(true)}
+                            className="p-2.5 rounded-xl border border-[#3B99FC]/30 bg-[#3B99FC]/10 hover:bg-[#3B99FC]/20 text-white font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                           >
-                            Browser Injected
+                            <WalletConnectIcon className="w-4 h-4 text-[#3B99FC]" />
+                            <span>WalletConnect</span>
                           </button>
                           <button
                             type="button"
-                            onClick={() => setShowConnectManualInput(!showConnectManualInput)}
-                            className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-400 hover:text-white text-[11px] cursor-pointer"
+                            onClick={() => handleConnectWalletType("injected")}
+                            disabled={isWalletConnecting}
+                            className="p-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                           >
-                            {showConnectManualInput ? "Hide Manual" : "Paste 0x Address"}
+                            Browser Injected
                           </button>
                         </div>
-
-                        {showConnectManualInput && (
-                          <div className="p-3 rounded-xl border border-white/[0.08] bg-black/50 space-y-2">
-                            <input
-                              type="text"
-                              value={connectManualAddress}
-                              onChange={(e) => setConnectManualAddress(e.target.value)}
-                              placeholder="0x7f17d6224e7d48606598732c3f511412b5c1e922"
-                              className="w-full p-2 text-xs font-mono rounded-lg bg-black border border-white/[0.1] text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E]"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (!isValidEvmAddress(connectManualAddress.trim())) {
-                                  setConnectErrorMsg("Please enter a valid 42-character 0x EVM address.");
-                                  return;
-                                }
-                                setConnectAddress(connectManualAddress.trim().toLowerCase());
-                                setConnectWalletName("Manual Address");
-                                setShowConnectManualInput(false);
-                                setConnectInfoMsg(`Configured address ${formatShortAddress(connectManualAddress.trim())}`);
-                              }}
-                              className="w-full py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-medium cursor-pointer"
-                            >
-                              Set Manual Address
-                            </button>
-                          </div>
-                        )}
                       </div>
                     ) : (
                       <div className="flex gap-2">
@@ -2983,6 +3129,18 @@ export default function AppDashboardPage() {
               statusTone: "confirmed",
             });
           }
+        }}
+      />
+
+      {/* Universal WalletConnect Bridge Modal */}
+      <WalletConnectModal
+        isOpen={showWalletConnectModal}
+        onClose={() => setShowWalletConnectModal(false)}
+        onConnect={(address, walletName) => {
+          setConnectAddress(address);
+          setConnectWalletName(walletName);
+          setConnectInfoMsg(`Connected ${walletName} (${formatShortAddress(address)}) on OKX X Layer.`);
+          setShowWalletConnectModal(false);
         }}
       />
     </div>

@@ -42,7 +42,7 @@ export interface SigningResult {
   error?: string;
 }
 
-export type WalletType = "okx" | "metamask" | "coinbase" | "trust" | "injected";
+export type WalletType = "okx" | "metamask" | "walletconnect" | "coinbase" | "trust" | "injected";
 
 export interface WalletOption {
   id: WalletType;
@@ -78,6 +78,13 @@ export function getSpecificProvider(type: WalletType = "injected"): any {
       if (mm) return mm;
     }
     if (win.ethereum && !win.okxwallet) return win.ethereum;
+    return null;
+  }
+
+  if (type === "walletconnect") {
+    // If running inside a wallet's in-app Web3 browser (e.g. OKX Mobile, MetaMask Mobile)
+    if (win.okxwallet) return win.okxwallet;
+    if (win.ethereum) return win.ethereum;
     return null;
   }
 
@@ -133,6 +140,15 @@ export function getAvailableWallets(): WalletOption[] {
       isInstalled: hasMetaMask,
       installUrl: "https://metamask.io/download/",
       icon: "MM",
+    },
+    {
+      id: "walletconnect",
+      name: "WalletConnect",
+      description: "Universal mobile QR code bridge & 400+ wallets",
+      isInstalled: true,
+      installUrl: "https://walletconnect.com/",
+      deepLink: "wc:",
+      icon: "WC",
     },
     {
       id: "coinbase",
@@ -253,24 +269,43 @@ export async function connectInjectedWallet(): Promise<{
 /**
  * Switches connected wallet to OKX X Layer (Chain ID 196) or registers the network.
  */
-export async function ensureXLayerNetwork(): Promise<void> {
-  const provider = getInjectedProvider();
+export async function ensureXLayerNetwork(providerArg?: any): Promise<void> {
+  const provider = providerArg || getInjectedProvider();
   if (!provider) return;
 
   try {
+    // Check if already on X Layer
+    try {
+      const rawChainId: string = await provider.request({ method: "eth_chainId" });
+      if (parseInt(rawChainId, 16) === XLAYER_CHAIN_ID_DECIMAL) {
+        return;
+      }
+    } catch {}
+
     await provider.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: XLAYER_CHAIN_ID_HEX }],
     });
   } catch (switchError: any) {
-    // Error code 4902: Unrecognized chain, needs to be added
-    if (switchError?.code === 4902 || switchError?.message?.includes("Unrecognized")) {
-      await provider.request({
-        method: "wallet_addEthereumChain",
-        params: [XLAYER_NETWORK_PARAMS],
-      });
+    // Error code 4902 or unrecognized chain: register X Layer
+    if (
+      switchError?.code === 4902 ||
+      switchError?.data?.originalError?.code === 4902 ||
+      switchError?.message?.includes("Unrecognized") ||
+      switchError?.message?.includes("not added")
+    ) {
+      try {
+        await provider.request({
+          method: "wallet_addEthereumChain",
+          params: [XLAYER_NETWORK_PARAMS],
+        });
+      } catch (addErr) {
+        console.warn("[XLayer] Add chain notice:", addErr);
+      }
+    } else if (switchError?.code === 4001) {
+      console.warn("[XLayer] User declined chain switch to X Layer.");
     } else {
-      throw switchError;
+      console.warn("[XLayer] Chain switch notice:", switchError?.message || switchError);
     }
   }
 }
