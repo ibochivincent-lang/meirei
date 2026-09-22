@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveChannelUser, unlinkChannelWallet } from "@/lib/auth/user_identity";
+import { resolveChannelUser, linkChannelWallet, unlinkChannelWallet, isSandboxWallet } from "@/lib/auth/user_identity";
 import { fetchPrice, fetchBalances, fetchAllStockPrices } from "@/src/onchainos";
 import { resolveSymbol, ALLOWLIST } from "@/src/allowlist";
 import { handleMandate } from "@/src/agent/handler";
@@ -9,6 +9,7 @@ import { freezeAccount, unfreezeAccount } from "@/lib/users/freeze";
 import { generateOtpChallenge, verifyOtpChallenge } from "@/lib/auth/otp";
 import { sendTelegramMessage, downloadTelegramAudio } from "@/lib/telegram/client";
 import { transcribeAudioBuffer } from "@/lib/voice/transcribe";
+import { fetchLiveXLayerBalances, formatShortAddress, isValidEvmAddress } from "@/lib/wallet/xlayer";
 
 export const dynamic = "force-dynamic";
 
@@ -248,6 +249,13 @@ export async function POST(req: NextRequest) {
       lower === "balance" ||
       lower === "portfolio";
 
+    const evmAddressMatch = rawText.match(/\b(0x[a-fA-F0-9]{40})\b/i);
+
+    const isLeaveSandboxIntent =
+      /\b(leave\s+sandbox|exit\s+sandbox|leave\s+the\s+sandbox|exit\s+the\s+sandbox|real\s+wallet|work\s+with\s+real\s+wallet|real\s+funds|switch\s+to\s+real|use\s+real\s+wallet|how\s+to\s+fund|fund\s+wallet|deposit\s+funds|fund\s+my\s+wallet|how\s+to\s+deposit|deposit)\b/i.test(
+        rawText
+      );
+
     const isConnectIntent =
       (/\b(connect|link|pair)\b/i.test(rawText) ||
         lower === "/connect" ||
@@ -441,6 +449,103 @@ export async function POST(req: NextRequest) {
         reply += `Format: \`/unfreeze 123456\``;
         return await replyWith(reply);
       }
+    }
+
+    // 2b. Direct EVM Address Linkage ("0x...", "/connect 0x...", "link 0x...")
+    if (evmAddressMatch) {
+      const realWallet = evmAddressMatch[1].toLowerCase();
+      await linkChannelWallet({
+        channel: "telegram",
+        handle: telegramHandle,
+        walletAddress: realWallet,
+      });
+
+      const snapshot = await fetchLiveXLayerBalances(realWallet);
+      const shortReal = formatShortAddress(realWallet);
+      const explorerLink = `https://www.oklink.com/xlayer/address/${realWallet}`;
+
+      let reply = `*REAL WALLET ACTIVATED | LEAVING SANDBOX*\n\n`;
+      reply += `Your Web3 wallet has been linked to this Telegram account.\n`;
+      reply += `You have exited the sandbox and are now active on *OKX X Layer Mainnet (Chain ID 196)*.\n\n`;
+      reply += `*Connected Wallet*: \`${shortReal}\`\n`;
+      reply += `*Address*: \`${realWallet}\`\n`;
+      reply += `*Explorer*: ${explorerLink}\n\n`;
+
+      reply += `*Live On-Chain Balances*:\n`;
+      reply += `• *Native Gas (OKB)*: \`${snapshot.okbBalance.toFixed(4)} OKB\`\n`;
+      reply += `• *Settlement Cash (USDG)*: \`$${snapshot.usdgBalance.toFixed(2)} USDG\`\n`;
+      reply += `• *Settlement Cash (USDC)*: \`$${snapshot.usdcBalance.toFixed(2)} USDC\`\n`;
+
+      const nonCashHoldings = snapshot.holdings.filter((h) => !h.isCash);
+      if (nonCashHoldings.length > 0) {
+        reply += `• *Tokenized Equities*:\n`;
+        nonCashHoldings.forEach((h) => {
+          reply += `  - *${h.symbol}*: ${h.amount.toFixed(4)} ($${h.valueUsd.toFixed(2)})\n`;
+        });
+      } else {
+        reply += `• *Stock Positions*: None active ($0.00)\n`;
+      }
+      reply += `• *Total Portfolio Value*: *$${snapshot.totalValueUsd.toFixed(2)} USDG*\n\n`;
+
+      reply += `*How to Fund Your Real Wallet on OKX X Layer*:\n`;
+      reply += `1. *Native Gas Token (OKB)*:\n`;
+      reply += `   OKB is needed for transaction gas fees on X Layer (gas is <$0.01 per trade). A balance of ~0.05 OKB ($0.50) is plenty for 50+ trades.\n`;
+      reply += `   - Withdraw OKB from OKX Exchange (choose "X Layer" as withdrawal network).\n`;
+      reply += `   - Or bridge OKB/ETH via OKX Bridge: https://www.okx.com/web3/bridge\n\n`;
+      reply += `2. *Trading Capital (USDG / USDC)*:\n`;
+      reply += `   Equities (NVDAx, AAPLx, TSLAx, MSFTx, GOOGLx, AMZNx, METAx) settle in USDG or USDC.\n`;
+      reply += `   - Deposit USDG on X Layer to execute orders.\n\n`;
+      reply += `_Non-custodial architecture: Zero private keys stored on servers. All trades are authorized and signed by your connected Web3 wallet._`;
+
+      const keyboard = [
+        [
+          { text: "Open Web3 Trading Terminal", url: `${APP_URL}/app` },
+          { text: "Fund via OKX Bridge", url: "https://www.okx.com/web3/bridge" },
+        ],
+        [
+          { text: "View Portfolio", callback_data: "/balance" },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+      ];
+
+      return await replyWith(reply, keyboard);
+    }
+
+    // 2c. Leave Sandbox / Real Wallet Funding Guide
+    if (isLeaveSandboxIntent) {
+      const isSandbox = isSandboxWallet("telegram", telegramHandle, user.wallet_address);
+      let reply = `*PROJECT MEIREI | TRANSITION TO REAL WALLET*\n\n`;
+      reply += `You are ready to leave the sandbox and manage real capital on *OKX X Layer Mainnet (Chain ID 196)*!\n\n`;
+      reply += `*Current Mode*: ${isSandbox ? "Sandbox / Demo Account" : "Real Wallet Connected"}\n`;
+      reply += `*Active Address*: \`${shortAddr}\`\n\n`;
+
+      reply += `*Step 1: Link Your Real Web3 Wallet*\n`;
+      reply += `• *Option A (Instant Chat Link)*: Reply directly with your 0x address right here in the chat.\n`;
+      reply += `  Example: \`0x71C...1234\`\n`;
+      reply += `• *Option B (1-Click Web Connect)*: Tap "Connect OKX Wallet" below to connect with OKX Wallet or MetaMask.\n\n`;
+
+      reply += `*Step 2: Fund Your Wallet on X Layer*\n`;
+      reply += `1. *Gas Fees (OKB)*:\n`;
+      reply += `   X Layer requires native OKB for transaction fees (<$0.01 per trade). A balance of 0.05 to 0.1 OKB covers 100+ transactions.\n`;
+      reply += `   - Withdraw OKB from OKX Exchange selecting network: *X Layer*.\n`;
+      reply += `   - Or bridge OKB/ETH using OKX Bridge: https://www.okx.com/web3/bridge\n\n`;
+      reply += `2. *Trading Capital (USDG or USDC)*:\n`;
+      reply += `   Tokenized stocks (NVDAx, AAPLx, TSLAx, MSFTx, GOOGLx, AMZNx, METAx) trade 24/7 settled in USDG or USDC.\n`;
+      reply += `   - Deposit or swap for USDG on X Layer to fund purchases.\n\n`;
+      reply += `_Non-custodial architecture: Zero private keys stored on servers._`;
+
+      const keyboard = [
+        [
+          { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+          { text: "Fund via OKX Bridge", url: "https://www.okx.com/web3/bridge" },
+        ],
+        [
+          { text: "Open Web Terminal", url: `${APP_URL}/app` },
+          { text: "Live Stock Prices", callback_data: "/stocks" },
+        ],
+      ];
+
+      return await replyWith(reply, keyboard);
     }
 
     // 3. Buy Stocks Intent ("buy stock", "buy $250 in NVDAx", "buy TSLAx", etc.)
@@ -672,32 +777,61 @@ export async function POST(req: NextRequest) {
     // 9. Portfolio Balance Intent ("balance", "portfolio", "check my balance")
     if (isBalanceIntent) {
       try {
-        const holdings = await fetchBalances(user.wallet_address);
-        const total = holdings.reduce((sum, h) => sum + (h.valueUsd || 0), 0);
+        const snapshot = await fetchLiveXLayerBalances(user.wallet_address);
+        const isSandbox = isSandboxWallet("telegram", telegramHandle, user.wallet_address);
+        const explorerLink = `https://www.oklink.com/xlayer/address/${user.wallet_address}`;
 
         let reply = `*PROJECT MEIREI | PORTFOLIO*\n`;
-        reply += `*Wallet*: \`${shortAddr}\` (X Layer Chain 196)\n`;
-        reply += `*Total Value*: *$${total.toFixed(2)} USDG*\n\n`;
+        reply += `*Network*: OKX X Layer Mainnet (Chain ID 196)\n`;
+        reply += `*Mode*: ${isSandbox ? "Sandbox / Demo Account" : "REAL WALLET (Active)"}\n`;
+        reply += `*Wallet*: \`${shortAddr}\`\n`;
+        reply += `*Explorer*: ${explorerLink}\n\n`;
 
-        if (holdings.length === 0) {
-          reply += `_No active tokenized stock positions found._\n`;
-          reply += `Deposit USDG on X Layer to initiate automated mandates.`;
-        } else {
-          reply += `*Active Holdings*:\n`;
-          holdings.forEach((h) => {
-            reply += `• *${h.symbol}*: ${h.amount.toFixed(3)} ($${h.valueUsd.toFixed(2)})\n`;
+        reply += `*Live On-Chain Balances*:\n`;
+        reply += `• *Native Gas (OKB)*: \`${snapshot.okbBalance.toFixed(4)} OKB\`\n`;
+        reply += `• *Settlement Cash (USDG)*: \`$${snapshot.usdgBalance.toFixed(2)} USDG\`\n`;
+        reply += `• *Settlement Cash (USDC)*: \`$${snapshot.usdcBalance.toFixed(2)} USDC\`\n`;
+
+        const nonCashHoldings = snapshot.holdings.filter((h) => !h.isCash);
+        if (nonCashHoldings.length > 0) {
+          reply += `• *Active Stock Holdings*:\n`;
+          nonCashHoldings.forEach((h) => {
+            reply += `  - *${h.symbol}*: ${h.amount.toFixed(4)} ($${h.valueUsd.toFixed(2)})\n`;
           });
+        } else {
+          reply += `• *Stock Positions*: None active ($0.00)\n`;
+        }
+        reply += `• *Total Portfolio Value*: *$${snapshot.totalValueUsd.toFixed(2)} USDG*\n\n`;
+
+        if (isSandbox) {
+          reply += `_You are currently in Sandbox mode. Reply with your 0x address or tap "Connect OKX Wallet" to switch to your real wallet._`;
+        } else if (snapshot.okbBalance < 0.001) {
+          reply += `_Notice: Low OKB gas balance. Deposit a fraction of OKB on X Layer to pay transaction fees._`;
+        } else {
+          reply += `_Wallet funded and active on X Layer Mainnet. Ready for mandates and stock purchases._`;
         }
 
-        const keyboard = [
-          [
-            { text: "Check Stock Prices", callback_data: "/stocks" },
-            { text: "Open Web Terminal", url: `${APP_URL}/app` },
-          ],
-          [
-            { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
-          ],
-        ];
+        const keyboard = isSandbox
+          ? [
+              [
+                { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+                { text: "Fund via OKX Bridge", url: "https://www.okx.com/web3/bridge" },
+              ],
+              [
+                { text: "Live Stock Prices", callback_data: "/stocks" },
+                { text: "Open Web Terminal", url: `${APP_URL}/app` },
+              ],
+            ]
+          : [
+              [
+                { text: "Open Web Terminal", url: `${APP_URL}/app` },
+                { text: "Fund via OKX Bridge", url: "https://www.okx.com/web3/bridge" },
+              ],
+              [
+                { text: "Live Stock Prices", callback_data: "/stocks" },
+                { text: "Disconnect Wallet", callback_data: "/disconnect" },
+              ],
+            ];
 
         return await replyWith(reply, keyboard);
       } catch (err) {
@@ -709,18 +843,20 @@ export async function POST(req: NextRequest) {
 
     // 10. Connect Wallet Intent ("connect", "how to connect", "link wallet")
     if (isConnectIntent) {
+      const isSandbox = isSandboxWallet("telegram", telegramHandle, user.wallet_address);
       let reply = `*PROJECT MEIREI | CONNECT OKX WALLET*\n\n`;
       reply += `Link your personal OKX Web3 Wallet to your Telegram handle for non-custodial rebalances on *OKX X Layer (Chain ID 196)*.\n\n`;
-      reply += `*Connected Wallet*: \`${shortAddr}\`\n\n`;
-      reply += `*To link your OKX Web3 wallet*:\n`;
-      reply += `1. Tap "Connect OKX Wallet" below.\n`;
-      reply += `2. Switch network to OKX X Layer.\n`;
-      reply += `3. Confirm signature in your OKX Wallet.\n\n`;
-      reply += `Once linked, your live on-chain holdings will update automatically.`;
+      reply += `*Mode*: ${isSandbox ? "Sandbox / Demo Account" : "Real Wallet Connected"}\n`;
+      reply += `*Active Wallet*: \`${shortAddr}\`\n\n`;
+      reply += `*Two Ways to Connect*:\n`;
+      reply += `1. *Instant Chat Link*: Reply directly with your 42-char address (e.g. \`0x...\`)\n`;
+      reply += `2. *1-Click Web Connect*: Tap "Connect OKX Wallet" below to authenticate with OKX Wallet or MetaMask.\n\n`;
+      reply += `_Non-custodial: Zero private keys stored on servers._`;
 
       const keyboard = [
         [
           { text: "Connect OKX Wallet", url: `${APP_URL}/connect?channel=telegram&handle=${encodeURIComponent(telegramHandle)}` },
+          { text: "Fund via OKX Bridge", url: "https://www.okx.com/web3/bridge" },
         ],
         [
           { text: "View Portfolio", callback_data: "/balance" },

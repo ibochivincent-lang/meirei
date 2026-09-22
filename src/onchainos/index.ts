@@ -242,15 +242,38 @@ export function parseBalancesResponse(json: unknown): Holding[] {
   return Array.from(bySymbol.values()).sort((a, b) => b.valueUsd - a.valueUsd);
 }
 
-/** Read-only. One CLI call covers the whole allowlist. */
+/** Read-only. One CLI call covers the whole allowlist, with direct X Layer RPC fallback. */
 export async function fetchBalances(walletAddress: string): Promise<Holding[]> {
   const cfg = getOnchainOSConfig();
   const wallet = assertWalletAddress(walletAddress);
   if (cfg.mock) return mockBalances();
   if (cfg.useSkills) return parseSkillBalances(await runSkillPrompt(balancePrompt(wallet)));
 
-  const data = await runCliJson(["portfolio", "all-balances", "--address", wallet, "--chains", cfg.chain.alias]);
-  return parseBalancesResponse(data);
+  try {
+    const data = await runCliJson(["portfolio", "all-balances", "--address", wallet, "--chains", cfg.chain.alias]);
+    return parseBalancesResponse(data);
+  } catch (cliErr) {
+    // Graceful fallback to direct OKX X Layer JSON-RPC (works in serverless environments like Vercel)
+    try {
+      const { fetchLiveXLayerBalances } = await import("@/lib/wallet/xlayer");
+      const snapshot = await fetchLiveXLayerBalances(wallet, MOCK_PRICES);
+      const holdings: Holding[] = [];
+      if (snapshot.usdgBalance > 0) {
+        holdings.push({ symbol: "USDG", amount: snapshot.usdgBalance, valueUsd: snapshot.usdgBalance });
+      }
+      if (snapshot.usdcBalance > 0) {
+        holdings.push({ symbol: "USDC", amount: snapshot.usdcBalance, valueUsd: snapshot.usdcBalance });
+      }
+      for (const h of snapshot.holdings) {
+        if (!h.isCash && h.amount > 0) {
+          holdings.push({ symbol: h.symbol, amount: h.amount, valueUsd: h.valueUsd });
+        }
+      }
+      return holdings;
+    } catch {
+      throw cliErr;
+    }
+  }
 }
 
 /** Offline fixture. Funded by default so planning actually produces legs. */

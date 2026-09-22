@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveChannelUser, unlinkChannelWallet } from "@/lib/auth/user_identity";
+import { resolveChannelUser, linkChannelWallet, unlinkChannelWallet, isSandboxWallet } from "@/lib/auth/user_identity";
 import { fetchPrice, fetchBalances, fetchAllStockPrices } from "@/src/onchainos";
 import { resolveSymbol, ALLOWLIST } from "@/src/allowlist";
 import { handleMandate } from "@/src/agent/handler";
@@ -9,6 +9,7 @@ import { freezeAccount, unfreezeAccount } from "@/lib/users/freeze";
 import { generateOtpChallenge, verifyOtpChallenge } from "@/lib/auth/otp";
 import { sendWhatsAppMessage, markWhatsAppMessageRead } from "@/lib/meta/client";
 import { downloadWhatsAppAudio, transcribeAudioBuffer } from "@/lib/voice/transcribe";
+import { fetchLiveXLayerBalances, formatShortAddress, isValidEvmAddress } from "@/lib/wallet/xlayer";
 
 export const dynamic = "force-dynamic";
 
@@ -287,6 +288,13 @@ export async function POST(req: NextRequest) {
       lower === "balance" ||
       lower === "portfolio";
 
+    const evmAddressMatch = cleanMessage.match(/\b(0x[a-fA-F0-9]{40})\b/i);
+
+    const isLeaveSandboxIntent =
+      /\b(leave\s+sandbox|exit\s+sandbox|leave\s+the\s+sandbox|exit\s+the\s+sandbox|real\s+wallet|work\s+with\s+real\s+wallet|real\s+funds|switch\s+to\s+real|use\s+real\s+wallet|how\s+to\s+fund|fund\s+wallet|deposit\s+funds|fund\s+my\s+wallet|how\s+to\s+deposit|deposit)\b/i.test(
+        cleanMessage
+      );
+
     const isConnectIntent =
       (/\b(connect|link|pair)\b/i.test(cleanMessage) ||
         lower === "/connect" ||
@@ -429,6 +437,85 @@ export async function POST(req: NextRequest) {
         reply += `Format: "unfreeze 123456"`;
         return await sendReply(reply);
       }
+    }
+
+    // 2b. Direct EVM Address Linkage ("0x...", "connect 0x...", "link 0x...")
+    if (evmAddressMatch) {
+      const realWallet = evmAddressMatch[1].toLowerCase();
+      await linkChannelWallet({
+        channel: "whatsapp",
+        handle: senderPhone || "+1 (555) 392 1084",
+        walletAddress: realWallet,
+      });
+
+      const snapshot = await fetchLiveXLayerBalances(realWallet);
+      const shortReal = formatShortAddress(realWallet);
+      const explorerLink = `https://www.oklink.com/xlayer/address/${realWallet}`;
+
+      let reply = `REAL WALLET ACTIVATED | LEAVING SANDBOX\n\n`;
+      reply += `Your Web3 wallet has been linked to your WhatsApp profile.\n`;
+      reply += `You have exited the sandbox and are now active on OKX X Layer Mainnet (Chain ID 196).\n\n`;
+      reply += `Connected Wallet: ${shortReal}\n`;
+      reply += `Address: ${realWallet}\n`;
+      reply += `Explorer: ${explorerLink}\n\n`;
+
+      reply += `Live On-Chain Balances:\n`;
+      reply += `- Native Gas (OKB): ${snapshot.okbBalance.toFixed(4)} OKB\n`;
+      reply += `- Settlement Cash (USDG): $${snapshot.usdgBalance.toFixed(2)} USDG\n`;
+      reply += `- Settlement Cash (USDC): $${snapshot.usdcBalance.toFixed(2)} USDC\n`;
+
+      const nonCashHoldings = snapshot.holdings.filter((h) => !h.isCash);
+      if (nonCashHoldings.length > 0) {
+        reply += `- Active Stock Positions:\n`;
+        nonCashHoldings.forEach((h) => {
+          reply += `  * ${h.symbol}: ${h.amount.toFixed(4)} ($${h.valueUsd.toFixed(2)})\n`;
+        });
+      } else {
+        reply += `- Stock Positions: None active ($0.00)\n`;
+      }
+      reply += `- Total Portfolio Value: $${snapshot.totalValueUsd.toFixed(2)} USDG\n\n`;
+
+      reply += `How to Fund Your Real Wallet on OKX X Layer:\n`;
+      reply += `1. Native Gas Token (OKB):\n`;
+      reply += `   OKB is needed for transaction gas fees on X Layer (gas is <$0.01 per trade). A balance of ~0.05 OKB ($0.50) is plenty for 50+ trades.\n`;
+      reply += `   - Withdraw OKB from OKX Exchange (choose "X Layer" as withdrawal network).\n`;
+      reply += `   - Or bridge OKB/ETH via OKX Bridge: https://www.okx.com/web3/bridge\n\n`;
+      reply += `2. Trading Capital (USDG / USDC):\n`;
+      reply += `   Equities (NVDAx, AAPLx, TSLAx, MSFTx, GOOGLx, AMZNx, METAx) settle in USDG or USDC.\n`;
+      reply += `   - Deposit USDG on X Layer to execute orders.\n\n`;
+      reply += `Web3 Trading Terminal: ${APP_URL}/app\n`;
+      reply += `Fund via OKX Bridge: https://www.okx.com/web3/bridge\n`;
+      reply += `Non-custodial architecture: Zero private keys stored on servers. All trades are authorized and signed by your connected Web3 wallet.`;
+
+      return await sendReply(reply);
+    }
+
+    // 2c. Leave Sandbox / Real Wallet Funding Guide
+    if (isLeaveSandboxIntent) {
+      const isSandbox = isSandboxWallet("whatsapp", senderPhone || "+1 (555) 392 1084", user.wallet_address);
+      let reply = `MEIREI | TRANSITION TO REAL WALLET & FUNDING\n\n`;
+      reply += `You are ready to leave the sandbox and manage real capital on OKX X Layer Mainnet (Chain ID 196)!\n\n`;
+      reply += `Current Mode: ${isSandbox ? "Sandbox / Demo Account" : "Real Wallet Connected"}\n`;
+      reply += `Active Address: ${shortAddr}\n\n`;
+
+      reply += `Step 1: Link Your Real Web3 Wallet\n`;
+      reply += `- Option A (Instant Chat Link): Reply directly with your 0x address right here in the chat.\n`;
+      reply += `  Example: "0x71C...1234"\n`;
+      reply += `- Option B (1-Click Web Connect): Open the Web Connect portal to connect with OKX Wallet or MetaMask:\n`;
+      reply += `  ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}\n\n`;
+
+      reply += `Step 2: Fund Your Wallet on X Layer\n`;
+      reply += `1. Gas Fees (OKB):\n`;
+      reply += `   X Layer requires native OKB for transaction fees (<$0.01 per trade). A balance of 0.05 to 0.1 OKB covers 100+ transactions.\n`;
+      reply += `   - Withdraw OKB from OKX Exchange selecting network: X Layer.\n`;
+      reply += `   - Or bridge OKB/ETH using OKX Bridge: https://www.okx.com/web3/bridge\n\n`;
+      reply += `2. Trading Capital (USDG or USDC):\n`;
+      reply += `   Tokenized stocks (NVDAx, AAPLx, TSLAx, MSFTx, GOOGLx, AMZNx, METAx) trade 24/7 settled in USDG or USDC.\n`;
+      reply += `   - Deposit or swap for USDG on X Layer to fund purchases.\n\n`;
+      reply += `Web3 Trading Terminal: ${APP_URL}/app\n`;
+      reply += `Non-custodial architecture: Zero private keys stored on servers.`;
+
+      return await sendReply(reply);
     }
 
     // 3. Buy Stocks Intent ("buy stock", "buy $250 in NVDAx", "buy TSLAx", etc.)
@@ -598,25 +685,39 @@ export async function POST(req: NextRequest) {
     // 9. Portfolio Balance Intent ("balance", "check my balance", "portfolio")
     if (isBalanceIntent) {
       try {
-        const holdings = await fetchBalances(user.wallet_address);
-        const total = holdings.reduce((sum, h) => sum + (h.valueUsd || 0), 0);
+        const snapshot = await fetchLiveXLayerBalances(user.wallet_address);
+        const isSandbox = isSandboxWallet("whatsapp", senderPhone || "+1 (555) 392 1084", user.wallet_address);
+        const explorerLink = `https://www.oklink.com/xlayer/address/${user.wallet_address}`;
 
         let replyText = `MEIREI | X LAYER PORTFOLIO\n`;
-        replyText += `Account: ${user.email}\n`;
+        replyText += `Mode: ${isSandbox ? "Sandbox / Demo Account" : "REAL WALLET (Active)"}\n`;
         replyText += `Wallet: ${shortAddr}\n`;
-        replyText += `Total Portfolio Value: $${total.toFixed(2)} USDG\n\n`;
+        replyText += `Explorer: ${explorerLink}\n\n`;
 
-        if (holdings.length === 0) {
-          replyText += `No tokenized stock balances found. Deposit USDG on X Layer (chain 196) to start automated mandates.`;
-        } else {
-          replyText += `Current Holdings:\n`;
-          holdings.forEach((h) => {
-            replyText += `- ${h.symbol}: ${h.amount.toFixed(3)} units ($${h.valueUsd.toFixed(2)})\n`;
+        replyText += `Live On-Chain Balances:\n`;
+        replyText += `- Native Gas (OKB): ${snapshot.okbBalance.toFixed(4)} OKB\n`;
+        replyText += `- Settlement Cash (USDG): $${snapshot.usdgBalance.toFixed(2)} USDG\n`;
+        replyText += `- Settlement Cash (USDC): $${snapshot.usdcBalance.toFixed(2)} USDC\n`;
+
+        const nonCashHoldings = snapshot.holdings.filter((h) => !h.isCash);
+        if (nonCashHoldings.length > 0) {
+          replyText += `- Active Stock Positions:\n`;
+          nonCashHoldings.forEach((h) => {
+            replyText += `  * ${h.symbol}: ${h.amount.toFixed(4)} ($${h.valueUsd.toFixed(2)})\n`;
           });
+        } else {
+          replyText += `- Stock Positions: None active ($0.00)\n`;
+        }
+        replyText += `- Total Portfolio Value: $${snapshot.totalValueUsd.toFixed(2)} USDG\n\n`;
+
+        if (isSandbox) {
+          replyText += `You are in Sandbox mode. Reply with your 0x address or tap below to link your real wallet:\n${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}`;
+        } else if (snapshot.okbBalance < 0.001) {
+          replyText += `Notice: Low OKB gas balance. Deposit a fraction of OKB on X Layer to pay transaction fees.\nBridge: https://www.okx.com/web3/bridge`;
+        } else {
+          replyText += `Wallet funded and active on X Layer Mainnet. Web Terminal: ${APP_URL}/app`;
         }
 
-        replyText += `\nTerminal: ${APP_URL}/app\n`;
-        replyText += `Link Wallet: ${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}`;
         return await sendReply(replyText);
       } catch (err) {
         return await sendReply(
@@ -627,16 +728,17 @@ export async function POST(req: NextRequest) {
 
     // 10. Connect Wallet Intent ("connect", "how to connect", "link wallet")
     if (isConnectIntent) {
+      const isSandbox = isSandboxWallet("whatsapp", senderPhone || "+1 (555) 392 1084", user.wallet_address);
       let reply = `MEIREI | CONNECT OKX WALLET\n\n`;
       reply += `Link your personal OKX Wallet to your WhatsApp account for non-custodial rebalances on OKX X Layer (Chain ID 196).\n\n`;
+      reply += `Current Mode: ${isSandbox ? "Sandbox / Demo Account" : "Real Wallet Connected"}\n`;
       reply += `Current Wallet: ${shortAddr}\n\n`;
-      reply += `To link your OKX Web3 wallet:\n`;
-      reply += `1. Open this secure linkage portal in your browser:\n`;
+      reply += `Two Ways to Connect:\n`;
+      reply += `1. Instant Chat Link: Reply directly with your 42-character 0x address (e.g. "0x...") right here.\n`;
+      reply += `2. 1-Click Web Connect: Open this secure portal in your browser to sign with OKX Wallet or MetaMask:\n`;
       reply += `${APP_URL}/connect?channel=whatsapp&handle=${encodeURIComponent(senderPhone)}\n\n`;
-      reply += `2. Tap "Connect OKX Wallet".\n`;
-      reply += `3. Switch network to OKX X Layer.\n`;
-      reply += `4. Tap "Confirm Linkage to WhatsApp".\n\n`;
-      reply += `Once linked, your portfolio balances will update automatically here.`;
+      reply += `Fund via OKX Bridge: https://www.okx.com/web3/bridge\n`;
+      reply += `Zero private keys stored on servers. Non-custodial execution.`;
 
       return await sendReply(reply);
     }

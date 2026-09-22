@@ -507,3 +507,22 @@ export async function unlinkChannelWallet({
   return user;
 }
 
+/**
+ * Checks whether a given address is the default deterministic sandbox wallet
+ * or a real externally linked Web3 wallet.
+ */
+export function isSandboxWallet(
+  channel: UserPrimaryChannel,
+  handle: string,
+  walletAddress: string
+): boolean {
+  if (!walletAddress) return true;
+  const cleanHandle = handle.trim();
+  const sanitized = cleanHandle.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  const fallbackEmail = `${sanitized || "user"}@${channel}.meirei.app`;
+  const hash = crypto.createHash("sha256").update(`meirei_xlayer_${fallbackEmail}`).digest("hex");
+  const defaultWallet = `0x${hash.slice(24, 64)}`.toLowerCase();
+  return walletAddress.trim().toLowerCase() === defaultWallet;
+}
+
+

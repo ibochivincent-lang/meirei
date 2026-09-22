@@ -1163,6 +1163,159 @@ async function runTests() {
     failed++;
   }
 
+  // Test 44: Telegram Direct 0x EVM Address Linking
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "0x71C8bf40D550bCeAEb5F3a79fF2a363E1965B620",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (
+      res.ok &&
+      text.includes("REAL WALLET ACTIVATED") &&
+      text.toLowerCase().includes("0x71c8...b620") &&
+      text.includes("Native Gas (OKB)")
+    ) {
+      console.log("PASS: Telegram Direct 0x EVM Address Linking ('0x71C8...')");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Direct 0x EVM Address Linking:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 44:", err.message);
+    failed++;
+  }
+
+  // Test 45: Telegram Leave Sandbox & Fund Wallet Intent
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "time to leave the sandbox and work with real wallet and f",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (
+      res.ok &&
+      text.includes("TRANSITION TO REAL WALLET") &&
+      text.includes("Step 1: Link Your Real Web3 Wallet") &&
+      text.includes("Step 2: Fund Your Wallet on X Layer")
+    ) {
+      console.log("PASS: Telegram Leave Sandbox & Funding Intent");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Leave Sandbox & Funding Intent:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 45:", err.message);
+    failed++;
+  }
+
+  // Test 46: Telegram Live Portfolio Balance with Real Wallet
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/telegram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          chat: { id: 987654321 },
+          from: { id: 987654321, username: "alex_trader" },
+          text: "/balance",
+        },
+      }),
+    });
+    const data = await res.json();
+    const text = data.text || "";
+    if (
+      res.ok &&
+      text.includes("PROJECT MEIREI | PORTFOLIO") &&
+      text.includes("Native Gas (OKB)") &&
+      text.includes("Settlement Cash (USDG)")
+    ) {
+      console.log("PASS: Telegram Live Portfolio Balance with Real Wallet");
+      passed++;
+    } else {
+      console.error("FAIL: Telegram Live Portfolio Balance with Real Wallet:", text);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 46:", err.message);
+    failed++;
+  }
+
+  // Test 47: WhatsApp Direct 0x EVM Address Linking
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "0x71C8bf40D550bCeAEb5F3a79fF2a363E1965B620",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (
+      res.ok &&
+      reply.includes("REAL WALLET ACTIVATED") &&
+      reply.toLowerCase().includes("0x71c8...b620") &&
+      reply.includes("Native Gas (OKB)")
+    ) {
+      console.log("PASS: WhatsApp Direct 0x EVM Address Linking");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp Direct 0x EVM Address Linking:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 47:", err.message);
+    failed++;
+  }
+
+  // Test 48: WhatsApp Leave Sandbox Intent
+  try {
+    const res = await fetch(`${baseUrl}/api/webhooks/whatsapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "+1 (555) 392 1084",
+        message: "how to leave the sandbox and fund my wallet",
+      }),
+    });
+    const data = await res.json();
+    const reply = data.reply || "";
+    if (
+      res.ok &&
+      reply.includes("TRANSITION TO REAL WALLET") &&
+      reply.includes("Step 1: Link Your Real Web3 Wallet")
+    ) {
+      console.log("PASS: WhatsApp Leave Sandbox Intent");
+      passed++;
+    } else {
+      console.error("FAIL: WhatsApp Leave Sandbox Intent:", reply);
+      failed++;
+    }
+  } catch (err) {
+    console.error("ERROR in Test 48:", err.message);
+    failed++;
+  }
+
   console.log(`\n================================`);
   console.log(`TOTAL PASSED: ${passed}`);
   console.log(`TOTAL FAILED: ${failed}`);
@@ -1174,3 +1327,4 @@ async function runTests() {
 }
 
 runTests();
+
