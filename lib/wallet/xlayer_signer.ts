@@ -71,12 +71,17 @@ export function getSpecificProvider(type: WalletType = "injected"): any {
   }
 
   if (type === "metamask") {
-    if (win.ethereum?.isMetaMask && !win.ethereum?.isOkxWallet) return win.ethereum;
+    // 1. Check EIP-6963 / multi-provider array
     if (win.ethereum?.providers?.length) {
       const mm = win.ethereum.providers.find((p: any) => p.isMetaMask && !p.isOkxWallet);
       if (mm) return mm;
+      const anyMm = win.ethereum.providers.find((p: any) => p.isMetaMask);
+      if (anyMm) return anyMm;
     }
-    if (win.ethereum && !win.okxwallet) return win.ethereum;
+    // 2. Direct MetaMask provider
+    if (win.ethereum?.isMetaMask && !win.ethereum?.isOkxWallet) return win.ethereum;
+    if (win.ethereum?.isMetaMask) return win.ethereum;
+    if (win.ethereum) return win.ethereum;
     return null;
   }
 
@@ -118,7 +123,7 @@ export function getAvailableWallets(): WalletOption[] {
   const win = window as any;
 
   const hasOkx = !!(win.okxwallet || win.ethereum?.isOkxWallet || win.ethereum?.providers?.some((p: any) => p.isOkxWallet));
-  const hasMetaMask = !!(win.ethereum?.isMetaMask && !win.ethereum?.isOkxWallet) || !!win.ethereum?.providers?.some((p: any) => p.isMetaMask && !p.isOkxWallet);
+  const hasMetaMask = !!(win.ethereum?.isMetaMask) || !!win.ethereum?.providers?.some((p: any) => p.isMetaMask) || !!win.ethereum;
   const hasCoinbase = !!(win.coinbaseWalletExtension || win.ethereum?.isCoinbaseWallet || win.ethereum?.providers?.some((p: any) => p.isCoinbaseWallet));
   const hasTrust = !!(win.trustwallet || win.ethereum?.isTrust || win.ethereum?.providers?.some((p: any) => p.isTrust));
 

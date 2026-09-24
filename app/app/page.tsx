@@ -34,7 +34,7 @@ import {
   OKX_TRADING_PLAN_DATA,
 } from "@/lib/okx/skills_data";
 
-type Platform = "telegram" | "web" | "okx_wallet";
+type Platform = "telegram" | "web" | "okx_wallet" | "whatsapp" | "instagram";
 type Mode = "basic" | "advanced";
 
 // Simple Vector SVG Logos for Supported Platforms
@@ -74,6 +74,23 @@ function SimpleWebLogo({ className = "w-5 h-5" }: { className?: string }) {
     </svg>
   );
 }
+
+function SimpleWhatsAppLogo({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm0 18.15c-1.49 0-2.95-.4-4.22-1.16l-.3-.18-3.13.82.83-3.05-.2-.31a8.188 8.188 0 0 1-1.25-4.36c0-4.54 3.7-8.24 8.27-8.24 2.21 0 4.28.86 5.84 2.42 1.56 1.56 2.42 3.63 2.42 5.84 0 4.54-3.7 8.22-8.26 8.22z" />
+    </svg>
+  );
+}
+
+function SimpleInstagramLogo({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+    </svg>
+  );
+}
+
 
 interface ChatMessage {
   id: string;
@@ -673,15 +690,25 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
   // Trading mode state: strictly TWO MODES: "basic" | "advanced"
   const [mode, setMode] = useState<Mode>("basic");
 
-  // Advanced Mode Terms & Conditions state
-  const [hasAcceptedAdvancedTerms, setHasAcceptedAdvancedTerms] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("meirei_advanced_terms_accepted") === "true";
-    }
-    return false;
-  });
+  // Advanced Mode Terms & Conditions state: re-prompts on reload for comprehensive risk review
+  const [hasAcceptedAdvancedTerms, setHasAcceptedAdvancedTerms] = useState<boolean>(false);
   const [showAdvancedTermsModal, setShowAdvancedTermsModal] = useState<boolean>(false);
   const [termsAgreedCheckbox, setTermsAgreedCheckbox] = useState<boolean>(false);
+
+  // Mandate Execution Summary state (renders immediately following execution)
+  const [deployedMandateReceipt, setDeployedMandateReceipt] = useState<{
+    mandateId: string;
+    timestamp: string;
+    strategy: string;
+    capital: number;
+    stablecoin: string;
+    rule: string;
+    txHash: string;
+    status: string;
+    allocations: { symbol: string; weightPercent: number; role: string }[];
+    rebalanceInterval: string;
+    downsideProtection: string;
+  } | null>(null);
 
   const handleSwitchToAdvanced = () => {
     if (hasAcceptedAdvancedTerms) {
@@ -808,16 +835,16 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
   const [showAuditLogs, setShowAuditLogs] = useState<boolean>(false);
   const [lastTelemetryRefresh, setLastTelemetryRefresh] = useState<string>("Just now");
 
-  // Computed live advisory plan
+  // Computed live advisory plan based on user-selected allocation capital
   const currentAdvisoryPlan: AdvisoryPlan = useMemo(() => {
     return generateAdvisoryPlan({
       horizon: advisoryHorizon,
       riskProfile: advisoryRisk,
-      capitalUsd: profile.portfolioValue || advisoryCapital,
+      capitalUsd: advisoryCapital || 2500,
       customStocks: advisorySelectionMode === "custom" ? advisoryCustomStocks : undefined,
       stablecoin: advisoryStablecoin,
     });
-  }, [advisoryHorizon, advisoryRisk, profile.portfolioValue, advisoryCapital, advisorySelectionMode, advisoryCustomStocks, advisoryStablecoin]);
+  }, [advisoryHorizon, advisoryRisk, advisoryCapital, advisorySelectionMode, advisoryCustomStocks, advisoryStablecoin]);
 
   // Market News Catalyst Feed state (Advanced Mode)
   const [newsList, setNewsList] = useState<NewsCatalyst[]>([]);
@@ -907,6 +934,12 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     try {
       const provider = getSpecificProvider(type);
       if (!provider) {
+        if (type === "metamask") {
+          setShowWalletConnectModal(true);
+          setConnectInfoMsg("Launching WalletConnect bridge for MetaMask. You can scan the QR code with your MetaMask mobile app or open directly.");
+          setIsWalletConnecting(false);
+          return;
+        }
         throw new Error(
           type === "okx"
             ? "OKX Wallet extension not detected. Please install OKX Wallet from okx.com/web3."
@@ -965,7 +998,12 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       }));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      setConnectErrorMsg(msg);
+      if (type === "metamask") {
+        setShowWalletConnectModal(true);
+        setConnectInfoMsg("Opening WalletConnect bridge for MetaMask. You can scan the QR code with MetaMask mobile or select your browser provider.");
+      } else {
+        setConnectErrorMsg(msg);
+      }
     } finally {
       setIsWalletConnecting(false);
     }
@@ -1078,6 +1116,10 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
   // Deploy Advisory Mandate from Advanced Mode (Instant & Session-Key Guarded)
   const handleDeployAdvisoryMandate = (plan: AdvisoryPlan) => {
+    const mandateId = `MAN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
     const newPolicy: MandatePolicy = {
       id: `mandate_${Date.now()}`,
       title: plan.strategyName,
@@ -1093,11 +1135,24 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
     setMandatePolicies((prev) => [newPolicy, ...prev]);
 
-    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    setDeployedMandateReceipt({
+      mandateId,
+      timestamp: now,
+      strategy: plan.strategyName,
+      capital: advisoryCapital,
+      stablecoin: advisoryStablecoin,
+      rule: plan.mandateRule,
+      txHash,
+      status: "Active & Session-Guarded on Chain 196",
+      allocations: plan.allocations,
+      rebalanceInterval: plan.rebalanceInterval,
+      downsideProtection: plan.downsideProtection,
+    });
+
     const confirmMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
       sender: "bot",
-      text: `✅ Autonomous Mandate Deployed on OKX X Layer!\n\nStrategy: ${plan.strategyName}\nRule: ${plan.mandateRule}\nDownside Safeguard: ${plan.downsideProtection}\nStatus: Active · Continuously monitored on OKX X Layer (Chain 196) with 100% sponsored gas.`,
+      text: `✅ Autonomous Mandate Deployed on OKX X Layer!\n\nMandate ID: ${mandateId}\nStrategy: ${plan.strategyName}\nCapital: $${advisoryCapital.toLocaleString()} ${advisoryStablecoin}\nRule: ${plan.mandateRule}\nDownside Safeguard: ${plan.downsideProtection}\nStatus: Active · Monitored on OKX X Layer (Chain 196) with 100% sponsored gas.`,
       timestamp: now,
       status: "confirmed",
       type: "mandate",
@@ -1105,13 +1160,16 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     setChatMessages((prev) => [...prev, confirmMsg]);
 
     setMandateResult({
-      reply: `Mandate "${plan.strategyName}" successfully deployed to OKX X Layer. Active session key guard is monitoring execution.`,
+      reply: `Mandate "${plan.strategyName}" (${mandateId}) successfully deployed to OKX X Layer. Active session key guard is monitoring execution.`,
       type: "mandate",
       statusTone: "confirmed",
     });
 
-    const el = document.getElementById("active-mandates-section");
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    // Smoothly scroll to the immediate execution summary receipt
+    setTimeout(() => {
+      const summaryEl = document.getElementById("mandate-execution-summary-receipt");
+      if (summaryEl) summaryEl.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   };
 
   // Deploy Stock Momentum / Dip Guard Mandate from Table
@@ -2673,18 +2731,18 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
-                          Active Protocol Capabilities
+                          Meirei AI Intelligence Architecture
                         </span>
                         <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 flex items-center gap-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          4 OKX AI Skills Synchronized
+                          4 Meirei Assistant Skills Synchronized
                         </span>
                       </div>
                       <h2 className="mt-1 font-display text-lg font-bold text-ink-950 sm:text-xl">
-                        Active OKX AI Skills Engine
+                        Active Meirei AI Assistant Intelligence Engine
                       </h2>
                       <p className="mt-0.5 text-xs text-ink-600 leading-relaxed">
-                        Autonomous machine learning telemetry and mathematical risk modeling running across all 20 allowlisted equities on OKX X Layer (Chain 196).
+                        Synchronizing <strong className="text-ink-900 font-mono">trading-plan-generator</strong>, <strong className="text-ink-900 font-mono">okx-sentiment-tracker</strong>, <strong className="text-ink-900 font-mono">okx-cex-smartmoney</strong>, and <strong className="text-ink-900 font-mono">okx-cex-market</strong> across all 20 allowlisted equities on OKX X Layer (Chain 196).
                       </p>
                     </div>
 
@@ -3012,6 +3070,69 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     </div>
                   )}
 
+                  {/* Dedicated Allocation Capital & Settlement Stablecoin Input */}
+                  <div className="mt-4 rounded-xl border border-accent-200/90 bg-accent-50/40 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-accent-200/70 pb-2.5">
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-ink-950 flex items-center gap-1.5">
+                          <span>Allocation Capital &amp; Settlement Stablecoin</span>
+                          <span className="rounded bg-accent-500/20 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-800">
+                            Custom Allocation
+                          </span>
+                        </label>
+                        <p className="text-[11px] text-ink-600 mt-0.5">
+                          Specify the exact money amount to allocate for this mandate. You choose your capital—never forced to deploy your full portfolio.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 font-mono text-xs font-bold text-accent-800">
+                        <span>Deploying:</span>
+                        <span className="rounded bg-white px-2 py-0.5 border border-accent-300 shadow-2xs">
+                          ${advisoryCapital.toLocaleString()} {advisoryStablecoin}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                      <div className="sm:col-span-7 relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm font-bold text-ink-400">$</span>
+                        <input
+                          type="number"
+                          min="10"
+                          step="50"
+                          value={advisoryCapital}
+                          onChange={(e) => {
+                            const val = Math.max(10, parseFloat(e.target.value) || 0);
+                            setAdvisoryCapital(val);
+                          }}
+                          className="w-full rounded-xl border border-ink-200 bg-white py-2 pl-7 pr-16 font-mono text-sm font-bold text-ink-950 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 shadow-2xs"
+                          placeholder="e.g. 500, 1000, 2500"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-accent-700">
+                          {advisoryStablecoin}
+                        </span>
+                      </div>
+
+                      {/* Quick Capital Preset Chips */}
+                      <div className="sm:col-span-5 flex flex-wrap gap-1.5">
+                        {[250, 500, 1000, 2500, 5000].map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => setAdvisoryCapital(amt)}
+                            className={cn(
+                              "rounded-lg border px-2.5 py-1 text-[11px] font-mono font-semibold transition-all cursor-pointer shadow-2xs",
+                              advisoryCapital === amt
+                                ? "border-accent-500 bg-accent-600 text-white font-bold"
+                                : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
+                            )}
+                          >
+                            ${amt >= 1000 ? `${amt / 1000}K` : amt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Risk Profile Selection Bar */}
                   <div className="mt-5">
                     <label className="text-xs font-bold uppercase tracking-wider text-ink-700">
@@ -3301,37 +3422,326 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       </div>
                     </div>
 
-                    {/* Deploy Mandate CTA */}
-                    <div className="mt-5 flex flex-col items-center justify-between gap-3 rounded-xl bg-ink-900 border border-transparent p-4 text-white sm:flex-row shadow-sm">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-ink-300">Executable Mandate Rule</span>
-                          <span className="rounded bg-accent-500/20 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-400">
-                            Session Key Guarded
-                          </span>
+                    {/* Analysis of Selected Strategy & Tokenized Stocks (Summary of Every Skill) */}
+                    <div className="mt-5 rounded-2xl border border-ink-200/90 bg-white p-4 sm:p-5 shadow-2xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ink-100 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                              AI Telemetry Synthesis
+                            </span>
+                            <span className="rounded bg-accent-100 px-2 py-0.2 font-mono text-[9px] font-bold text-accent-800">
+                              4 Skills Synthesized
+                            </span>
+                          </div>
+                          <h4 className="mt-0.5 font-display text-sm font-bold text-ink-950 sm:text-base">
+                            Analysis of Selected Strategy &amp; Tokenized Stocks
+                          </h4>
+                          <p className="text-[11px] text-ink-500">
+                            How each synchronized AI skill influences your mandate decision and execution parameters:
+                          </p>
                         </div>
-                        <p className="mt-0.5 font-mono text-xs font-bold text-white">
-                          {currentAdvisoryPlan.mandateRule}
-                        </p>
+                        <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-emerald-700">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                          Non-Custodial Session Guard
+                        </span>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      {/* 4 Skill Impact Summaries */}
+                      <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        {/* 1. Trading Plan Generator */}
+                        <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-[9px] font-bold uppercase text-sky-800 bg-sky-100 px-1.5 py-0.2 rounded">
+                              trading-plan-generator
+                            </span>
+                            <span className="font-mono text-[10px] font-bold text-sky-900">
+                              {currentAdvisoryPlan.rebalanceInterval}
+                            </span>
+                          </div>
+                          <p className="font-display text-xs font-bold text-ink-950">
+                            Drift Tolerance &amp; Risk Floor
+                          </p>
+                          <p className="text-[10px] text-ink-600 leading-relaxed">
+                            Formulates a dynamic <strong>{advisoryHorizon === "short_term" ? "1.8%" : "3.0%"} drift corridor</strong>, with downside safeguard set to <strong>{currentAdvisoryPlan.downsideProtection}</strong> to prevent adverse liquidation.
+                          </p>
+                        </div>
+
+                        {/* 2. OKX Sentiment Tracker */}
+                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-[9px] font-bold uppercase text-indigo-800 bg-indigo-100 px-1.5 py-0.2 rounded">
+                              okx-sentiment-tracker
+                            </span>
+                            <span className="font-mono text-[10px] font-bold text-indigo-900">
+                              {OKX_SENTIMENT_DATA.overallScore}/100 Bullish
+                            </span>
+                          </div>
+                          <p className="font-display text-xs font-bold text-ink-950">
+                            Social Momentum &amp; Consensus
+                          </p>
+                          <p className="text-[10px] text-ink-600 leading-relaxed">
+                            Aggregates 48.2K mentions and whale consensus across tokenized stocks on X Layer, validating positive institutional accumulation velocity.
+                          </p>
+                        </div>
+
+                        {/* 3. OKX Smart Money */}
+                        <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-[9px] font-bold uppercase text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded">
+                              okx-cex-smartmoney
+                            </span>
+                            <span className="font-mono text-[10px] font-bold text-emerald-900">
+                              {OKX_SMART_MONEY_DATA.netInflow24h}
+                            </span>
+                          </div>
+                          <p className="font-display text-xs font-bold text-ink-950">
+                            Whale Accumulation Inflow
+                          </p>
+                          <p className="text-[10px] text-ink-600 leading-relaxed">
+                            Confirms positive institutional absorption on OKX CEX/DEX bridges, shielding the mandate from sudden smart-money exit cascades.
+                          </p>
+                        </div>
+
+                        {/* 4. OKX CEX Market Depth */}
+                        <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-[9px] font-bold uppercase text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded">
+                              okx-cex-market
+                            </span>
+                            <span className="font-mono text-[10px] font-bold text-amber-900">
+                              0.02% Tight Spread
+                            </span>
+                          </div>
+                          <p className="font-display text-xs font-bold text-ink-950">
+                            Liquidity Depth &amp; Low Slippage
+                          </p>
+                          <p className="text-[10px] text-ink-600 leading-relaxed">
+                            Monitors {OKX_CEX_MARKET_DATA.liquidityDepthUsd} orderbook depth to guarantee minimal execution slippage (&lt;0.05%) via OKX DEX Aggregator.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Execute & Deploy Mandate Bar */}
+                      <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl bg-ink-950 p-4 text-white shadow-md">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded bg-accent-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-accent-400">
+                              Deploying ${advisoryCapital.toLocaleString()} {advisoryStablecoin}
+                            </span>
+                            <span className="rounded bg-emerald-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-400">
+                              Gas Sponsored (0 ETH)
+                            </span>
+                          </div>
+                          <p className="mt-1 font-mono text-xs font-bold text-white truncate">
+                            {currentAdvisoryPlan.mandateRule}
+                          </p>
+                        </div>
+
                         <button
                           type="button"
                           onClick={() => {
                             handleDeployAdvisoryMandate(currentAdvisoryPlan);
                           }}
-                          className="rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer flex items-center gap-2"
+                          className="shrink-0 rounded-xl bg-accent-500 hover:bg-accent-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
                         >
-                          <span>Deploy Mandate on OKX X Layer</span>
+                          <span>Execute &amp; Deploy Mandate</span>
                           <span>↗</span>
                         </button>
                       </div>
+
+                      {/* Mandate Execution Summary Receipt (Appears Immediately Following Execution) */}
+                      {deployedMandateReceipt && (
+                        <div
+                          id="mandate-execution-summary-receipt"
+                          className="mt-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/90 p-4 text-ink-900 shadow-md animate-in fade-in slide-in-from-top-2 duration-300"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200 pb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-xs">
+                                ✓
+                              </span>
+                              <div>
+                                <h4 className="font-display text-sm font-bold text-emerald-950">
+                                  Mandate Execution Summary
+                                </h4>
+                                <p className="text-[10px] font-mono text-emerald-700">
+                                  ID: {deployedMandateReceipt.mandateId} · Executed at {deployedMandateReceipt.timestamp}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-full bg-emerald-200/80 px-2.5 py-0.5 font-mono text-[10px] font-bold text-emerald-900">
+                                Active on OKX X Layer (Chain 196)
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setDeployedMandateReceipt(null)}
+                                className="text-emerald-700 hover:text-emerald-950 text-xs font-bold cursor-pointer"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                            <div className="rounded-lg bg-white/80 p-2 border border-emerald-100">
+                              <span className="text-[10px] font-mono text-ink-500 block">Allocated Capital</span>
+                              <span className="font-mono font-bold text-ink-950 text-sm">
+                                ${deployedMandateReceipt.capital.toLocaleString()} {deployedMandateReceipt.stablecoin}
+                              </span>
+                            </div>
+                            <div className="rounded-lg bg-white/80 p-2 border border-emerald-100">
+                              <span className="text-[10px] font-mono text-ink-500 block">Strategy Horizon</span>
+                              <span className="font-bold text-ink-950 text-xs truncate block">
+                                {deployedMandateReceipt.strategy}
+                              </span>
+                            </div>
+                            <div className="rounded-lg bg-white/80 p-2 border border-emerald-100">
+                              <span className="text-[10px] font-mono text-ink-500 block">Rebalance Interval</span>
+                              <span className="font-mono font-bold text-ink-950 text-xs block">
+                                {deployedMandateReceipt.rebalanceInterval}
+                              </span>
+                            </div>
+                            <div className="rounded-lg bg-white/80 p-2 border border-emerald-100">
+                              <span className="text-[10px] font-mono text-ink-500 block">Paymaster Gas Fee</span>
+                              <span className="font-mono font-bold text-emerald-700 text-xs block">
+                                0.0000 ETH (100% Free)
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Allocation Breakdown */}
+                          <div className="mt-3 rounded-lg bg-white/90 p-2.5 border border-emerald-100">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500 font-mono block mb-1.5">
+                              Target Asset Distribution
+                            </span>
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              {deployedMandateReceipt.allocations.map((a) => (
+                                <span
+                                  key={a.symbol}
+                                  className="inline-flex items-center gap-1.5 rounded-md bg-surface-100 px-2 py-1 font-mono text-[11px] font-semibold text-ink-800"
+                                >
+                                  <strong>{a.symbol}:</strong>
+                                  <span className="text-accent-700">{a.weightPercent}%</span>
+                                  <span className="text-ink-400">
+                                    (${((deployedMandateReceipt.capital * a.weightPercent) / 100).toFixed(0)})
+                                  </span>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Execution Reference */}
+                          <div className="mt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[10px] font-mono text-emerald-800 border-t border-emerald-200/60 pt-2">
+                            <span>Rule: {deployedMandateReceipt.rule}</span>
+                            <span className="text-ink-400">Tx Ref: {deployedMandateReceipt.txHash.slice(0, 16)}...</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
 
-{/* 2. Institutional Market & Mandates Directory (Powered by OKX AI Skills) */}
+                {/* 2. Market Catalysts, News & Investor Sentiment Feed (Rendered Directly ON TOP of Directory in Advanced Mode) */}
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
+                  <div className="flex items-center justify-between border-b border-ink-100 pb-4">
+                    <div>
+                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
+                        Live Market Intelligence &amp; Investor Sentiment
+                      </span>
+                      <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
+                        Market Catalysts &amp; Investor Consensus
+                      </h2>
+                    </div>
+                    <span className="rounded-full bg-surface-100 border border-transparent px-3 py-1 text-xs font-medium text-ink-600">
+                      Live On-Chain Feed
+                    </span>
+                  </div>
+
+                  {isLoadingNews ? (
+                    <div className="py-12 text-center text-xs text-ink-500">
+                      Loading real-time market catalysts from X Layer onchain feed...
+                    </div>
+                  ) : (
+                    <div className="mt-5 space-y-4">
+                      {newsList.map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded-2xl border border-ink-200/80 bg-surface-50/50 p-4 transition-all hover:bg-white hover:shadow-xs"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className="rounded bg-ink-900 border border-transparent px-2 py-0.5 font-mono text-xs font-bold text-white">
+                                {item.ticker}
+                              </span>
+                              <span className="text-xs font-semibold text-ink-600">
+                                {item.category}
+                              </span>
+                              <span className="text-ink-400">·</span>
+                              <span className="text-[11px] text-ink-400">{item.timestamp}</span>
+                            </div>
+
+                            <span
+                              className={cn(
+                                "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase",
+                                item.impact === "Bullish"
+                                  ? "bg-emerald-100 text-emerald-800 border border-transparent"
+                                  : item.impact === "Bearish"
+                                  ? "bg-red-100 text-red-800 border border-transparent"
+                                  : "bg-amber-100 text-amber-800 border border-transparent"
+                              )}
+                            >
+                              {item.impact}
+                            </span>
+                          </div>
+
+                          <h3 className="mt-2 font-display text-sm font-bold leading-snug text-ink-900">
+                            {item.headline}
+                          </h3>
+                          <p className="mt-1 text-xs text-ink-600 leading-relaxed">
+                            {item.summary}
+                          </p>
+
+                          {/* What Investors Think So Far & Market Effect */}
+                          <div className="mt-3 space-y-2 rounded-xl border border-ink-200/70 bg-white p-3 text-xs">
+                            <p className="text-ink-800 leading-relaxed">
+                              <strong className="text-ink-900">What Investors Think So Far: </strong>
+                              {item.impact === "Bullish"
+                                ? "Institutional accumulation detected; retail sentiment strongly positive with surging call options activity."
+                                : item.impact === "Bearish"
+                                ? "Defensive rebalancing observed; traders hedging downside risk with automated stop loss triggers."
+                                : "Balanced consolidation; market awaiting further macro economic and earnings guidance."}
+                            </p>
+                            <p className="text-ink-800 leading-relaxed border-t border-ink-100 pt-2">
+                              <strong className="text-accent-600">Market Effect on X Layer: </strong>
+                              {item.marketEffectAnalysis}
+                            </p>
+                          </div>
+
+                          {/* Quick Trade Action */}
+                          <div className="mt-3.5 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const stockMatch = STOCKS.find((s) => s.symbol === item.ticker);
+                                if (stockMatch) setSelectedStock(stockMatch);
+                                setPromptText(item.suggestedAction.tradePrompt);
+                                setMode("basic");
+                                handleSendPrompt(item.suggestedAction.tradePrompt);
+                              }}
+                              className="rounded-lg bg-ink-900 border border-transparent px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-600 cursor-pointer"
+                            >
+                              Trade on Catalyst: {item.suggestedAction.label}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Institutional Market & Mandates Directory (Powered by OKX AI Skills) */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
                   <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
                     <div>
@@ -3613,314 +4023,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                 </>
               )}
             </div>
-
-            
-
-{/* 3. Market Catalysts, News & Investor Sentiment Feed (Rendered Directly Following Directory) */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
-                  <div className="flex items-center justify-between border-b border-ink-100 pb-4">
-                    <div>
-                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
-                        Live Market Intelligence &amp; Investor Sentiment
-                      </span>
-                      <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
-                        Market Catalysts &amp; Investor Consensus
-                      </h2>
-                    </div>
-                    <span className="rounded-full bg-surface-100 border border-transparent px-3 py-1 text-xs font-medium text-ink-600">
-                      Live On-Chain Feed
-                    </span>
-                  </div>
-
-                  {isLoadingNews ? (
-                    <div className="py-12 text-center text-xs text-ink-500">
-                      Loading real-time market catalysts from X Layer onchain feed...
-                    </div>
-                  ) : (
-                    <div className="mt-5 space-y-4">
-                      {newsList.map((item) => (
-                        <div
-                          key={item.id}
-                          className="rounded-2xl border border-ink-200/80 bg-surface-50/50 p-4 transition-all hover:bg-white hover:shadow-xs"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2">
-                              <span className="rounded bg-ink-900 border border-transparent px-2 py-0.5 font-mono text-xs font-bold text-white">
-                                {item.ticker}
-                              </span>
-                              <span className="text-xs font-semibold text-ink-600">
-                                {item.category}
-                              </span>
-                              <span className="text-ink-400">·</span>
-                              <span className="text-[11px] text-ink-400">{item.timestamp}</span>
-                            </div>
-
-                            <span
-                              className={cn(
-                                "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase",
-                                item.impact === "Bullish"
-                                  ? "bg-emerald-100 text-emerald-800 border border-transparent"
-                                  : item.impact === "Bearish"
-                                  ? "bg-red-100 text-red-800 border border-transparent"
-                                  : "bg-amber-100 text-amber-800 border border-transparent"
-                              )}
-                            >
-                              {item.impact}
-                            </span>
-                          </div>
-
-                          <h3 className="mt-2 font-display text-sm font-bold leading-snug text-ink-900">
-                            {item.headline}
-                          </h3>
-                          <p className="mt-1 text-xs text-ink-600 leading-relaxed">
-                            {item.summary}
-                          </p>
-
-                          {/* What Investors Think So Far & Market Effect */}
-                          <div className="mt-3 space-y-2 rounded-xl border border-ink-200/70 bg-white p-3 text-xs">
-                            <p className="text-ink-800 leading-relaxed">
-                              <strong className="text-ink-900">What Investors Think So Far: </strong>
-                              {item.impact === "Bullish"
-                                ? "Institutional accumulation detected; retail sentiment strongly positive with surging call options activity."
-                                : item.impact === "Bearish"
-                                ? "Defensive rebalancing observed; traders hedging downside risk with automated stop loss triggers."
-                                : "Balanced consolidation; market awaiting further macro economic and earnings guidance."}
-                            </p>
-                            <p className="text-ink-800 leading-relaxed border-t border-ink-100 pt-2">
-                              <strong className="text-accent-600">Market Effect on X Layer: </strong>
-                              {item.marketEffectAnalysis}
-                            </p>
-                          </div>
-
-                          {/* Quick Trade Action */}
-                          <div className="mt-3.5 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const stockMatch = STOCKS.find((s) => s.symbol === item.ticker);
-                                if (stockMatch) setSelectedStock(stockMatch);
-                                setPromptText(item.suggestedAction.tradePrompt);
-                                setMode("basic");
-                                handleSendPrompt(item.suggestedAction.tradePrompt);
-                              }}
-                              className="rounded-lg bg-ink-900 border border-transparent px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-600 cursor-pointer"
-                            >
-                              Trade on Catalyst: {item.suggestedAction.label}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* ========================================================================= */}
-            {/* THE MANDATE EXECUTION SUMMARY                                             */}
-            {/* ========================================================================= */}
-            <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6 text-ink-900">
-              <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
-                      OKX X Layer (Chain 196) Autonomous Agent
-                    </span>
-                    <span className="rounded bg-emerald-100 border border-emerald-200 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-800">
-                      Live Execution Active
-                    </span>
-                  </div>
-                  <h2 className="mt-1 font-display text-lg font-bold text-ink-950 sm:text-xl">
-                    The Mandate Execution Summary
-                  </h2>
-                  <p className="mt-0.5 text-xs text-ink-600 leading-relaxed">
-                    Comprehensive background, trading comparison, active duration, and stipulated growth targets for the initiated mandate.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleEvaluateDriftNow}
-                    className="rounded-lg border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-white hover:text-ink-950 transition-colors cursor-pointer"
-                  >
-                    Check Drift Telemetry
-                  </button>
-                </div>
-              </div>
-
-              {/* Explanatory Mandate Statement */}
-              <div className="mt-4 rounded-xl border border-accent-200 bg-accent-50/50 p-4">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-accent-700">
-                  Initiated Policy
-                </span>
-                <p className="mt-1 font-display text-base font-bold text-ink-950 leading-snug">
-                  The mandate was: <span className="text-accent-600">{currentAdvisoryPlan.strategyName}</span> utilizing{" "}
-                  <span className="font-mono text-ink-800">{advisoryStablecoin}</span> liquidity across{" "}
-                  <span className="font-mono text-ink-800">
-                    {currentAdvisoryPlan.allocations.filter(a => a.symbol !== advisoryStablecoin).map(a => a.symbol).join(", ")}
-                  </span>.
-                </p>
-                <p className="mt-1.5 text-xs text-ink-600 leading-relaxed font-mono">
-                  Active Rule: "{currentAdvisoryPlan.mandateRule}"
-                </p>
-              </div>
-
-              {/* Execution Background 4-Metric Grid */}
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Capital Initiated</span>
-                  <p className="mt-1 font-mono text-sm font-bold text-ink-950">
-                    $1,000 {advisoryStablecoin}
-                  </p>
-                  <span className="text-[10px] text-ink-500 font-mono">Initiated Sep 24, 2026</span>
-                </div>
-
-                <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Timeline &amp; Horizon</span>
-                  <p className="mt-1 font-mono text-sm font-bold text-accent-700">
-                    {advisoryHorizon === "short_term" ? "Short-Term Momentum" : "Long-Term DCA"}
-                  </p>
-                  <span className="text-[10px] text-ink-500 font-mono">
-                    {advisoryHorizon === "short_term" ? "30 Days Window" : "12-24 Months"}
-                  </span>
-                </div>
-
-                <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Stipulated Growth</span>
-                  <p className="mt-1 font-mono text-sm font-bold text-emerald-700">
-                    +{advisoryHorizon === "short_term"
-                      ? (advisoryRisk === "aggressive" ? "27.8%" : advisoryRisk === "balanced" ? "15.2%" : "6.5%")
-                      : (advisoryRisk === "aggressive" ? "44.5%" : advisoryRisk === "balanced" ? "26.5%" : "12.8%")}
-                  </p>
-                  <span className="text-[10px] text-emerald-600 font-mono">
-                    Projected +${advisoryHorizon === "short_term"
-                      ? (advisoryRisk === "aggressive" ? "278.00" : advisoryRisk === "balanced" ? "152.00" : "65.00")
-                      : (advisoryRisk === "aggressive" ? "445.00" : advisoryRisk === "balanced" ? "265.00" : "128.00")} {advisoryStablecoin}
-                  </span>
-                </div>
-
-                <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Active Trading Duration</span>
-                  <p className="mt-1 font-mono text-sm font-bold text-ink-950">
-                    3 Days Active
-                  </p>
-                  <span className="text-[10px] text-ink-500 font-mono">4 OKX DEX Rebalances</span>
-                </div>
-              </div>
-
-              {/* Trading Comparison Table */}
-              <div className="mt-5">
-                <div className="flex items-center justify-between pb-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-ink-800">
-                    Trading Comparison &amp; Stipulated Asset Growth
-                  </h4>
-                  <span className="text-[11px] font-mono text-ink-500">OKX DEX Aggregator Telemetry</span>
-                </div>
-
-                <div className="overflow-x-auto rounded-xl border border-ink-200">
-                  <table className="w-full min-w-[640px] text-left text-xs">
-                    <thead className="border-b border-ink-200 bg-surface-100 font-semibold text-ink-900">
-                      <tr>
-                        <th className="p-3">Asset</th>
-                        <th className="p-3">Allocation</th>
-                        <th className="p-3">Capital</th>
-                        <th className="p-3">Initial / Live Spot</th>
-                        <th className="p-3">Stipulated Target</th>
-                        <th className="p-3">Drift Status</th>
-                        <th className="p-3 text-right">Execution Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-ink-200/70 bg-white">
-                      {currentAdvisoryPlan.allocations.map((alloc) => {
-                        const price = stockPrices[alloc.symbol] || (alloc.symbol === advisoryStablecoin ? 1.0 : 213.9);
-                        const allocCapital = (1000 * alloc.weightPercent) / 100;
-                        const stipulatedPct =
-                          alloc.symbol === advisoryStablecoin
-                            ? "+0.0% (Floor)"
-                            : advisoryRisk === "aggressive"
-                            ? "+32.4%"
-                            : advisoryRisk === "balanced"
-                            ? "+18.5%"
-                            : "+9.2%";
-
-                        return (
-                          <tr key={alloc.symbol} className="hover:bg-surface-50/80 transition-colors">
-                            <td className="p-3">
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-ink-950">{alloc.symbol}</span>
-                                <span className="text-[10px] text-ink-500 font-medium">({alloc.role})</span>
-                              </div>
-                            </td>
-                            <td className="p-3 font-mono font-semibold text-accent-700">
-                              {alloc.weightPercent}%
-                            </td>
-                            <td className="p-3 font-mono text-ink-800">
-                              ${allocCapital.toFixed(2)}
-                            </td>
-                            <td className="p-3 font-mono text-ink-800">
-                              {alloc.symbol === advisoryStablecoin ? `$1.00 ${advisoryStablecoin}` : `$${price.toFixed(2)}`}
-                            </td>
-                            <td className="p-3 font-mono font-bold text-emerald-700">
-                              {stipulatedPct}
-                            </td>
-                            <td className="p-3">
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-mono font-semibold text-emerald-800">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                In Equilibrium
-                              </span>
-                            </td>
-                            <td className="p-3 text-right">
-                              <span className="font-mono text-[11px] font-bold text-ink-700">
-                                Auto-Guarded
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Collapsible Low-Level On-Chain Telemetry Log */}
-              <div className="mt-4 pt-3 border-t border-ink-100">
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setShowAuditLogs(!showAuditLogs)}
-                    className="text-xs font-semibold text-ink-600 hover:text-ink-950 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>{showAuditLogs ? "Hide" : "Show"} Low-Level On-Chain Telemetry Log</span>
-                    <span>{showAuditLogs ? "▲" : "▼"}</span>
-                  </button>
-
-                  {showAuditLogs && (
-                    <button
-                      type="button"
-                      onClick={() => setExecutionLogs([])}
-                      className="text-[10px] text-ink-400 hover:text-red-600 cursor-pointer"
-                    >
-                      Clear Log
-                    </button>
-                  )}
-                </div>
-
-                {showAuditLogs && (
-                  <div className="mt-3 rounded-xl border border-zinc-800 bg-[#0C0F17] p-3 text-zinc-300 font-mono text-[10px] max-h-[180px] overflow-y-auto space-y-1.5">
-                    {executionLogs.length === 0 ? (
-                      <p className="text-zinc-500 text-center py-2">No raw events recorded.</p>
-                    ) : (
-                      executionLogs.map((log) => (
-                        <div key={log.id} className="border-b border-zinc-800/60 pb-1 last:border-b-0">
-                          <span className="text-zinc-500">[{log.timestamp}]</span>{" "}
-                          <span className="font-bold text-accent-400">[{log.source}]</span> {log.message}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
       </main>
@@ -4100,18 +4202,18 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   )}
                 </div>
 
-                {/* STEP 2: All 2 Execution & Interface Channels */}
+                {/* STEP 2: Choose Interface Platform */}
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider block">
                       2. Choose Interface Platform
                     </label>
                     <span className="text-[10px] text-accent-700 font-medium font-mono">
-                      2 Channels Active
+                      Multi-Platform Gateway
                     </span>
                   </div>
 
-                  {/* 2 Platform Selection Grid */}
+                  {/* 4 Platform Selection Grid */}
                   <div className="grid grid-cols-2 gap-2">
                     {/* 1. Web Platform */}
                     <button
@@ -4152,14 +4254,62 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                         <div className="text-[9px] text-sky-700 font-mono truncate">@MeireiXLayerBot</div>
                       </div>
                     </button>
+
+                    {/* 3. WhatsApp (Coming Soon) */}
+                    <button
+                      type="button"
+                      onClick={() => setConnectChannel("whatsapp")}
+                      className={cn(
+                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 relative",
+                        connectChannel === "whatsapp"
+                          ? "border-emerald-500 bg-emerald-50/90 shadow-xs ring-1 ring-emerald-500"
+                          : "border-ink-200 bg-surface-50 hover:bg-white"
+                      )}
+                    >
+                      <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
+                        <SimpleWhatsAppLogo className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="font-bold text-ink-950 text-xs truncate">WhatsApp</span>
+                        </div>
+                        <span className="inline-block rounded bg-amber-100 border border-amber-300 px-1 py-0.2 font-mono text-[8px] font-bold text-amber-800">
+                          COMING SOON
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* 4. Instagram (Coming Soon) */}
+                    <button
+                      type="button"
+                      onClick={() => setConnectChannel("instagram")}
+                      className={cn(
+                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 relative",
+                        connectChannel === "instagram"
+                          ? "border-pink-500 bg-pink-50/90 shadow-xs ring-1 ring-pink-500"
+                          : "border-ink-200 bg-surface-50 hover:bg-white"
+                      )}
+                    >
+                      <div className="p-1.5 rounded-lg bg-pink-100 text-pink-700 shrink-0">
+                        <SimpleInstagramLogo className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="font-bold text-ink-950 text-xs truncate">Instagram</span>
+                        </div>
+                        <span className="inline-block rounded bg-amber-100 border border-amber-300 px-1 py-0.2 font-mono text-[8px] font-bold text-amber-800">
+                          COMING SOON
+                        </span>
+                      </div>
+                    </button>
                   </div>
 
                   {/* Channel Action Panel */}
                   <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-2">
                     {connectChannel === "web" && (
                       <div className="space-y-2">
-                        <p className="text-[11px] text-ink-600">
-                          Direct web browser access to spot equities, conversational agent, unit calculator, and autonomous mandates on OKX X Layer.
+                        <p className="text-[11px] text-ink-700 leading-relaxed">
+                          <strong>Run simulation on specific amount to test:</strong> Model non-custodial spot trades, converse with the AI agent, and simulate autonomous rebalancing mandates on OKX X Layer (Chain 196) without risking real capital.
                         </p>
                         <button
                           type="button"
@@ -4172,9 +4322,33 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                           }}
                           className="w-full py-2 px-3 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                         >
-                          <span>Continue on Web Terminal Console</span>
+                          <span>Launch Web Terminal Simulation</span>
                           <span>→</span>
                         </button>
+                      </div>
+                    )}
+
+                    {connectChannel === "whatsapp" && (
+                      <div className="space-y-2 text-center py-2">
+                        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
+                          <span>⏳</span>
+                          <span>WhatsApp Assistant — COMING SOON</span>
+                        </div>
+                        <p className="text-[11px] text-ink-600 leading-relaxed">
+                          WhatsApp Autonomous AI Agent integration on OKX X Layer is currently finalizing testnet validation. Use <strong>Telegram</strong> (@MeireiXLayerBot) or <strong>Web Console</strong> today for instant live execution.
+                        </p>
+                      </div>
+                    )}
+
+                    {connectChannel === "instagram" && (
+                      <div className="space-y-2 text-center py-2">
+                        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
+                          <span>⏳</span>
+                          <span>Instagram Direct Agent — COMING SOON</span>
+                        </div>
+                        <p className="text-[11px] text-ink-600 leading-relaxed">
+                          Instagram automated social signals and direct portfolio tracking is launching soon. Use <strong>Telegram</strong> (@MeireiXLayerBot) or <strong>Web Console</strong> for live execution on Chain 196.
+                        </p>
                       </div>
                     )}
 
@@ -4628,9 +4802,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     disabled={!termsAgreedCheckbox}
                     onClick={() => {
                       setHasAcceptedAdvancedTerms(true);
-                      if (typeof window !== "undefined") {
-                        localStorage.setItem("meirei_advanced_terms_accepted", "true");
-                      }
                       setShowAdvancedTermsModal(false);
                       setMode("advanced");
                     }}
