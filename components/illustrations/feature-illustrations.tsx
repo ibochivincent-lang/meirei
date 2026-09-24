@@ -194,7 +194,7 @@ export function ReceiveIllustration() {
               {/* Latest Market News Banner */}
               <div className="mt-2.5 rounded-lg border border-sky-200 bg-sky-50/70 p-2 text-left">
                 <span className="font-mono text-[9px] font-bold text-sky-800 uppercase flex items-center gap-1">
-                  <span>📰</span> Latest Market News Intelligence
+                  Latest Market News Intelligence
                 </span>
                 <p className="mt-0.5 text-[10px] text-sky-900 leading-snug">
                   NVDA compute shipments accelerate; Mag7 sentiment score surges to 86/100. Autonomous rebalance solver activated.
@@ -315,7 +315,7 @@ export function ContextIllustration() {
           {/* Section 3: Expanding to More Languages */}
           <div className="mt-2.5 rounded-lg border border-accent-200 bg-accent-50/50 p-2 text-center">
             <p className="text-[10px] font-semibold text-ink-800">
-              🌐 Adding French, German, Korean &amp; Arabic soon!
+              Adding French, German, Korean &amp; Arabic soon!
             </p>
           </div>
         </div>

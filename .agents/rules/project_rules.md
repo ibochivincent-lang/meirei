@@ -1,9 +1,3 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
-
 # Project Rules and Guidelines
 
 ## 1. Naming and Syntax Rules
@@ -20,4 +14,3 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## 4. Data & Connectivity Standards
 * **Zero Mock Data:** Mock data, placeholder dynamic lists, dummy fixtures, and hardcoded static objects are strictly forbidden.
 * **Full Stack Integration:** All features, data flows, UI components, and backend endpoints must be fully connected and operational end-to-end.
-
