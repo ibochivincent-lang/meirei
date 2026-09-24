@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   /* Surface — warm near-whites */
@@ -54,162 +53,13 @@ html {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
-/* Dark Theme Tokens & Overrides */
-html.dark {
-  --color-surface-0: #11141d;
-  --color-surface-50: #0b0e14;
-  --color-surface-100: #161b26;
-  --color-surface-200: #202736;
-  --color-surface-300: #2d3748;
-
-  --color-ink-900: #f8fafc;
-  --color-ink-700: #e2e8f0;
-  --color-ink-600: #cbd5e1;
-  --color-ink-500: #94a3b8;
-  --color-ink-400: #64748b;
-  --color-ink-300: #475569;
-  --color-ink-200: #202736;
-  --color-ink-100: #161b26;
-
-  --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.7), 0 4px 12px rgb(0 0 0 / 0.7);
-  --shadow-card: 0 4px 12px rgb(0 0 0 / 0.8), 0 16px 40px rgb(0 0 0 / 0.9);
-
-  color-scheme: dark;
-}
-
+/* Strict Light Theme Tokens - Institutional Terminal Aesthetic */
 body {
   background: var(--color-surface-50);
   color: var(--color-ink-900);
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  transition: background-color 200ms ease, color 200ms ease;
-}
-
-html.dark body {
-  background: #0b0e14 !important;
-  color: #f8fafc !important;
-}
-
-/* Eliminate header, nav, and modal transparency in dark mode — strictly solid opaque surfaces */
-html.dark header,
-html.dark nav,
-html.dark aside,
-html.dark footer {
-  background-color: #0b0e14 !important;
-  border-bottom-color: #202736 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* Eliminate any backdrop blur throughout the app in dark mode to prevent ghost text bleed */
-html.dark [class*="backdrop-blur"] {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* Ensure all cards with bg-white convert to solid dark cards in dark mode */
-html.dark .bg-white:not(.keep-white) {
-  background-color: #11141d !important;
-  border-color: #202736 !important;
-  color: #f8fafc !important;
-}
-
-/* Inputs and textareas in dark mode */
-html.dark input:not([type="checkbox"]):not([type="radio"]),
-html.dark textarea,
-html.dark select {
-  background-color: #161b26 !important;
-  border-color: #202736 !important;
-  color: #f8fafc !important;
-}
-
-html.dark .bg-surface-50,
-html.dark .bg-surface-50\/90,
-html.dark .bg-surface-50\/95,
-html.dark .bg-surface-50\/85,
-html.dark .bg-surface-50\/80 {
-  background-color: #0b0e14 !important;
-}
-
-html.dark .bg-surface-0,
-html.dark .bg-surface-0\/90,
-html.dark .bg-surface-0\/95 {
-  background-color: #11141d !important;
-}
-
-html.dark .bg-surface-100 {
-  background-color: #161b26 !important;
-}
-
-html.dark #research-spotlight,
-html.dark .research-spotlight,
-html.dark .bg-\[\#F6F5EE\] {
-  background-color: #0b0e14 !important;
-}
-
-html.dark #how-it-works,
-html.dark #features,
-html.dark .bg-\[\#FFF5F2\] {
-  background-color: #0b0e14 !important;
-}
-
-html.dark .bg-\[\#F5F5F5\] {
-  background-color: #161b26 !important;
-}
-
-html.dark .bg-grain {
-  display: none !important;
-}
-
-html.dark .bg-\[\#FAFAF8\] {
-  background-color: var(--color-surface-50) !important;
-}
-
-html.dark .bg-\[\#FAFAFA\] {
-  background-color: #000000 !important;
-}
-
-html.dark .bg-\[\#FFFBF2\] {
-  background-color: var(--color-surface-100) !important;
-}
-
-html.dark .bg-\[\#FCFCFA\] {
-  background-color: var(--color-surface-100) !important;
-}
-
-html.dark .bg-\[\#E6EEFF\] {
-  background-color: var(--color-surface-100) !important;
-}
-
-html.dark .bg-\[\#DCEAF5\] {
-  background-color: #0e1621 !important;
-}
-
-/* Mobile device background overrides for dark mode */
-html.dark .bg-\[url\(\'\/whatsapp-bg\.png\'\)\],
-html.dark .bg-\[url\(\"\/whatsapp-bg\.png\"\)\],
-html.dark [style*="whatsapp-bg"] {
-  background-image: none !important;
-  background-color: #0b141a !important;
-}
-
-html.dark .border-ink-300,
-html.dark .border-ink-200,
-html.dark .border-ink-200\/80,
-html.dark .border-ink-200\/70,
-html.dark .border-ink-200\/60,
-html.dark .border-ink-100,
-html.dark .border-\[\#D2D2D2\] {
-  border-color: var(--color-surface-200) !important;
-}
-
-html.dark .text-black {
-  color: var(--color-ink-900) !important;
-}
-
-html.dark .text-ink-950 {
-  color: var(--color-ink-900) !important;
 }
 
 h1, h2, h3 {
@@ -323,25 +173,4 @@ h4, h5, h6 {
   font-size: 0.9rem;
 }
 
-html.dark .legal-prose {
-  color: #e2e8f0 !important;
-}
 
-html.dark .legal-prose strong {
-  color: #ffffff !important;
-}
-
-html.dark .legal-prose h1,
-html.dark .legal-prose h2,
-html.dark .legal-prose h3,
-html.dark .legal-prose h4 {
-  color: #ffffff !important;
-}
-
-html.dark .legal-prose .legal-link {
-  color: #ffa594 !important;
-}
-
-html.dark .legal-prose .legal-link:hover {
-  color: #ffdcd6 !important;
-}

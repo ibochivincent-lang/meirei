@@ -18,10 +18,9 @@ export const SITE = {
   brandName: "meirei",
   legalName: "meirei CORE LTD",
   whatsappNumber: "2349043580863",
-  whatsappLink:
-    "https://wa.me/2349043580863?text=" + encodeURIComponent("Hi meirei"),
+  whatsappLink: "/coming-soon",
   telegramLink: `https://t.me/${TELEGRAM_BOT_USERNAME || "MeireiXLayerBot"}`,
-  instagramLink: "https://instagram.com/meirei.agent",
+  instagramLink: "/coming-soon",
 
   privacyEmail: CONTACT_EMAIL,
   legalEmail: "legal@meirei.app",

@@ -41,5 +41,5 @@ Meirei clearly separates ephemeral and durable state:
 ## Sanctions & Asset Integrity
 
 - **Pre-Quote Sanctions Screening**: Every wallet address is verified against the Chainalysis Sanctions Oracle and known OFAC Specially Designated Nationals (SDN) lists before any quote or calldata is generated.
-- **Strict Allowlist**: Trading is restricted to allowlisted demo tokenized equities and ETFs on OKX X Layer (`AAPLx`, `MSFTx`, `NVDAx`, `GOOGLx`, `AMZNx`, `METAx`, `TSLAx`, `COINx`, `SPYx`, `QQQx`, `AMDx`, `CRWDx`) and cash stablecoins (`USDG`, `USDC`).
+- **Strict Allowlist**: Trading is restricted to allowlisted demo tokenized equities and ETFs on OKX X Layer (`AAPLx`, `MSFTx`, `NVDAx`, `GOOGLx`, `AMZNx`, `METAx`, `TSLAx`, `COINx`, `SPYx`, `QQQx`, `AMDx`, `CRWDx`, `MSTRx`, `TSMx`, `AVGOx`, `INTCx`, `MUx`, `MRVLx`, `IWMx`, `DELLx`) and cash stablecoins (`USDG`, `USDC`).
 - **Slippage Bounds**: Max slippage bounds are enforced to protect users from front-running and execution drift.

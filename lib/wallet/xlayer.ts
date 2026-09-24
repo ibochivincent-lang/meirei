@@ -84,6 +84,14 @@ export const XLAYER_MONITORED_TOKENS = [
   { symbol: "QQQx", address: "0x71c50b69107cc6ea56795f54070a7f1a8c9e5033", decimals: 18, name: "Invesco QQQ xStock", isCash: false },
   { symbol: "AMDx", address: "0x89e13b8602b9ff9b867cfae4f8d55d71fa8430e2", decimals: 18, name: "Advanced Micro Devices xStock", isCash: false },
   { symbol: "CRWDx", address: "0x3a4b69c5819772bf258b3506c74ad64a787965df", decimals: 18, name: "CrowdStrike xStock", isCash: false },
+  { symbol: "MSTRx", address: "0x7b58c9320b92f72bc97e79391ab1a457492c13fa", decimals: 18, name: "MicroStrategy xStock", isCash: false },
+  { symbol: "TSMx", address: "0x2a946b5d92e8c614efabcf6e1598da4c4e7926b1", decimals: 18, name: "Taiwan Semiconductor xStock", isCash: false },
+  { symbol: "AVGOx", address: "0x6f31b87a912852643a6d71ec9103cba7e48df528", decimals: 18, name: "Broadcom xStock", isCash: false },
+  { symbol: "INTCx", address: "0x18c4b726ae0d4f5b2f67ea9a36729a571c8901eb", decimals: 18, name: "Intel Corporation xStock", isCash: false },
+  { symbol: "MUx", address: "0x91d3e74a812b704c356da7fe63098514ef1a52fc", decimals: 18, name: "Micron Technology xStock", isCash: false },
+  { symbol: "MRVLx", address: "0x48e1c67d301ba593fa88d5e4905cf71286b24a35", decimals: 18, name: "Marvell Technology xStock", isCash: false },
+  { symbol: "IWMx", address: "0x3c71a54b9d0263f1ec78b4a8e0380c5984cf7632", decimals: 18, name: "Russell 2000 ETF xStock", isCash: false },
+  { symbol: "DELLx", address: "0x83e5fa62d908e234bc5719ab4c5770df594e9b7a", decimals: 18, name: "Dell Technologies xStock", isCash: false },
 ];
 
 /** Standard fallback spot reference prices for USD valuation */
@@ -102,6 +110,14 @@ export const REFERENCE_PRICES: Record<string, number> = {
   QQQx: 495.2,
   AMDx: 156.4,
   CRWDx: 318.2,
+  MSTRx: 135.2,
+  TSMx: 175.8,
+  AVGOx: 168.4,
+  INTCx: 23.5,
+  MUx: 92.4,
+  MRVLx: 68.2,
+  IWMx: 215.6,
+  DELLx: 118.5,
 };
 
 /**

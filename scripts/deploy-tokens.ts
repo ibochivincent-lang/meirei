@@ -29,6 +29,14 @@ export const TOKEN_SPECS: TokenSpec[] = [
   { symbol: "QQQx", name: "Invesco QQQ Nasdaq-100 Tokenized Asset", decimals: 18, initialSupply: 25_000 },
   { symbol: "AMDx", name: "Advanced Micro Devices Tokenized Equity", decimals: 18, initialSupply: 50_000 },
   { symbol: "CRWDx", name: "CrowdStrike Holdings Tokenized Equity", decimals: 18, initialSupply: 50_000 },
+  { symbol: "MSTRx", name: "MicroStrategy Inc. Tokenized Equity", decimals: 18, initialSupply: 25_000 },
+  { symbol: "TSMx", name: "Taiwan Semiconductor Mfg. Tokenized Equity", decimals: 18, initialSupply: 50_000 },
+  { symbol: "AVGOx", name: "Broadcom Inc. Tokenized Equity", decimals: 18, initialSupply: 50_000 },
+  { symbol: "INTCx", name: "Intel Corporation Tokenized Equity", decimals: 18, initialSupply: 100_000 },
+  { symbol: "MUx", name: "Micron Technology Tokenized Equity", decimals: 18, initialSupply: 50_000 },
+  { symbol: "MRVLx", name: "Marvell Technology Tokenized Equity", decimals: 18, initialSupply: 50_000 },
+  { symbol: "IWMx", name: "Russell 2000 ETF Tokenized Asset", decimals: 18, initialSupply: 25_000 },
+  { symbol: "DELLx", name: "Dell Technologies Tokenized Equity", decimals: 18, initialSupply: 50_000 },
 ];
 
 export const NETWORK_CONFIG = {

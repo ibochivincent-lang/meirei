@@ -20,6 +20,14 @@ export const ALLOWLIST: AllowlistEntry[] = [
   { symbol: "QQQx", address: "0x71c50b69107cc6ea56795f54070a7f1a8c9e5033", decimals: 18, name: "Invesco QQQ xStock" },
   { symbol: "AMDx", address: "0x89e13b8602b9ff9b867cfae4f8d55d71fa8430e2", decimals: 18, name: "Advanced Micro Devices xStock" },
   { symbol: "CRWDx", address: "0x3a4b69c5819772bf258b3506c74ad64a787965df", decimals: 18, name: "CrowdStrike xStock" },
+  { symbol: "MSTRx", address: "0x7b58c9320b92f72bc97e79391ab1a457492c13fa", decimals: 18, name: "MicroStrategy xStock" },
+  { symbol: "TSMx", address: "0x2a946b5d92e8c614efabcf6e1598da4c4e7926b1", decimals: 18, name: "Taiwan Semiconductor xStock" },
+  { symbol: "AVGOx", address: "0x6f31b87a912852643a6d71ec9103cba7e48df528", decimals: 18, name: "Broadcom xStock" },
+  { symbol: "INTCx", address: "0x18c4b726ae0d4f5b2f67ea9a36729a571c8901eb", decimals: 18, name: "Intel Corporation xStock" },
+  { symbol: "MUx", address: "0x91d3e74a812b704c356da7fe63098514ef1a52fc", decimals: 18, name: "Micron Technology xStock" },
+  { symbol: "MRVLx", address: "0x48e1c67d301ba593fa88d5e4905cf71286b24a35", decimals: 18, name: "Marvell Technology xStock" },
+  { symbol: "IWMx", address: "0x3c71a54b9d0263f1ec78b4a8e0380c5984cf7632", decimals: 18, name: "Russell 2000 ETF xStock" },
+  { symbol: "DELLx", address: "0x83e5fa62d908e234bc5719ab4c5770df594e9b7a", decimals: 18, name: "Dell Technologies xStock" },
   { symbol: "USDG", address: "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8", decimals: 6, name: "Global Dollar" },
   { symbol: "USDC", address: "0xb6ceceab302e2e4948951ee7843fc24e92933061", decimals: 6, name: "USD Coin" },
 ];
@@ -28,7 +36,10 @@ export const ALLOWLIST: AllowlistEntry[] = [
 export const MAG7_SYMBOLS = ["AAPLx", "MSFTx", "NVDAx", "GOOGLx", "AMZNx", "METAx", "TSLAx"] as const;
 
 /** Broad Market and Tech ETF members available on X Layer. */
-export const ETF_SYMBOLS = ["SPYx", "QQQx"] as const;
+export const ETF_SYMBOLS = ["SPYx", "QQQx", "IWMx"] as const;
+
+/** Semiconductor and hardware infrastructure sleeve. */
+export const SEMI_SYMBOLS = ["NVDAx", "TSMx", "AVGOx", "AMDx", "INTCx", "MUx", "MRVLx"] as const;
 
 export const CASH_SYMBOLS: CashSymbol[] = ["USDG", "USDC"];
 
@@ -62,6 +73,30 @@ const SYMBOL_ALIASES: Record<string, string> = {
   ADVANCEDMICRODEVICES: "AMDx",
   CRWD: "CRWDx",
   CROWDSTRIKE: "CRWDx",
+  MSTR: "MSTRx",
+  MICROSTRATEGY: "MSTRx",
+  XMSTR: "MSTRx",
+  TSM: "TSMx",
+  TSMC: "TSMx",
+  XTSM: "TSMx",
+  AVGO: "AVGOx",
+  BROADCOM: "AVGOx",
+  XAVGO: "AVGOx",
+  INTC: "INTCx",
+  INTEL: "INTCx",
+  XINTC: "INTCx",
+  MU: "MUx",
+  MICRON: "MUx",
+  XMU: "MUx",
+  MRVL: "MRVLx",
+  MARVELL: "MRVLx",
+  XMRVL: "MRVLx",
+  IWM: "IWMx",
+  RUSSELL: "IWMx",
+  RUSSELL2000: "IWMx",
+  XIWM: "IWMx",
+  DELL: "DELLx",
+  XDELL: "DELLx",
 };
 
 export const CHAIN_INDEX = 196;

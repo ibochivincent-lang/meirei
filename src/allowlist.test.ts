@@ -5,8 +5,8 @@ import * as fs from "fs";
 import * as path from "path";
 
 describe("Canonical Asset Allowlist Integrity", () => {
-  it("should contain exactly 14 canonical tokens (12 xStocks/ETFs + 2 cash stables)", () => {
-    expect(ALLOWLIST).toHaveLength(14);
+  it("should contain exactly 22 canonical tokens (20 xStocks/ETFs + 2 cash stables)", () => {
+    expect(ALLOWLIST).toHaveLength(22);
     const symbols = ALLOWLIST.map((e) => e.symbol);
     expect(symbols).toContain("AAPLx");
     expect(symbols).toContain("MSFTx");
@@ -20,6 +20,14 @@ describe("Canonical Asset Allowlist Integrity", () => {
     expect(symbols).toContain("QQQx");
     expect(symbols).toContain("AMDx");
     expect(symbols).toContain("CRWDx");
+    expect(symbols).toContain("MSTRx");
+    expect(symbols).toContain("TSMx");
+    expect(symbols).toContain("AVGOx");
+    expect(symbols).toContain("INTCx");
+    expect(symbols).toContain("MUx");
+    expect(symbols).toContain("MRVLx");
+    expect(symbols).toContain("IWMx");
+    expect(symbols).toContain("DELLx");
     expect(symbols).toContain("USDG");
     expect(symbols).toContain("USDC");
   });
@@ -66,6 +74,21 @@ describe("Canonical Asset Allowlist Integrity", () => {
     expect(resolveSymbol("nasdaq")).toBe("QQQx");
     expect(resolveSymbol("AMD")).toBe("AMDx");
     expect(resolveSymbol("CRWD")).toBe("CRWDx");
+    expect(resolveSymbol("MSTR")).toBe("MSTRx");
+    expect(resolveSymbol("microstrategy")).toBe("MSTRx");
+    expect(resolveSymbol("TSM")).toBe("TSMx");
+    expect(resolveSymbol("tsmc")).toBe("TSMx");
+    expect(resolveSymbol("AVGO")).toBe("AVGOx");
+    expect(resolveSymbol("broadcom")).toBe("AVGOx");
+    expect(resolveSymbol("INTC")).toBe("INTCx");
+    expect(resolveSymbol("intel")).toBe("INTCx");
+    expect(resolveSymbol("MU")).toBe("MUx");
+    expect(resolveSymbol("micron")).toBe("MUx");
+    expect(resolveSymbol("MRVL")).toBe("MRVLx");
+    expect(resolveSymbol("marvell")).toBe("MRVLx");
+    expect(resolveSymbol("IWM")).toBe("IWMx");
+    expect(resolveSymbol("russell2000")).toBe("IWMx");
+    expect(resolveSymbol("DELL")).toBe("DELLx");
   });
 
   it("prevents drift between .env.example and canonical allowlist", () => {

@@ -27,17 +27,15 @@ export function Footer() {
           </p>
 
           <div className="flex flex-col gap-3 pt-2 text-base text-surface-50/70">
-            <a
-              href={SITE.whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/coming-soon"
               className="flex items-center gap-2.5 transition-colors hover:text-surface-50"
             >
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent-500">
-                <Image src={whatsappIcon} alt="" width={13} height={13} />
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent-500/30 text-accent-400">
+                <Image src={whatsappIcon} alt="" width={13} height={13} className="opacity-70" />
               </span>
-              WhatsApp
-            </a>
+              <span>WhatsApp <span className="text-xs font-mono text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">Coming Soon</span></span>
+            </Link>
             {SITE.telegramLink && (
               <a
                 href={SITE.telegramLink}
@@ -51,23 +49,19 @@ export function Footer() {
                 Telegram
               </a>
             )}
-            {SITE.instagramLink && (
-              <a
-                href={SITE.instagramLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2.5 transition-colors hover:text-surface-50"
-              >
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-tr from-[#FFDC80] via-[#FD1D1D] to-[#833AB4]">
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-white stroke-2">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                    <circle cx="12" cy="12" r="4" />
-                    <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" />
-                  </svg>
-                </span>
-                Instagram
-              </a>
-            )}
+            <Link
+              href="/coming-soon"
+              className="flex items-center gap-2.5 transition-colors hover:text-surface-50"
+            >
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface-50/10">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-white stroke-2 opacity-70">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" />
+                </svg>
+              </span>
+              <span>Instagram <span className="text-xs font-mono text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">Coming Soon</span></span>
+            </Link>
           </div>
         </div>
 

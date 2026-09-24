@@ -230,6 +230,143 @@ export const STOCKS: StockItem[] = [
       </svg>
     ),
   },
+  {
+    symbol: "MSTRx",
+    name: "MicroStrategy",
+    price: "$135.20",
+    isLive: true,
+    color: "#F7931A",
+    change24h: "+4.12%",
+    high24h: "$138.50",
+    low24h: "$131.00",
+    volume24h: "$3.82M USDG",
+    chartPoints: [131.0, 132.4, 131.8, 133.5, 134.2, 136.0, 135.4, 138.5, 137.1, 135.2],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M4 4h4v16H4V4zm6 0h4v16h-4V4zm6 0h4v16h-4V4z" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "TSMx",
+    name: "Taiwan Semi",
+    price: "$175.80",
+    isLive: true,
+    color: "#0055A5",
+    change24h: "+2.15%",
+    high24h: "$178.20",
+    low24h: "$173.40",
+    volume24h: "$2.65M USDG",
+    chartPoints: [173.4, 174.1, 174.8, 175.2, 176.0, 177.3, 176.8, 178.2, 177.0, 175.8],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "AVGOx",
+    name: "Broadcom",
+    price: "$168.40",
+    isLive: true,
+    color: "#CC092F",
+    change24h: "+1.92%",
+    high24h: "$170.80",
+    low24h: "$166.20",
+    volume24h: "$1.95M USDG",
+    chartPoints: [166.2, 166.8, 167.5, 168.1, 167.9, 169.4, 168.8, 170.8, 169.5, 168.4],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "INTCx",
+    name: "Intel",
+    price: "$23.50",
+    isLive: true,
+    color: "#0071C5",
+    change24h: "+0.85%",
+    high24h: "$24.10",
+    low24h: "$23.10",
+    volume24h: "$1.12M USDG",
+    chartPoints: [23.1, 23.3, 23.2, 23.5, 23.7, 24.1, 23.9, 23.8, 23.6, 23.5],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <circle cx="12" cy="12" r="9" stroke="#FFFFFF" strokeWidth="2" fill="none" />
+        <path d="M9 9h6v6H9z" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "MUx",
+    name: "Micron Tech",
+    price: "$92.40",
+    isLive: true,
+    color: "#002D62",
+    change24h: "+2.88%",
+    high24h: "$94.20",
+    low24h: "$90.80",
+    volume24h: "$1.55M USDG",
+    chartPoints: [90.8, 91.2, 91.8, 92.5, 92.1, 93.4, 92.9, 94.2, 93.5, 92.4],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M3 5h3v14H3V5zm5 0h3l4 8V5h3v14h-3l-4-8v8H8V5z" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "MRVLx",
+    name: "Marvell",
+    price: "$68.20",
+    isLive: true,
+    color: "#6A0DAD",
+    change24h: "+1.75%",
+    high24h: "$69.50",
+    low24h: "$67.10",
+    volume24h: "$880K USDG",
+    chartPoints: [67.1, 67.5, 67.9, 68.3, 68.0, 68.8, 68.5, 69.5, 68.9, 68.2],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M4 18h16V6H4v12zm2-10h12v8H6V8z" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "IWMx",
+    name: "Russell 2000",
+    price: "$215.60",
+    isLive: true,
+    color: "#059669",
+    change24h: "+1.10%",
+    high24h: "$217.20",
+    low24h: "$214.00",
+    volume24h: "$1.78M USDG",
+    chartPoints: [214.0, 214.5, 215.2, 214.8, 215.9, 216.5, 216.0, 217.2, 216.4, 215.6],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 10h4v7H7v-7zm6-3h4v10h-4V7z" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "DELLx",
+    name: "Dell Tech",
+    price: "$118.50",
+    isLive: true,
+    color: "#007DB8",
+    change24h: "+2.30%",
+    high24h: "$120.40",
+    low24h: "$116.80",
+    volume24h: "$1.34M USDG",
+    chartPoints: [116.8, 117.3, 118.0, 117.6, 118.9, 119.5, 119.0, 120.4, 119.8, 118.5],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M4 6h16v12H4V6zm2 2v8h12V8H6zm3 2h2v4H9v-4zm4 0h2v4h-2v-4z" />
+      </svg>
+    ),
+  },
 ];
 
 interface StockSelectorGridProps {
@@ -305,13 +442,13 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
   };
 
   return (
-    <div className="w-full rounded-2xl border border-ink-200/80 dark:border-surface-200 bg-[#FAFAF8] dark:bg-surface-50 p-4 shadow-sm md:p-6">
+    <div className="w-full rounded-2xl border border-ink-200/80 bg-[#FAFAF8] p-4 shadow-sm md:p-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 dark:border-surface-200 pb-3">
-        <h4 className="font-display text-base font-semibold tracking-tight text-ink-900 dark:text-ink-50 md:text-lg">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 pb-3">
+        <h4 className="font-display text-base font-semibold tracking-tight text-ink-900 md:text-lg">
           Choose a stock
         </h4>
-        <span className="text-xs text-ink-400 dark:text-ink-400 md:text-sm font-normal">
+        <span className="text-xs text-ink-400 md:text-sm font-normal">
           More list as X Layer liquidity deepens.
         </span>
       </div>
@@ -322,7 +459,7 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
           const isSelected = selected === stock.symbol;
 
           // Icon container styling matching the screenshot
-          let iconBg = "bg-white border border-ink-200/60 dark:bg-surface-100 dark:border-surface-300";
+          let iconBg = "bg-white border border-ink-200/60";
           if (stock.symbol === "NVDAx") iconBg = "bg-[#76B900]";
           else if (stock.symbol === "AAPLx" || stock.symbol === "AMZNx") iconBg = "bg-black";
           else if (stock.symbol === "TSLAx") iconBg = "bg-[#E82127]";
@@ -334,10 +471,10 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
               type="button"
               onClick={() => handleSelect(stock)}
               className={cn(
-                "group relative flex flex-col justify-between rounded-xl border p-3.5 text-left transition-all duration-200 cursor-pointer md:p-4",
+                "group relative flex min-h-[110px] flex-col justify-between rounded-xl border p-3.5 text-left transition-all duration-200 cursor-pointer md:p-4",
                 isSelected
-                  ? "border-[#E5A93C] bg-[#FFFBF2] dark:bg-amber-950/30 dark:border-amber-500/60 shadow-sm ring-1 ring-[#E5A93C]/50"
-                  : "border-ink-200/70 dark:border-surface-200 bg-white dark:bg-surface-0 hover:border-ink-300 dark:hover:border-surface-300 hover:bg-[#FCFCFA] dark:hover:bg-surface-100",
+                  ? "border-[#E5A93C] bg-[#FFFBF2] shadow-sm ring-1 ring-[#E5A93C]/50"
+                  : "border-ink-200/70 bg-white hover:border-ink-300 hover:bg-[#FCFCFA]",
               )}
             >
               {/* Top row: Styled Logo Icon + Live/Soon Badge */}
@@ -347,12 +484,12 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
                 </div>
 
                 {stock.isLive ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3DC] dark:bg-amber-950/60 px-2 py-0.5 text-[11px] font-medium text-[#B26B00] dark:text-amber-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3DC] px-2 py-0.5 text-[11px] font-medium text-[#B26B00]">
                     <span className="h-1.5 w-1.5 rounded-full bg-[#FF9900]" />
                     Live
                   </span>
                 ) : (
-                  <span className="rounded-md bg-surface-100 dark:bg-surface-200 px-2 py-0.5 font-mono text-[9px] font-medium tracking-wider text-ink-400 dark:text-ink-400">
+                  <span className="rounded-md bg-surface-100 px-2 py-0.5 font-mono text-[9px] font-medium tracking-wider text-ink-400">
                     SOON
                   </span>
                 )}
@@ -360,18 +497,18 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
 
               {/* Middle row: Symbol & Company Name */}
               <div className="mt-3 leading-tight">
-                <p className="font-display text-base font-bold text-ink-900 dark:text-ink-50">
+                <p className="font-display text-base font-bold text-ink-900">
                   {stock.symbol}
                 </p>
-                <p className="text-xs text-ink-500 dark:text-ink-400 font-normal">{stock.name}</p>
+                <p className="text-xs text-ink-500 font-normal">{stock.name}</p>
               </div>
 
               {/* Bottom row: Price or Coming Soon */}
-              <div className="mt-2.5 border-t border-ink-100/60 dark:border-surface-200 pt-2">
+              <div className="mt-2.5 border-t border-ink-100/60 pt-2">
                 <p
                   className={cn(
                     "font-sans text-sm font-semibold tabular-nums",
-                    stock.isLive ? "text-ink-900 dark:text-ink-50" : "text-xs font-normal text-ink-400",
+                    stock.isLive ? "text-ink-900" : "text-xs font-normal text-ink-400",
                   )}
                 >
                   {stock.price}
@@ -383,47 +520,47 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
       </div>
 
       {/* Interactive Stock Price Chart */}
-      <div className="mt-5 overflow-hidden rounded-2xl border border-ink-200/80 dark:border-surface-200 bg-white dark:bg-surface-0 p-4 shadow-sm md:p-5">
+      <div className="mt-5 overflow-hidden rounded-2xl border border-ink-200/80 bg-white p-4 shadow-sm md:p-5">
         {/* Chart Header Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 dark:border-surface-200 pb-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 pb-3.5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-100 dark:bg-surface-200 p-2 font-display text-xs font-bold text-ink-900 dark:text-ink-50 shadow-xs">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-100 p-2 font-display text-xs font-bold text-ink-900 shadow-xs">
               {activeStock.symbol.slice(0, 4)}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h5 className="font-display text-base font-bold text-ink-900 dark:text-ink-50 md:text-lg">
+                <h5 className="font-display text-base font-bold text-ink-900 md:text-lg">
                   {activeStock.symbol} / USDG
                 </h5>
-                <span className="rounded bg-surface-100 dark:bg-surface-200 px-1.5 py-0.5 font-mono text-[10px] text-ink-600 dark:text-ink-300">
+                <span className="rounded bg-surface-100 px-1.5 py-0.5 font-mono text-[10px] text-ink-600">
                   {activeStock.name}
                 </span>
                 {activeStock.isLive ? (
-                  <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-600/20">
-                    ● Live Oracle
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-600/20">
+                    Live Oracle
                   </span>
                 ) : (
-                  <span className="rounded-full bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300 ring-1 ring-amber-600/20">
-                    ● Roadmap Tier
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-600/20">
+                    Roadmap Tier
                   </span>
                 )}
               </div>
-              <p className="text-xs text-ink-500 dark:text-ink-400">X Layer Chain 196 · OKX DEX Feed</p>
+              <p className="text-xs text-ink-500">X Layer Chain 196 · OKX DEX Feed</p>
             </div>
           </div>
 
           {/* Timeframe selector */}
-          <div className="flex items-center gap-1 rounded-lg bg-surface-100 dark:bg-surface-200 p-1 text-xs">
+          <div className="flex items-center gap-1 rounded-lg bg-surface-100 p-1 text-xs">
             {["1D", "1W", "1M", "1Y", "ALL"].map((tf) => (
               <button
                 key={tf}
                 type="button"
                 onClick={() => setTimeframe(tf)}
                 className={cn(
-                  "rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors",
+                  "min-h-[36px] min-w-[36px] rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors cursor-pointer",
                   timeframe === tf
-                    ? "bg-white dark:bg-surface-100 text-ink-900 dark:text-ink-50 shadow-xs"
-                    : "text-ink-500 dark:text-ink-400 hover:text-ink-900 dark:hover:text-ink-50",
+                    ? "bg-white text-ink-900 shadow-xs"
+                    : "text-ink-500 hover:text-ink-900",
                 )}
               >
                 {tf}
@@ -436,11 +573,11 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
         <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <div className="flex items-baseline gap-2.5">
-              <span className="font-display text-2xl font-bold tracking-tight text-ink-900 dark:text-ink-50 md:text-3xl tabular-nums">
+              <span className="font-display text-2xl font-bold tracking-tight text-ink-900 md:text-3xl tabular-nums">
                 {currentDisplayPrice}
               </span>
               {activeStock.isLive && (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
                   <svg viewBox="0 0 12 12" className="h-3 w-3 fill-current">
                     <path d="M6 2.5l4 4.5H2l4-4.5z" />
                   </svg>
@@ -448,23 +585,23 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-[11px] text-ink-400 dark:text-ink-400">
+            <p className="mt-0.5 text-[11px] text-ink-400">
               {hoverIndex !== null ? "Scrubbing 24h timeline" : "Real time spot price settleable via OKX DEX Aggregator"}
             </p>
           </div>
 
           <div className="flex gap-4 text-right text-xs">
             <div>
-              <p className="text-[10px] text-ink-400 dark:text-ink-400 uppercase">24h High</p>
-              <p className="font-mono font-semibold text-ink-800 dark:text-ink-200">{activeStock.high24h}</p>
+              <p className="text-[10px] text-ink-400 uppercase">24h High</p>
+              <p className="font-mono font-semibold text-ink-800">{activeStock.high24h}</p>
             </div>
             <div>
-              <p className="text-[10px] text-ink-400 dark:text-ink-400 uppercase">24h Low</p>
-              <p className="font-mono font-semibold text-ink-800 dark:text-ink-200">{activeStock.low24h}</p>
+              <p className="text-[10px] text-ink-400 uppercase">24h Low</p>
+              <p className="font-mono font-semibold text-ink-800">{activeStock.low24h}</p>
             </div>
             <div>
-              <p className="text-[10px] text-ink-400 dark:text-ink-400 uppercase">Liquidity / Vol</p>
-              <p className="font-mono font-semibold text-ink-800 dark:text-ink-200">{activeStock.volume24h}</p>
+              <p className="text-[10px] text-ink-400 uppercase">Liquidity / Vol</p>
+              <p className="font-mono font-semibold text-ink-800">{activeStock.volume24h}</p>
             </div>
           </div>
         </div>
@@ -487,9 +624,9 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
             </defs>
 
             {/* Subtle grid lines */}
-            <line x1="0" y1={paddingY} x2={width} y2={paddingY} stroke="currentColor" className="text-[#F0F0EE] dark:text-surface-200" strokeDasharray="3 3" />
-            <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="currentColor" className="text-[#F0F0EE] dark:text-surface-200" strokeDasharray="3 3" />
-            <line x1="0" y1={height - paddingY} x2={width} y2={height - paddingY} stroke="currentColor" className="text-[#F0F0EE] dark:text-surface-200" strokeDasharray="3 3" />
+            <line x1="0" y1={paddingY} x2={width} y2={paddingY} stroke="currentColor" className="text-[#F0F0EE]" strokeDasharray="3 3" />
+            <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="currentColor" className="text-[#F0F0EE]" strokeDasharray="3 3" />
+            <line x1="0" y1={height - paddingY} x2={width} y2={height - paddingY} stroke="currentColor" className="text-[#F0F0EE]" strokeDasharray="3 3" />
 
             {/* Gradient Area Fill */}
             <path d={areaD} fill={`url(#${gradientId})`} />
@@ -549,8 +686,8 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
         </div>
 
         {/* Quick action footer */}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-ink-100 dark:border-surface-200 pt-3 text-xs">
-          <div className="flex items-center gap-1.5 text-ink-500 dark:text-ink-400">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-ink-100 pt-3 text-xs">
+          <div className="flex items-center gap-1.5 text-ink-500">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             <span>X Layer sub second finality via OKX DEX Aggregator</span>
           </div>
@@ -558,7 +695,7 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
           <button
             type="button"
             onClick={() => onSelectStock?.(activeStock)}
-            className="flex items-center gap-1 rounded-lg bg-accent-50 dark:bg-accent-950/40 px-3 py-1.5 font-semibold text-accent-700 dark:text-accent-300 hover:bg-accent-100 dark:hover:bg-accent-900/50 transition-colors cursor-pointer"
+            className="min-h-[44px] flex items-center gap-1 rounded-lg bg-accent-50 px-3.5 py-2 font-semibold text-accent-700 hover:bg-accent-100 transition-colors cursor-pointer"
           >
             <span>Ask Meirei for {activeStock.symbol} Quote</span>
             <svg viewBox="0 0 12 12" className="h-3 w-3 fill-current">

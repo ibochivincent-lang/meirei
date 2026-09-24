@@ -728,29 +728,15 @@ export default function AppDashboardPage() {
     }
   };
 
-  // Theme state: light / dark mode
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  // Theme state: locked to crisp institutional light mode
+  const isDarkMode = false;
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("meirei_theme");
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const shouldBeDark = stored === "dark" || (!stored && prefersDark);
-      setIsDarkMode(shouldBeDark);
-      document.documentElement.classList.toggle("dark", shouldBeDark);
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("meirei_theme", "light");
     }
   }, []);
-
-  const toggleTheme = () => {
-    setIsDarkMode((prev) => {
-      const next = !prev;
-      if (typeof document !== "undefined") {
-        document.documentElement.classList.toggle("dark", next);
-        localStorage.setItem("meirei_theme", next ? "dark" : "light");
-      }
-      return next;
-    });
-  };
 
   // Trading mode state: strictly TWO MODES: "simple" | "advanced"
   const [mode, setMode] = useState<Mode>("simple");
@@ -1059,11 +1045,8 @@ export default function AppDashboardPage() {
       let redirectUrl = "";
       if (connectChannel === "telegram") {
         redirectUrl = "https://t.me/MeireiXLayerBot";
-      } else if (connectChannel === "whatsapp") {
-        const cleanPhone = effectiveHandle.replace(/[^0-9]/g, "") || "2349028279382";
-        redirectUrl = `https://wa.me/${cleanPhone}?text=Hello%20Meirei%2C%20I%20have%20anchored%20my%20wallet%20${connectAddress}%20to%20OKX%20X%20Layer`;
-      } else if (connectChannel === "instagram") {
-        redirectUrl = "https://ig.me/m/meirei_investor";
+      } else if (connectChannel === "whatsapp" || connectChannel === "instagram") {
+        redirectUrl = "/coming-soon";
       }
 
       setProfile((prev) => ({
@@ -1633,19 +1616,6 @@ export default function AppDashboardPage() {
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               <span>Cookies</span>
-            </button>
-
-            {/* Dark / Light Theme Toggle Button */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-label={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
-              title={isDarkMode ? "Switch to light theme" : "Switch to dark theme"}
-              className="grid h-7 w-7 sm:h-8 sm:w-8 place-items-center rounded-full border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] text-ink-900 dark:text-white hover:bg-surface-200 dark:hover:bg-[#202736] transition-colors cursor-pointer"
-            >
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-current">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18V4c4.41 0 8 3.59 8 8s-3.59 8-8 8z" />
-              </svg>
             </button>
 
             {/* OTP 2FA Protection Status Pill */}
@@ -3644,7 +3614,7 @@ export default function AppDashboardPage() {
                         color: "text-[#25D366]",
                         border: "border-[#25D366]",
                         bg: "bg-[#25D366]/15",
-                        tagline: "Messaging Bot",
+                        tagline: "Coming Soon",
                       },
                       {
                         id: "telegram" as Platform,
@@ -3653,7 +3623,7 @@ export default function AppDashboardPage() {
                         color: "text-[#229ED9]",
                         border: "border-[#229ED9]",
                         bg: "bg-[#229ED9]/15",
-                        tagline: "Direct Bot",
+                        tagline: "Direct Bot (Live)",
                       },
                       {
                         id: "instagram" as Platform,
@@ -3662,7 +3632,7 @@ export default function AppDashboardPage() {
                         color: "text-[#E1306C]",
                         border: "border-[#E1306C]",
                         bg: "bg-[#E1306C]/15",
-                        tagline: "DM Assistant",
+                        tagline: "Coming Soon",
                       },
                       {
                         id: "web" as Platform,
@@ -3876,21 +3846,22 @@ export default function AppDashboardPage() {
                             href={
                               connectChannel === "telegram"
                                 ? "https://t.me/MeireiXLayerBot"
-                                : connectChannel === "whatsapp"
-                                ? `https://wa.me/${connectHandle.replace(/[^0-9]/g, "") || "2349028279382"}?text=Hello%20Meirei%2C%20I%20have%20anchored%20my%20wallet%20${connectAddress}%20to%20OKX%20X%20Layer`
-                                : "https://ig.me/m/meirei_investor"
+                                : "/coming-soon"
                             }
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            {...(connectChannel === "telegram" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                             className={cn(
                               "w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer",
-                              connectChannel === "whatsapp" && "bg-[#25D366] hover:bg-[#20ba5a] shadow-[#25D366]/25",
+                              connectChannel === "whatsapp" && "bg-amber-600 hover:bg-amber-700 shadow-amber-600/25",
                               connectChannel === "telegram" && "bg-[#229ED9] hover:bg-[#1c8ec4] shadow-[#229ED9]/25",
-                              connectChannel === "instagram" && "bg-[#E1306C] hover:bg-[#c9255c] shadow-[#E1306C]/25"
+                              connectChannel === "instagram" && "bg-amber-600 hover:bg-amber-700 shadow-amber-600/25"
                             )}
                           >
-                            <span>Open in {connectChannel === "whatsapp" ? "WhatsApp" : connectChannel === "telegram" ? "Telegram" : "Instagram"}</span>
-                            <span>→</span>
+                            <span>
+                              {connectChannel === "telegram"
+                                ? "Open in Telegram"
+                                : `${connectChannel === "whatsapp" ? "WhatsApp" : "Instagram"} (Coming Soon - View Roadmap)`}
+                            </span>
+                            <span>&rarr;</span>
                           </a>
                         )}
                       </div>

@@ -103,59 +103,6 @@ export function Web3SigningModal({
         } else {
           setSigningError(result.error || "Transaction signature was rejected.");
         }
-      } else if (signingMethod === "passkey") {
-        setSigningStatusText("Awaiting WebAuthn hardware biometric prompt...");
-        let signatureDigest: string | null = null;
-
-        if (typeof window !== "undefined" && window.PublicKeyCredential) {
-          try {
-            const challengeBuffer = new Uint8Array(32);
-            window.crypto.getRandomValues(challengeBuffer);
-            const credential = await navigator.credentials.get({
-              publicKey: {
-                challenge: challengeBuffer,
-                timeout: 60000,
-                userVerification: "preferred",
-              },
-            });
-
-            if (credential && (credential as any).rawId) {
-              const rawId = new Uint8Array((credential as any).rawId);
-              signatureDigest = `0x${Array.from(rawId).map((b) => b.toString(16).padStart(2, "0")).join("")}`;
-            }
-          } catch (credErr) {
-            console.warn("[Passkey Verification] Hardware enclave prompt bypassed or cancelled:", credErr);
-          }
-        }
-
-        // Submit verified mandate execution through X Layer routing engine
-        setSigningStatusText("Broadcasting authorized mandate to X Layer router...");
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: `Confirm buy ${estimatedUnits.toFixed(4)} ${targetSymbol} for ${fromAmountUsdg} USDG with biometric passkey authentication`,
-            walletAddress: userAddress,
-            confirm: true,
-          }),
-        });
-        const data = await res.json();
-        const verifiedHash =
-          data.receipt?.reference ||
-          data.delivery?.txs?.[0]?.hash ||
-          signatureDigest;
-
-        if (!verifiedHash) {
-          throw new Error(data.error || "Biometric authentication failed to confirm on X Layer.");
-        }
-
-        const result: SigningResult = {
-          ok: true,
-          txHash: verifiedHash,
-          explorerUrl: `https://www.oklink.com/xlayer/tx/${verifiedHash}`,
-        };
-        setSigningResult(result);
-        if (onSuccess) onSuccess(result);
       } else {
         // OTP session execution via backend verified session
         setSigningStatusText("Submitting mandate with verified OTP session token...");
@@ -202,17 +149,18 @@ export function Web3SigningModal({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] text-ink-900 dark:text-ink-50 shadow-2xl p-6"
+          className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-ink-200 bg-white text-ink-900 shadow-2xl p-6"
         >
           {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-ink-100 dark:border-ink-900">
+          <div className="flex items-center justify-between pb-4 border-b border-ink-100">
             <div>
               <h3 className="text-base font-bold tracking-tight">Non-Custodial Mandate Execution</h3>
               <p className="text-xs text-ink-500 mt-0.5">OKX X Layer (Chain ID 196) · Zero Server Custody</p>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 hover:bg-ink-100 dark:hover:bg-ink-900 transition-colors"
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-ink-400 hover:text-ink-900 hover:bg-ink-100 transition-colors"
+              aria-label="Close modal"
             >
               [X]
             </button>
@@ -221,32 +169,32 @@ export function Web3SigningModal({
           {signingResult ? (
             /* Success State */
             <div className="py-6 space-y-4 text-center">
-              <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 font-bold text-lg">
+              <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 font-bold text-lg">
                 OK
               </div>
               <div>
-                <h4 className="text-sm font-bold text-ink-900 dark:text-ink-100">Transaction Broadcasted</h4>
+                <h4 className="text-sm font-bold text-ink-900">Transaction Broadcasted</h4>
                 <p className="text-xs text-ink-500 mt-1">
                   Successfully signed and submitted on X Layer Mainnet.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-ink-50 dark:bg-ink-900/60 border border-ink-200 dark:border-ink-800 text-left font-mono text-xs space-y-1.5">
+              <div className="p-3.5 rounded-xl bg-ink-50 border border-ink-200 text-left font-mono text-xs space-y-1.5">
                 <div className="flex justify-between text-ink-500">
                   <span>Target Asset:</span>
-                  <span className="font-semibold text-ink-900 dark:text-ink-100">{targetSymbol}</span>
+                  <span className="font-semibold text-ink-900">{targetSymbol}</span>
                 </div>
                 <div className="flex justify-between text-ink-500">
                   <span>Units Acquired:</span>
-                  <span className="font-semibold text-emerald-500">{estimatedUnits.toFixed(4)} {targetSymbol}</span>
+                  <span className="font-semibold text-emerald-600">{estimatedUnits.toFixed(4)} {targetSymbol}</span>
                 </div>
                 <div className="flex justify-between text-ink-500">
                   <span>Total Notional:</span>
-                  <span className="font-semibold text-ink-900 dark:text-ink-100">${fromAmountUsdg.toFixed(2)} USDG</span>
+                  <span className="font-semibold text-ink-900">${fromAmountUsdg.toFixed(2)} USDG</span>
                 </div>
-                <div className="flex justify-between text-ink-500 pt-1 border-t border-ink-200 dark:border-ink-800">
+                <div className="flex justify-between text-ink-500 pt-1 border-t border-ink-200">
                   <span>Tx Hash:</span>
-                  <span className="font-semibold truncate max-w-[200px] text-ink-700 dark:text-ink-300">
+                  <span className="font-semibold truncate max-w-[200px] text-ink-700">
                     {signingResult.txHash}
                   </span>
                 </div>
@@ -257,7 +205,7 @@ export function Web3SigningModal({
                   href={signingResult.explorerUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block text-xs font-semibold text-accent hover:underline"
+                  className="inline-flex items-center justify-center min-h-[44px] text-xs font-semibold text-accent hover:underline"
                 >
                   View on OKLink X Layer Explorer -&gt;
                 </a>
@@ -265,7 +213,7 @@ export function Web3SigningModal({
 
               <button
                 onClick={onClose}
-                className="w-full mt-2 py-2.5 rounded-xl bg-ink-900 dark:bg-ink-100 text-white dark:text-ink-900 text-xs font-bold hover:opacity-90 transition-opacity"
+                className="w-full mt-2 min-h-[44px] py-2.5 rounded-xl bg-ink-900 text-white text-xs font-bold hover:opacity-90 transition-opacity"
               >
                 Done
               </button>
@@ -274,32 +222,32 @@ export function Web3SigningModal({
             /* Execution Review & Signing Form */
             <div className="mt-4 space-y-4">
               {/* Transaction Breakdown Card */}
-              <div className="p-4 rounded-xl bg-ink-50 dark:bg-ink-900/50 border border-ink-200 dark:border-ink-800 space-y-2 text-xs">
+              <div className="p-4 rounded-xl bg-ink-50 border border-ink-200 space-y-2 text-xs">
                 <div className="flex justify-between items-center text-ink-500">
                   <span>Swap Route</span>
-                  <span className="font-mono font-medium text-ink-900 dark:text-ink-100">
+                  <span className="font-mono font-medium text-ink-900">
                     {fromAmountUsdg} USDG -&gt; {estimatedUnits.toFixed(4)} {targetSymbol}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-ink-500">
                   <span>Spot Price</span>
-                  <span className="font-mono font-medium text-ink-900 dark:text-ink-100">
+                  <span className="font-mono font-medium text-ink-900">
                     ${spotPrice.toFixed(2)} USDG per {targetSymbol}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-ink-500">
                   <span>Max Slippage</span>
-                  <span className="font-mono font-medium text-ink-900 dark:text-ink-100">0.50%</span>
+                  <span className="font-mono font-medium text-ink-900">0.50%</span>
                 </div>
                 <div className="flex justify-between items-center text-ink-500">
                   <span>Est. Network Gas</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span className="font-mono text-emerald-600 font-medium">
                     &lt; 0.0001 OKB (~$0.002)
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-ink-500 pt-2 border-t border-ink-200 dark:border-ink-800">
+                <div className="flex justify-between items-center text-ink-500 pt-2 border-t border-ink-200">
                   <span>Execution Router</span>
-                  <span className="font-mono text-[11px] text-ink-600 dark:text-ink-400 truncate max-w-[200px]">
+                  <span className="font-mono text-[11px] text-ink-600 truncate max-w-[200px]">
                     OKX DEX Aggregator (X Layer 196)
                   </span>
                 </div>
@@ -310,54 +258,49 @@ export function Web3SigningModal({
                 <label className="text-xs font-bold uppercase tracking-wider text-ink-500">
                   Signature Authorization Method
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setSigningMethod("web3")}
-                    className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
+                    className={`min-h-[44px] p-2.5 rounded-xl border text-left text-xs transition-all ${
                       signingMethod === "web3"
-                        ? "border-accent bg-accent/5 dark:bg-accent/10 font-bold text-accent"
-                        : "border-ink-200 dark:border-ink-800 hover:border-ink-300 dark:hover:border-ink-700 text-ink-600 dark:text-ink-400"
+                        ? "border-accent bg-accent/5 font-bold text-accent"
+                        : "border-ink-200 hover:border-ink-300 text-ink-600"
                     }`}
                   >
-                    <div className="font-semibold">OKX Wallet</div>
-                    <div className="text-[10px] text-ink-500 mt-0.5">Browser Extension</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSigningMethod("passkey")}
-                    className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
-                      signingMethod === "passkey"
-                        ? "border-accent bg-accent/5 dark:bg-accent/10 font-bold text-accent"
-                        : "border-ink-200 dark:border-ink-800 hover:border-ink-300 dark:hover:border-ink-700 text-ink-600 dark:text-ink-400"
-                    }`}
-                  >
-                    <div className="font-semibold">Passkey Enclave</div>
-                    <div className="text-[10px] text-ink-500 mt-0.5">Biometric Touch</div>
+                    <div className="font-semibold">OKX Wallet / Injected</div>
+                    <div className="text-[10px] text-ink-500 mt-0.5">Non-Custodial EOA Signing</div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSigningMethod("otp_session")}
-                    className={`p-2.5 rounded-xl border text-left text-xs transition-all ${
+                    className={`min-h-[44px] p-2.5 rounded-xl border text-left text-xs transition-all ${
                       signingMethod === "otp_session"
-                        ? "border-accent bg-accent/5 dark:bg-accent/10 font-bold text-accent"
-                        : "border-ink-200 dark:border-ink-800 hover:border-ink-300 dark:hover:border-ink-700 text-ink-600 dark:text-ink-400"
+                        ? "border-accent bg-accent/5 font-bold text-accent"
+                        : "border-ink-200 hover:border-ink-300 text-ink-600"
                     }`}
                   >
                     <div className="font-semibold">2FA OTP Session</div>
-                    <div className="text-[10px] text-ink-500 mt-0.5">Universal Email</div>
+                    <div className="text-[10px] text-ink-500 mt-0.5">Calldata-Bound Token</div>
                   </button>
+                </div>
+
+                <div className="p-2 rounded-lg bg-surface-100 border border-dashed border-ink-200 flex items-center justify-between text-[11px] text-ink-500">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    <span>Phase 2 Roadmap: ERC-4337 Smart Accounts with Passkey Signers</span>
+                  </span>
+                  <span className="font-mono text-[10px] text-amber-500">Coming Soon</span>
                 </div>
               </div>
 
               {/* Web3 Provider Connection State */}
               {signingMethod === "web3" && (
-                <div className="p-3 rounded-xl bg-ink-50 dark:bg-ink-900/40 border border-ink-200 dark:border-ink-800 text-xs flex items-center justify-between">
+                <div className="p-3 rounded-xl bg-ink-50 border border-ink-200 text-xs flex items-center justify-between">
                   <div>
                     <span className="text-ink-500">Connected Wallet: </span>
-                    <span className="font-mono font-medium text-ink-900 dark:text-ink-100">
+                    <span className="font-mono font-medium text-ink-900">
                       {providerState.connectedAddress
                         ? formatShortAddress(providerState.connectedAddress)
                         : formatShortAddress(userAddress)}
@@ -368,7 +311,7 @@ export function Web3SigningModal({
                       type="button"
                       onClick={handleConnectWallet}
                       disabled={isSigning}
-                      className="px-2.5 py-1 rounded-lg bg-accent text-white text-[11px] font-bold hover:opacity-90 transition-opacity"
+                      className="min-h-[44px] px-3 py-1.5 rounded-lg bg-accent text-white text-[11px] font-bold hover:opacity-90 transition-opacity"
                     >
                       Connect Extension
                     </button>
@@ -377,13 +320,13 @@ export function Web3SigningModal({
               )}
 
               {/* Non-Custodial Disclosure */}
-              <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed">
+              <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-[11px] text-amber-700 leading-relaxed">
                 Self-Custodial Guarantee: Private keys never touch Meirei servers or databases. Your signature is authorized locally on your device hardware.
               </div>
 
               {/* Error Message */}
               {signingError && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 font-medium">
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 font-medium">
                   {signingError}
                 </div>
               )}
@@ -400,7 +343,7 @@ export function Web3SigningModal({
                 type="button"
                 onClick={handleSignTransaction}
                 disabled={isSigning}
-                className="w-full py-3 rounded-xl bg-accent text-white text-xs font-bold tracking-wide hover:opacity-95 disabled:opacity-50 transition-all shadow-md"
+                className="w-full min-h-[44px] py-3 rounded-xl bg-accent text-white text-xs font-bold tracking-wide hover:opacity-95 disabled:opacity-50 transition-all shadow-md cursor-pointer"
               >
                 {isSigning ? "Authorizing on X Layer..." : "Sign & Broadcast on X Layer"}
               </button>

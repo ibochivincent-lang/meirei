@@ -5,11 +5,13 @@ import { resolveSymbol, ALLOWLIST } from "@/src/allowlist";
 import { handleMandate } from "@/src/agent/handler";
 import { checkRateLimit, getClientIp } from "@/lib/security/rate_limiter";
 import { validatePayloadSize } from "@/lib/security/payload_guard";
-import { freezeAccount, unfreezeAccount } from "@/lib/users/freeze";
+import { freezeAccount, unfreezeAccount, isAccountFrozen } from "@/lib/users/freeze";
 import { generateOtpChallenge, verifyOtpChallenge } from "@/lib/auth/otp";
 import { sendWhatsAppMessage, markWhatsAppMessageRead } from "@/lib/meta/client";
 import { downloadWhatsAppAudio, transcribeAudioBuffer } from "@/lib/voice/transcribe";
 import { fetchLiveXLayerBalances, formatShortAddress, isValidEvmAddress } from "@/lib/wallet/xlayer";
+import { checkIdempotencyAtomic } from "@/lib/security/idempotency";
+import { recordWebhookEvent } from "@/lib/observability/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +105,15 @@ export async function POST(req: NextRequest) {
         if (contact?.profile?.name) {
           senderName = contact.profile.name;
         }
+
+        // Atomic idempotency check backed by Upstash Redis (NX flag)
+        const msgId = msg.id || `wa_${senderPhone}_${Date.now()}`;
+        const idempotency = await checkIdempotencyAtomic(`wa_msg_${msgId}`);
+        if (idempotency.isDuplicate) {
+          await recordWebhookEvent("whatsapp", true, `wa_msg_${msgId}`);
+          return NextResponse.json({ ok: true, status: "duplicate_dropped" });
+        }
+        await recordWebhookEvent("whatsapp", false, `wa_msg_${msgId}`);
 
         // 1. Text message
         if (msg.text?.body) {
@@ -230,6 +241,14 @@ export async function POST(req: NextRequest) {
       /\b(unfreeze|unlock)\b/i.test(cleanMessage) ||
       lower.startsWith("unfreeze") ||
       lower.startsWith("/unfreeze");
+
+    // Security Gate: Check if account is frozen
+    const accountFrozen = await isAccountFrozen(user.id);
+    if (accountFrozen && !isUnfreezeIntent) {
+      return await sendReply(
+        `SECURITY LOCK ACTIVE\n\nYour account is frozen. All automated trading, rebalances, and withdrawals are halted.\n\nTo restore access, send: /unfreeze\n\nOr contact support at legal@meirei.app.`
+      );
+    }
 
     const isFreezeIntent =
       (/\b(freeze|panic|emergency lock|lock account|lock wallet)\b/i.test(cleanMessage) ||

@@ -5,11 +5,13 @@ import { resolveSymbol, ALLOWLIST } from "@/src/allowlist";
 import { handleMandate } from "@/src/agent/handler";
 import { checkRateLimit, getClientIp } from "@/lib/security/rate_limiter";
 import { validatePayloadSize } from "@/lib/security/payload_guard";
-import { freezeAccount, unfreezeAccount } from "@/lib/users/freeze";
+import { freezeAccount, unfreezeAccount, isAccountFrozen } from "@/lib/users/freeze";
 import { generateOtpChallenge, verifyOtpChallenge } from "@/lib/auth/otp";
 import { sendTelegramMessage, downloadTelegramAudio } from "@/lib/telegram/client";
 import { transcribeAudioBuffer } from "@/lib/voice/transcribe";
 import { fetchLiveXLayerBalances, formatShortAddress, isValidEvmAddress } from "@/lib/wallet/xlayer";
+import { checkIdempotencyAtomic } from "@/lib/security/idempotency";
+import { recordWebhookEvent } from "@/lib/observability/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,17 @@ export async function POST(req: NextRequest) {
 
     const clientIp = getClientIp(req);
     const body = await req.json();
+
+    // Atomic idempotency check backed by Upstash Redis (NX flag)
+    const updateId = body.update_id ?? body.message?.message_id ?? body.callback_query?.id;
+    if (updateId) {
+      const idempotency = await checkIdempotencyAtomic(`tg_update_${updateId}`);
+      if (idempotency.isDuplicate) {
+        await recordWebhookEvent("telegram", true, `tg_update_${updateId}`);
+        return NextResponse.json({ ok: true, status: "duplicate_dropped" });
+      }
+      await recordWebhookEvent("telegram", false, `tg_update_${updateId}`);
+    }
 
     // Support both standard text messages and interactive callback query button taps
     const callbackQuery = body.callback_query;
@@ -166,6 +179,14 @@ export async function POST(req: NextRequest) {
     });
 
     const lower = rawText.toLowerCase();
+
+    // Security Gate: Check if account is frozen
+    const accountFrozen = await isAccountFrozen(user.id);
+    if (accountFrozen && !lower.startsWith("/unfreeze") && !lower.startsWith("unfreeze")) {
+      return await replyWith(
+        `*SECURITY LOCK ACTIVE*\n\nYour account is frozen. All automated trading, rebalances, and withdrawals are halted.\n\nTo restore access, send:\n\`/unfreeze\`\n\nOr contact support at legal@meirei.app.`
+      );
+    }
     const shortAddr = `${user.wallet_address.slice(0, 6)}...${user.wallet_address.slice(-4)}`;
 
     // Identify referenced symbols for price, comparison, buy order, or unit calculation

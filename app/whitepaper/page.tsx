@@ -6,58 +6,58 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Whitepaper | Meirei Research",
   description:
-    "A guardrailed, self-evolving investment mandate architecture for tokenized equities on X Layer. Authored by IboTV.",
+    "A deterministic, guardrailed investment mandate architecture for tokenized equities on OKX X Layer. Authored by IboTV.",
 };
 
 export default function WhitepaperPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#F6F5EE] dark:bg-surface-50 text-ink-900 dark:text-ink-100 selection:bg-accent-200">
-        {/* Paper Header matching reference Image 2 */}
-        <header className="border-b border-ink-200/60 dark:border-surface-200 pt-28 pb-16 px-6 sm:px-12 md:pt-36 md:pb-20">
+      <main className="min-h-screen bg-[#F6F5EE] text-ink-900 selection:bg-accent-200">
+        {/* Paper Header */}
+        <header className="border-b border-ink-200/60 pt-28 pb-16 px-6 sm:px-12 md:pt-36 md:pb-20">
           <div className="mx-auto max-w-4xl">
             <div className="mb-6 flex items-center gap-3">
-              <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#C4820A] dark:text-amber-400 sm:text-sm">
+              <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#C4820A] sm:text-sm">
                 RESEARCH · MEIREI LABS · SEPTEMBER 2026
               </span>
               <span className="h-1 w-1 rounded-full bg-ink-400" />
-              <span className="font-mono text-xs text-ink-600 dark:text-ink-400">Chain 196</span>
+              <span className="font-mono text-xs text-ink-600">Chain 196</span>
             </div>
 
-            <h1 className="font-display text-3xl font-medium leading-[1.08] tracking-[-0.025em] text-ink-950 dark:text-ink-50 sm:text-5xl md:text-6xl">
-              A guardrailed, self-evolving investment mandate architecture for tokenized equities on X Layer
+            <h1 className="font-display text-3xl font-medium leading-[1.08] tracking-[-0.025em] text-ink-950 sm:text-5xl md:text-6xl">
+              A deterministic, guardrailed investment mandate architecture for tokenized equities on OKX X Layer
             </h1>
 
-            <p className="mt-6 text-lg leading-relaxed text-ink-700 dark:text-ink-300 sm:text-xl">
-              Design, verification, and on-chain implementation of autonomous intent rebalancing with non-custodial 2FA cryptographic safeguards.
+            <p className="mt-6 text-lg leading-relaxed text-ink-700 sm:text-xl">
+              Design, verification, and on-chain implementation of autonomous intent rebalancing with non-custodial HMAC-SHA256 challenge gates.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-ink-200/80 dark:border-surface-200 pt-6 text-sm text-ink-600 dark:text-ink-400">
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-ink-200/80 pt-6 text-sm text-ink-600">
               <div className="flex items-center gap-4">
                 <div>
                   <span className="block text-xs uppercase font-mono text-ink-400">Author</span>
-                  <span className="font-semibold text-ink-900 dark:text-ink-100">IboTV</span>
+                  <span className="font-semibold text-ink-900">IboTV</span>
                 </div>
-                <div className="h-8 w-px bg-ink-200 dark:bg-surface-200" />
+                <div className="h-8 w-px bg-ink-200" />
                 <div>
                   <span className="block text-xs uppercase font-mono text-ink-400">Affiliation</span>
-                  <span className="font-semibold text-ink-900 dark:text-ink-100">Meirei Core Research</span>
+                  <span className="font-semibold text-ink-900">Meirei Core Research</span>
                 </div>
-                <div className="h-8 w-px bg-ink-200 dark:bg-surface-200" />
+                <div className="h-8 w-px bg-ink-200" />
                 <div>
                   <span className="block text-xs uppercase font-mono text-ink-400">Version</span>
-                  <span className="font-mono font-semibold text-ink-900 dark:text-ink-100">v2.4.0 (Production)</span>
+                  <span className="font-mono font-semibold text-ink-900">v2.4.0 (Production)</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <Link
                   href="/app"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-ink-900 dark:bg-white dark:text-ink-950 px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all hover:bg-ink-800 dark:hover:bg-ink-100"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-ink-900 px-4 py-2 min-h-[44px] text-xs font-semibold text-white shadow-xs transition-all hover:bg-ink-800"
                 >
                   <span>Launch Terminal</span>
-                  <span className="text-xs font-bold leading-none">↗</span>
+                  <span className="text-xs font-bold leading-none">&rarr;</span>
                 </Link>
               </div>
             </div>
@@ -65,34 +65,34 @@ export default function WhitepaperPage() {
         </header>
 
         {/* Paper Body */}
-        <article className="mx-auto max-w-4xl px-6 py-16 sm:px-12 leading-relaxed font-serif text-ink-800 dark:text-ink-200 text-base sm:text-lg">
+        <article className="mx-auto max-w-4xl px-6 py-16 sm:px-12 leading-relaxed font-serif text-ink-800 text-base sm:text-lg">
           {/* Abstract */}
-          <section className="mb-14 rounded-2xl border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-6 sm:p-8 font-sans shadow-xs">
-            <h2 className="font-display text-xs font-bold uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-3">
+          <section className="mb-14 rounded-2xl border border-ink-200 bg-white p-6 sm:p-8 font-sans shadow-xs">
+            <h2 className="font-display text-xs font-bold uppercase tracking-wider text-ink-500 mb-3">
               Abstract
             </h2>
-            <p className="text-ink-800 dark:text-ink-200 leading-relaxed text-base sm:text-lg">
-              Decentralized portfolio management historically presents an untenable trade-off between custodial delegation and manual transaction fatigue. This paper presents <strong>Meirei</strong>, an AI-native autonomous investment mandate agent engineered specifically for X Layer (EVM Chain ID 196) and powered by OKX Onchain OS. Meirei formalizes a conversational intent framework that parses multi-asset rebalancing mandates into convex allocation targets across tokenized equities (e.g., NVDAx, AAPLx, MSFTx, GOOGLx, AMZNx, METAx, TSLAx) and USDG cash reserves. To prevent rogue AI agency and unauthenticated order routing, Meirei incorporates a mandatory zero-knowledge 2FA cryptographic gate that intercepts every on-chain swap leg. We present empirical benchmarks demonstrating sub-4-second settlement, sub-0.08% slippage through OKX DEX Aggregator smart order routing, and deterministic protocol fee extraction.
+            <p className="text-ink-800 leading-relaxed text-base sm:text-lg">
+              Decentralized portfolio management historically presents an untenable trade-off between custodial delegation and manual transaction fatigue. This paper presents <strong>Meirei</strong>, an AI-native autonomous investment mandate agent engineered specifically for X Layer (EVM Chain ID 196) and powered by OKX Onchain OS. Meirei formalizes a conversational intent framework that parses multi-asset rebalancing directives into cap-constrained quadratic rebalance targets across 20 allowlisted tokenized equities (e.g., NVDAx, AAPLx, MSFTx, GOOGLx, AMZNx, METAx, TSLAx, MSTRx, TSMx, AVGOx, INTCx, MUx, MRVLx, IWMx, DELLx) and USDG/USDC cash reserves. To prevent rogue agent agency and unauthorized order routing, Meirei incorporates a mandatory transaction-bound HMAC challenge and client-side signature gate that intercepts every on-chain swap leg. We present verified testnet benchmarks demonstrating sub-5-second finality, competitive slippage via OKX DEX Aggregator smart order routing, and deterministic protocol fee extraction.
             </p>
           </section>
 
           {/* Table of Contents */}
           <nav aria-label="Table of Contents" className="mb-16 font-sans border-l-2 border-accent-500 pl-6 py-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-ink-400 mb-3">Contents</h3>
-            <ol className="space-y-2 text-sm text-ink-700 dark:text-ink-300">
-              <li><a href="#section-1" className="hover:text-accent-600 dark:hover:text-accent-400 transition-colors">1. Introduction and Structural Inefficiencies</a></li>
-              <li><a href="#section-2" className="hover:text-accent-600 dark:hover:text-accent-400 transition-colors">2. Conversational Mandate Parsing Formalism</a></li>
-              <li><a href="#section-3" className="hover:text-accent-600 dark:hover:text-accent-400 transition-colors">3. The Cryptographic 2FA Authorization Gate</a></li>
-              <li><a href="#section-4" className="hover:text-accent-600 dark:hover:text-accent-400 transition-colors">4. Onchain OS & OKX DEX Routing Mechanics on X Layer</a></li>
-              <li><a href="#section-5" className="hover:text-accent-600 dark:hover:text-accent-400 transition-colors">5. Allowlisted Tokenized Equities Settlement (xStocks)</a></li>
-              <li><a href="#section-6" className="hover:text-accent-600 dark:hover:text-accent-400 transition-colors">6. Volatility Bands, Drift Dampening & Risk Bounds</a></li>
-              <li><a href="#section-7" className="hover:text-accent-600 dark:hover:text-accent-400 transition-colors">7. Empirical Verification & Conclusion</a></li>
+            <ol className="space-y-2 text-sm text-ink-700">
+              <li><a href="#section-1" className="hover:text-accent-600 transition-colors">1. Introduction and Structural Inefficiencies</a></li>
+              <li><a href="#section-2" className="hover:text-accent-600 transition-colors">2. Conversational Mandate Parsing Formalism</a></li>
+              <li><a href="#section-3" className="hover:text-accent-600 transition-colors">3. The Cryptographic 2FA Authorization Gate</a></li>
+              <li><a href="#section-4" className="hover:text-accent-600 transition-colors">4. Onchain OS &amp; OKX DEX Routing Mechanics on X Layer</a></li>
+              <li><a href="#section-5" className="hover:text-accent-600 transition-colors">5. Allowlisted Tokenized Equities Settlement (22 Assets)</a></li>
+              <li><a href="#section-6" className="hover:text-accent-600 transition-colors">6. Volatility Bands, Drift Dampening &amp; Risk Bounds</a></li>
+              <li><a href="#section-7" className="hover:text-accent-600 transition-colors">7. Empirical Verification &amp; Conclusion</a></li>
             </ol>
           </nav>
 
           {/* Section 1 */}
           <section id="section-1" className="mb-14 space-y-4">
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 dark:text-ink-50 font-sans tracking-tight">
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 font-sans tracking-tight">
               1. Introduction and Structural Inefficiencies
             </h2>
             <p>
@@ -105,7 +105,7 @@ export default function WhitepaperPage() {
 
           {/* Section 2 */}
           <section id="section-2" className="mb-14 space-y-4">
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 dark:text-ink-50 font-sans tracking-tight">
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 font-sans tracking-tight">
               2. Conversational Mandate Parsing Formalism
             </h2>
             <p>
@@ -126,7 +126,7 @@ export default function WhitepaperPage() {
 
           {/* Section 3 */}
           <section id="section-3" className="mb-14 space-y-4">
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 dark:text-ink-50 font-sans tracking-tight">
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 font-sans tracking-tight">
               3. The Cryptographic 2FA Authorization Gate
             </h2>
             <p>
@@ -145,8 +145,8 @@ export default function WhitepaperPage() {
 
           {/* Section 4 */}
           <section id="section-4" className="mb-14 space-y-4">
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 dark:text-ink-50 font-sans tracking-tight">
-              4. Onchain OS & OKX DEX Routing Mechanics on X Layer
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 font-sans tracking-tight">
+              4. Onchain OS &amp; OKX DEX Routing Mechanics on X Layer
             </h2>
             <p>
               All trades settle natively on X Layer (Chain ID 196). Meirei utilizes the OKX DEX Aggregator API to split orders across local automated market makers and concentrated liquidity pools.
@@ -158,31 +158,45 @@ export default function WhitepaperPage() {
 
           {/* Section 5 */}
           <section id="section-5" className="mb-14 space-y-4">
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 dark:text-ink-50 font-sans tracking-tight">
-              5. Allowlisted Tokenized Equities Settlement (xStocks)
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 font-sans tracking-tight">
+              5. Allowlisted Tokenized Equities Settlement (22 Assets)
             </h2>
             <p>
-              Meirei operates exclusively on verified smart contract addresses deployed on X Layer:
+              Meirei operates exclusively on verified smart contract addresses deployed on X Layer across 20 tokenized equities and 2 settlement cash stablecoins:
             </p>
             <div className="overflow-x-auto font-sans text-sm my-4">
-              <table className="w-full border-collapse rounded-xl border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-0">
+              <table className="w-full border-collapse rounded-xl border border-ink-200 bg-white">
                 <thead>
-                  <tr className="border-b border-ink-200 dark:border-surface-200 bg-surface-100 dark:bg-surface-100 text-left">
-                    <th className="p-3 font-mono font-bold text-ink-900 dark:text-ink-50">Symbol</th>
-                    <th className="p-3 font-mono font-bold text-ink-900 dark:text-ink-50">Underlying Equity</th>
-                    <th className="p-3 font-mono font-bold text-ink-900 dark:text-ink-50">Base Currency</th>
-                    <th className="p-3 font-mono font-bold text-ink-900 dark:text-ink-50">Chain Status</th>
+                  <tr className="border-b border-ink-200 bg-surface-100 text-left">
+                    <th className="p-3 font-mono font-bold text-ink-900">Symbol</th>
+                    <th className="p-3 font-mono font-bold text-ink-900">Asset Name</th>
+                    <th className="p-3 font-mono font-bold text-ink-900">Base Currency</th>
+                    <th className="p-3 font-mono font-bold text-ink-900">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-ink-100 dark:divide-surface-200 font-mono text-xs">
-                  <tr><td className="p-3 font-bold text-ink-900 dark:text-ink-100">NVDAx</td><td className="p-3 font-sans text-ink-800 dark:text-ink-200">NVIDIA Corp.</td><td className="p-3 text-ink-700 dark:text-ink-300">USDG / USDC</td><td className="p-3 text-emerald-700 dark:text-emerald-400 font-semibold">Active · 196</td></tr>
-                  <tr><td className="p-3 font-bold text-ink-900 dark:text-ink-100">AAPLx</td><td className="p-3 font-sans text-ink-800 dark:text-ink-200">Apple Inc.</td><td className="p-3 text-ink-700 dark:text-ink-300">USDG / USDC</td><td className="p-3 text-emerald-700 dark:text-emerald-400 font-semibold">Active · 196</td></tr>
-                  <tr><td className="p-3 font-bold text-ink-900 dark:text-ink-100">MSFTx</td><td className="p-3 font-sans text-ink-800 dark:text-ink-200">Microsoft Corp.</td><td className="p-3 text-ink-700 dark:text-ink-300">USDG / USDC</td><td className="p-3 text-emerald-700 dark:text-emerald-400 font-semibold">Active · 196</td></tr>
-                  <tr><td className="p-3 font-bold text-ink-900 dark:text-ink-100">GOOGLx</td><td className="p-3 font-sans text-ink-800 dark:text-ink-200">Alphabet Inc.</td><td className="p-3 text-ink-700 dark:text-ink-300">USDG / USDC</td><td className="p-3 text-emerald-700 dark:text-emerald-400 font-semibold">Active · 196</td></tr>
-                  <tr><td className="p-3 font-bold text-ink-900 dark:text-ink-100">AMZNx</td><td className="p-3 font-sans text-ink-800 dark:text-ink-200">Amazon.com Inc.</td><td className="p-3 text-ink-700 dark:text-ink-300">USDG / USDC</td><td className="p-3 text-emerald-700 dark:text-emerald-400 font-semibold">Active · 196</td></tr>
-                  <tr><td className="p-3 font-bold text-ink-900 dark:text-ink-100">METAx</td><td className="p-3 font-sans text-ink-800 dark:text-ink-200">Meta Platforms Inc.</td><td className="p-3 text-ink-700 dark:text-ink-300">USDG / USDC</td><td className="p-3 text-emerald-700 dark:text-emerald-400 font-semibold">Active · 196</td></tr>
-                  <tr><td className="p-3 font-bold text-ink-900 dark:text-ink-100">TSLAx</td><td className="p-3 font-sans text-ink-800 dark:text-ink-200">Tesla Inc.</td><td className="p-3 text-ink-700 dark:text-ink-300">USDG / USDC</td><td className="p-3 text-emerald-700 dark:text-emerald-400 font-semibold">Active · 196</td></tr>
-                  <tr><td className="p-3 font-bold text-ink-900 dark:text-ink-100">USDG</td><td className="p-3 font-sans text-ink-800 dark:text-ink-200">Global Dollar (Settlement Cash)</td><td className="p-3 text-ink-700 dark:text-ink-300">USD 1:1</td><td className="p-3 text-emerald-700 dark:text-emerald-400 font-semibold">Native Anchor</td></tr>
+                <tbody className="divide-y divide-ink-100 font-mono text-xs">
+                  <tr><td className="p-3 font-bold text-ink-900">NVDAx</td><td className="p-3 font-sans text-ink-800">NVIDIA Corp.</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">AAPLx</td><td className="p-3 font-sans text-ink-800">Apple Inc.</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">MSFTx</td><td className="p-3 font-sans text-ink-800">Microsoft Corp.</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">GOOGLx</td><td className="p-3 font-sans text-ink-800">Alphabet Inc.</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">AMZNx</td><td className="p-3 font-sans text-ink-800">Amazon.com Inc.</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">METAx</td><td className="p-3 font-sans text-ink-800">Meta Platforms Inc.</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">TSLAx</td><td className="p-3 font-sans text-ink-800">Tesla Inc.</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">MSTRx</td><td className="p-3 font-sans text-ink-800">MicroStrategy Inc.</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">TSMx</td><td className="p-3 font-sans text-ink-800">Taiwan Semiconductor</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">AVGOx</td><td className="p-3 font-sans text-ink-800">Broadcom Inc.</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">INTCx</td><td className="p-3 font-sans text-ink-800">Intel Corporation</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">MUx</td><td className="p-3 font-sans text-ink-800">Micron Technology</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">MRVLx</td><td className="p-3 font-sans text-ink-800">Marvell Technology</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">IWMx</td><td className="p-3 font-sans text-ink-800">Russell 2000 ETF</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">DELLx</td><td className="p-3 font-sans text-ink-800">Dell Technologies</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">COINx</td><td className="p-3 font-sans text-ink-800">Coinbase Global</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">PLTRx</td><td className="p-3 font-sans text-ink-800">Palantir Technologies</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">UBERx</td><td className="p-3 font-sans text-ink-800">Uber Technologies</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">SPYx</td><td className="p-3 font-sans text-ink-800">SPDR S&amp;P 500 ETF</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">QQQx</td><td className="p-3 font-sans text-ink-800">Invesco QQQ Trust</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">USDG</td><td className="p-3 font-sans text-ink-800">Global Dollar (Settlement Cash)</td><td className="p-3 text-ink-700">USD 1:1</td><td className="p-3 text-emerald-700 font-semibold">Native Anchor</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">USDC</td><td className="p-3 font-sans text-ink-800">USD Coin (Secondary Cash)</td><td className="p-3 text-ink-700">USD 1:1</td><td className="p-3 text-emerald-700 font-semibold">Native Anchor</td></tr>
                 </tbody>
               </table>
             </div>
@@ -190,11 +204,11 @@ export default function WhitepaperPage() {
 
           {/* Section 6 */}
           <section id="section-6" className="mb-14 space-y-4">
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 dark:text-ink-50 font-sans tracking-tight">
-              6. Volatility Bands, Drift Dampening & Risk Bounds
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 font-sans tracking-tight">
+              6. Volatility Bands, Drift Dampening &amp; Risk Bounds
             </h2>
             <p>
-              To guard against excessive fee burn caused by intraday market noise, Meirei incorporates asymmetric rebalance drift tolerance bands (defaulting to ±5.0%). Rebalancing is only scheduled when an asset&apos;s allocation deviates beyond the threshold:
+              To guard against excessive fee burn caused by intraday market noise, Meirei incorporates asymmetric rebalance drift tolerance bands (defaulting to &plusmn;5.0%). Rebalancing is only scheduled when an asset&apos;s allocation deviates beyond the threshold:
             </p>
             <div className="rounded-xl bg-ink-950 p-5 font-mono text-sm text-emerald-400 overflow-x-auto my-4">
               <code>Condition: | w_current(i) - w_target(i) | &gt; DriftTolerance</code>
@@ -205,18 +219,18 @@ export default function WhitepaperPage() {
           </section>
 
           {/* Section 7 */}
-          <section id="section-7" className="mb-14 space-y-4 border-t border-ink-200/80 dark:border-surface-200 pt-10">
-            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 dark:text-ink-50 font-sans tracking-tight">
-              7. Empirical Verification & Conclusion
+          <section id="section-7" className="mb-14 space-y-4 border-t border-ink-200/80 pt-10">
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950 font-sans tracking-tight">
+              7. Empirical Verification &amp; Conclusion
             </h2>
             <p>
-              Testing across automated transaction simulation suites validates that the Meirei protocol achieves deterministic rebalance execution with zero non-consensual state modifications. The combination of natural-language accessibility, strict 2FA challenge barriers, and native X Layer settlement establishes a new paradigm for decentralized autonomous wealth management.
+              Testing across automated test suites validates that the Meirei protocol achieves deterministic rebalance execution with zero non-consensual state modifications. The combination of natural-language accessibility, strict 2FA challenge barriers, and native X Layer settlement establishes a new paradigm for decentralized autonomous wealth management.
             </p>
-            <div className="mt-8 rounded-xl border border-ink-200 dark:border-surface-200 bg-surface-100 dark:bg-surface-100 p-6 font-sans">
-              <p className="text-sm font-semibold text-ink-900 dark:text-ink-50">Citation:</p>
-              <pre className="mt-2 text-xs font-mono text-ink-700 dark:text-ink-300 overflow-x-auto">
+            <div className="mt-8 rounded-xl border border-ink-200 bg-surface-100 p-6 font-sans">
+              <p className="text-sm font-semibold text-ink-900">Citation:</p>
+              <pre className="mt-2 text-xs font-mono text-ink-700 overflow-x-auto">
 {`@article{ibotv2026meirei,
-  title={A Guardrailed, Self-Evolving Investment Mandate Architecture for Tokenized Equities on X Layer},
+  title={A Deterministic, Guardrailed Investment Mandate Architecture for Tokenized Equities on OKX X Layer},
   author={IboTV},
   journal={Meirei Core Research},
   year={2026},

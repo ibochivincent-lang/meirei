@@ -40,10 +40,10 @@ interface Message {
 
 const USE_CASES: UseCase[] = [
   {
-    id: "students",
-    label: "Students",
-    amount: "$150",
-    sentLabel: "monthly DCA",
+    id: "monthly_dca",
+    label: "Monthly Savings",
+    amount: "$50 USDG",
+    sentLabel: "monthly DCA [Illustrative]",
     photos: [
       {
         title: "Campus life",
@@ -62,25 +62,25 @@ const USE_CASES: UseCase[] = [
     ],
     messages: [
       { side: "out", text: "Put $50 into AAPLx every month", time: "10:14" },
-      { side: "in", text: "Recurring DCA configured: $50 USDG into AAPLx on X Layer on the 1st of each month. Start now?", time: "10:14" },
+      { side: "in", text: "Recurring mandate configured: $50 USDG into AAPLx on X Layer on the 1st of each month. Start now?", time: "10:14" },
       { side: "out", text: "yes", time: "10:15" },
       {
         side: "in",
-        text: "First trade executed via OKX DEX.",
+        text: "First trade simulated via OKX DEX on X Layer.",
         time: "10:15",
         receipt: {
-          status: "DCA Executed",
-          amount: "+ 0.151 AAPLx",
+          status: "DCA Executed [Simulated]",
+          amount: "+ 0.150 AAPLx",
           detail: "Swapped $50.00 USDG",
         },
       },
     ],
   },
   {
-    id: "families",
-    label: "Families",
-    amount: "$3,200",
-    sentLabel: "savings protected",
+    id: "inflation_shield",
+    label: "Inflation Shield",
+    amount: "$500 USDG",
+    sentLabel: "dollar hedge [Illustrative]",
     photos: [
       {
         title: "Family home",
@@ -98,26 +98,26 @@ const USE_CASES: UseCase[] = [
       },
     ],
     messages: [
-      { side: "out", text: "Save $1,200 in USDG and split rest between Apple and Nvidia", time: "08:31" },
-      { side: "in", text: "Mandate: $1,200 into USDG cash reserve, $1,000 AAPLx, $1,000 NVDAx. Confirm allocation?", time: "08:31" },
+      { side: "out", text: "Hedge local inflation: $250 USDG cash reserve and $250 into SPYx ETF", time: "08:31" },
+      { side: "in", text: "Mandate parsed: 50% USDG stable reserve, 50% SPYx S&P 500 ETF. Total: $500 USDG. Confirm?", time: "08:31" },
       { side: "out", text: "confirm", time: "08:32" },
       {
         side: "in",
         text: "Portfolio updated on X Layer.",
         time: "08:32",
         receipt: {
-          status: "Mandate Settled",
-          amount: "$3,200.00 USDG",
-          detail: "Reserve + AAPLx & NVDAx",
+          status: "Mandate Settled [Simulated]",
+          amount: "$500.00 USDG",
+          detail: "Reserve + SPYx ETF",
         },
       },
     ],
   },
   {
-    id: "investors",
-    label: "Investors",
-    amount: "$650",
-    sentLabel: "fractional shares",
+    id: "tech_leaders",
+    label: "Tech Growth",
+    amount: "$150 USDG",
+    sentLabel: "blue-chip equities [Illustrative]",
     photos: [
       {
         title: "Coffee shop",
@@ -135,29 +135,66 @@ const USE_CASES: UseCase[] = [
       },
     ],
     messages: [
-      { side: "out", text: "Buy $200 of Tesla and $200 of Microsoft", time: "15:26" },
-      { side: "in", text: "Buying 0.484 TSLAx and 0.390 MSFTx with $400 USDG. Price impact: 0.12%. Execute?", time: "15:26" },
-      { side: "out", text: "yes execute", time: "15:27" },
+      { side: "out", text: "Buy $50 each of Nvidia, Microsoft, and Google", time: "15:26" },
+      { side: "in", text: "Allocating $150 USDG across NVDAx, MSFTx, and GOOGLx. Max slippage 0.50%. Ready to sign in wallet?", time: "15:26" },
+      { side: "out", text: "ready", time: "15:27" },
       {
         side: "in",
-        text: "Swaps confirmed on X Layer.",
+        text: "Non-custodial signature approved on X Layer.",
         time: "15:27",
         receipt: {
-          status: "Trade Executed",
-          amount: "+ TSLAx & MSFTx",
-          detail: "Swapped $400.00 USDG",
+          status: "Trade Executed [Simulated]",
+          amount: "+ NVDAx, MSFTx, GOOGLx",
+          detail: "Swapped $150.00 USDG",
         },
       },
     ],
   },
   {
-    id: "traders",
-    label: "Traders",
-    amount: "$15,000",
-    sentLabel: "rebalance mandate",
+    id: "micro_mandate",
+    label: "Weekly Habit",
+    amount: "$25 USDG",
+    sentLabel: "weekly fractional [Illustrative]",
     photos: [
       {
         title: "Market desk",
+        subtitle: "Recurring discipline",
+        src: "/Images/Trader 1.jpg",
+        placement: "left-2 top-20 h-[240px] w-[228px] lg:left-[10%] lg:top-[60px] lg:h-[321px] lg:w-[307px]",
+        objectPosition: "object-center",
+      },
+      {
+        title: "Screen view",
+        subtitle: "Nasdaq-100 target",
+        src: "/Images/Trader 2.jpg",
+        placement: "right-2 top-[370px] h-[240px] w-[228px] lg:right-[7%] lg:top-[320px] lg:h-[310px] lg:w-[300px]",
+        objectPosition: "object-center",
+      },
+    ],
+    messages: [
+      { side: "out", text: "Invest $25 into QQQx every Friday", time: "16:40" },
+      { side: "in", text: "Weekly micro-mandate enabled: $25 USDG into Invesco QQQx every Friday at 16:00 UTC. Confirm schedule?", time: "16:40" },
+      { side: "out", text: "confirm schedule", time: "16:41" },
+      {
+        side: "in",
+        text: "Micro-mandate registered on X Layer.",
+        time: "16:41",
+        receipt: {
+          status: "Schedule Active [Simulated]",
+          amount: "$25.00 USDG / week",
+          detail: "QQQx Tokenized ETF",
+        },
+      },
+    ],
+  },
+  {
+    id: "algorithmic_rebalance",
+    label: "Dynamic Sleeve",
+    amount: "$15,000 USDG",
+    sentLabel: "cap-constrained mandate [Illustrative]",
+    photos: [
+      {
+        title: "Trading workspace",
         subtitle: "Algorithmic rules",
         src: "/Images/nightout.jpg",
         placement: "right-0 top-[330px] h-[250px] w-[246px] lg:right-[4%] lg:top-[342px] lg:h-[321px] lg:w-[307px]",
@@ -219,10 +256,10 @@ export function UseCasesSection() {
             </Reveal>
             <Reveal delay={0.2}>
               <p className="mt-2 max-w-xl text-sm text-ink-500 dark:text-ink-400 md:text-base">
-                For students, families, investors, and traders. Check your investments and manage portfolios on WhatsApp, Telegram, and Instagram.
+                Dollar-denominated equity investing by message. Built for individuals and savers in high-inflation markets seeking global purchasing power through simple conversational mandates.
               </p>
               <div className="mt-4 max-w-2xl rounded-2xl border border-accent-500/20 dark:border-accent-700/40 bg-accent-50/60 dark:bg-accent-950/30 p-4 text-xs leading-relaxed text-ink-800 dark:text-accent-200 md:text-sm shadow-xs">
-                Meirei is built to include everyone. Whether you are an advanced trader, a well known investor, or have zero prior knowledge of stocks and crypto, Meirei is here for you. With our AI agent, you can place and manage stocks on the market using simple conversational chat. Be part of the journey and check it out now.
+                Turn your messaging app into a global wealth preservation vehicle. Save in dollar stablecoins (USDG) and acquire fractional US blue-chip equities with plain text commands like &ldquo;$50 into AAPLx monthly&rdquo; on OKX X Layer.
               </div>
             </Reveal>
           </div>

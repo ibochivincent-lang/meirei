@@ -65,7 +65,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${dmSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${spaceGroteskWorks.variable}`}
+      className={`${dmSans.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${spaceGroteskWorks.variable}`}
       suppressHydrationWarning
     >
       <head>
@@ -73,15 +73,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `(function() {
               try {
-                var stored = localStorage.getItem('meirei_theme');
-                if (stored === 'light') {
-                  document.documentElement.classList.remove('dark');
-                } else {
-                  document.documentElement.classList.add('dark');
-                }
-              } catch (e) {
-                document.documentElement.classList.add('dark');
-              }
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('meirei_theme', 'light');
+              } catch (e) {}
             })();`,
           }}
         />
