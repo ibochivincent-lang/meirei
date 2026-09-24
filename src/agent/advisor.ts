@@ -41,7 +41,7 @@ export function generateAdvisoryPlan(params: {
   // Custom stock selection branch: dynamically calculate allocation, weights, and thesis
   if (customStocks && customStocks.length > 0) {
     const validStocks = customStocks.filter(
-      (s) => ALLOWLIST.has(s as any) && s !== "USDG" && s !== "USDC" && s !== "USDT"
+      (s) => ALLOWLIST.some((item) => item.symbol === s) && s !== "USDG" && s !== "USDC" && s !== "USDT"
     );
     if (validStocks.length > 0) {
       let stableWeight = 25;
