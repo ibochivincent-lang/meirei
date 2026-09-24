@@ -49,29 +49,44 @@ export default function HomePage() {
 
           <FeatureSection
             index='2'
-            heading='Your portfolio, one message away'
-            description="Check your holdings, track weekly progress, and stay updated simply by providing your email or wallet address — no complex wallet extensions required."
+            heading='Stay updated with your portfolio & active mandates'
+            description="Stay updated with the latest happenings in your portfolio and what our mandate is doing 24/7. We want to be part of your everyday life and everyday app use — always staying connected on Telegram, WhatsApp, or Web to deliver seamless portfolio tracking and automated weekly updates without complex wallet friction."
             visual={<BalanceIllustration />}
             reverse
-          />
+          >
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+              <div className="rounded-xl border border-ink-200/80 bg-surface-50 p-3.5 shadow-2xs">
+                <span className="font-mono text-xs font-bold text-accent-700">Everyday App Connected</span>
+                <p className="mt-1 text-xs text-ink-600 leading-relaxed">
+                  Part of your everyday life and daily messaging apps. Receive automated portfolio progress, mandate execution logs, and live balance updates.
+                </p>
+              </div>
+              <div className="rounded-xl border border-ink-200/80 bg-surface-50 p-3.5 shadow-2xs">
+                <span className="font-mono text-xs font-bold text-accent-700">Latest Mandate Happenings</span>
+                <p className="mt-1 text-xs text-ink-600 leading-relaxed">
+                  Real-time visibility into what your mandate is doing: automated drift rebalances, stop-loss protection triggers, and dollar accumulation.
+                </p>
+              </div>
+            </div>
+          </FeatureSection>
 
           <FeatureSection
             index='3'
-            heading='Rebalance with a single sentence'
-            description="Say 'allocate 20% each into mag7 and usdg' and Meirei will calculate the diff and execute the necessary swaps instantly."
+            heading='Rebalance with a single sentence & autonomous AI'
+            description="We show you the latest news, real-time market catalysts, and operate an autonomous AI trading agent on OKX X Layer. Say 'allocate 20% each into mag7 and usdg' and Meirei will synthesize market news, calculate the portfolio diff, and execute the necessary swaps instantly."
             visual={<ReceiveIllustration />}
           >
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
               <div className="rounded-xl border border-ink-200/80 bg-surface-50 p-3.5 shadow-2xs">
-                <span className="font-mono text-xs font-bold text-accent-700">Sub-Second Finality</span>
+                <span className="font-mono text-xs font-bold text-accent-700">Autonomous AI Trading Agent</span>
                 <p className="mt-1 text-xs text-ink-600 leading-relaxed">
-                  OKX X Layer (Chain 196) settles your multi-asset rebalance with sponsored gas and instant confirmations.
+                  Acts as your tireless 24/7 autonomous trading co-pilot on OKX X Layer (Chain 196) with sponsored gas and instant execution.
                 </p>
               </div>
               <div className="rounded-xl border border-ink-200/80 bg-surface-50 p-3.5 shadow-2xs">
-                <span className="font-mono text-xs font-bold text-accent-700">Drift Protection</span>
+                <span className="font-mono text-xs font-bold text-accent-700">Latest Market News & Intelligence</span>
                 <p className="mt-1 text-xs text-ink-600 leading-relaxed">
-                  Meirei dynamically rebalances across 20 allowlisted equities and USDG cash to prevent unwanted portfolio drift.
+                  Shows you the latest breaking news and institutional signals to continuously guide algorithmic rebalancing and drift prevention.
                 </p>
               </div>
             </div>
@@ -79,11 +94,26 @@ export default function HomePage() {
 
           <FeatureSection
             index='4'
-            heading='Talk naturally. Meirei understands'
-            description="Connect in one tap and talk naturally. Ask live stock prices, check balances, or execute rebalance mandates with zero crypto friction."
+            heading='Talk naturally in any form. Meirei understands'
+            description="Talk naturally in any form of way — we understand you. Meirei understands every word you say in different languages. We currently support English, Spanish, Chinese, Japanese, and are actively adding more languages so anyone worldwide can invest with zero crypto friction."
             visual={<ContextIllustration />}
             reverse
-          />
+          >
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+              <div className="rounded-xl border border-ink-200/80 bg-surface-50 p-3.5 shadow-2xs">
+                <span className="font-mono text-xs font-bold text-accent-700">Multilingual NLP Engine</span>
+                <p className="mt-1 text-xs text-ink-600 leading-relaxed">
+                  Understands every word you say across English, Español, 中文, and 日本語. No crypto jargon, technical hex, or complex setups required.
+                </p>
+              </div>
+              <div className="rounded-xl border border-ink-200/80 bg-surface-50 p-3.5 shadow-2xs">
+                <span className="font-mono text-xs font-bold text-accent-700">More Languages Being Added</span>
+                <p className="mt-1 text-xs text-ink-600 leading-relaxed">
+                  Expanding rapidly to French, German, Korean, Vietnamese, and Arabic to bring financial inclusion to billions across the globe.
+                </p>
+              </div>
+            </div>
+          </FeatureSection>
         </HowItWorksWrapper>
 
         <SecuritySection />
