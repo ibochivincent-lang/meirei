@@ -2128,22 +2128,22 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       : getFormattedPrice(selectedStock);
 
   return (
-    <div className="min-h-screen bg-surface-50 text-ink-900 transition-colors">
+    <div className="min-h-screen bg-surface-50 text-ink-900 transition-colors w-full max-w-full overflow-x-hidden">
       {/* Top Application Header */}
-      <header className="sticky inset-x-0 top-0 z-40 border-b border-surface-200 bg-surface-50 transition-colors">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-3 sm:px-8">
-          <div className="flex items-center gap-4">
+      <header className="sticky inset-x-0 top-0 z-40 border-b border-surface-200 bg-surface-50 transition-colors w-full max-w-full overflow-x-hidden">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-3 py-2.5 sm:px-8 sm:py-3 w-full">
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             <Link href="/" aria-label="meirei - home">
               <BrandMark />
             </Link>
             <div className="hidden h-5 w-px bg-surface-200 sm:block" />
-            <div className="hidden items-center gap-2 sm:flex">
+            <div className="hidden items-center gap-2 lg:flex">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span className="font-mono text-xs font-semibold text-ink-700">
                 OKX Chain (X Layer 196)
               </span>
             </div>
-            <div className="hidden md:flex items-center gap-1.5 rounded-full border border-surface-200 bg-surface-100 px-2.5 py-1">
+            <div className="hidden xl:flex items-center gap-1.5 rounded-full border border-surface-200 bg-surface-100 px-2.5 py-1">
               <span className="font-mono text-[11px] text-ink-600">
                 Routing: <span className="font-semibold text-ink-900">OKX Exchange OS</span>
               </span>
@@ -2157,7 +2157,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                 type="button"
                 onClick={() => setExecutionEnvironment("live")}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer",
+                  "flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer",
                   executionEnvironment === "live"
                     ? "bg-emerald-600 text-white shadow-xs"
                     : "text-ink-600 hover:text-ink-950"
@@ -2174,7 +2174,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                 type="button"
                 onClick={() => setExecutionEnvironment("simulation")}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer",
+                  "flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer",
                   executionEnvironment === "simulation"
                     ? "bg-ink-900 text-white shadow-xs"
                     : "text-ink-600 hover:text-ink-950"
@@ -2185,7 +2185,8 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   "h-1.5 w-1.5 rounded-full",
                   executionEnvironment === "simulation" ? "bg-amber-400" : "bg-ink-400"
                 )} />
-                <span>Simulation</span>
+                <span className="hidden sm:inline">Simulation</span>
+                <span className="sm:hidden">Sim</span>
               </button>
             </div>
 
@@ -2197,7 +2198,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   {profile.platform === "web" && "WEB"}
                   {profile.platform === "okx_wallet" && "OKX"}
                 </div>
-                <div className="text-left max-w-[70px] sm:max-w-none">
+                <div className="text-left max-w-[65px] sm:max-w-none">
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-semibold text-ink-900 truncate">{profile.handle}</span>
                     <span className="hidden sm:inline-block rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800">
@@ -2234,7 +2235,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
               <button
                 type="button"
                 onClick={() => setShowLoginModal(true)}
-                className="rounded-full bg-accent-500 px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-accent-600 cursor-pointer"
+                className="rounded-full bg-accent-500 px-3 py-1 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-semibold text-white shadow-sm transition-all hover:bg-accent-600 cursor-pointer shrink-0"
               >
                 Connect
               </button>
@@ -2242,7 +2243,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
             <Link
               href="/"
-              className="rounded-full border border-ink-200 px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs font-medium text-ink-700 transition-colors hover:bg-surface-100"
+              className="hidden md:inline-flex rounded-full border border-ink-200 px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs font-medium text-ink-700 transition-colors hover:bg-surface-100"
             >
               Overview
             </Link>
@@ -2251,7 +2252,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       </header>
 
       {/* Main Terminal Container */}
-      <main className="mx-auto max-w-[1440px] px-3.5 py-4 sm:px-8 sm:py-6">
+      <main className="mx-auto max-w-[1440px] px-3 sm:px-8 py-3.5 sm:py-6 w-full max-w-full overflow-x-hidden">
 
         {/* Terminal Subheader & DUAL-ENVIRONMENT MODE SWITCHER */}
         <div className="mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center">
@@ -3609,7 +3610,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                             Click any of the 20 tokenized stocks to add or remove from your algorithmic mandate.
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 shrink-0 pt-0.5">
                           <button
                             type="button"
                             onClick={() => setAdvisoryCustomStocks(["NVDAx", "MSFTx", "AAPLx", "TSLAx"])}
@@ -4001,7 +4002,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       <div className="mt-4">
                         <svg
                           viewBox="0 0 600 230"
-                          className="w-full h-auto overflow-visible select-none"
+                          className="w-full h-auto overflow-hidden select-none"
                           preserveAspectRatio="xMidYMid meet"
                         >
                           <defs>
@@ -4121,7 +4122,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                         </svg>
 
                         {/* Horizon Return Badges */}
-                        <div className="mt-2 grid grid-cols-5 gap-2 border-t border-ink-100 pt-3 text-center">
+                        <div className="mt-2 grid grid-cols-5 gap-1 sm:gap-2 border-t border-ink-100 pt-3 text-center">
                           {OKX_TRADING_PLAN_DATA.trajectories.map((traj) => {
                             const val =
                               advisoryRisk === "aggressive"
@@ -4131,13 +4132,13 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                                 : traj.conservativeReturnPct;
 
                             return (
-                              <div key={traj.timeHorizon} className="rounded-lg bg-surface-50 p-2">
-                                <span className="block text-[10px] font-bold text-ink-500 font-mono">
+                              <div key={traj.timeHorizon} className="rounded-lg bg-surface-50 p-1 sm:p-2">
+                                <span className="block text-[9px] sm:text-[10px] font-bold text-ink-500 font-mono">
                                   {traj.timeHorizon}
                                 </span>
                                 <span
                                   className={cn(
-                                    "font-mono text-xs font-bold",
+                                    "font-mono text-[11px] sm:text-xs font-bold",
                                     advisoryRisk === "aggressive" && "text-rose-600",
                                     advisoryRisk === "balanced" && "text-accent-600",
                                     advisoryRisk === "conservative" && "text-emerald-600"

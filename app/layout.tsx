@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import "@/app/globals.css";
@@ -32,6 +32,12 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   display: "swap",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 
 const title = "Meirei · AI Native Investment Mandate Agent";

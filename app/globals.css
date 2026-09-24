@@ -53,6 +53,8 @@ html {
      it must be non-static for that measurement to be reliable. */
   position: relative;
   transition: background-color 200ms ease, color 200ms ease;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* Strict Light Theme Tokens - Institutional Terminal Aesthetic */
@@ -62,6 +64,8 @@ body {
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 h1, h2, h3 {
