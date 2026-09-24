@@ -749,12 +749,16 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     });
   };
 
-  // Mandate editing state
+  // Mandate editing state with structured stock & percentage/price selection
   const [editingMandate, setEditingMandate] = useState<MandatePolicy | null>(null);
   const [editTarget, setEditTarget] = useState<string>("");
   const [editRule, setEditRule] = useState<string>("");
   const [editThreshold, setEditThreshold] = useState<string>("");
   const [editStatus, setEditStatus] = useState<"active" | "paused">("active");
+  const [editSelectedStocks, setEditSelectedStocks] = useState<string[]>(["NVDAx", "AAPLx"]);
+  const [editStockWeights, setEditStockWeights] = useState<Record<string, number>>({ NVDAx: 60, AAPLx: 40 });
+  const [editDcaStock, setEditDcaStock] = useState<string>("TSLAx");
+  const [editDcaAmount, setEditDcaAmount] = useState<number>(50);
 
   const handleOpenEditMandate = (mandate: MandatePolicy) => {
     setEditingMandate(mandate);
@@ -762,18 +766,65 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     setEditRule(mandate.rule);
     setEditThreshold(mandate.threshold);
     setEditStatus(mandate.status);
+
+    if (mandate.policyType === "drift_rebalance" || mandate.target.includes("%")) {
+      const parts = mandate.target.split(/[\/,]/).map((p) => p.trim());
+      const stocks: string[] = [];
+      const weights: Record<string, number> = {};
+      for (const p of parts) {
+        const m = p.match(/(\d+(?:\.\d+)?)\s*%\s*([A-Za-z0-9]+)/);
+        if (m) {
+          const w = parseFloat(m[1]);
+          const sym = m[2];
+          stocks.push(sym);
+          weights[sym] = w;
+        }
+      }
+      if (stocks.length > 0) {
+        setEditSelectedStocks(stocks);
+        setEditStockWeights(weights);
+      } else {
+        setEditSelectedStocks(["NVDAx", "AAPLx"]);
+        setEditStockWeights({ NVDAx: 60, AAPLx: 40 });
+      }
+    } else if (mandate.policyType === "dca_recurring" || mandate.target.toLowerCase().includes("into")) {
+      const match = mandate.target.match(/(\d+(?:\.\d+)?)\s*USDG\s*into\s*([A-Za-z0-9]+)/i);
+      if (match) {
+        setEditDcaAmount(parseFloat(match[1]) || 50);
+        setEditDcaStock(match[2] || "TSLAx");
+      } else {
+        setEditDcaAmount(50);
+        setEditDcaStock("TSLAx");
+      }
+    }
   };
 
   const handleSaveEditMandate = () => {
     if (!editingMandate) return;
+
+    let computedTarget = editTarget.trim() || editingMandate.target;
+    let computedRule = editRule.trim() || editingMandate.rule;
+    let computedThreshold = editThreshold.trim() || editingMandate.threshold;
+
+    if (editingMandate.policyType === "drift_rebalance" || editingMandate.target.includes("%")) {
+      if (editSelectedStocks.length > 0) {
+        computedTarget = editSelectedStocks
+          .map((sym) => `${editStockWeights[sym] || 0}% ${sym}`)
+          .join(" / ");
+      }
+    } else if (editingMandate.policyType === "dca_recurring" || editingMandate.target.toLowerCase().includes("into")) {
+      computedTarget = `${editDcaAmount} USDG into ${editDcaStock}`;
+      computedThreshold = `${editDcaAmount} USDG`;
+    }
+
     setMandatePolicies((prev) =>
       prev.map((m) =>
         m.id === editingMandate.id
           ? {
               ...m,
-              target: editTarget.trim() || m.target,
-              rule: editRule.trim() || m.rule,
-              threshold: editThreshold.trim() || m.threshold,
+              target: computedTarget,
+              rule: computedRule,
+              threshold: computedThreshold,
               status: editStatus,
               lastEvaluated: "Updated by operator",
             }
@@ -785,7 +836,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
         id: `log-${Date.now()}`,
         timestamp: new Date().toLocaleTimeString(),
         source: "Policy Manager",
-        message: `Policy "${editingMandate.title}" updated. Target: ${editTarget || editingMandate.target}, Threshold: ${editThreshold || editingMandate.threshold}, Status: ${editStatus.toUpperCase()}.`,
+        message: `Policy "${editingMandate.title}" updated. Target: ${computedTarget}, Threshold: ${computedThreshold}, Status: ${editStatus.toUpperCase()}.`,
         type: "success",
       },
       ...prev,
@@ -927,6 +978,9 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       spotPrice,
     });
   };
+
+  // Live vs Simulation Execution Environment switch
+  const [executionEnvironment, setExecutionEnvironment] = useState<"live" | "simulation">("live");
 
   // Advisory Agent parameters (Advanced Mode)
   const [advisoryHorizon, setAdvisoryHorizon] = useState<AdvisoryHorizon>("short_term");
@@ -1935,6 +1989,44 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            {/* Live vs Simulation Toggle Switch */}
+            <div className="flex items-center rounded-full border border-ink-200 bg-surface-100 p-0.5 text-xs font-mono">
+              <button
+                type="button"
+                onClick={() => setExecutionEnvironment("live")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer",
+                  executionEnvironment === "live"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "text-ink-600 hover:text-ink-950"
+                )}
+                title="Live execution on OKX X Layer (Chain 196)"
+              >
+                <span className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  executionEnvironment === "live" ? "bg-white animate-pulse" : "bg-emerald-500"
+                )} />
+                <span>Live</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setExecutionEnvironment("simulation")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer",
+                  executionEnvironment === "simulation"
+                    ? "bg-ink-900 text-white shadow-xs"
+                    : "text-ink-600 hover:text-ink-950"
+                )}
+                title="Simulated paper execution sandbox"
+              >
+                <span className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  executionEnvironment === "simulation" ? "bg-amber-400" : "bg-ink-400"
+                )} />
+                <span>Simulation</span>
+              </button>
+            </div>
+
             {/* Account Status & Identity Badge (Optimized for mobile) */}
             {isLoggedIn ? (
               <div className="flex items-center gap-1.5 sm:gap-2.5 rounded-full border border-ink-200 bg-white p-1 sm:p-1.5 sm:pr-3.5 shadow-xs">
@@ -2993,51 +3085,21 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
                 {/* AI Trading Advisory Agent Studio */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
-                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
-                    <div>
-                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
-                        Institutional Advisory Studio
-                      </span>
-                      <h2 className="font-display text-lg font-bold text-ink-950 sm:text-xl">
-                        AI Trading Advisory Agent
-                      </h2>
-                      <p className="mt-0.5 text-xs text-ink-600">
-                        Synthesizes your time horizon, preferred stock selections, and stablecoin liquidity to formulate custom non-custodial mandates.
-                      </p>
-                    </div>
-
-                    {/* Horizon Selector */}
-                    <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
-                      <button
-                        type="button"
-                        onClick={() => setAdvisoryHorizon("short_term")}
-                        className={cn(
-                          "rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer",
-                          advisoryHorizon === "short_term"
-                            ? "bg-white text-ink-950 shadow-xs"
-                            : "text-ink-500 hover:text-ink-900"
-                        )}
-                      >
-                        Short-Term Momentum
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAdvisoryHorizon("long_term")}
-                        className={cn(
-                          "rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer",
-                          advisoryHorizon === "long_term"
-                            ? "bg-white text-ink-950 shadow-xs"
-                            : "text-ink-500 hover:text-ink-900"
-                        )}
-                      >
-                        Long-Term Blue Chip DCA
-                      </button>
-                    </div>
+                  <div className="border-b border-ink-100 pb-4">
+                    <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
+                      Institutional Advisory Studio
+                    </span>
+                    <h2 className="font-display text-lg font-bold text-ink-950 sm:text-xl">
+                      AI Trading Advisory Agent
+                    </h2>
+                    <p className="mt-0.5 text-xs text-ink-600">
+                      Synthesizes your time horizon, preferred stock selections, and stablecoin liquidity to formulate custom non-custodial mandates.
+                    </p>
                   </div>
 
                   {/* Stablecoin Liquidity & Strategy Formulation Selectors */}
                   <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    {/* Stablecoin Settlement Selection */}
+                    {/* Stablecoin Settlement Selection (USDG Only) */}
                     <div>
                       <label className="text-xs font-bold uppercase tracking-wider text-ink-700">
                         Base Stablecoin Liquidity Asset
@@ -3045,25 +3107,13 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       <p className="text-[11px] text-ink-500 mt-0.5">
                         Settlement and cash buffer asset for algorithmic rebalances.
                       </p>
-                      <div className="mt-2 grid grid-cols-3 gap-2">
-                        {(["USDG", "USDC", "USDT"] as const).map((coin) => (
-                          <button
-                            key={coin}
-                            type="button"
-                            onClick={() => setAdvisoryStablecoin(coin)}
-                            className={cn(
-                              "rounded-xl border p-2.5 text-center transition-all cursor-pointer",
-                              advisoryStablecoin === coin
-                                ? "border-accent-500 bg-accent-50/70 ring-1 ring-accent-500"
-                                : "border-ink-200 bg-surface-50 hover:bg-white"
-                            )}
-                          >
-                            <span className="font-mono text-xs font-bold text-ink-900 block">{coin}</span>
-                            <span className="text-[9px] text-ink-500 block mt-0.5">
-                              {coin === "USDG" ? "OKX X Layer (Gas Sponsored)" : coin === "USDC" ? "Circle Bridged" : "Tether USD"}
-                            </span>
-                          </button>
-                        ))}
+                      <div className="mt-2">
+                        <div className="rounded-xl border border-accent-500 bg-accent-50/70 ring-1 ring-accent-500 p-2.5 text-center">
+                          <span className="font-mono text-xs font-bold text-ink-900 block">USDG</span>
+                          <span className="text-[9px] text-accent-700 font-semibold block mt-0.5">
+                            OKX X Layer (Gas Sponsored)
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -3087,7 +3137,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                           )}
                         >
                           <span className="font-display text-xs font-bold text-ink-900 block">Recommended Basket</span>
-                          <span className="text-[9px] text-ink-500 block mt-0.5">Curated by OKX AI Skills</span>
+                          <span className="text-[9px] text-ink-500 block mt-0.5">Current Hot in the Market</span>
                         </button>
                         <button
                           type="button"
@@ -3267,6 +3317,45 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                           </button>
                         ))}
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Strategy Horizon Selection (Placed Before Investment Risk Profile) */}
+                  <div className="mt-5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-ink-700">
+                      Select Investment Strategy Horizon
+                    </label>
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setAdvisoryHorizon("short_term")}
+                        className={cn(
+                          "rounded-xl border p-3 text-left transition-all cursor-pointer",
+                          advisoryHorizon === "short_term"
+                            ? "border-accent-500 bg-accent-50/60 ring-1 ring-accent-500"
+                            : "border-ink-200 bg-surface-50 hover:bg-white"
+                        )}
+                      >
+                        <p className="font-display text-xs font-bold text-ink-900">Short-Term Momentum</p>
+                        <p className="mt-0.5 text-[10px] text-ink-500">
+                          Tactical rotation into high-beta market leaders &amp; momentum swings
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdvisoryHorizon("long_term")}
+                        className={cn(
+                          "rounded-xl border p-3 text-left transition-all cursor-pointer",
+                          advisoryHorizon === "long_term"
+                            ? "border-accent-500 bg-accent-50/60 ring-1 ring-accent-500"
+                            : "border-ink-200 bg-surface-50 hover:bg-white"
+                        )}
+                      >
+                        <p className="font-display text-xs font-bold text-ink-900">Long-Term Blue Chip DCA</p>
+                        <p className="mt-0.5 text-[10px] text-ink-500">
+                          Automated systematic accumulation of core institutional equities
+                        </p>
+                      </button>
                     </div>
                   </div>
 
@@ -3780,105 +3869,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   </div>
                 </div>
 
-                {/* 2. Market Catalysts, News & Investor Sentiment Feed (Rendered Directly ON TOP of Directory in Advanced Mode) */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
-                  <div className="flex items-center justify-between border-b border-ink-100 pb-4">
-                    <div>
-                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
-                        Live Market Intelligence &amp; Investor Sentiment
-                      </span>
-                      <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
-                        Market Catalysts &amp; Investor Consensus
-                      </h2>
-                    </div>
-                    <span className="rounded-full bg-surface-100 border border-transparent px-3 py-1 text-xs font-medium text-ink-600">
-                      Live On-Chain Feed
-                    </span>
-                  </div>
-
-                  {isLoadingNews ? (
-                    <div className="py-12 text-center text-xs text-ink-500">
-                      Loading real-time market catalysts from X Layer onchain feed...
-                    </div>
-                  ) : (
-                    <div className="mt-5 space-y-4">
-                      {newsList.map((item) => (
-                        <div
-                          key={item.id}
-                          className="rounded-2xl border border-ink-200/80 bg-surface-50/50 p-4 transition-all hover:bg-white hover:shadow-xs"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2">
-                              <span className="rounded bg-ink-900 border border-transparent px-2 py-0.5 font-mono text-xs font-bold text-white">
-                                {item.ticker}
-                              </span>
-                              <span className="text-xs font-semibold text-ink-600">
-                                {item.category}
-                              </span>
-                              <span className="text-ink-400">·</span>
-                              <span className="text-[11px] text-ink-400">{item.timestamp}</span>
-                            </div>
-
-                            <span
-                              className={cn(
-                                "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase",
-                                item.impact === "Bullish"
-                                  ? "bg-emerald-100 text-emerald-800 border border-transparent"
-                                  : item.impact === "Bearish"
-                                  ? "bg-red-100 text-red-800 border border-transparent"
-                                  : "bg-amber-100 text-amber-800 border border-transparent"
-                              )}
-                            >
-                              {item.impact}
-                            </span>
-                          </div>
-
-                          <h3 className="mt-2 font-display text-sm font-bold leading-snug text-ink-900">
-                            {item.headline}
-                          </h3>
-                          <p className="mt-1 text-xs text-ink-600 leading-relaxed">
-                            {item.summary}
-                          </p>
-
-                          {/* What Investors Think So Far & Market Effect */}
-                          <div className="mt-3 space-y-2 rounded-xl border border-ink-200/70 bg-white p-3 text-xs">
-                            <p className="text-ink-800 leading-relaxed">
-                              <strong className="text-ink-900">What Investors Think So Far: </strong>
-                              {item.impact === "Bullish"
-                                ? "Institutional accumulation detected; retail sentiment strongly positive with surging call options activity."
-                                : item.impact === "Bearish"
-                                ? "Defensive rebalancing observed; traders hedging downside risk with automated stop loss triggers."
-                                : "Balanced consolidation; market awaiting further macro economic and earnings guidance."}
-                            </p>
-                            <p className="text-ink-800 leading-relaxed border-t border-ink-100 pt-2">
-                              <strong className="text-accent-600">Market Effect on X Layer: </strong>
-                              {item.marketEffectAnalysis}
-                            </p>
-                          </div>
-
-                          {/* Quick Trade Action */}
-                          <div className="mt-3.5 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const stockMatch = STOCKS.find((s) => s.symbol === item.ticker);
-                                if (stockMatch) setSelectedStock(stockMatch);
-                                setPromptText(item.suggestedAction.tradePrompt);
-                                setMode("basic");
-                                handleSendPrompt(item.suggestedAction.tradePrompt);
-                              }}
-                              className="rounded-lg bg-ink-900 border border-transparent px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-600 cursor-pointer"
-                            >
-                              Trade on Catalyst: {item.suggestedAction.label}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. Institutional Market & Mandates Directory (Powered by OKX AI Skills) */}
+                {/* 2. Institutional Market & Mandates Directory (Powered by OKX AI Skills) */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
                   <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
                     <div>
@@ -4182,6 +4173,106 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                 );
               })()}
             </div>
+
+            {/* Live Market Intelligence & Investor Sentiment: Market Catalysts & Investor Consensus (Directly Under Active Portfolio in Advanced Mode) */}
+            {mode === "advanced" && (
+              <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+                <div className="flex items-center justify-between border-b border-ink-100 pb-3">
+                  <div>
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600 block">
+                      Live Market Intelligence &amp; Investor Sentiment
+                    </span>
+                    <h3 className="font-display text-sm font-bold text-ink-950">
+                      Market Catalysts &amp; Investor Consensus
+                    </h3>
+                  </div>
+                  <span className="rounded-full bg-surface-100 px-2 py-0.5 font-mono text-[9px] font-bold text-ink-600">
+                    Live Feed
+                  </span>
+                </div>
+
+                {isLoadingNews ? (
+                  <div className="py-8 text-center text-xs text-ink-500">
+                    Loading real-time market catalysts from X Layer onchain feed...
+                  </div>
+                ) : (
+                  <div className="mt-3.5 space-y-3.5">
+                    {newsList.map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-ink-200/80 bg-surface-50/60 p-3 text-xs transition-all hover:bg-white hover:shadow-xs"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="rounded bg-ink-900 px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                              {item.ticker}
+                            </span>
+                            <span className="text-[11px] font-semibold text-ink-600">
+                              {item.category}
+                            </span>
+                            <span className="text-ink-300">·</span>
+                            <span className="text-[10px] text-ink-400">{item.timestamp}</span>
+                          </div>
+
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase shrink-0",
+                              item.impact === "Bullish"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : item.impact === "Bearish"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-amber-100 text-amber-800"
+                            )}
+                          >
+                            {item.impact}
+                          </span>
+                        </div>
+
+                        <h4 className="mt-1.5 font-display text-xs font-bold leading-snug text-ink-950">
+                          {item.headline}
+                        </h4>
+                        <p className="mt-1 text-[11px] text-ink-600 leading-relaxed">
+                          {item.summary}
+                        </p>
+
+                        {/* What Investors Think So Far & Market Effect */}
+                        <div className="mt-2.5 space-y-1.5 rounded-lg border border-ink-200/60 bg-white p-2 text-[11px]">
+                          <p className="text-ink-700 leading-normal">
+                            <strong className="text-ink-900">What Investors Think So Far: </strong>
+                            {item.impact === "Bullish"
+                              ? "Institutional accumulation detected; retail sentiment positive with active call buying."
+                              : item.impact === "Bearish"
+                              ? "Defensive rebalancing observed; traders hedging downside risk."
+                              : "Balanced consolidation; market awaiting further guidance."}
+                          </p>
+                          <p className="text-ink-700 leading-normal border-t border-ink-100 pt-1.5">
+                            <strong className="text-accent-600">Market Effect on X Layer: </strong>
+                            {item.marketEffectAnalysis}
+                          </p>
+                        </div>
+
+                        {/* Quick Trade Action */}
+                        <div className="mt-2.5 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const stockMatch = STOCKS.find((s) => s.symbol === item.ticker);
+                              if (stockMatch) setSelectedStock(stockMatch);
+                              setPromptText(item.suggestedAction.tradePrompt);
+                              setMode("basic");
+                              handleSendPrompt(item.suggestedAction.tradePrompt);
+                            }}
+                            className="rounded-lg bg-ink-900 hover:bg-accent-600 text-white px-2.5 py-1 text-[11px] font-bold shadow-2xs transition-colors cursor-pointer"
+                          >
+                            Trade on Catalyst: {item.suggestedAction.label}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -5026,7 +5117,9 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-2xl">⚡</span>
+                      <span className="font-mono text-xs font-bold text-accent-700 tracking-wider uppercase">
+                        Direct Spot
+                      </span>
                       <span className="rounded-full bg-accent-100 px-2.5 py-0.5 font-mono text-[10px] font-bold text-accent-800">
                         Spot &amp; Calculator
                       </span>
@@ -5066,7 +5159,9 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-2xl">🧠</span>
+                      <span className="font-mono text-xs font-bold text-ink-700 tracking-wider uppercase">
+                        Algorithmic Mandates
+                      </span>
                       <span className="rounded-full bg-ink-200 px-2.5 py-0.5 font-mono text-[10px] font-bold text-ink-800">
                         Autonomous Mandates
                       </span>
@@ -5076,11 +5171,11 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                         Advanced Mode
                       </h3>
                       <p className="text-xs text-ink-600 mt-1 leading-relaxed">
-                        Autonomous mandate orchestrator synchronizing 4 OKX AI skills, algorithmic drift rebalancing, recurring DCA schedules, and institutional market catalyst intelligence.
+                        Autonomous mandate orchestrator synchronizing institutional market analysis, algorithmic drift rebalancing, recurring DCA schedules, and on-chain catalyst intelligence.
                       </p>
                     </div>
                     <ul className="text-[11px] text-ink-700 space-y-1 font-medium pt-2 border-t border-ink-200/60">
-                      <li>✓ 4 OKX AI Skills Synchronized</li>
+                      <li>✓ Real-Time On-Chain Intelligence</li>
                       <li>✓ Algorithmic Drift &amp; DCA Solvers</li>
                       <li>✓ Volatility Circuit Breakers</li>
                       <li>✓ Dedicated Mandate Capital Allocation</li>
@@ -5089,7 +5184,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
                   <button
                     type="button"
-                    className="mt-5 w-full py-2.5 rounded-xl bg-ink-950 hover:bg-accent-600 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                    className="mt-5 w-full py-2.5 rounded-xl bg-ink-900 hover:bg-accent-600 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5"
                   >
                     <span>Enter Advanced Mode</span>
                     <span>→</span>

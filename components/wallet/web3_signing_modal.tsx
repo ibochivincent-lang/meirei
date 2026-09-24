@@ -364,10 +364,10 @@ export function Web3SigningModal({
                 type="button"
                 onClick={handleSignTransaction}
                 disabled={isSigning || inputAmount <= 0}
-                className="w-full py-3.5 rounded-2xl bg-ink-950 hover:bg-accent-600 text-white text-xs font-bold tracking-wide disabled:opacity-50 transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-2xl bg-ink-900 hover:bg-accent-600 text-white text-sm font-bold tracking-wide disabled:opacity-50 transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>{isSigning ? "Awaiting Wallet Signature..." : `Confirm & Sign Quick Buy (${currentUnits.toFixed(4)} ${targetSymbol})`}</span>
-                {!isSigning && <span>→</span>}
+                {!isSigning && <span className="text-base leading-none">→</span>}
               </button>
             </div>
           )}
