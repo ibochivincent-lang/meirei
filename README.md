@@ -2,8 +2,6 @@
 
 AI-Native Investment Mandate Architecture for Tokenized Equities on OKX X Layer (Chain ID 196).
 
-Author: IboTV <290086463+ibochivincent-lang@users.noreply.github.com>
-
 ---
 
 ## Overview
@@ -193,4 +191,4 @@ npm run build
 
 ## License
 
-MIT License. Developed by IboTV.
+MIT License. Meirei Protocol.

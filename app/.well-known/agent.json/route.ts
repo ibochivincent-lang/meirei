@@ -29,7 +29,7 @@ export async function GET() {
     service_provider: {
       protocol: "OKX AI Agent Service Provider (ASP)",
       version: "2.4.0",
-      author: "IboTV",
+      author: "Meirei Protocol",
       execution_mode: "non-custodial-intent-solver",
     },
     tools: [

@@ -1,6 +1,5 @@
 /**
  * Wallet Channel Linking & Unlinking API Endpoint
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  *
  * Links and unlinks OKX Web3 wallet addresses to/from social bot users (WhatsApp / Telegram).

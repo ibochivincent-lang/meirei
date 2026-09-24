@@ -13,7 +13,6 @@ pragma solidity ^0.8.24;
  *
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  * Settlement: USDG / USDC
- * Author: IboTV <290086463+ibochivincent-lang@users.noreply.github.com>
  */
 
 interface IERC20 {

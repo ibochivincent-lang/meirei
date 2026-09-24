@@ -1,7 +1,6 @@
 /**
  * Chainalysis Sanctions Screening Integration
- * Author: IboTV
- * 
+ * Platform: OKX X Layer (Chain ID 196)
  * Verifies EVM wallet addresses against known OFAC Specially Designated Nationals (SDN)
  * and sanctions lists via Chainalysis oracle patterns and API screening prior to quote generation.
  */

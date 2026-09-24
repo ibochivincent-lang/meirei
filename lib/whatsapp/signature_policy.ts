@@ -1,6 +1,5 @@
 /**
  * WhatsApp Webhook Signature and Redaction Policy
- * Author: IboTV
  * Platform: OKX Chain / X Layer (Chain 196)
  */
 

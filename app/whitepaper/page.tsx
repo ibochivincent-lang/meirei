@@ -6,7 +6,7 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Whitepaper | Meirei Research",
   description:
-    "A deterministic, guardrailed investment mandate architecture for tokenized equities on OKX X Layer. Authored by IboTV.",
+    "A deterministic, guardrailed investment mandate architecture for tokenized equities on OKX X Layer.",
 };
 
 export default function WhitepaperPage() {
@@ -37,7 +37,7 @@ export default function WhitepaperPage() {
               <div className="flex items-center gap-4">
                 <div>
                   <span className="block text-xs uppercase font-mono text-ink-400">Author</span>
-                  <span className="font-semibold text-ink-900">IboTV</span>
+                  <span className="font-semibold text-ink-900">Meirei Core Research Group</span>
                 </div>
                 <div className="h-8 w-px bg-ink-200" />
                 <div>
@@ -229,9 +229,9 @@ export default function WhitepaperPage() {
             <div className="mt-8 rounded-xl border border-ink-200 bg-surface-100 p-6 font-sans">
               <p className="text-sm font-semibold text-ink-900">Citation:</p>
               <pre className="mt-2 text-xs font-mono text-ink-700 overflow-x-auto">
-{`@article{ibotv2026meirei,
+{`@article{meirei2026architecture,
   title={A Deterministic, Guardrailed Investment Mandate Architecture for Tokenized Equities on OKX X Layer},
-  author={IboTV},
+  author={Meirei Core Research Group},
   journal={Meirei Core Research},
   year={2026},
   month={September},

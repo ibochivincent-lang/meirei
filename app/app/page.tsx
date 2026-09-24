@@ -27,6 +27,12 @@ import {
   WalletConnectModal,
   WalletConnectIcon,
 } from "@/components/wallet/wallet_connect_modal";
+import {
+  OKX_SENTIMENT_DATA,
+  OKX_SMART_MONEY_DATA,
+  OKX_CEX_MARKET_DATA,
+  OKX_TRADING_PLAN_DATA,
+} from "@/lib/okx/skills_data";
 
 type Platform = "whatsapp" | "telegram" | "instagram" | "web" | "okx_wallet";
 type Mode = "simple" | "advanced";
@@ -1698,81 +1704,83 @@ export default function AppDashboardPage() {
 
       {/* Main Terminal Container */}
       <main className="mx-auto max-w-[1440px] px-3.5 py-4 sm:px-8 sm:py-6">
-        {/* Judge Onboarding Friction: 1-Click Demo Sandbox Banner */}
-        <div
-          className={cn(
-            "mb-5 rounded-2xl border p-4 text-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors",
-            isDemoSandbox
-              ? "border-emerald-500/30 bg-emerald-500/10"
-              : "border-accent-500/30 bg-accent-500/10"
-          )}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-xl font-mono font-bold shrink-0 text-white shadow-xs text-xs",
-                isDemoSandbox ? "bg-emerald-600" : "bg-accent-500"
-              )}
-            >
-              {isDemoSandbox ? "OKX" : "DEMO"}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-ink-900 sm:text-sm">
-                  {isDemoSandbox
-                    ? "Demo Sandbox Active (1,000 USDG Loaded)"
-                    : "Judging OKX Dev Day?"}
-                </span>
-                <span
-                  className={cn(
-                    "rounded-full font-mono text-[10px] font-bold px-2 py-0.5 border",
-                    isDemoSandbox
-                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
-                      : "bg-accent-500/15 border-accent-500/30 text-accent-700"
-                  )}
-                >
-                  {isDemoSandbox ? "Chain 196 Simulated Sandbox" : "Fast-Track 60s Testing"}
-                </span>
-              </div>
-              <p className="mt-0.5 text-ink-600">
-                {isDemoSandbox
-                  ? "Test liquidity (1,000 USDG) and sample positions (NVDAx, AAPLx, TSLAx) are active. You can execute rebalances, trade assets, or test conversational chat."
-                  : "Skip bridging real mainnet funds. Click below to load an interactive sandbox with 1,000 USDG test cash & sample equities to test mandates immediately."}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {!isDemoSandbox ? (
-              <button
-                type="button"
-                onClick={handleLoadDemoSandbox}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <span>Load Demo Sandbox (1,000 USDG)</span>
-                <span>&rarr;</span>
-              </button>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleTopUpDemoUsdg}
-                  className="px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 font-semibold text-xs cursor-pointer"
-                  title="Credit another 500 USDG to test sandbox"
-                >
-                  +500 USDG
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResetDemoSandbox}
-                  className="px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-600 font-semibold text-xs cursor-pointer"
-                >
-                  Reset to Live Wallet
-                </button>
-              </div>
+        {/* Judge Onboarding Friction: 1-Click Demo Sandbox Banner (Advanced Mode Only) */}
+        {mode === "advanced" && (
+          <div
+            className={cn(
+              "mb-5 rounded-2xl border p-4 text-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors",
+              isDemoSandbox
+                ? "border-emerald-500/30 bg-emerald-500/10"
+                : "border-accent-500/30 bg-accent-500/10"
             )}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-xl font-mono font-bold shrink-0 text-white shadow-xs text-xs",
+                  isDemoSandbox ? "bg-emerald-600" : "bg-accent-500"
+                )}
+              >
+                {isDemoSandbox ? "OKX" : "DEMO"}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-ink-900 sm:text-sm">
+                    {isDemoSandbox
+                      ? "Demo Sandbox Active (1,000 USDG Loaded)"
+                      : "Judging OKX Dev Day?"}
+                  </span>
+                  <span
+                    className={cn(
+                      "rounded-full font-mono text-[10px] font-bold px-2 py-0.5 border",
+                      isDemoSandbox
+                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
+                        : "bg-accent-500/15 border-accent-500/30 text-accent-700"
+                    )}
+                  >
+                    {isDemoSandbox ? "Chain 196 Simulated Sandbox" : "Fast-Track 60s Testing"}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-ink-600">
+                  {isDemoSandbox
+                    ? "Test liquidity (1,000 USDG) and sample positions (NVDAx, AAPLx, TSLAx) are active. You can execute rebalances, trade assets, or test conversational chat."
+                    : "Skip bridging real mainnet funds. Click below to load an interactive sandbox with 1,000 USDG test cash & sample equities to test mandates immediately."}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {!isDemoSandbox ? (
+                <button
+                  type="button"
+                  onClick={handleLoadDemoSandbox}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>Load Demo Sandbox (1,000 USDG)</span>
+                  <span>&rarr;</span>
+                </button>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleTopUpDemoUsdg}
+                    className="px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 font-semibold text-xs cursor-pointer"
+                    title="Credit another 500 USDG to test sandbox"
+                  >
+                    +500 USDG
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetDemoSandbox}
+                    className="px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-600 font-semibold text-xs cursor-pointer"
+                  >
+                    Reset to Live Wallet
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Terminal Subheader & CONSOLIDATED TWO-MODE SWITCHER */}
         <div className="mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center">
@@ -2695,20 +2703,18 @@ export default function AppDashboardPage() {
                     <div ref={chatBottomRef} />
                   </div>
 
-                  {/* Quick Suggestion Chips matching Telegram and WhatsApp commands */}
+                  {/* Quick Suggestion Chips with Natural Mandate Prompts */}
                   <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
                     <span className="text-[10px] uppercase font-bold text-ink-400 tracking-wider shrink-0 mr-1">
                       Quick:
                     </span>
                     {[
-                      "/stocks",
-                      "/balance",
+                      `Price of ${selectedStock.symbol}`,
                       `Buy 250 USDG of ${selectedStock.symbol}`,
                       `Compare ${selectedStock.symbol} vs MSFTx`,
-                      `Calculate $250 in ${selectedStock.symbol}`,
-                      "/deposit",
-                      "/freeze",
-                      "/help",
+                      `60% ${selectedStock.symbol}, 20% AAPLx, 20% USDG`,
+                      "Holdings & Portfolio Value",
+                      "Emergency Circuit Breaker",
                     ].map((chip) => (
                       <button
                         key={chip}
@@ -2735,29 +2741,10 @@ export default function AppDashboardPage() {
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
-                      placeholder="Message Meirei... (e.g. '/stocks', '/balance', 'Buy 250 USDG NVDAx', '/help')"
+                      placeholder="Message Meirei... (e.g. 'Price of NVDAx', 'Buy 250 USDG of NVDAx', '60% NVDAx, 40% USDG')"
                       disabled={isChatSending}
                       className="flex-1 rounded-xl border border-ink-200 bg-surface-50 px-4 py-2.5 text-xs text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors"
                     />
-
-                    {/* Voice Dictation Microphone Button */}
-                    <button
-                      type="button"
-                      onClick={handleVoiceDictation}
-                      className={cn(
-                        "flex h-9 w-9 items-center justify-center rounded-xl border transition-all cursor-pointer shrink-0",
-                        isListeningVoice
-                          ? "bg-red-500 text-white border-red-600 animate-pulse"
-                          : "border-ink-200 bg-surface-50 text-ink-600 hover:text-accent-500 hover:border-accent-500"
-                      )}
-                      title={isListeningVoice ? "Listening... Click to stop" : "Voice input (dictate message)"}
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                        <line x1="12" x2="12" y1="19" y2="22" />
-                      </svg>
-                    </button>
 
                     <button
                       type="submit"
@@ -2771,213 +2758,108 @@ export default function AppDashboardPage() {
                 </div>
 
                 {/* Section Separator */}
-                <SectionSeparator label="Real-Time Allocation Estimator" />
+                <SectionSeparator label="Live Tokenized Equities Spot Prices" />
 
-                {/* Integrated Price Comparison & Units Calculator */}
+                {/* Direct Tokenized Equities Spot Pricing & Quick Trade Terminal */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
                   <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 md:flex-row md:items-center">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
-                          Integrated Calculator
+                          OKX X Layer (Chain 196)
                         </span>
                         <span className="rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800">
-                          Real-Time USDG Estimator
+                          100% Gas Sponsored
                         </span>
                       </div>
                       <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg">
-                        Price Comparison &amp; Units Calculator
+                        Tokenized Equities Live Spot Prices
                       </h3>
                       <p className="text-xs text-ink-500">
-                        Input any USDG amount to calculate precise unit allocations across all 8 allowlisted stocks on OKX X Layer.
+                        Real-time on-chain pricing for all 20 allowlisted equities. Click Quick Trade to execute non-custodially via OKX DEX Aggregator.
                       </p>
                     </div>
 
-                    {/* Capital Preset Selectors & Custom Input */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="relative flex items-center">
-                        <span className="absolute left-3 font-mono text-xs font-bold text-ink-400">$</span>
-                        <input
-                          id="calculator-investment-input"
-                          type="number"
-                          min={1}
-                          max={1000000}
-                          value={calcInvestmentUsdg || ""}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value);
-                            setCalcInvestmentUsdg(isNaN(val) ? 0 : val);
-                          }}
-                          placeholder="250"
-                          className="w-28 sm:w-32 rounded-xl border border-ink-200 bg-surface-50 py-1.5 pl-7 pr-3 font-mono text-xs font-bold text-ink-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
-                        />
-                        <span className="ml-1.5 font-mono text-[11px] font-bold text-ink-500">USDG</span>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        {[100, 250, 500, 1000, 2500].map((amt) => (
-                          <button
-                            key={amt}
-                            type="button"
-                            onClick={() => setCalcInvestmentUsdg(amt)}
-                            className={cn(
-                              "rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
-                              calcInvestmentUsdg === amt
-                                ? "bg-accent-500 text-white shadow-xs"
-                                : "border border-ink-200 bg-surface-50 text-ink-700 hover:bg-white"
-                            )}
-                          >
-                            ${amt}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-100 border border-ink-200 px-2.5 py-1 text-[11px] font-mono font-medium text-ink-600">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        20 Assets Allowlisted
+                      </span>
                     </div>
                   </div>
 
-                  {/* Selected Stock Live Breakdown Card */}
-                  <div className="mt-4 rounded-xl border border-accent-500/20 bg-accent-50/40 p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-3">
+                  {/* Clean Equity Pricing Grid & Quick Trade */}
+                  <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    {STOCKS.map((stk) => {
+                      const priceNum = getNumericPrice(stk);
+                      const isSelected = stk.symbol === selectedStock.symbol;
+
+                      return (
                         <div
-                          className="flex h-10 w-10 items-center justify-center rounded-xl shadow-xs shrink-0"
-                          style={{ backgroundColor: selectedStock.color }}
+                          key={stk.symbol}
+                          className={cn(
+                            "flex items-center justify-between rounded-xl border p-3 text-xs transition-all",
+                            isSelected
+                              ? "border-accent-400 bg-accent-50/30 shadow-xs"
+                              : "border-ink-200/80 bg-surface-50/50 hover:bg-white hover:border-ink-300"
+                          )}
                         >
-                          {selectedStock.logo}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-sm font-bold text-ink-900">
-                              {selectedStock.symbol}
-                            </span>
-                            <span className="text-xs text-ink-500">
-                              {selectedStock.name}
-                            </span>
-                            <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600">
-                              Live on X Layer
-                            </span>
-                          </div>
-                          <div className="mt-0.5 text-xs text-ink-600">
-                            Spot Price:{" "}
-                            <span className="font-mono font-bold text-ink-900">
-                              {getFormattedPrice(selectedStock)}
-                            </span>
-                            {" · "}
-                            Gas: <span className="font-semibold text-emerald-600">100% Sponsored (OKX Paymaster)</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <span className="block text-[10px] font-bold uppercase tracking-wider text-ink-400">
-                            Estimated Units
-                          </span>
-                          <span className="font-mono text-base font-bold text-accent-600 sm:text-lg">
-                            {(calcInvestmentUsdg / getNumericPrice(selectedStock)).toFixed(4)} {selectedStock.symbol}
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const units = calcInvestmentUsdg / getNumericPrice(selectedStock);
-                            openWeb3Signer(
-                              selectedStock.symbol,
-                              calcInvestmentUsdg,
-                              units,
-                              getNumericPrice(selectedStock)
-                            );
-                          }}
-                          className="rounded-xl bg-accent-500 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-accent-600 cursor-pointer shrink-0"
-                        >
-                          Trade {selectedStock.symbol} ↗
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Calculator Comparison Table */}
-                  <div className="mt-4 overflow-x-auto rounded-xl border border-ink-200">
-                    <table className="w-full min-w-[580px] text-left text-xs">
-                      <thead className="border-b border-ink-200 bg-surface-100 font-semibold text-ink-900">
-                        <tr>
-                          <th className="p-3">Asset</th>
-                          <th className="p-3">Spot Price</th>
-                          <th className="p-3 font-mono">${calcInvestmentUsdg || 0} USDG Buys</th>
-                          <th className="p-3 text-right">Instant Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-ink-200/60 bg-white text-ink-700">
-                        {STOCKS.map((stk) => {
-                          const priceNum = getNumericPrice(stk);
-                          const units = (calcInvestmentUsdg / priceNum).toFixed(3);
-
-                          return (
-                            <tr
-                              key={stk.symbol}
-                              className={cn(
-                                "transition-colors hover:bg-surface-50",
-                                stk.symbol === selectedStock.symbol ? "bg-accent-50/30" : ""
-                              )}
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className="flex h-8 w-8 items-center justify-center rounded-lg shadow-xs shrink-0 text-white font-bold text-xs"
+                              style={{ backgroundColor: stk.color }}
                             >
-                              <td className="p-3 font-semibold text-ink-900">
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className="flex h-6 w-6 items-center justify-center rounded shadow-xs shrink-0"
-                                    style={{ backgroundColor: stk.color }}
-                                  >
-                                    {stk.logo}
-                                  </div>
-                                  <div>
-                                    <span className="font-mono font-bold">{stk.symbol}</span>
-                                    <span className="ml-1.5 text-[11px] text-ink-500">({stk.name})</span>
-                                  </div>
-                                </div>
-                              </td>
-                              <td
+                              {stk.logo}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-mono font-bold text-ink-900">{stk.symbol}</span>
+                                <span className="text-[10px] text-ink-400 truncate max-w-[80px]">
+                                  {stk.name}
+                                </span>
+                              </div>
+                              <div
                                 className={cn(
-                                  "p-3 font-mono font-semibold transition-colors duration-300",
-                                  priceFlashes[stk.symbol] === "up" && "text-emerald-600 bg-emerald-500/10 font-bold",
-                                  priceFlashes[stk.symbol] === "down" && "text-rose-600 bg-rose-500/10 font-bold",
+                                  "font-mono font-semibold transition-colors duration-300 text-xs",
+                                  priceFlashes[stk.symbol] === "up" && "text-emerald-600 font-bold",
+                                  priceFlashes[stk.symbol] === "down" && "text-rose-600 font-bold",
                                   !priceFlashes[stk.symbol] && "text-ink-900"
                                 )}
                               >
                                 {getFormattedPrice(stk)}
-                              </td>
-                              <td className="p-3 font-mono font-bold text-accent-700 text-sm">
-                                {units} units
-                              </td>
-                              <td className="p-3 text-right">
-                                <div className="flex items-center justify-end gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedStock(stk);
-                                      const u = calcInvestmentUsdg / priceNum;
-                                      openWeb3Signer(stk.symbol, calcInvestmentUsdg, u, priceNum);
-                                    }}
-                                    className="rounded-lg bg-ink-900 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-colors hover:bg-accent-500 hover:text-white cursor-pointer"
-                                  >
-                                    Quick Buy
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      handleSendChatMessage(`Buy ${calcInvestmentUsdg} USDG of ${stk.symbol}`);
-                                      const el = document.getElementById("conversational-chat");
-                                      if (el) el.scrollIntoView({ behavior: "smooth" });
-                                    }}
-                                    className="rounded-lg border border-ink-200 px-2 py-1 text-[11px] font-semibold text-ink-600 hover:bg-surface-50 cursor-pointer"
-                                    title="Send trade instruction to Meirei Conversational Chat"
-                                  >
-                                    Chat
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedStock(stk);
+                                openWeb3Signer(stk.symbol, 100, 100 / priceNum, priceNum);
+                              }}
+                              className="rounded-lg bg-ink-900 hover:bg-accent-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-xs transition-colors cursor-pointer"
+                              title={`Trade ${stk.symbol} on OKX X Layer`}
+                            >
+                              Quick Trade
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedStock(stk);
+                                handleSendChatMessage(`Buy 250 USDG of ${stk.symbol}`);
+                                const el = document.getElementById("conversational-chat");
+                                if (el) el.scrollIntoView({ behavior: "smooth" });
+                              }}
+                              className="rounded-lg border border-ink-200 bg-white hover:bg-surface-100 px-2 py-1.5 text-[11px] font-semibold text-ink-600 cursor-pointer transition-colors"
+                              title={`Chat with AI about ${stk.symbol}`}
+                            >
+                              Chat
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </>
@@ -3108,74 +2990,255 @@ export default function AppDashboardPage() {
                               </span>
                             </div>
 
-                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-100">
-                              <div
-                                className="h-full bg-accent-500"
-                                style={{ width: `${alloc.weightPercent}%` }}
-                              />
+                              <p className="mt-1 text-[11px] text-ink-500 leading-normal">
+                                {alloc.rationale}
+                              </p>
                             </div>
+                          ))}
+                        </div>
+                      </div>
 
-                            <p className="mt-1.5 text-[11px] text-ink-500 leading-normal">
-                              {alloc.rationale}
-                            </p>
+                      {/* Interactive SVG Valuation & Alpha Trajectory Graph (Explicit X & Y Axes) */}
+                      <div className="mt-5 rounded-2xl border border-ink-200 bg-white p-4 sm:p-5 shadow-xs">
+                        <div className="flex flex-col justify-between gap-2 border-b border-ink-100 pb-3 sm:flex-row sm:items-center">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                                Trajectory Model (trading-plan-generator)
+                              </span>
+                              <span className="rounded bg-sky-100 px-1.5 py-0.2 text-[9px] font-bold text-sky-800">
+                                OKX AI Skill
+                              </span>
+                            </div>
+                            <h4 className="font-display text-sm font-bold text-ink-900 sm:text-base">
+                              Projected Valuation &amp; Return Horizon Trajectory
+                            </h4>
                           </div>
-                        ))}
-                      </div>
-                    </div>
+                          <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
+                            <span className="flex items-center gap-1.5 text-rose-600 font-semibold">
+                              <span className="h-2 w-2 rounded-full bg-rose-500" />
+                              Aggressive ({advisoryHorizon === "short_term" ? "Momentum" : "+44.5%"})
+                            </span>
+                            <span className="flex items-center gap-1.5 text-accent-600 font-semibold">
+                              <span className="h-2 w-2 rounded-full bg-accent-500" />
+                              Balanced (+26.5%)
+                            </span>
+                            <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                              Conservative (+12.8%)
+                            </span>
+                          </div>
+                        </div>
 
-                    {/* Operational Guardrails */}
-                    <div className="mt-4 grid grid-cols-2 gap-3 border-t border-ink-200/80 pt-3.5 text-xs">
-                      <div>
-                        <span className="text-ink-500">Rebalance Interval:</span>
-                        <p className="font-semibold text-ink-900">
-                          {currentAdvisoryPlan.rebalanceInterval}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-ink-500">Downside Safeguard:</span>
-                        <p className="font-semibold text-ink-900">
-                          {currentAdvisoryPlan.downsideProtection}
-                        </p>
-                      </div>
-                    </div>
+                        {/* Explicit X and Y Axis SVG Chart */}
+                        <div className="mt-4 relative">
+                          <svg
+                            viewBox="0 0 620 220"
+                            className="w-full h-48 sm:h-56 select-none"
+                            preserveAspectRatio="none"
+                          >
+                            <defs>
+                              <linearGradient id="gradAggressive" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.25" />
+                                <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
+                              </linearGradient>
+                              <linearGradient id="gradBalanced" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.20" />
+                                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                              </linearGradient>
+                              <linearGradient id="gradConservative" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.15" />
+                                <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                              </linearGradient>
+                            </defs>
 
-                    {/* Deploy Mandate CTA */}
-                    <div className="mt-5 flex flex-col items-center justify-between gap-3 rounded-xl bg-ink-900 border border-transparent p-4 text-white sm:flex-row">
-                      <div>
-                        <p className="text-xs font-medium text-ink-300">Executable Mandate Rule</p>
-                        <p className="font-mono text-xs font-bold text-white">
-                          {currentAdvisoryPlan.mandateRule}
-                        </p>
+                            {/* Grid Lines & Y-Axis Labels (0% to 50%) */}
+                            <line x1="50" y1="180" x2="590" y2="180" stroke="#e2e8f0" strokeWidth="1" />
+                            <text x="42" y="184" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">0%</text>
+
+                            <line x1="50" y1="146" x2="590" y2="146" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+                            <text x="42" y="150" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+10%</text>
+
+                            <line x1="50" y1="112" x2="590" y2="112" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+                            <text x="42" y="116" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+20%</text>
+
+                            <line x1="50" y1="78" x2="590" y2="78" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+                            <text x="42" y="82" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+30%</text>
+
+                            <line x1="50" y1="44" x2="590" y2="44" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+                            <text x="42" y="48" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+40%</text>
+
+                            <line x1="50" y1="10" x2="590" y2="10" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+                            <text x="42" y="14" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+50%</text>
+
+                            {/* Y-Axis Line */}
+                            <line x1="50" y1="10" x2="50" y2="180" stroke="#94a3b8" strokeWidth="1.5" />
+                            {/* X-Axis Line */}
+                            <line x1="50" y1="180" x2="590" y2="180" stroke="#94a3b8" strokeWidth="1.5" />
+
+                            {/* X-Axis Vertical Guide Ticks & Labels */}
+                            <line x1="80" y1="180" x2="80" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                            <text x="80" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">1D</text>
+
+                            <line x1="190" y1="180" x2="190" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                            <text x="190" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">7D</text>
+
+                            <line x1="310" y1="180" x2="310" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                            <text x="310" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">14D</text>
+
+                            <line x1="440" y1="180" x2="440" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                            <text x="440" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">30D</text>
+
+                            <line x1="570" y1="180" x2="570" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                            <text x="570" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">90D</text>
+
+                            {/* Axis Title Labels */}
+                            <text x="25" y="100" transform="rotate(-90 25 100)" textAnchor="middle" className="text-[9px] fill-zinc-400 font-mono font-semibold uppercase tracking-wider">
+                              Return (%)
+                            </text>
+                            <text x="325" y="215" textAnchor="middle" className="text-[9px] fill-zinc-400 font-mono font-semibold uppercase tracking-wider">
+                              Time Horizon
+                            </text>
+
+                            {/* Conservative Curve */}
+                            <path
+                              d="M 80 178 Q 190 173 310 167 T 570 136 L 570 180 L 80 180 Z"
+                              fill="url(#gradConservative)"
+                              opacity={advisoryRisk === "conservative" ? 1 : 0.4}
+                            />
+                            <path
+                              d="M 80 178 Q 190 173 310 167 T 570 136"
+                              fill="none"
+                              stroke="#10b981"
+                              strokeWidth={advisoryRisk === "conservative" ? 3 : 1.8}
+                              strokeDasharray={advisoryRisk === "conservative" ? "none" : "4 2"}
+                            />
+                            <circle cx="80" cy="178" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
+                            <circle cx="190" cy="173" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
+                            <circle cx="310" cy="167" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
+                            <circle cx="440" cy="158" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
+                            <circle cx="570" cy="136" r={advisoryRisk === "conservative" ? 5 : 3.5} fill="#10b981" />
+
+                            {/* Balanced Curve */}
+                            <path
+                              d="M 80 175 Q 190 164 310 151 T 570 90 L 570 180 L 80 180 Z"
+                              fill="url(#gradBalanced)"
+                              opacity={advisoryRisk === "balanced" ? 1 : 0.4}
+                            />
+                            <path
+                              d="M 80 175 Q 190 164 310 151 T 570 90"
+                              fill="none"
+                              stroke="#6366f1"
+                              strokeWidth={advisoryRisk === "balanced" ? 3 : 2}
+                            />
+                            <circle cx="80" cy="175" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
+                            <circle cx="190" cy="164" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
+                            <circle cx="310" cy="151" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
+                            <circle cx="440" cy="128" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
+                            <circle cx="570" cy="90" r={advisoryRisk === "balanced" ? 5 : 3.5} fill="#6366f1" />
+
+                            {/* Aggressive Curve */}
+                            <path
+                              d="M 80 170 Q 190 150 310 127 T 570 29 L 570 180 L 80 180 Z"
+                              fill="url(#gradAggressive)"
+                              opacity={advisoryRisk === "aggressive" ? 1 : 0.4}
+                            />
+                            <path
+                              d="M 80 170 Q 190 150 310 127 T 570 29"
+                              fill="none"
+                              stroke="#f43f5e"
+                              strokeWidth={advisoryRisk === "aggressive" ? 3.5 : 2}
+                            />
+                            <circle cx="80" cy="170" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
+                            <circle cx="190" cy="150" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
+                            <circle cx="310" cy="127" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
+                            <circle cx="440" cy="85" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
+                            <circle cx="570" cy="29" r={advisoryRisk === "aggressive" ? 6 : 4} fill="#f43f5e" />
+                          </svg>
+
+                          {/* Horizon Return Badges */}
+                          <div className="mt-2 grid grid-cols-5 gap-2 border-t border-ink-100 pt-3 text-center">
+                            {OKX_TRADING_PLAN_DATA.trajectories.map((traj) => {
+                              const val =
+                                advisoryRisk === "aggressive"
+                                  ? traj.aggressiveReturnPct
+                                  : advisoryRisk === "balanced"
+                                  ? traj.balancedReturnPct
+                                  : traj.conservativeReturnPct;
+
+                              return (
+                                <div key={traj.timeHorizon} className="rounded-lg bg-surface-50 p-2">
+                                  <span className="block text-[10px] font-bold text-ink-500 font-mono">
+                                    {traj.timeHorizon}
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      "font-mono text-xs font-bold",
+                                      advisoryRisk === "aggressive" && "text-rose-600",
+                                      advisoryRisk === "balanced" && "text-accent-600",
+                                      advisoryRisk === "conservative" && "text-emerald-600"
+                                    )}
+                                  >
+                                    +{val.toFixed(1)}%
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPromptText(currentAdvisoryPlan.mandateRule);
-                            setMode("simple");
-                            handleSendPrompt(currentAdvisoryPlan.mandateRule);
-                          }}
-                          className="rounded-xl bg-ink-800 border border-transparent px-3.5 py-2.5 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-                        >
-                          Review in Console
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const firstAlloc = currentAdvisoryPlan.allocations[0];
-                            const sym = firstAlloc?.symbol || "NVDAx";
-                            const amt = (advisoryCapital * (firstAlloc?.weightPercent || 35)) / 100;
-                            openWeb3Signer(sym, amt, amt / 213.9, 213.9);
-                          }}
-                          className="rounded-xl bg-accent-500 px-4 py-2.5 text-xs font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-                        >
-                          Sign in OKX Wallet
-                        </button>
+                      {/* Operational Guardrails */}
+                      <div className="mt-4 grid grid-cols-2 gap-3 border-t border-ink-200/80 pt-3.5 text-xs">
+                        <div>
+                          <span className="text-ink-500">Rebalance Interval:</span>
+                          <p className="font-semibold text-ink-900">
+                            {currentAdvisoryPlan.rebalanceInterval}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-ink-500">Downside Safeguard:</span>
+                          <p className="font-semibold text-ink-900">
+                            {currentAdvisoryPlan.downsideProtection}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Deploy Mandate CTA */}
+                      <div className="mt-5 flex flex-col items-center justify-between gap-3 rounded-xl bg-ink-900 border border-transparent p-4 text-white sm:flex-row shadow-sm">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-ink-300">Executable Mandate Rule</span>
+                            <span className="rounded bg-accent-500/20 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-400">
+                              Session Key Guarded
+                            </span>
+                          </div>
+                          <p className="mt-0.5 font-mono text-xs font-bold text-white">
+                            {currentAdvisoryPlan.mandateRule}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPromptText(currentAdvisoryPlan.mandateRule);
+                              handleSendPrompt(currentAdvisoryPlan.mandateRule);
+                              const firstAlloc = currentAdvisoryPlan.allocations[0];
+                              const sym = firstAlloc?.symbol || "NVDAx";
+                              const amt = (advisoryCapital * (firstAlloc?.weightPercent || 35)) / 100;
+                              const price = stockPrices[sym] || 213.9;
+                              openWeb3Signer(sym, amt, amt / price, price);
+                            }}
+                            className="rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer flex items-center gap-2"
+                          >
+                            <span>Deploy Mandate on OKX X Layer</span>
+                            <span>↗</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
                 {/* 2. Market Catalysts, News & Investor Sentiment Feed (Rendered Directly Beneath Advisory) */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
@@ -3274,6 +3337,199 @@ export default function AppDashboardPage() {
                     </div>
                   )}
                 </div>
+
+                {/* 3. Institutional Market & Mandates Directory (Powered by OKX AI Skills) */}
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
+                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
+                          OKX AI Skills Telemetry Engine
+                        </span>
+                        <span className="rounded bg-accent-100 px-2 py-0.5 font-mono text-[10px] font-bold text-accent-800">
+                          4 Skills Active
+                        </span>
+                      </div>
+                      <h2 className="mt-1 font-display text-lg font-bold text-ink-900 sm:text-xl">
+                        Institutional Market &amp; Mandates Directory
+                      </h2>
+                      <p className="mt-0.5 text-xs text-ink-500">
+                        Synthesizing okx-sentiment-tracker, okx-cex-smartmoney, okx-cex-market, and trading-plan-generator across all 20 tokenized equities on OKX X Layer.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-mono font-bold text-emerald-800">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                        Whale Inflow: {OKX_SMART_MONEY_DATA.netInflow24h}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-100 border border-ink-200 px-3 py-1 text-xs font-mono text-ink-700">
+                        Market: {OKX_CEX_MARKET_DATA.marketStatus}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Comprehensive Institutional Equities Table */}
+                  <div className="mt-5 overflow-x-auto rounded-xl border border-ink-200">
+                    <table className="w-full min-w-[760px] text-left text-xs">
+                      <thead className="border-b border-ink-200 bg-surface-100 font-semibold text-ink-900">
+                        <tr>
+                          <th className="p-3">Asset</th>
+                          <th className="p-3">Spot Price</th>
+                          <th className="p-3">Smart Money Flow</th>
+                          <th className="p-3">Sentiment Score</th>
+                          <th className="p-3">CEX Metrics</th>
+                          <th className="p-3 text-right">Autonomous Mandate</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-ink-200/60 bg-white text-ink-700">
+                        {STOCKS.map((stk) => {
+                          const priceNum = getNumericPrice(stk);
+                          const sentiment = OKX_SENTIMENT_DATA.assetScores[stk.symbol] || { score: 75, verdict: "Bullish" };
+                          const smartFlow = OKX_SMART_MONEY_DATA.assetSmartFlow[stk.symbol] || { netFlow: "+$500K", flowType: "Inflow", tier: "Accumulation" };
+                          const metrics = OKX_CEX_MARKET_DATA.assetMetrics[stk.symbol] || { volume24h: "$1.5M", beta: 1.2, spread: "0.02%", momentumRank: 5 };
+
+                          return (
+                            <tr key={stk.symbol} className="transition-colors hover:bg-surface-50">
+                              <td className="p-3 font-semibold text-ink-900">
+                                <div className="flex items-center gap-2.5">
+                                  <div
+                                    className="flex h-7 w-7 items-center justify-center rounded-lg shadow-xs shrink-0 text-white font-bold text-xs"
+                                    style={{ backgroundColor: stk.color }}
+                                  >
+                                    {stk.logo}
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-mono font-bold">{stk.symbol}</span>
+                                      <span className="text-[10px] text-ink-400">({stk.name})</span>
+                                    </div>
+                                    <span className="font-mono text-[10px] text-ink-500">
+                                      Rank #{metrics.momentumRank}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="p-3 font-mono">
+                                <div
+                                  className={cn(
+                                    "font-semibold text-xs",
+                                    priceFlashes[stk.symbol] === "up" && "text-emerald-600 font-bold",
+                                    priceFlashes[stk.symbol] === "down" && "text-rose-600 font-bold",
+                                    !priceFlashes[stk.symbol] && "text-ink-900"
+                                  )}
+                                >
+                                  {getFormattedPrice(stk)}
+                                </div>
+                                <span className="text-[10px] text-ink-400">Spread: {metrics.spread}</span>
+                              </td>
+
+                              <td className="p-3 font-mono">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className={cn(
+                                      "font-bold text-xs",
+                                      smartFlow.flowType === "Inflow" ? "text-emerald-700" : "text-rose-600"
+                                    )}
+                                  >
+                                    {smartFlow.netFlow}
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      "rounded px-1.5 py-0.2 text-[9px] font-bold uppercase",
+                                      smartFlow.flowType === "Inflow"
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : "bg-rose-100 text-rose-800"
+                                    )}
+                                  >
+                                    {smartFlow.flowType}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-ink-500">{smartFlow.tier}</span>
+                              </td>
+
+                              <td className="p-3">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={cn(
+                                      "font-mono font-bold text-xs",
+                                      sentiment.score >= 80
+                                        ? "text-emerald-700"
+                                        : sentiment.score >= 70
+                                        ? "text-accent-700"
+                                        : "text-amber-700"
+                                    )}
+                                  >
+                                    {sentiment.score}/100
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      "rounded px-1.5 py-0.2 font-mono text-[9px] font-bold",
+                                      sentiment.verdict === "Bullish"
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : sentiment.verdict === "Neutral"
+                                        ? "bg-surface-200 text-ink-700"
+                                        : "bg-amber-100 text-amber-800"
+                                    )}
+                                  >
+                                    {sentiment.verdict}
+                                  </span>
+                                </div>
+                                <div className="mt-1 h-1.5 w-20 overflow-hidden rounded-full bg-surface-200">
+                                  <div
+                                    className={cn(
+                                      "h-full",
+                                      sentiment.score >= 80
+                                        ? "bg-emerald-500"
+                                        : sentiment.score >= 70
+                                        ? "bg-accent-500"
+                                        : "bg-amber-500"
+                                    )}
+                                    style={{ width: `${sentiment.score}%` }}
+                                  />
+                                </div>
+                              </td>
+
+                              <td className="p-3 font-mono text-[11px]">
+                                <div>Vol: <span className="font-semibold text-ink-900">{metrics.volume24h}</span></div>
+                                <div className="text-ink-500">Beta: <span className="text-ink-700">{metrics.beta.toFixed(2)}</span></div>
+                              </td>
+
+                              <td className="p-3 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const prompt = `Deploy 30% ${stk.symbol}, 70% USDG Short-Term Momentum Mandate with 5% stop protection`;
+                                      setPromptText(prompt);
+                                      handleSendPrompt(prompt);
+                                      openWeb3Signer(stk.symbol, 150, 150 / priceNum, priceNum);
+                                    }}
+                                    className="rounded-lg bg-ink-900 hover:bg-accent-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-xs transition-colors cursor-pointer"
+                                  >
+                                    Deploy Mandate
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedStock(stk);
+                                      openWeb3Signer(stk.symbol, 100, 100 / priceNum, priceNum);
+                                    }}
+                                    className="rounded-lg border border-ink-200 bg-white hover:bg-surface-100 px-2 py-1.5 text-[11px] font-semibold text-ink-700 transition-colors cursor-pointer"
+                                    title={`Instant swap on OKX X Layer`}
+                                  >
+                                    Swap
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -3307,23 +3563,14 @@ export default function AppDashboardPage() {
               </div>
 
               {profile.holdings.length === 0 ? (
-                <div className="mt-4 rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
-                  <p className="text-xs font-semibold text-ink-800">No active stock holdings</p>
-                  <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
-                    This wallet currently holds no tokenized equities on X Layer (chain 196). Submit an investment mandate or a direct trade to begin.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPromptText("Buy 100 USDG of NVDAx");
-                      setMode("simple");
-                    }}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-ink-900 px-3.5 py-1.5 text-[11px] font-bold text-white shadow-xs hover:bg-ink-800 cursor-pointer"
-                  >
-                    <span>Try Sample Trade</span>
-                    <span>↗</span>
-                  </button>
-                </div>
+                mode === "advanced" ? (
+                  <div className="mt-4 rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
+                    <p className="text-xs font-semibold text-ink-800">No active stock holdings</p>
+                    <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
+                      This wallet currently holds no tokenized equities on X Layer (chain 196). Submit an investment mandate to begin.
+                    </p>
+                  </div>
+                ) : null
               ) : (
                 <>
                   {/* Progress Bar Breakdown */}
@@ -3367,65 +3614,67 @@ export default function AppDashboardPage() {
               )}
             </div>
 
-            {/* Active stocks on this account */}
-            <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-ink-100 pb-3">
-                <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
-                  Active stocks on this account
-                </span>
-                <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                  {profile.holdings.filter((h) => h.symbol !== "USDG").length} Active Stocks
-                </span>
-              </div>
+            {/* Active stocks on this account (Advanced Mode Only) */}
+            {mode === "advanced" && (
+              <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+                <div className="flex items-center justify-between border-b border-ink-100 pb-3">
+                  <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
+                    Active stocks on this account
+                  </span>
+                  <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                    {profile.holdings.filter((h) => h.symbol !== "USDG").length} Active Stocks
+                  </span>
+                </div>
 
-              <div className="mt-3.5 space-y-2.5">
-                {profile.holdings.filter((h) => h.symbol !== "USDG").length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
-                    <p className="text-xs font-semibold text-ink-800">No active stock positions</p>
-                    <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
-                      You currently hold 0 stock tokens on OKX X Layer. Use the trade console or Meirei AI chat to execute an order.
-                    </p>
-                  </div>
-                ) : (
-                  profile.holdings
-                    .filter((h) => h.symbol !== "USDG")
-                    .map((h) => {
-                      const livePrice = stockPrices[h.symbol];
-                      const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
-                      const stockItem = STOCKS.find((s) => s.symbol === h.symbol);
+                <div className="mt-3.5 space-y-2.5">
+                  {profile.holdings.filter((h) => h.symbol !== "USDG").length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
+                      <p className="text-xs font-semibold text-ink-800">No active stock positions</p>
+                      <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
+                        You currently hold 0 stock tokens on OKX X Layer. Use the trade console or Meirei AI chat to execute an order.
+                      </p>
+                    </div>
+                  ) : (
+                    profile.holdings
+                      .filter((h) => h.symbol !== "USDG")
+                      .map((h) => {
+                        const livePrice = stockPrices[h.symbol];
+                        const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
+                        const stockItem = STOCKS.find((s) => s.symbol === h.symbol);
 
-                      return (
-                        <div
-                          key={h.symbol}
-                          className="rounded-xl border border-ink-100 bg-surface-50 p-3 text-xs"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="h-2.5 w-2.5 rounded-full shrink-0"
-                                style={{ backgroundColor: h.color }}
-                              />
-                              <span className="font-bold text-ink-900">{h.symbol}</span>
-                              <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600">
-                                Active
+                        return (
+                          <div
+                            key={h.symbol}
+                            className="rounded-xl border border-ink-100 bg-surface-50 p-3 text-xs"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="h-2.5 w-2.5 rounded-full shrink-0"
+                                  style={{ backgroundColor: h.color }}
+                                />
+                                <span className="font-bold text-ink-900">{h.symbol}</span>
+                                <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600">
+                                  Active
+                                </span>
+                              </div>
+                              <span className="font-mono font-bold text-ink-900">
+                                ${currentVal.toFixed(2)}
                               </span>
                             </div>
-                            <span className="font-mono font-bold text-ink-900">
-                              ${currentVal.toFixed(2)}
-                            </span>
+                            <div className="mt-1.5 flex items-center justify-between text-[11px] text-ink-500 font-mono">
+                              <span>Holding: {h.amount.toFixed(2)} units</span>
+                              <span>
+                                Spot: {livePrice ? `$${livePrice.toFixed(2)}` : stockItem?.price || "--"}
+                              </span>
+                            </div>
                           </div>
-                          <div className="mt-1.5 flex items-center justify-between text-[11px] text-ink-500 font-mono">
-                            <span>Holding: {h.amount.toFixed(2)} units</span>
-                            <span>
-                              Spot: {livePrice ? `$${livePrice.toFixed(2)}` : stockItem?.price || "--"}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })
-                )}
+                        );
+                      })
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* ========================================================================= */}
             {/* AUTONOMOUS AGENT EXECUTION AUDIT TRAIL                                    */}
@@ -3508,8 +3757,6 @@ export default function AppDashboardPage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 OKX X Layer (Chain 196) Mainnet
               </span>
-              <span>·</span>
-              <span className="text-[11px] text-ink-500">Author: IboTV</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-4 text-xs font-medium">

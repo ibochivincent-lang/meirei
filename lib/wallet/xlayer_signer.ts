@@ -1,6 +1,5 @@
 /**
  * Non-Custodial Web3 & ERC-4337 Signing Bridge for OKX X Layer (Chain ID 196)
- * Author: IboTV
  * Platform: OKX Chain / X Layer
  *
  * CRITICAL ARCHITECTURAL CONSTRAINTS:

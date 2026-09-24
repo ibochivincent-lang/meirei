@@ -1,6 +1,5 @@
 /**
  * X Layer EVM Network & Wallet Utilities
- * Author: IboTV
  * Platform: OKX Chain / X Layer (Chain 196)
  */
 

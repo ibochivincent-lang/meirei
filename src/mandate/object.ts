@@ -1,7 +1,6 @@
 /**
  * First-Class Versioned Mandate Object & Lifecycle Manager
- * Author: IboTV
- * 
+ * Platform: OKX X Layer (Chain ID 196)
  * Provides stateful mandate lifecycle (create, list, pause, edit, revoke),
  * automated risk-diff computation upon updates, and a dry-run execution mode.
  */

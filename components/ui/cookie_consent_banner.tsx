@@ -5,7 +5,6 @@ import Link from "next/link";
 
 /**
  * Cookie Consent Banner & Floating Preferences Widget
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  *
  * Solid high-contrast dark design with zero transparency bleed.

@@ -1,6 +1,5 @@
 /**
  * Telegram Webhook Configuration Tool
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  *
  * Usage:
@@ -75,7 +74,7 @@ async function main() {
 
   console.log("======================================================================");
   console.log("             PROJECT MEIREI | TELEGRAM WEBHOOK BINDING                ");
-  console.log("             Author: IboTV | Network: OKX X Layer (196)               ");
+  console.log("             Network: OKX X Layer (196)                               ");
   console.log("======================================================================");
   console.log("Target Webhook URL:", fullWebhookUrl);
   console.log("Connecting to Telegram Bot API...");

@@ -58,7 +58,6 @@ export async function GET(req: NextRequest) {
  * Inbound WhatsApp message processor supporting Meta Cloud API, voice notes transcription,
  * natural language conversational keyword understanding, and direct integrations.
  *
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  */
 export async function POST(req: NextRequest) {

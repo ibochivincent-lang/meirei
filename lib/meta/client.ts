@@ -1,6 +1,5 @@
 /**
  * Meta WhatsApp Cloud API Client
- * Author: IboTV
  * Platform: OKX X Layer (Chain ID 196)
  */
 

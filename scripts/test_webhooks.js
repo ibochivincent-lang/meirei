@@ -1,6 +1,5 @@
 /**
  * Webhook Verification Script for WhatsApp & Telegram
- * Author: IboTV
  * Platform: OKX Chain / X Layer (Chain 196)
  */
 

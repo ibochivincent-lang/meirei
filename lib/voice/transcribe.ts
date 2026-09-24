@@ -1,6 +1,5 @@
 /**
  * WhatsApp Voice Notes Transcription Engine - Ultra-Low Latency Edition
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  *
  * Downloads inbound audio voice notes from Meta WhatsApp Cloud API and

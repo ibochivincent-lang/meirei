@@ -5,7 +5,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Research | Meirei Labs",
-  description: "Institutional research publications and algorithmic architecture for X Layer tokenized equities by IboTV.",
+  description: "Institutional research publications and algorithmic architecture for X Layer tokenized equities.",
 };
 
 const PUBLICATIONS = [
@@ -16,7 +16,7 @@ const PUBLICATIONS = [
     title: "A deterministic, guardrailed investment mandate architecture for tokenized equities on OKX X Layer",
     summary:
       "Formalizing natural language mandate parsing into cap-constrained quadratic portfolio targets with mandatory transaction-bound HMAC challenge gates and atomic DEX execution.",
-    author: "IboTV",
+    author: "Meirei Core Research",
     tags: ["X Layer", "RWA Equities", "2FA Security", "OKX Onchain OS"],
     href: "/whitepaper",
   },
@@ -27,7 +27,7 @@ const PUBLICATIONS = [
     title: "Slippage minimization and concentrated liquidity dynamics in xStock secondary pools",
     summary:
       "Analyzing market impact, routing depth, and price discovery across synthetic equity pools settling in USDG and USDC.",
-    author: "IboTV",
+    author: "Meirei Core Research",
     tags: ["Liquidity Routing", "Slippage Bounds", "USDG Settlement"],
     href: "/docs",
   },
@@ -38,7 +38,7 @@ const PUBLICATIONS = [
     title: "Preventing rogue AI agency via time-decaying HMAC session authorization tokens",
     summary:
       "Architectural teardown of the 2FA challenge barrier that stops prompt-injection state modifications in non-custodial chat environments.",
-    author: "IboTV",
+    author: "Meirei Core Research",
     tags: ["Agent Security", "HMAC-SHA256", "Prompt Defense"],
     href: "/docs",
   },

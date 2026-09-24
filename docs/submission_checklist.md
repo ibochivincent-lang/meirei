@@ -3,7 +3,6 @@
 Track: Build a Company with OKX.AI  
 Project Name: Meirei (命令)  
 Tagline: AI-Native Investment Mandate Architecture for Tokenized Equities on OKX X Layer  
-Author: IboTV  
 Network: OKX X Layer Mainnet (Chain ID 196)  
 Repository: https://github.com/ibochivincent-lang/meirei  
 

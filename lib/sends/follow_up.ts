@@ -1,6 +1,5 @@
 /**
  * Non-Custodial Receipt Delivery and Follow-up Handler
- * Author: IboTV
  * Platform: OKX Chain / X Layer (Chain 196)
  */
 

@@ -1,6 +1,5 @@
 /**
  * Meirei Interactive CLI Bot Simulator
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  *
  * Simulates real conversational bot interactions across Telegram and WhatsApp channels
@@ -26,7 +25,7 @@ async function sendToBot(channel: "telegram" | "whatsapp", text: string, serverU
       body: JSON.stringify({
         message: {
           chat: { id: 7770001 },
-          from: { id: 7770001, username: "ibotv_investor" },
+          from: { id: 7770001, username: "meirei_investor" },
           text,
         },
       }),
@@ -35,7 +34,7 @@ async function sendToBot(channel: "telegram" | "whatsapp", text: string, serverU
     const data = await res.json();
     return {
       channel: "Telegram",
-      sender: "@ibotv_investor",
+      sender: "@meirei_investor",
       text: data.text || JSON.stringify(data, null, 2),
       keyboard: data.reply_markup?.inline_keyboard,
     };
@@ -82,7 +81,7 @@ async function startInteractiveRepl() {
 
   console.log("\n======================================================================");
   console.log("             PROJECT MEIREI | LIVE BOT SIMULATOR                     ");
-  console.log("             Author: IboTV | Network: OKX X Layer (196)               ");
+  console.log("             Network: OKX X Layer (196)                               ");
   console.log("======================================================================");
   console.log("Active Channel:", activeChannel.toUpperCase());
   console.log("Try typing:");

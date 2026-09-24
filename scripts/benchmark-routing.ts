@@ -4,8 +4,6 @@
  *
  * Usage:
  *   npx tsx scripts/benchmark-routing.ts
- *
- * Author: IboTV <290086463+ibochivincent-lang@users.noreply.github.com>
  */
 
 import { ALLOWLIST } from "../src/allowlist";

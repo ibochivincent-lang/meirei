@@ -31,7 +31,6 @@ const unfreezeChallenges = new Map<string, string>();
  * interactive inline buttons, 2FA circuit breakers, live X Layer stock quotes,
  * and 1-click non-custodial signing links.
  *
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  */
 export async function POST(req: NextRequest) {
@@ -350,7 +349,6 @@ export async function POST(req: NextRequest) {
     // 0. Project Welcome: /start or /help
     if (lower === "/start" || lower === "/help" || lower === "help") {
       let welcome = `*PROJECT MEIREI | OKX X LAYER BOT*\n\n`;
-      welcome += `*Author*: IboTV\n`;
       welcome += `*Network*: OKX X Layer Mainnet (Chain ID 196)\n`;
       welcome += `*Connected Wallet*: \`${shortAddr}\`\n`;
       welcome += `*Identity*: ${user.email}\n\n`;
@@ -676,7 +674,6 @@ export async function POST(req: NextRequest) {
             .join("\n");
           reply += `*Proposed Rebalancing Plan*:\n${legsSummary}\n\n`;
         }
-        reply += `*Sole Author*: IboTV\n`;
         reply += `_Tap below to review and sign with your OKX Wallet:_`;
 
         const signUrl = `${APP_URL}/app?mandate=${encodeURIComponent(rawText)}`;
@@ -1035,7 +1032,6 @@ export async function POST(req: NextRequest) {
           .join("\n");
         reply += `*Proposed Rebalancing Plan*:\n${legsSummary}\n\n`;
       }
-      reply += `*Sole Author*: IboTV\n`;
       reply += `_Tap below to review and sign with your OKX Wallet:_`;
 
       const keyboard = [

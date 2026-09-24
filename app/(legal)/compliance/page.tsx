@@ -18,7 +18,7 @@ export default function CompliancePage() {
           Compliance & Operational Scope
         </h1>
         <p className="text-sm text-ink-500">
-          Effective Date: September 2026 · Author: IboTV · Network: OKX X Layer (Chain ID 196)
+          Effective Date: September 2026 · Network: OKX X Layer (Chain ID 196)
         </p>
       </header>
 

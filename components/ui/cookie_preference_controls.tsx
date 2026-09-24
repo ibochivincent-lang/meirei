@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 
 /**
  * Cookie Preference Controls
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  *
  * Allows users to inspect active cookie consent status, open the consent modal,

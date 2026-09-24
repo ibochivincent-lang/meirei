@@ -1,6 +1,5 @@
 # Project Meirei | Messaging Bot Setup and Deployment Guide
 
-Author: IboTV  
 Network: OKX X Layer Mainnet (Chain ID 196)  
 Protocol: OKX Onchain OS AI Mandate Protocol  
 

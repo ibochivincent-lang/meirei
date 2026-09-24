@@ -18,7 +18,7 @@ export async function GET() {
     uptimeSeconds,
     timestamp: new Date().toISOString(),
     version: "2.4.0",
-    author: "IboTV",
+    author: "Meirei Protocol",
     metrics: {
       heapUsedMb: (mem.heapUsed / (1024 * 1024)).toFixed(2),
       heapTotalMb: (mem.heapTotal / (1024 * 1024)).toFixed(2),

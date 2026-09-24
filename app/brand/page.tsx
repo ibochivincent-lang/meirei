@@ -22,7 +22,7 @@ export default function BrandPage() {
               Brand & Design Assets
             </h1>
             <p className="mt-3 max-w-2xl text-base text-ink-700 sm:text-lg">
-              Official identity guidelines, color palettes, typographic hierarchy, and brand assets for the Meirei protocol. Authored by IboTV.
+              Official identity guidelines, color palettes, typographic hierarchy, and brand assets for the Meirei protocol.
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export default function BrandPage() {
           {/* Attribution */}
           <section className="rounded-2xl border border-ink-200 bg-surface-100 p-6 font-mono text-xs text-ink-700">
             <p className="font-bold text-ink-900 mb-1">Architecture & Design Ownership</p>
-            <p>Designed, engineered, and formally verified by IboTV. All rights reserved.</p>
+            <p>Designed, engineered, and formally verified for the Meirei protocol on OKX X Layer. All rights reserved.</p>
           </section>
         </div>
       </main>

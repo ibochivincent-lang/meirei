@@ -1,7 +1,6 @@
 /**
  * Red-Team Adversarial Prompt Injection & Structural Boundary Tests
- * Author: IboTV
- * 
+ * Platform: OKX X Layer (Chain ID 196)
  * Verifies that Meirei's architectural constraint model prevents prompt injections,
  * unauthorized transfers, non-allowlisted assets, and privilege escalation.
  */

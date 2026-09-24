@@ -1,6 +1,5 @@
 # Meirei Protocol — Rendered Architecture
 
-Author: IboTV  
 Network: OKX X Layer Mainnet (Chain ID 196)  
 Protocol: OKX Onchain OS AI Mandate Protocol  
 

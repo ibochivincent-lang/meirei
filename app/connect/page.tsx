@@ -2,11 +2,10 @@
 
 /**
  * Meirei Multi-Wallet Connection & Channel Linkage Portal
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  *
  * Provides non-custodial multi-wallet selection (OKX Wallet, MetaMask, Coinbase, Trust, Injected)
- * and multi-channel linkage with platform selector for WhatsApp, Telegram, Instagram, and Web.
+ * and multi-channel linkage with platform selector for Telegram and Web.
  */
 
 import { useState, useEffect, Suspense } from "react";
@@ -33,29 +32,7 @@ import {
   WalletConnectIcon,
 } from "@/components/wallet/wallet_connect_modal";
 
-export type SocialPlatform = "whatsapp" | "telegram" | "instagram" | "web";
-
-// Simple Vector SVG Logos
-function SimpleWhatsAppLogo({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-      <path
-        d="M9.5 9a.5.5 0 0 0-.5.5v.1c.1 1.2.7 2.6 1.8 3.7s2.5 1.7 3.7 1.8h.1a.5.5 0 0 0 .5-.5v-1.2a.5.5 0 0 0-.3-.5l-1.5-.6a.5.5 0 0 0-.6.2l-.5.7a6.2 6.2 0 0 1-2.2-2.2l.7-.5a.5.5 0 0 0 .2-.6l-.6-1.5a.5.5 0 0 0-.5-.3H9.5z"
-        fill="currentColor"
-        stroke="none"
-      />
-    </svg>
-  );
-}
+export type SocialPlatform = "telegram" | "web";
 
 function SimpleTelegramLogo({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -70,24 +47,6 @@ function SimpleTelegramLogo({ className = "w-5 h-5" }: { className?: string }) {
     >
       <path d="m22 2-11 13" />
       <path d="m22 2-7 20-4-9-9-4 20-7z" />
-    </svg>
-  );
-}
-
-function SimpleInstagramLogo({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -133,102 +92,54 @@ interface PlatformConfig {
 }
 
 const PLATFORM_CONFIGS: Record<SocialPlatform, PlatformConfig> = {
-  whatsapp: {
-    id: "whatsapp",
-    name: "WhatsApp",
-    tagline: "Conversational Bot",
-    badge: "Coming Soon (Phase 2)",
-    handleLabel: "WhatsApp Phone Number",
-    handlePlaceholder: "+234 902 827 9382 (with country code)",
-    defaultHandle: "+234 902 827 9382",
-    helperText: "WhatsApp bot connector is scheduled for Phase 2 launch on OKX X Layer.",
-    themeColor: "#25D366",
-    activeBorder: "border-emerald-500",
-    activeBg: "bg-emerald-500/10",
-    activeGlow: "shadow-emerald-500/20",
-    activeBadge: "bg-amber-500/20 text-amber-600 border-amber-500/30",
-    logo: SimpleWhatsAppLogo,
-    returnCtaText: "WhatsApp Coming Soon",
-    getReturnUrl: () => "/coming-soon",
-    nextSteps: [
-      "1. WhatsApp channel integration is launching in Phase 2.",
-      "2. Experience our live Web Terminal on OKX X Layer Chain 196 today.",
-      "3. You can also interact with our live Telegram Bot @meirei_bot.",
-      "4. No external redirection: explore the live Web Terminal now.",
-    ],
-  },
   telegram: {
     id: "telegram",
-    name: "Telegram",
-    tagline: "Bot & Community",
-    badge: "Direct Bot",
+    name: "Telegram Bot",
+    tagline: "Live Bot & Execution",
+    badge: "Direct Telegram Bot",
     handleLabel: "Telegram Handle or Chat ID",
     handlePlaceholder: "@username or numeric Chat ID",
     defaultHandle: "@meirei_trader",
-    helperText: "Enter your Telegram handle with leading @ or your numeric Telegram user ID.",
+    helperText: "Enter your Telegram handle with leading @ or your numeric Telegram user ID to link your wallet.",
     themeColor: "#24A1DE",
     activeBorder: "border-sky-500",
     activeBg: "bg-sky-500/10",
     activeGlow: "shadow-sky-500/20",
-    activeBadge: "bg-sky-500/20 text-sky-400 border-sky-500/30",
+    activeBadge: "bg-sky-500/20 text-sky-700 border-sky-500/30",
     logo: SimpleTelegramLogo,
     returnCtaText: "Open Telegram Bot",
     getReturnUrl: () => {
-      return SITE.telegramLink || "https://t.me/meirei_agent_bot";
+      return SITE.telegramLink || "https://t.me/MeireiXLayerBot";
     },
     nextSteps: [
-      "1. Open the Meirei Telegram bot chat.",
+      "1. Open the Meirei Telegram bot chat (@MeireiXLayerBot).",
       "2. Send /start or 'balance' to inspect your synchronized wallet balance.",
       "3. Execute tokenized stock mandates by sending natural language instructions.",
       "4. Use /help to see all supported commands anytime.",
     ],
   },
-  instagram: {
-    id: "instagram",
-    name: "Instagram",
-    tagline: "Direct Message",
-    badge: "Coming Soon (Phase 2)",
-    handleLabel: "Instagram Handle",
-    handlePlaceholder: "@your_instagram",
-    defaultHandle: "@meirei_investor",
-    helperText: "Instagram DM assistant is scheduled for Phase 2 launch on OKX X Layer.",
-    themeColor: "#E1306C",
-    activeBorder: "border-pink-500",
-    activeBg: "bg-pink-500/10",
-    activeGlow: "shadow-pink-500/20",
-    activeBadge: "bg-amber-500/20 text-amber-600 border-amber-500/30",
-    logo: SimpleInstagramLogo,
-    returnCtaText: "Instagram Coming Soon",
-    getReturnUrl: () => "/coming-soon",
-    nextSteps: [
-      "1. Instagram direct messaging channel is launching in Phase 2.",
-      "2. Experience our full conversational agent on the Web Terminal today.",
-      "3. Connect your OKX Wallet or MetaMask to execute real trades on Chain 196.",
-      "4. No external redirection: explore the live Web Terminal now.",
-    ],
-  },
   web: {
     id: "web",
-    name: "Web Platform",
-    tagline: "Conversational Chat",
-    badge: "Direct Web Chat",
-    handleLabel: "Web Chat Session",
+    name: "Web Browser Console",
+    tagline: "Direct Web Terminal",
+    badge: "Connect Wallet & Trade",
+    handleLabel: "Web Session Identity",
     handlePlaceholder: "Direct browser chat session",
-    defaultHandle: "web_conversational_chat",
-    helperText: "Directly chat with Meirei on the website to query stocks, inspect balance, and execute mandates.",
+    defaultHandle: "web_terminal_trader",
+    helperText: "Connect your non-custodial wallet (OKX Wallet, MetaMask, etc.) on OKX X Layer to execute mandates with zero gas.",
     themeColor: "#FF6B4E",
-    activeBorder: "border-[#FF6B4E]",
-    activeBg: "bg-[#FF6B4E]/10",
-    activeGlow: "shadow-[#FF6B4E]/20",
-    activeBadge: "bg-[#FF6B4E]/20 text-[#FF6B4E] border-[#FF6B4E]/30",
+    activeBorder: "border-accent-500",
+    activeBg: "bg-accent-500/10",
+    activeGlow: "shadow-accent-500/20",
+    activeBadge: "bg-accent-500/20 text-accent-700 border-accent-500/30",
     logo: SimpleWebLogo,
-    returnCtaText: "Open Meirei Conversational Chat",
-    getReturnUrl: () => "/app#conversational-chat",
+    returnCtaText: "Launch Web Terminal",
+    getReturnUrl: () => "/app",
     nextSteps: [
-      "1. Launch the Meirei Conversational Chat directly on the website.",
-      "2. Send 'stocks' to view real-time OKX X Layer allowlisted equities.",
-      "3. Send 'balance' to view synchronized smart wallet holdings.",
-      "4. Execute natural-language tokenized stock trades with zero gas fees.",
+      "1. Connect your OKX Wallet or Web3 provider on Chain 196.",
+      "2. Explore real-time OKX X Layer allowlisted equities and live spot prices.",
+      "3. Configure autonomous investment mandates or deploy direct rebalance swaps.",
+      "4. Enjoy 100% sponsored gas on all non-custodial executions.",
     ],
   },
 };
@@ -238,11 +149,11 @@ function ConnectWalletContent() {
 
   // Initial channel and handle resolution
   const initialChannelParam = (searchParams.get("channel") || "").toLowerCase() as SocialPlatform;
-  const initialChannel: SocialPlatform = ["whatsapp", "telegram", "instagram", "web"].includes(
+  const initialChannel: SocialPlatform = ["telegram", "web"].includes(
     initialChannelParam
   )
     ? initialChannelParam
-    : "whatsapp";
+    : "telegram";
 
   const rawHandleParam = searchParams.get("handle") || "";
 
@@ -535,7 +446,7 @@ function ConnectWalletContent() {
               <span className="text-[11px] text-ink-400 font-mono">Select to switch</span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {(Object.keys(PLATFORM_CONFIGS) as SocialPlatform[]).map((platformId) => {
                 const conf = PLATFORM_CONFIGS[platformId];
                 const isSelected = selectedChannel === platformId;
@@ -708,9 +619,7 @@ function ConnectWalletContent() {
                   rel="noopener noreferrer"
                   className={cn(
                     "w-full min-h-[44px] py-3 px-4 rounded-xl text-white font-semibold text-sm text-center transition shadow-xs flex items-center justify-center gap-2",
-                    selectedChannel === "whatsapp" && "bg-emerald-600 hover:bg-emerald-700",
                     selectedChannel === "telegram" && "bg-sky-600 hover:bg-sky-700",
-                    selectedChannel === "instagram" && "bg-pink-600 hover:bg-pink-700",
                     selectedChannel === "web" && "bg-accent-600 hover:bg-accent-700"
                   )}
                 >
@@ -820,9 +729,7 @@ function ConnectWalletContent() {
                     disabled={isLinking}
                     className={cn(
                       "w-full min-h-[44px] py-3.5 px-4 rounded-xl disabled:opacity-50 text-white font-semibold text-sm transition shadow-xs cursor-pointer flex items-center justify-center gap-2",
-                      selectedChannel === "whatsapp" && "bg-emerald-600 hover:bg-emerald-700",
                       selectedChannel === "telegram" && "bg-sky-600 hover:bg-sky-700",
-                      selectedChannel === "instagram" && "bg-pink-600 hover:bg-pink-700",
                       selectedChannel === "web" && "bg-accent-600 hover:bg-accent-700"
                     )}
                   >
@@ -978,7 +885,7 @@ function ConnectWalletContent() {
 
         {/* Bottom Helper Footer */}
         <div className="mt-6 text-center text-xs text-ink-500">
-          Project Meirei | Author: IboTV | OKX X Layer Mainnet
+          Project Meirei · OKX X Layer Mainnet (Chain ID 196)
         </div>
       </div>
     </div>

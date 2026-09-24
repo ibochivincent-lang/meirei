@@ -198,7 +198,6 @@ export async function POST(req: NextRequest) {
     ) {
       const shortAddr = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
       let welcome = `PROJECT MEIREI | OKX X LAYER TERMINAL\n\n`;
-      welcome += `Author: IboTV\n`;
       welcome += `Network: OKX X Layer Mainnet (Chain ID 196 / hex 0xc4)\n`;
       welcome += `Connected Wallet: ${shortAddr}\n\n`;
       welcome += `Supported Commands (Identical across Web, WhatsApp, and Telegram):\n`;

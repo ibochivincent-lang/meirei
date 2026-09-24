@@ -1,6 +1,5 @@
 /**
  * Meirei Live Telegram Long-Polling Runner
- * Author: IboTV
  * Platform: OKX X Layer Mainnet (Chain ID 196)
  *
  * Allows running the live Telegram Bot locally or in background workers
@@ -50,7 +49,7 @@ async function startPolling() {
 
   console.log("======================================================================");
   console.log("             PROJECT MEIREI | LIVE TELEGRAM POLLER                    ");
-  console.log("             Author: IboTV | Network: OKX X Layer (196)               ");
+  console.log("             Network: OKX X Layer (196)                               ");
   console.log("======================================================================");
   console.log("Target Webhook Server:", SERVER_URL);
   console.log("Starting long-polling connection with Telegram Bot API...");

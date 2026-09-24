@@ -1,6 +1,5 @@
 # Project Meirei — Production Cloud Deployment & Webhook Configuration Guide
 
-Author: IboTV  
 Network: OKX X Layer Mainnet (Chain ID 196)  
 Repository: https://github.com/ibochivincent-lang/meirei  
 

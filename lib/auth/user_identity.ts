@@ -1,6 +1,5 @@
 /**
  * Non-Custodial Identity & Multi-Channel Authentication Engine
- * Author: IboTV
  * Platform: OKX Chain / X Layer (Chain 196)
  *
  * CRITICAL ARCHITECTURAL CONSTRAINTS:

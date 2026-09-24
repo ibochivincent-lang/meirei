@@ -1,7 +1,6 @@
 /**
  * Mathematical Invariants and Property-Based Tests
- * Author: IboTV
- * 
+ * Platform: OKX X Layer (Chain ID 196)
  * Verifies core financial engine properties:
  * 1. Mandate target weights always sum to 1.0 (100%).
  * 2. No equity target exceeds the maxSingle cap.

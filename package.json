@@ -1,7 +1,7 @@
 {
   "name": "meirei",
   "version": "0.1.0",
-  "author": "IboTV",
+  "author": "Meirei Protocol",
   "packageManager": "pnpm@9.15.4",
   "private": true,
   "scripts": {

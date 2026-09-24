@@ -1,7 +1,6 @@
 /**
  * OKX X Layer Real-Time On-Chain Wallet Balance Endpoint
  * Platform: OKX X Layer Mainnet (Chain ID 196)
- * Author: IboTV <290086463+ibochivincent-lang@users.noreply.github.com>
  *
  * Queries authentic on-chain balances from OKX X Layer JSON-RPC.
  * Returns real USDG, USDC, OKB, and allowlisted tokenized equities (NVDAx, AAPLx, etc.).
