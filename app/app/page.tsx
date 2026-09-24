@@ -34,7 +34,7 @@ import {
   OKX_TRADING_PLAN_DATA,
 } from "@/lib/okx/skills_data";
 
-type Platform = "telegram" | "web" | "okx_wallet" | "whatsapp" | "instagram";
+type Platform = "telegram" | "web" | "okx_wallet";
 type Mode = "basic" | "advanced";
 
 // Simple Vector SVG Logos for Supported Platforms
@@ -71,40 +71,6 @@ function SimpleWebLogo({ className = "w-5 h-5" }: { className?: string }) {
       <line x1="12" y1="17" x2="12" y2="21" />
       <path d="m7 8 2 2-2 2" />
       <line x1="11" y1="12" x2="15" y2="12" />
-    </svg>
-  );
-}
-
-function SimpleWhatsAppLogo({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-    </svg>
-  );
-}
-
-function SimpleInstagramLogo({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
     </svg>
   );
 }
@@ -4134,18 +4100,18 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   )}
                 </div>
 
-                {/* STEP 2: All 4 Execution & Interface Channels */}
+                {/* STEP 2: All 2 Execution & Interface Channels */}
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider block">
                       2. Choose Interface Platform
                     </label>
                     <span className="text-[10px] text-accent-700 font-medium font-mono">
-                      4 Channels Active
+                      2 Channels Active
                     </span>
                   </div>
 
-                  {/* 2x2 Platform Selection Grid */}
+                  {/* 2 Platform Selection Grid */}
                   <div className="grid grid-cols-2 gap-2">
                     {/* 1. Web Platform */}
                     <button
@@ -4184,46 +4150,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       <div className="min-w-0">
                         <div className="font-bold text-ink-950 text-xs truncate">Telegram</div>
                         <div className="text-[9px] text-sky-700 font-mono truncate">@MeireiXLayerBot</div>
-                      </div>
-                    </button>
-
-                    {/* 3. WhatsApp Assistant */}
-                    <button
-                      type="button"
-                      onClick={() => setConnectChannel("whatsapp")}
-                      className={cn(
-                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2",
-                        connectChannel === "whatsapp"
-                          ? "border-emerald-500 bg-emerald-50/90 shadow-xs ring-1 ring-emerald-500"
-                          : "border-ink-200 bg-surface-50 hover:bg-white"
-                      )}
-                    >
-                      <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
-                        <SimpleWhatsAppLogo className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-ink-950 text-xs truncate">WhatsApp</div>
-                        <div className="text-[9px] text-emerald-700 font-mono truncate">Autonomous AI</div>
-                      </div>
-                    </button>
-
-                    {/* 4. Instagram Social Trader */}
-                    <button
-                      type="button"
-                      onClick={() => setConnectChannel("instagram")}
-                      className={cn(
-                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2",
-                        connectChannel === "instagram"
-                          ? "border-pink-500 bg-pink-50/90 shadow-xs ring-1 ring-pink-500"
-                          : "border-ink-200 bg-surface-50 hover:bg-white"
-                      )}
-                    >
-                      <div className="p-1.5 rounded-lg bg-pink-100 text-pink-700 shrink-0">
-                        <SimpleInstagramLogo className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-ink-950 text-xs truncate">Instagram</div>
-                        <div className="text-[9px] text-pink-700 font-mono truncate">Social Trader</div>
                       </div>
                     </button>
                   </div>
@@ -4285,64 +4211,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                             Open Bot
                           </a>
                         </div>
-                      </div>
-                    )}
-
-                    {connectChannel === "whatsapp" && (
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-ink-700 block mb-1">
-                            WhatsApp Phone Number (with country code)
-                          </label>
-                          <input
-                            type="text"
-                            value={connectHandle.startsWith("+") ? connectHandle : "+1"}
-                            onChange={(e) => setConnectHandle(e.target.value)}
-                            placeholder="+1234567890"
-                            className="w-full rounded-lg border border-ink-200 bg-white p-2 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-emerald-500"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (typeof window !== "undefined") {
-                              window.open(`https://wa.me/?text=Hello%20Meirei%20on%20OKX%20X%20Layer`, "_blank", "noopener,noreferrer");
-                            }
-                          }}
-                          className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-                        >
-                          <SimpleWhatsAppLogo className="w-3.5 h-3.5 text-white" />
-                          <span>Launch WhatsApp Assistant →</span>
-                        </button>
-                      </div>
-                    )}
-
-                    {connectChannel === "instagram" && (
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-ink-700 block mb-1">
-                            Instagram Username
-                          </label>
-                          <input
-                            type="text"
-                            value={connectHandle.startsWith("@") ? connectHandle : "@meirei_trader"}
-                            onChange={(e) => setConnectHandle(e.target.value)}
-                            placeholder="@your_instagram_handle"
-                            className="w-full rounded-lg border border-ink-200 bg-white p-2 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-pink-500"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (typeof window !== "undefined") {
-                              window.open("https://instagram.com/direct/inbox/", "_blank", "noopener,noreferrer");
-                            }
-                          }}
-                          className="w-full py-2 px-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
-                        >
-                          <SimpleInstagramLogo className="w-3.5 h-3.5 text-white" />
-                          <span>Connect Instagram Trader →</span>
-                        </button>
                       </div>
                     )}
                   </div>
