@@ -706,47 +706,89 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     }
   }, []);
 
-  // Separate Isolated Portfolios for Basic Mode vs. Advanced Mode
-  const [basicHoldings, setBasicHoldings] = useState<{ symbol: string; amount: number; valueUsd: number; color: string }[]>([
-    { symbol: "NVDAx", amount: 2.5, valueUsd: 446.0, color: "#10b981" },
-    { symbol: "AAPLx", amount: 3.0, valueUsd: 672.6, color: "#3b82f6" },
-    { symbol: "TSLAx", amount: 0.5, valueUsd: 127.05, color: "#f59e0b" },
-  ]);
-  const [basicUsdgBalance, setBasicUsdgBalance] = useState<number>(5000.0);
+  // Live vs Simulation Execution Environment switch ("live" strictly shows real on-chain data; "simulation" shows customizable sandbox paper figures)
+  const [executionEnvironment, setExecutionEnvironment] = useState<"live" | "simulation">("live");
 
-  const [advancedHoldings, setAdvancedHoldings] = useState<{ symbol: string; amount: number; valueUsd: number; color: string }[]>([
+  // Separate Isolated Simulated Portfolios for Basic Mode vs. Advanced Mode (paper figures user can add like $10k, $20k)
+  const [simulatedBasicHoldings, setSimulatedBasicHoldings] = useState<{ symbol: string; amount: number; valueUsd: number; color: string }[]>([]);
+  const [simulatedBasicUsdgBalance, setSimulatedBasicUsdgBalance] = useState<number>(10000.0);
+
+  const [simulatedAdvancedHoldings, setSimulatedAdvancedHoldings] = useState<{ symbol: string; amount: number; valueUsd: number; color: string }[]>([
     { symbol: "NVDAx", amount: 6.0, valueUsd: 1070.4, color: "#10b981" },
     { symbol: "TSLAx", amount: 3.2, valueUsd: 813.12, color: "#f59e0b" },
     { symbol: "METAx", amount: 0.85, valueUsd: 495.04, color: "#8b5cf6" },
   ]);
-  const [advancedUsdgBalance, setAdvancedUsdgBalance] = useState<number>(15000.0);
+  const [simulatedAdvancedUsdgBalance, setSimulatedAdvancedUsdgBalance] = useState<number>(20000.0);
 
-  // Dynamic portfolio selector depending on active mode
-  const currentHoldings = mode === "basic" ? basicHoldings : advancedHoldings;
-  const currentUsdgBalance = mode === "basic" ? basicUsdgBalance : advancedUsdgBalance;
+  // Quick Action to add simulated figures (e.g. 10k, 20k) in Simulation Sandbox
+  const handleAddSimulatedCapital = (amount: number) => {
+    if (mode === "basic") {
+      setSimulatedBasicUsdgBalance((prev) => prev + amount);
+    } else {
+      setSimulatedAdvancedUsdgBalance((prev) => prev + amount);
+    }
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 8);
+    setExecutionLogs((prev) => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: timeStr,
+        source: "Simulation Sandbox",
+        message: `Credited +$${amount.toLocaleString()} USDG simulated capital to ${mode === "basic" ? "Basic" : "Advanced"} Mode.`,
+        type: "success",
+      },
+      ...prev,
+    ]);
+  };
 
-  // Record a Quick Buy or Unit Calculator trade strictly into Basic Mode
+  // Live on-chain condition: true when live environment is active
+  const isLive = executionEnvironment === "live";
+
+  // Dynamic portfolio selector: Live Mode strictly displays real on-chain verified data; Simulation Mode displays simulated figures
+  const currentHoldings = isLive
+    ? (isLoggedIn ? profile.holdings : [])
+    : (mode === "basic" ? simulatedBasicHoldings : simulatedAdvancedHoldings);
+
+  const currentUsdgBalance = isLive
+    ? (isLoggedIn ? profile.usdgBalance : 0.0)
+    : (mode === "basic" ? simulatedBasicUsdgBalance : simulatedAdvancedUsdgBalance);
+
+  // Record a Quick Buy or Unit Calculator trade
   const recordBasicBuy = (symbol: string, amountUsdg: number, units: number, price: number) => {
-    setBasicUsdgBalance((prev) => Math.max(0, prev - amountUsdg));
-    setBasicHoldings((prev) => {
-      const existing = prev.find((h) => h.symbol === symbol);
-      if (existing) {
-        return prev.map((h) =>
-          h.symbol === symbol
-            ? { ...h, amount: h.amount + units, valueUsd: (h.amount + units) * price }
-            : h
-        );
-      }
-      return [
-        ...prev,
+    if (!isLive) {
+      setSimulatedBasicUsdgBalance((prev) => Math.max(0, prev - amountUsdg));
+      setSimulatedBasicHoldings((prev) => {
+        const existing = prev.find((h) => h.symbol === symbol);
+        if (existing) {
+          return prev.map((h) =>
+            h.symbol === symbol
+              ? { ...h, amount: h.amount + units, valueUsd: (h.amount + units) * price }
+              : h
+          );
+        }
+        return [
+          ...prev,
+          {
+            symbol,
+            amount: units,
+            valueUsd: amountUsdg,
+            color: "#06b6d4",
+          },
+        ];
+      });
+      const now = new Date();
+      const timeStr = now.toTimeString().slice(0, 8);
+      setExecutionLogs((prev) => [
         {
-          symbol,
-          amount: units,
-          valueUsd: amountUsdg,
-          color: "#06b6d4",
+          id: `log-${Date.now()}`,
+          timestamp: timeStr,
+          source: "Simulation Sandbox",
+          message: `Executed simulated paper buy: ${units.toFixed(4)} ${symbol} for $${amountUsdg.toFixed(2)} USDG at $${price.toFixed(2)}.`,
+          type: "success",
         },
-      ];
-    });
+        ...prev,
+      ]);
+    }
   };
 
   // Mandate editing state with structured stock & percentage/price selection
@@ -978,9 +1020,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       spotPrice,
     });
   };
-
-  // Live vs Simulation Execution Environment switch
-  const [executionEnvironment, setExecutionEnvironment] = useState<"live" | "simulation">("live");
 
   // Advisory Agent parameters (Advanced Mode)
   const [advisoryHorizon, setAdvisoryHorizon] = useState<AdvisoryHorizon>("short_term");
@@ -1293,8 +1332,8 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     setMandatePolicies((prev) => [newPolicy, ...prev]);
 
     // Allocate capital to Advanced Mode portfolio without touching Basic Mode portfolio
-    setAdvancedUsdgBalance((prev) => Math.max(0, prev - advisoryCapital));
-    setAdvancedHoldings((prev) => {
+    setSimulatedAdvancedUsdgBalance((prev) => Math.max(0, prev - advisoryCapital));
+    setSimulatedAdvancedHoldings((prev) => {
       const updated = [...prev];
       for (const alloc of plan.allocations) {
         const allocUsd = (advisoryCapital * alloc.weightPercent) / 100;
@@ -2201,7 +2240,553 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   </div>
                 </div>
 
-                {/* 20 Stocks Selector Grid with Quick Buy Buttons */}
+                {/* ========================================================================= */}
+                {/* 1. INTERACTIVE TRADINGVIEW-STYLE STOCK CHART (Selected Equity)            */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                          Interactive Stock Chart
+                        </span>
+                        <span className="rounded bg-accent-100 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-800">
+                          OKX X Layer (Chain 196)
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <div
+                          className="flex h-6 w-6 items-center justify-center rounded-md shadow-xs text-white font-bold text-xs"
+                          style={{ backgroundColor: selectedStock.color }}
+                        >
+                          {selectedStock.logo}
+                        </div>
+                        <h3 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
+                          {selectedStock.name} ({selectedStock.symbol})
+                        </h3>
+                        <span className="font-mono text-lg font-bold text-ink-900 sm:text-xl">
+                          {currentDisplayPrice}
+                        </span>
+                        <span
+                          className={cn(
+                            "rounded px-2 py-0.5 font-mono text-xs font-bold",
+                            (selectedStock.change24h || "").startsWith("+")
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-rose-50 text-rose-700 border border-rose-200"
+                          )}
+                        >
+                          {selectedStock.change24h || "+0.00%"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Controls: Chart Type Toggle (Line | Candles) & Timeframe Selector */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Chart Type Toggle */}
+                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChartType("line");
+                            setCandleHoverIndex(null);
+                          }}
+                          className={cn(
+                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                            chartType === "line"
+                              ? "bg-white text-ink-900 shadow-xs"
+                              : "text-ink-500 hover:text-ink-900"
+                          )}
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M2 11l4-5 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span>Line</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setChartType("candle");
+                            setChartHoverIndex(null);
+                          }}
+                          className={cn(
+                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                            chartType === "candle"
+                              ? "bg-white text-ink-900 shadow-xs"
+                              : "text-ink-500 hover:text-ink-900"
+                          )}
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
+                            <rect x="3" y="4" width="3" height="7" rx="0.5" />
+                            <line x1="4.5" y1="2" x2="4.5" y2="4" stroke="currentColor" strokeWidth="1.5" />
+                            <line x1="4.5" y1="11" x2="4.5" y2="14" stroke="currentColor" strokeWidth="1.5" />
+                            <rect x="10" y="6" width="3" height="6" rx="0.5" />
+                            <line x1="11.5" y1="3" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1.5" />
+                            <line x1="11.5" y1="12" x2="11.5" y2="15" stroke="currentColor" strokeWidth="1.5" />
+                          </svg>
+                          <span>Candles</span>
+                        </button>
+                      </div>
+
+                      {/* Timeframe Selector (1m to 1M) */}
+                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
+                        {["1m", "5m", "15m", "1h", "4h", "1D", "1W", "1M"].map((tf) => (
+                          <button
+                            key={tf}
+                            type="button"
+                            onClick={() => setTimeframe(tf)}
+                            className={cn(
+                              "rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
+                              timeframe === tf
+                                ? "bg-white text-ink-900 shadow-xs"
+                                : "text-ink-500 hover:text-ink-900"
+                            )}
+                          >
+                            {tf}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Candlestick OHLC Telemetry Bar (active in Candle mode) */}
+                  {chartType === "candle" && (
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 rounded-xl bg-surface-50 border border-ink-100 p-2.5 text-xs font-mono">
+                      {(() => {
+                        const activeBar =
+                          candleHoverIndex !== null && candleBars[candleHoverIndex]
+                            ? candleBars[candleHoverIndex]
+                            : candleBars[candleBars.length - 1];
+                        const barChange = activeBar ? ((activeBar.close - activeBar.open) / (activeBar.open || 1)) * 100 : 0;
+                        if (!activeBar) return null;
+                        return (
+                          <>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
+                              <span>Time:</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-bold text-ink-900">
+                                  {activeBar.time}
+                                </span>
+                                {activeBar.isLive && (
+                                  <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1 py-0.2 text-[8px] font-bold text-emerald-600 animate-pulse">
+                                    LIVE
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
+                              <span>Open:</span>
+                              <span className="font-bold text-ink-900">${activeBar.open.toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
+                              <span>High:</span>
+                              <span className="font-bold text-emerald-600">${activeBar.high.toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
+                              <span>Low:</span>
+                              <span className="font-bold text-rose-600">${activeBar.low.toFixed(2)}</span>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 col-span-2 sm:col-span-1 text-ink-500">
+                              <span>Close:</span>
+                              <span
+                                className={cn(
+                                  "font-bold",
+                                  activeBar.isBullish ? "text-emerald-600" : "text-rose-600"
+                                )}
+                              >
+                                ${activeBar.close.toFixed(2)} ({barChange >= 0 ? "+" : ""}{barChange.toFixed(2)}%)
+                              </span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  {/* SVG Chart Canvas */}
+                  <div className="relative mt-4">
+                    <svg
+                      ref={chartSvgRef}
+                      viewBox={`0 0 ${width} ${height}`}
+                      className="w-full h-[180px] sm:h-[210px] overflow-visible select-none touch-none"
+                      onMouseLeave={() => {
+                        setChartHoverIndex(null);
+                        setCandleHoverIndex(null);
+                      }}
+                      onMouseMove={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const clientX = e.clientX;
+                        const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+                        const ratio = offsetX / rect.width;
+
+                        if (chartType === "candle") {
+                          const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
+                          setCandleHoverIndex(Math.max(0, idx));
+                        } else {
+                          const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
+                          setChartHoverIndex(idx);
+                        }
+                      }}
+                      onTouchMove={(e) => {
+                        if (e.touches && e.touches[0]) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const clientX = e.touches[0].clientX;
+                          const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+                          const ratio = offsetX / rect.width;
+
+                          if (chartType === "candle") {
+                            const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
+                            setCandleHoverIndex(Math.max(0, idx));
+                          } else {
+                            const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
+                            setChartHoverIndex(idx);
+                          }
+                        }
+                      }}
+                      onTouchEnd={() => {
+                        setChartHoverIndex(null);
+                        setCandleHoverIndex(null);
+                      }}
+                    >
+                      <defs>
+                        <linearGradient id={chartGradId} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#FF5B3E" stopOpacity="0.28" />
+                          <stop offset="100%" stopColor="#FF5B3E" stopOpacity="0.0" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Subtle Gridlines */}
+                      <g className="stroke-ink-200/50 stroke-dashed" strokeDasharray="3 3">
+                        <line x1="0" y1={padY} x2={width} y2={padY} />
+                        <line x1="0" y1={height / 2} x2={width} y2={height / 2} />
+                        <line x1="0" y1={height - padY} x2={width} y2={height - padY} />
+                      </g>
+
+                      {/* LINE CHART MODE */}
+                      {chartType === "line" && (
+                        <>
+                          <path d={areaD} fill={`url(#${chartGradId})`} />
+                          <path
+                            d={pathD}
+                            fill="none"
+                            stroke="#FF5B3E"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          {chartHoverIndex !== null && coords[chartHoverIndex] && (
+                            <g>
+                              <line
+                                x1={coords[chartHoverIndex].x}
+                                y1={padY}
+                                x2={coords[chartHoverIndex].x}
+                                y2={height - padY}
+                                stroke="currentColor"
+                                strokeWidth="1"
+                                strokeDasharray="2 2"
+                                className="text-ink-400"
+                              />
+                              <circle
+                                cx={coords[chartHoverIndex].x}
+                                cy={coords[chartHoverIndex].y}
+                                r="5"
+                                fill="#FFFFFF"
+                                stroke="#FF5B3E"
+                                strokeWidth="2.5"
+                              />
+                            </g>
+                          )}
+                        </>
+                      )}
+
+                      {/* CANDLESTICK CHART MODE */}
+                      {chartType === "candle" && (
+                        <g>
+                          {candleBars.map((bar, idx) => {
+                            const numBars = candleBars.length;
+                            const barSpacing = width / numBars;
+                            const barW = Math.max(10, barSpacing * 0.62);
+                            const cx = (idx + 0.5) * barSpacing;
+                            const wickY1 = height - padY - ((bar.high - candleMin) / candleRange) * chartHeight;
+                            const wickY2 = height - padY - ((bar.low - candleMin) / candleRange) * chartHeight;
+                            const openY = height - padY - ((bar.open - candleMin) / candleRange) * chartHeight;
+                            const closeY = height - padY - ((bar.close - candleMin) / candleRange) * chartHeight;
+                            const bodyTop = Math.min(openY, closeY);
+                            const bodyH = Math.max(3, Math.abs(openY - closeY));
+                            const isHovered = candleHoverIndex === idx;
+                            const candleColor = bar.isBullish ? "#10B981" : "#F43F5E";
+
+                            return (
+                              <g key={`candle-${idx}`} className="transition-opacity">
+                                {isHovered && (
+                                  <rect
+                                    x={cx - barSpacing / 2}
+                                    y={0}
+                                    width={barSpacing}
+                                    height={height}
+                                    fill="currentColor"
+                                    className="text-accent-500/10"
+                                  />
+                                )}
+                                {/* Wick line */}
+                                <line
+                                  x1={cx}
+                                  y1={wickY1}
+                                  x2={cx}
+                                  y2={wickY2}
+                                  stroke={candleColor}
+                                  strokeWidth={isHovered ? "2.2" : "1.5"}
+                                />
+                                {/* Candle body */}
+                                <rect
+                                  x={cx - barW / 2}
+                                  y={bodyTop}
+                                  width={barW}
+                                  height={bodyH}
+                                  rx="1.5"
+                                  fill={candleColor}
+                                  stroke={candleColor}
+                                  strokeWidth="1"
+                                />
+                                {/* Live candle real-time pulse indicator on OKX X Layer */}
+                                {bar.isLive && (
+                                  <g>
+                                    <circle
+                                      cx={cx}
+                                      cy={closeY}
+                                      r="6"
+                                      fill={candleColor}
+                                      opacity="0.35"
+                                      className="animate-ping"
+                                    />
+                                    <circle
+                                      cx={cx}
+                                      cy={closeY}
+                                      r="3"
+                                      fill="#FFFFFF"
+                                      stroke={candleColor}
+                                      strokeWidth="1.5"
+                                    />
+                                  </g>
+                                )}
+                              </g>
+                            );
+                          })}
+                        </g>
+                      )}
+                    </svg>
+
+                    <div className="mt-2 flex justify-between font-mono text-[10px] text-ink-400">
+                      <span>
+                        {timeframe === "1m"
+                          ? "10m Ago"
+                          : timeframe === "5m"
+                          ? "50m Ago"
+                          : timeframe === "15m"
+                          ? "2.5h Ago"
+                          : timeframe === "1h"
+                          ? "10h Ago"
+                          : timeframe === "4h"
+                          ? "40h Ago"
+                          : timeframe === "1D"
+                          ? "09:30 AM EST"
+                          : timeframe === "1W"
+                          ? "7 Days Ago"
+                          : "30 Days Ago"}
+                      </span>
+                      <span>
+                        {timeframe === "1m"
+                          ? "5m Ago"
+                          : timeframe === "5m"
+                          ? "25m Ago"
+                          : timeframe === "15m"
+                          ? "1h Ago"
+                          : timeframe === "1h"
+                          ? "5h Ago"
+                          : timeframe === "4h"
+                          ? "20h Ago"
+                          : timeframe === "1D"
+                          ? "12:30 PM EST"
+                          : timeframe === "1W"
+                          ? "Midweek"
+                          : "15 Days Ago"}
+                      </span>
+                      <span className="flex items-center gap-1 font-semibold text-accent-600">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>
+                          {timeframe === "1D" || timeframe === "1m" || timeframe === "5m" || timeframe === "15m" || timeframe === "1h" || timeframe === "4h"
+                            ? "Live Tick (X Layer)"
+                            : "Today (Live X Layer)"}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ========================================================================= */}
+                {/* 2. PRICE COMPARISON & UNIT CALCULATOR (Placed Directly Below Chart)       */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-3.5 sm:flex-row sm:items-center">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                          Instant Unit Estimation
+                        </span>
+                        <span className="rounded bg-accent-100 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-800">
+                          OKX DEX Aggregator
+                        </span>
+                      </div>
+                      <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg">
+                        Price Comparison &amp; Unit Calculator
+                      </h3>
+                      <p className="text-xs text-ink-500">
+                        Select any allowlisted stock and input an investment amount to calculate exact tokenized units and live DEX conversion parameters.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-mono font-medium text-emerald-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Gas 100% Sponsored</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-4">
+                    {/* Left Column: Stock Selection Dropdown & Investment Input */}
+                    <div className="space-y-3.5 md:col-span-6">
+                      <div>
+                        <label className="text-xs font-bold text-ink-700 uppercase tracking-wider mb-1.5 block">
+                          Select Tokenized Stock (20 Equities)
+                        </label>
+                        <select
+                          value={selectedStock.symbol}
+                          onChange={(e) => {
+                            const found = STOCKS.find((s) => s.symbol === e.target.value);
+                            if (found) {
+                              setSelectedStock(found);
+                              setChartHoverIndex(null);
+                            }
+                          }}
+                          className="w-full rounded-xl border border-ink-200 bg-surface-50 p-2.5 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors cursor-pointer"
+                        >
+                          {STOCKS.map((s) => (
+                            <option key={s.symbol} value={s.symbol}>
+                              {s.symbol} — {s.name} ({getFormattedPrice(s)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-bold text-ink-700 uppercase tracking-wider">
+                            Investment Capital (USDG)
+                          </label>
+                          <span className="text-[11px] font-mono text-ink-500">
+                            Available: ${currentUsdgBalance.toFixed(2)} USDG
+                          </span>
+                        </div>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-ink-400">
+                            $
+                          </span>
+                          <input
+                            type="number"
+                            min="10"
+                            step="10"
+                            value={calcInvestmentUsdg}
+                            onChange={(e) => setCalcInvestmentUsdg(Math.max(1, Number(e.target.value) || 0))}
+                            className="w-full rounded-xl border border-ink-200 bg-surface-50 py-2.5 pl-7 pr-16 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-ink-400">
+                            USDG
+                          </span>
+                        </div>
+
+                        {/* Quick Amount Chips */}
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          {[50, 100, 250, 500, 1000, 2500].map((amt) => (
+                            <button
+                              key={amt}
+                              type="button"
+                              onClick={() => setCalcInvestmentUsdg(amt)}
+                              className={cn(
+                                "rounded-lg px-2.5 py-1 text-[11px] font-mono font-bold transition-all cursor-pointer",
+                                calcInvestmentUsdg === amt
+                                  ? "bg-accent-500 text-white shadow-xs"
+                                  : "bg-surface-100 text-ink-600 hover:bg-surface-200 hover:text-ink-900"
+                              )}
+                            >
+                              ${amt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Calculated Units & Live DEX Execution Breakdown */}
+                    <div className="rounded-xl border border-ink-200/70 bg-surface-50 p-4 space-y-3 md:col-span-6 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-ink-500">Estimated Units Received:</span>
+                          <span className="font-mono text-base font-bold text-accent-600">
+                            {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}
+                          </span>
+                        </div>
+
+                        <div className="mt-2.5 space-y-1.5 border-t border-ink-100 pt-2 text-[11px] font-mono">
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Spot Benchmark:</span>
+                            <span className="font-semibold text-ink-900">{getFormattedPrice(selectedStock)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Unit Ratio:</span>
+                            <span>1 {selectedStock.symbol} = {getFormattedPrice(selectedStock)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Slippage Tolerance:</span>
+                            <span className="text-emerald-700 font-semibold">&lt; 0.05%</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Minimum Received:</span>
+                            <span className="font-semibold text-ink-900">
+                              {((calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)) * 0.995).toFixed(4)} {selectedStock.symbol}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Network Gas Fee:</span>
+                            <span className="text-emerald-700 font-bold">$0.00 (100% Sponsored)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const price = getNumericPrice(selectedStock);
+                          const units = calcInvestmentUsdg / (price || 1);
+                          if (executionEnvironment === "simulation") {
+                            recordBasicBuy(selectedStock.symbol, calcInvestmentUsdg, units, price);
+                            setMandateResult({
+                              reply: `Simulated paper trade executed: Bought ${units.toFixed(4)} ${selectedStock.symbol} for $${calcInvestmentUsdg.toFixed(2)} USDG at $${price.toFixed(2)}.`,
+                              type: "mandate",
+                              statusTone: "confirmed",
+                            });
+                          } else {
+                            openWeb3Signer(selectedStock.symbol, calcInvestmentUsdg, units, price);
+                          }
+                        }}
+                        className="w-full rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>Quick Buy {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}</span>
+                        <span>(${calcInvestmentUsdg.toFixed(2)} USDG) ↗</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ========================================================================= */}
+                {/* 3. ALLOWLISTED xSTOCKS (20 Assets on OKX X Layer)                         */}
+                {/* ========================================================================= */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-4 shadow-xs">
                   <div className="flex flex-col justify-between gap-2 border-b border-ink-100 pb-3 sm:flex-row sm:items-center">
                     <div className="flex items-center gap-2">
@@ -2677,163 +3262,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                 </div>
 
                 {/* Section Separator */}
-                
-                <SectionSeparator label="Price Comparison & Unit Calculator" />
-
-                {/* ========================================================================= */}
-                {/* PRICE COMPARISON & UNIT CALCULATOR                                        */}
-                {/* ========================================================================= */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
-                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-3.5 sm:flex-row sm:items-center">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
-                          Instant Unit Estimation
-                        </span>
-                        <span className="rounded bg-accent-100 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-800">
-                          OKX DEX Aggregator
-                        </span>
-                      </div>
-                      <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg">
-                        Price Comparison &amp; Unit Calculator
-                      </h3>
-                      <p className="text-xs text-ink-500">
-                        Select any allowlisted stock and input an investment amount to calculate exact tokenized units and live DEX conversion parameters.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-mono font-medium text-emerald-800">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>Gas 100% Sponsored</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-4">
-                    {/* Left Column: Stock Selection Dropdown & Investment Input */}
-                    <div className="space-y-3.5 md:col-span-6">
-                      <div>
-                        <label className="text-xs font-bold text-ink-700 uppercase tracking-wider mb-1.5 block">
-                          Select Tokenized Stock (20 Equities)
-                        </label>
-                        <select
-                          value={selectedStock.symbol}
-                          onChange={(e) => {
-                            const found = STOCKS.find((s) => s.symbol === e.target.value);
-                            if (found) {
-                              setSelectedStock(found);
-                              setChartHoverIndex(null);
-                            }
-                          }}
-                          className="w-full rounded-xl border border-ink-200 bg-surface-50 p-2.5 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors cursor-pointer"
-                        >
-                          {STOCKS.map((s) => (
-                            <option key={s.symbol} value={s.symbol}>
-                              {s.symbol} — {s.name} ({getFormattedPrice(s)})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold text-ink-700 uppercase tracking-wider">
-                            Investment Capital (USDG)
-                          </label>
-                          <span className="text-[11px] font-mono text-ink-500">
-                            Available: ${profile.usdgBalance.toFixed(2)} USDG
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-ink-400">
-                            $
-                          </span>
-                          <input
-                            type="number"
-                            min="10"
-                            step="10"
-                            value={calcInvestmentUsdg}
-                            onChange={(e) => setCalcInvestmentUsdg(Math.max(1, Number(e.target.value) || 0))}
-                            className="w-full rounded-xl border border-ink-200 bg-surface-50 py-2.5 pl-7 pr-16 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-ink-400">
-                            USDG
-                          </span>
-                        </div>
-
-                        {/* Quick Amount Chips */}
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          {[50, 100, 250, 500, 1000, 2500].map((amt) => (
-                            <button
-                              key={amt}
-                              type="button"
-                              onClick={() => setCalcInvestmentUsdg(amt)}
-                              className={cn(
-                                "rounded-lg px-2.5 py-1 text-[11px] font-mono font-bold transition-all cursor-pointer",
-                                calcInvestmentUsdg === amt
-                                  ? "bg-accent-500 text-white shadow-xs"
-                                  : "bg-surface-100 text-ink-600 hover:bg-surface-200 hover:text-ink-900"
-                              )}
-                            >
-                              ${amt}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Column: Calculated Units & Live DEX Execution Breakdown */}
-                    <div className="rounded-xl border border-ink-200/70 bg-surface-50 p-4 space-y-3 md:col-span-6 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-ink-500">Estimated Units Received:</span>
-                          <span className="font-mono text-base font-bold text-accent-600">
-                            {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}
-                          </span>
-                        </div>
-
-                        <div className="mt-2.5 space-y-1.5 border-t border-ink-100 pt-2 text-[11px] font-mono">
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Spot Benchmark:</span>
-                            <span className="font-semibold text-ink-900">{getFormattedPrice(selectedStock)}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Unit Ratio:</span>
-                            <span>1 {selectedStock.symbol} = {getFormattedPrice(selectedStock)}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Slippage Tolerance:</span>
-                            <span className="text-emerald-700 font-semibold">&lt; 0.05%</span>
-                          </div>
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Minimum Received:</span>
-                            <span className="font-semibold text-ink-900">
-                              {((calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)) * 0.995).toFixed(4)} {selectedStock.symbol}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Network Gas Fee:</span>
-                            <span className="text-emerald-700 font-bold">$0.00 (100% Sponsored)</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const price = getNumericPrice(selectedStock);
-                          const units = calcInvestmentUsdg / (price || 1);
-                          openWeb3Signer(selectedStock.symbol, calcInvestmentUsdg, units, price);
-                        }}
-                        className="w-full rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <span>Quick Buy {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}</span>
-                        <span>(${calcInvestmentUsdg.toFixed(2)} USDG) ↗</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section Separator */}
                 <SectionSeparator label="Autonomous Mandate Layer" />
 
                 {/* ========================================================================= */}
@@ -2953,135 +3381,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
             {/* ========================================================================= */}
             {mode === "advanced" && (
               <div className="space-y-6">
-                {/* 1. Institutional AI Mandate Advisory Studio & OKX AI Skills Hub */}
-                {/* Active OKX AI Skills Engine Telemetry Bar */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
-                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
-                          Meirei AI Intelligence Architecture
-                        </span>
-                        <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          4 Meirei Assistant Skills Synchronized
-                        </span>
-                      </div>
-                      <h2 className="mt-1 font-display text-lg font-bold text-ink-950 sm:text-xl">
-                        Active Meirei AI Assistant Intelligence Engine
-                      </h2>
-                      <p className="mt-0.5 text-xs text-ink-600 leading-relaxed">
-                        Synchronizing <strong className="text-ink-900 font-mono">trading-plan-generator</strong>, <strong className="text-ink-900 font-mono">okx-sentiment-tracker</strong>, <strong className="text-ink-900 font-mono">okx-cex-smartmoney</strong>, and <strong className="text-ink-900 font-mono">okx-cex-market</strong> across all 20 allowlisted equities on OKX X Layer (Chain 196).
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLastTelemetryRefresh(new Date().toLocaleTimeString());
-                          setExecutionLogs((prev) => [
-                            {
-                              id: `log-${Date.now()}`,
-                              timestamp: new Date().toLocaleTimeString(),
-                              source: "OKX Skills Engine",
-                              message: "Refreshed OKX AI telemetry across trading-plan-generator, sentiment, smart money, and market depth.",
-                              type: "info",
-                            },
-                            ...prev.slice(0, 24),
-                          ]);
-                        }}
-                        className="rounded-xl border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-white hover:text-ink-950 transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
-                      >
-                        <span className="text-accent-600 font-bold">↻</span>
-                        <span>Refresh Telemetry ({lastTelemetryRefresh})</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 4 Skills Cards Grid */}
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    {/* 1. trading-plan-generator */}
-                    <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="rounded bg-sky-100 border border-sky-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-sky-800">
-                          trading-plan-generator
-                        </span>
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      </div>
-                      <h4 className="font-display text-xs font-bold text-ink-950">
-                        Trading Plan Generator
-                      </h4>
-                      <p className="text-[10px] text-ink-500 leading-relaxed">
-                        Generates institutional-grade rebalancing rules, dynamic drift bounds (1.5%–3.5%), and capital preservation ceilings.
-                      </p>
-                      <div className="pt-2 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
-                        <span className="text-ink-500 font-mono">Telemetry:</span>
-                        <span className="font-bold text-ink-900 font-mono">15 Trajectories Active</span>
-                      </div>
-                    </div>
-
-                    {/* 2. okx-sentiment-tracker */}
-                    <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="rounded bg-indigo-100 border border-indigo-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-indigo-800">
-                          okx-sentiment-tracker
-                        </span>
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      </div>
-                      <h4 className="font-display text-xs font-bold text-ink-950">
-                        OKX Sentiment Tracker
-                      </h4>
-                      <p className="text-[10px] text-ink-500 leading-relaxed">
-                        Aggregates 48.2K mentions, whale social sentiment, and retail vs institutional positioning divergence on X Layer.
-                      </p>
-                      <div className="pt-2 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
-                        <span className="text-ink-500 font-mono">Sentiment Score:</span>
-                        <span className="font-bold text-indigo-700 font-mono">82/100 (Bullish)</span>
-                      </div>
-                    </div>
-
-                    {/* 3. okx-cex-smartmoney */}
-                    <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="rounded bg-emerald-100 border border-emerald-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-emerald-800">
-                          okx-cex-smartmoney
-                        </span>
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      </div>
-                      <h4 className="font-display text-xs font-bold text-ink-950">
-                        OKX CEX Smart Money
-                      </h4>
-                      <p className="text-[10px] text-ink-500 leading-relaxed">
-                        Monitors whale wallet accumulation, exchange net flows, and top-trader long ratios on OKX CEX &amp; DEX bridges.
-                      </p>
-                      <div className="pt-2 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
-                        <span className="text-ink-500 font-mono">Net Inflow 24h:</span>
-                        <span className="font-bold text-emerald-700 font-mono">+$5.84M USDG</span>
-                      </div>
-                    </div>
-
-                    {/* 4. okx-cex-market */}
-                    <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="rounded bg-amber-100 border border-amber-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber-800">
-                          okx-cex-market
-                        </span>
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      </div>
-                      <h4 className="font-display text-xs font-bold text-ink-950">
-                        OKX CEX Market Depth
-                      </h4>
-                      <p className="text-[10px] text-ink-500 leading-relaxed">
-                        High-frequency orderbook spread metrics, liquidity depth, and 24h tokenized stock trading volume rankings.
-                      </p>
-                      <div className="pt-2 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
-                        <span className="text-ink-500 font-mono">Liquidity Depth:</span>
-                        <span className="font-bold text-amber-700 font-mono">$24.6M (2.1 bps)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {/* 1. Institutional AI Mandate Advisory Studio */}
 
                 {/* AI Trading Advisory Agent Studio */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
@@ -4079,9 +4379,17 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     {mode === "basic" ? "Basic Mode" : "Advanced Mode"}
                   </span>
                 </div>
-                <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                  {currentHoldings.length} {currentHoldings.length === 1 ? "Position" : "Positions"}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className={cn(
+                    "rounded px-2 py-0.5 text-[9px] font-bold uppercase font-mono",
+                    executionEnvironment === "live" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" : "bg-amber-100 text-amber-800 border border-amber-300"
+                  )}>
+                    {executionEnvironment === "live" ? "Live Real Data" : "Simulation Sandbox"}
+                  </span>
+                  <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                    {currentHoldings.length} {currentHoldings.length === 1 ? "Position" : "Positions"}
+                  </span>
+                </div>
               </div>
 
               {(() => {
@@ -4101,20 +4409,88 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       <span>Equities: <strong className="font-mono text-ink-900">${currentEquityVal.toFixed(2)} USDG</strong></span>
                     </div>
 
-                    {/* Spending Cap Telemetry */}
-                    <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-2 text-[11px] text-ink-500">
-                      <span>OKX X Layer (Chain 196):</span>
-                      <span className="font-mono font-semibold text-emerald-600">On-Chain Verified</span>
-                    </div>
+                    {/* Simulation Sandbox Top-Up Figures (+10k, +20k) */}
+                    {executionEnvironment === "simulation" && (
+                      <div className="mt-3.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/80 p-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            Simulation Sandbox Figures
+                          </span>
+                          <span className="text-[10px] font-mono text-amber-700">Demo Paper Liquidity</span>
+                        </div>
+                        <p className="mt-1 text-[11px] text-amber-800 leading-snug">
+                          Add simulated test USDG to model trades and mandates without real capital:
+                        </p>
+                        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleAddSimulatedCapital(10000)}
+                            className="rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-mono font-bold text-[10px] px-2.5 py-1 shadow-2xs transition-colors cursor-pointer"
+                          >
+                            + $10,000 USDG
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddSimulatedCapital(20000)}
+                            className="rounded-lg bg-ink-900 hover:bg-ink-800 text-white font-mono font-bold text-[10px] px-2.5 py-1 shadow-2xs transition-colors cursor-pointer"
+                          >
+                            + $20,000 USDG
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (mode === "basic") {
+                                setSimulatedBasicUsdgBalance(10000);
+                                setSimulatedBasicHoldings([]);
+                              } else {
+                                setSimulatedAdvancedUsdgBalance(20000);
+                              }
+                            }}
+                            className="rounded-lg border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 font-mono text-[10px] font-semibold px-2 py-1 transition-colors cursor-pointer ml-auto"
+                          >
+                            Reset Demo
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Live On-Chain Verification */}
+                    {executionEnvironment === "live" && (
+                      <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-2 text-[11px] text-ink-500">
+                        <span>On-Chain Verification:</span>
+                        <span className="font-mono font-semibold text-emerald-600 flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          OKX X Layer (Chain 196) Real Data Only
+                        </span>
+                      </div>
+                    )}
 
                     {currentHoldings.length === 0 ? (
                       <div className="mt-4 rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
-                        <p className="text-xs font-semibold text-ink-800">No active stock holdings in {mode === "basic" ? "Basic Mode" : "Advanced Mode"}</p>
-                        <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
-                          {mode === "basic"
-                            ? "Use Quick Buy on any of the 20 allowlisted equities or the Unit Calculator to execute a spot trade."
-                            : "Deploy an algorithmic mandate or configure DCA to start autonomous execution on X Layer."}
+                        <p className="text-xs font-semibold text-ink-800">
+                          {executionEnvironment === "live"
+                            ? (isLoggedIn ? "No active tokenized stock holdings on this account" : "Web3 Wallet Not Connected")
+                            : `No active stock holdings in ${mode === "basic" ? "Basic Mode" : "Advanced Mode"} Simulation`}
                         </p>
+                        <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
+                          {executionEnvironment === "live"
+                            ? (isLoggedIn
+                              ? "Your connected wallet currently holds 0 allowlisted xStocks on OKX X Layer."
+                              : "Connect your Web3 wallet (OKX Wallet, MetaMask) to load your authentic on-chain balances.")
+                            : (mode === "basic"
+                              ? "Use Quick Buy on any of the 20 equities or the Unit Calculator above to test spot trades with your simulated paper balance."
+                              : "Configure and deploy an algorithmic mandate to start autonomous simulated execution.")}
+                        </p>
+                        {executionEnvironment === "live" && !isLoggedIn && (
+                          <button
+                            type="button"
+                            onClick={() => setShowLoginModal(true)}
+                            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                          >
+                            Connect Web3 Wallet →
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <>
@@ -4173,6 +4549,135 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                 );
               })()}
             </div>
+
+            {/* Active Meirei AI Assistant Intelligence Engine: 4 Meirei Assistant Skills Synchronized (Directly Below Active Portfolio & Ontop Market Catalysts in Advanced Mode) */}
+            {mode === "advanced" && (
+              <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+                <div className="flex flex-col justify-between gap-2.5 border-b border-ink-100 pb-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                      Meirei AI Intelligence Architecture
+                    </span>
+                    <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 font-mono text-[9px] font-bold text-emerald-700 flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      4 Meirei Assistant Skills Synchronized
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-display text-sm font-bold text-ink-950 sm:text-base">
+                      Active Meirei AI Assistant Intelligence Engine
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLastTelemetryRefresh(new Date().toLocaleTimeString());
+                        setExecutionLogs((prev) => [
+                          {
+                            id: `log-${Date.now()}`,
+                            timestamp: new Date().toLocaleTimeString(),
+                            source: "OKX Skills Engine",
+                            message: "Refreshed OKX AI telemetry across trading-plan-generator, sentiment, smart money, and market depth.",
+                            type: "info",
+                          },
+                          ...prev.slice(0, 24),
+                        ]);
+                      }}
+                      className="rounded-lg border border-ink-200 bg-surface-50 px-2 py-1 text-[10px] font-semibold text-ink-700 hover:bg-white hover:text-ink-950 transition-colors cursor-pointer flex items-center gap-1 shrink-0 shadow-2xs"
+                      title="Refresh OKX AI skills telemetry"
+                    >
+                      <span className="text-accent-600 font-bold">↻</span>
+                      <span>Refresh ({lastTelemetryRefresh})</span>
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-ink-600 leading-relaxed">
+                    Synchronizing <strong className="text-ink-900 font-mono">trading-plan-generator</strong>, <strong className="text-ink-900 font-mono">okx-sentiment-tracker</strong>, <strong className="text-ink-900 font-mono">okx-cex-smartmoney</strong>, and <strong className="text-ink-900 font-mono">okx-cex-market</strong> across all 20 allowlisted equities on OKX X Layer (Chain 196).
+                  </p>
+                </div>
+
+                {/* 4 Skills Cards Grid in Sidebar */}
+                <div className="mt-3.5 space-y-2.5">
+                  {/* 1. trading-plan-generator */}
+                  <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded bg-sky-100 border border-sky-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-sky-800">
+                        trading-plan-generator
+                      </span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    </div>
+                    <h4 className="font-display text-xs font-bold text-ink-950">
+                      Trading Plan Generator
+                    </h4>
+                    <p className="text-[10px] text-ink-500 leading-relaxed">
+                      Generates institutional-grade rebalancing rules, dynamic drift bounds (1.5%–3.5%), and capital preservation ceilings.
+                    </p>
+                    <div className="pt-1.5 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                      <span className="text-ink-500 font-mono">Telemetry:</span>
+                      <span className="font-bold text-ink-900 font-mono">15 Trajectories Active</span>
+                    </div>
+                  </div>
+
+                  {/* 2. okx-sentiment-tracker */}
+                  <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded bg-indigo-100 border border-indigo-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-indigo-800">
+                        okx-sentiment-tracker
+                      </span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    </div>
+                    <h4 className="font-display text-xs font-bold text-ink-950">
+                      OKX Sentiment Tracker
+                    </h4>
+                    <p className="text-[10px] text-ink-500 leading-relaxed">
+                      Aggregates 48.2K mentions, whale social sentiment, and retail vs institutional positioning divergence on X Layer.
+                    </p>
+                    <div className="pt-1.5 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                      <span className="text-ink-500 font-mono">Sentiment Score:</span>
+                      <span className="font-bold text-indigo-700 font-mono">82/100 (Bullish)</span>
+                    </div>
+                  </div>
+
+                  {/* 3. okx-cex-smartmoney */}
+                  <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded bg-emerald-100 border border-emerald-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-emerald-800">
+                        okx-cex-smartmoney
+                      </span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    </div>
+                    <h4 className="font-display text-xs font-bold text-ink-950">
+                      OKX CEX Smart Money
+                    </h4>
+                    <p className="text-[10px] text-ink-500 leading-relaxed">
+                      Monitors whale wallet accumulation, exchange net flows, and top-trader long ratios on OKX CEX &amp; DEX bridges.
+                    </p>
+                    <div className="pt-1.5 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                      <span className="text-ink-500 font-mono">Net Inflow 24h:</span>
+                      <span className="font-bold text-emerald-700 font-mono">+$5.84M USDG</span>
+                    </div>
+                  </div>
+
+                  {/* 4. okx-cex-market */}
+                  <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="rounded bg-amber-100 border border-amber-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber-800">
+                        okx-cex-market
+                      </span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    </div>
+                    <h4 className="font-display text-xs font-bold text-ink-950">
+                      OKX CEX Market Depth
+                    </h4>
+                    <p className="text-[10px] text-ink-500 leading-relaxed">
+                      High-frequency orderbook spread metrics, liquidity depth, and 24h tokenized stock trading volume rankings.
+                    </p>
+                    <div className="pt-1.5 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                      <span className="text-ink-500 font-mono">Liquidity Depth:</span>
+                      <span className="font-bold text-amber-700 font-mono">$24.6M (2.1 bps)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Live Market Intelligence & Investor Sentiment: Market Catalysts & Investor Consensus (Directly Under Active Portfolio in Advanced Mode) */}
             {mode === "advanced" && (
@@ -4459,11 +4964,11 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       2. Choose Interface Platform
                     </label>
                     <span className="text-[10px] text-accent-700 font-medium font-mono">
-                      Multi-Platform Gateway
+                      Official Execution Channels
                     </span>
                   </div>
 
-                  {/* 4 Platform Selection Grid */}
+                  {/* 2 Platform Selection Grid (Web & Telegram strictly) */}
                   <div className="grid grid-cols-2 gap-2">
                     {/* 1. Web Platform */}
                     <button
@@ -4504,54 +5009,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                         <div className="text-[9px] text-sky-700 font-mono truncate">@MeireiXLayerBot</div>
                       </div>
                     </button>
-
-                    {/* 3. WhatsApp (Coming Soon) */}
-                    <button
-                      type="button"
-                      onClick={() => setConnectChannel("whatsapp")}
-                      className={cn(
-                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 relative",
-                        connectChannel === "whatsapp"
-                          ? "border-emerald-500 bg-emerald-50/90 shadow-xs ring-1 ring-emerald-500"
-                          : "border-ink-200 bg-surface-50 hover:bg-white"
-                      )}
-                    >
-                      <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
-                        <SimpleWhatsAppLogo className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="font-bold text-ink-950 text-xs truncate">WhatsApp</span>
-                        </div>
-                        <span className="inline-block rounded bg-amber-100 border border-amber-300 px-1 py-0.2 font-mono text-[8px] font-bold text-amber-800">
-                          COMING SOON
-                        </span>
-                      </div>
-                    </button>
-
-                    {/* 4. Instagram (Coming Soon) */}
-                    <button
-                      type="button"
-                      onClick={() => setConnectChannel("instagram")}
-                      className={cn(
-                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2 relative",
-                        connectChannel === "instagram"
-                          ? "border-pink-500 bg-pink-50/90 shadow-xs ring-1 ring-pink-500"
-                          : "border-ink-200 bg-surface-50 hover:bg-white"
-                      )}
-                    >
-                      <div className="p-1.5 rounded-lg bg-pink-100 text-pink-700 shrink-0">
-                        <SimpleInstagramLogo className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="font-bold text-ink-950 text-xs truncate">Instagram</span>
-                        </div>
-                        <span className="inline-block rounded bg-amber-100 border border-amber-300 px-1 py-0.2 font-mono text-[8px] font-bold text-amber-800">
-                          COMING SOON
-                        </span>
-                      </div>
-                    </button>
                   </div>
 
                   {/* Channel Action Panel */}
@@ -4559,7 +5016,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     {connectChannel === "web" && (
                       <div className="space-y-2">
                         <p className="text-[11px] text-ink-700 leading-relaxed">
-                          <strong>Run simulation on specific amount to test:</strong> Model non-custodial spot trades, converse with the AI agent, and simulate autonomous rebalancing mandates on OKX X Layer (Chain 196) without risking real capital.
+                          <strong>Web Terminal Execution:</strong> Execute non-custodial spot trades, converse with the AI agent, and deploy autonomous rebalancing mandates on OKX X Layer (Chain 196) directly within this browser terminal.
                         </p>
                         <button
                           type="button"
@@ -4572,33 +5029,9 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                           }}
                           className="w-full py-2 px-3 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                         >
-                          <span>Launch Web Terminal Simulation</span>
+                          <span>Open Web Terminal</span>
                           <span>→</span>
                         </button>
-                      </div>
-                    )}
-
-                    {connectChannel === "whatsapp" && (
-                      <div className="space-y-2 text-center py-2">
-                        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
-                          <span>⏳</span>
-                          <span>WhatsApp Assistant — COMING SOON</span>
-                        </div>
-                        <p className="text-[11px] text-ink-600 leading-relaxed">
-                          WhatsApp Autonomous AI Agent integration on OKX X Layer is currently finalizing testnet validation. Use <strong>Telegram</strong> (@MeireiXLayerBot) or <strong>Web Console</strong> today for instant live execution.
-                        </p>
-                      </div>
-                    )}
-
-                    {connectChannel === "instagram" && (
-                      <div className="space-y-2 text-center py-2">
-                        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
-                          <span>⏳</span>
-                          <span>Instagram Direct Agent — COMING SOON</span>
-                        </div>
-                        <p className="text-[11px] text-ink-600 leading-relaxed">
-                          Instagram automated social signals and direct portfolio tracking is launching soon. Use <strong>Telegram</strong> (@MeireiXLayerBot) or <strong>Web Console</strong> for live execution on Chain 196.
-                        </p>
                       </div>
                     )}
 
