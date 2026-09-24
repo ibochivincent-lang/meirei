@@ -239,7 +239,7 @@ export function UseCasesSection() {
   }, [activeIndex]);
 
   return (
-    <section id="use-cases" className="relative overflow-hidden bg-white dark:bg-surface-0 px-3 py-16 sm:px-[72px] md:py-24">
+    <section id="use-cases" className="relative overflow-hidden bg-white px-3 py-16 sm:px-[72px] md:py-24">
       <div className="mx-auto max-w-[1296px]">
         <div className="flex flex-col items-center gap-6 text-center">
           <div className="flex flex-col items-center">
@@ -247,18 +247,18 @@ export function UseCasesSection() {
               as="h2"
               text="Move money directly from chat"
               accent="from chat"
-              className="justify-center font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-black dark:text-ink-50"
+              className="justify-center font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-black"
             />
             <Reveal delay={0.15}>
-              <p className="mt-4 text-base leading-relaxed text-ink-700 dark:text-ink-300 md:text-xl">
+              <p className="mt-4 text-base leading-relaxed text-ink-700 md:text-xl">
                 How Meirei becomes part of everyday life
               </p>
             </Reveal>
             <Reveal delay={0.2}>
-              <p className="mt-2 max-w-xl text-sm text-ink-500 dark:text-ink-400 md:text-base">
+              <p className="mt-2 max-w-xl text-sm text-ink-500 md:text-base">
                 Dollar-denominated equity investing by message. Built for individuals and savers in high-inflation markets seeking global purchasing power through simple conversational mandates.
               </p>
-              <div className="mt-4 max-w-2xl rounded-2xl border border-accent-500/20 dark:border-accent-700/40 bg-accent-50/60 dark:bg-accent-950/30 p-4 text-xs leading-relaxed text-ink-800 dark:text-accent-200 md:text-sm shadow-xs">
+              <div className="mt-4 max-w-2xl rounded-2xl border border-accent-500/20 bg-accent-50/60 p-4 text-xs leading-relaxed text-ink-800 md:text-sm shadow-xs">
                 Turn your messaging app into a global wealth preservation vehicle. Save in dollar stablecoins (USDG) and acquire fractional US blue-chip equities with plain text commands like &ldquo;$50 into AAPLx monthly&rdquo; on OKX X Layer.
               </div>
             </Reveal>
@@ -266,7 +266,7 @@ export function UseCasesSection() {
 
           <Reveal delay={0.25}>
             <div
-              className="flex w-full max-w-full flex-wrap content-start items-start gap-1.5 rounded-2xl bg-[#F5F5F5] dark:bg-surface-100 p-2 md:w-auto md:flex-nowrap md:overflow-x-auto"
+              className="flex w-full max-w-full flex-wrap content-start items-start gap-1.5 rounded-2xl bg-[#F5F5F5] p-2 md:w-auto md:flex-nowrap md:overflow-x-auto"
               role="tablist"
               aria-label="Use case examples"
             >
@@ -282,14 +282,14 @@ export function UseCasesSection() {
                     aria-controls={`use-case-panel-${useCase.id}`}
                     className={cn(
                       "relative shrink-0 rounded-xl px-4 py-2.5 text-sm leading-5 transition-colors md:px-5 md:py-3 md:text-lg font-medium",
-                      isActive ? "text-black dark:text-ink-50" : "text-ink-500 hover:text-black dark:text-ink-400 dark:hover:text-ink-50",
+                      isActive ? "text-black" : "text-ink-500 hover:text-black",
                     )}
                     onClick={() => setActiveIndex(index)}
                   >
                     {isActive && (
                       <motion.span
                         layoutId="usecase-tab"
-                        className="absolute inset-0 -z-10 rounded-xl bg-white dark:bg-surface-200 shadow-soft"
+                        className="absolute inset-0 -z-10 rounded-xl bg-white shadow-soft"
                         transition={{ type: "spring", stiffness: 380, damping: 32 }}
                       />
                     )}
@@ -351,14 +351,14 @@ function PersonaPhoto({ photo, index }: { photo: PhotoCard; index: number }) {
   return (
     <div
       className={cn(
-        "absolute z-20 rounded-[6px] bg-[#F5F5F5] dark:bg-surface-100 p-[3px] shadow-soft transition-all duration-700 md:z-0 md:rounded-2xl md:p-2",
+        "absolute z-20 rounded-[6px] bg-[#F5F5F5] p-[3px] shadow-soft transition-all duration-700 md:z-0 md:rounded-2xl md:p-2",
         mobilePlacement,
         desktopPlacement,
       )}
       aria-label={`${photo.title}: ${photo.subtitle}`}
       role="img"
     >
-      <div className="relative h-full w-full overflow-hidden rounded-[5px] bg-[#F5F5F5] dark:bg-surface-200 md:rounded-xl">
+      <div className="relative h-full w-full overflow-hidden rounded-[5px] bg-[#F5F5F5] md:rounded-xl">
         <Image
           src={photo.src}
           alt={`${photo.title} - ${photo.subtitle}`}
@@ -366,9 +366,9 @@ function PersonaPhoto({ photo, index }: { photo: PhotoCard; index: number }) {
           sizes="(min-width: 1024px) 307px, (min-width: 768px) 246px, 120px"
           className={cn("object-cover", photo.objectPosition)}
         />
-        <div className="absolute inset-x-4 bottom-4 hidden rounded-lg bg-white dark:bg-[#11141D] border border-ink-200 dark:border-zinc-800 p-3 shadow-md md:block">
-          <p className="text-sm font-medium leading-5 text-black dark:text-ink-50">{photo.title}</p>
-          <p className="text-xs leading-4 text-ink-500 dark:text-ink-400">{photo.subtitle}</p>
+        <div className="absolute inset-x-4 bottom-4 hidden rounded-lg bg-white border border-ink-200 p-3 shadow-md md:block">
+          <p className="text-sm font-medium leading-5 text-black">{photo.title}</p>
+          <p className="text-xs leading-4 text-ink-500">{photo.subtitle}</p>
         </div>
       </div>
     </div>
@@ -390,12 +390,12 @@ function ChatMessage({ message }: { message: Message }) {
     <StaticBubble side={message.side === "out" ? "out" : "in"} time={message.time}>
       <p>{message.text}</p>
       {message.receipt && (
-        <div className="mt-2 rounded-xl bg-[#F5F5F5] dark:bg-[#182533] p-2.5 text-ink-900 dark:text-white">
+        <div className="mt-2 rounded-xl bg-[#F5F5F5] p-2.5 text-ink-900">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[9px] font-medium uppercase tracking-wider text-ink-500 dark:text-ink-300">
+            <span className="text-[9px] font-medium uppercase tracking-wider text-ink-500">
               {message.receipt.status}
             </span>
-            <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 text-[8px] font-medium text-emerald-700 dark:text-emerald-300">
+            <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[8px] font-medium text-emerald-700">
               Confirmed
             </span>
           </div>

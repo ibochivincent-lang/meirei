@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.theme-dark-disabled, .theme-dark-disabled *));
 
 @theme {
   /* Surface — warm near-whites */

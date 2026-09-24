@@ -206,7 +206,7 @@ export function LiveAgentFeature() {
     <div ref={wrapperRef} className="relative md:h-[120vh]">
       <section
         id="features"
-        className="relative flex items-center overflow-visible bg-[#FFF5F2] dark:bg-surface-50 px-3 pb-6 md:sticky md:top-0 md:h-screen md:min-h-screen md:overflow-hidden md:px-[72px] md:py-10"
+        className="relative flex items-center overflow-visible bg-[#FFF5F2] px-3 pb-6 md:sticky md:top-0 md:h-screen md:min-h-screen md:overflow-hidden md:px-[72px] md:py-10"
       >
         <motion.div
           ref={cardRef}
@@ -214,13 +214,13 @@ export function LiveAgentFeature() {
           animate={animateState}
           variants={cardVariants}
           style={{ opacity: exitOpacity, scale: exitScale }}
-          className="mx-auto w-full max-w-[1296px] origin-top rounded-[24px] bg-white dark:bg-surface-0 dark:border dark:border-surface-200 p-4 shadow-sm md:p-6"
+          className="mx-auto w-full max-w-[1296px] origin-top rounded-[24px] bg-white p-4 shadow-sm md:p-6"
         >
           <div className="grid gap-6 lg:grid-cols-12 lg:items-center">
             {/* Visual: Live Phone Mockup */}
             <motion.div
               variants={visualVariants}
-              className="relative order-2 flex min-h-[540px] items-center justify-center overflow-hidden rounded-[24px] bg-[#F5F5F5] dark:bg-surface-100 px-4 py-6 md:order-1 md:min-h-[480px] lg:col-span-6 lg:min-h-[580px] lg:px-6"
+              className="relative order-2 flex min-h-[540px] items-center justify-center overflow-hidden rounded-[24px] bg-[#F5F5F5] px-4 py-6 md:order-1 md:min-h-[480px] lg:col-span-6 lg:min-h-[580px] lg:px-6"
             >
               <div className="relative mx-auto w-fit">
                 <PhoneFrame className="!w-[300px] sm:!w-[330px] lg:!w-[340px] shadow-2xl">
@@ -228,7 +228,7 @@ export function LiveAgentFeature() {
                     <ChatHeader variant="compact" subtitle="Online · X Layer" />
                     <div
                       ref={scrollAreaRef}
-                      className="flex flex-1 flex-col gap-2.5 overflow-y-auto bg-cover bg-center p-3.5 bg-[url('/whatsapp-bg.png')] dark:bg-none dark:bg-[#0b141a]"
+                      className="flex flex-1 flex-col gap-2.5 overflow-y-auto bg-cover bg-center p-3.5 bg-[url('/whatsapp-bg.png')]"
                       style={{ maxHeight: "420px" }}
                     >
                       {turns.map((turn) => (
@@ -241,14 +241,14 @@ export function LiveAgentFeature() {
                               "max-w-[85%] rounded-2xl px-3.5 py-2 text-[12px] leading-snug shadow-sm",
                               turn.side === "out"
                                 ? "rounded-br-md bg-accent-500 text-white"
-                                : "rounded-bl-md bg-white dark:bg-[#1f2c34] text-ink-900 dark:text-white",
+                                : "rounded-bl-md bg-white text-ink-900",
                             )}
                           >
                             <p className="whitespace-pre-line">{turn.text}</p>
                             <span
                               className={cn(
                                 "mt-1 block text-right text-[9px]",
-                                turn.side === "out" ? "text-white/70" : "text-ink-400 dark:text-ink-400",
+                                turn.side === "out" ? "text-white/70" : "text-ink-400",
                               )}
                             >
                               {turn.time}
@@ -269,19 +269,19 @@ export function LiveAgentFeature() {
                           )}
 
                           {turn.chartPreview && (
-                            <div className="mt-2 w-[90%] rounded-xl border border-ink-200/80 dark:border-ink-700/60 bg-white dark:bg-[#1f2c34] p-3 shadow-xs">
+                            <div className="mt-2 w-[90%] rounded-xl border border-ink-200/80 bg-white p-3 shadow-xs">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-display text-xs font-bold text-ink-900 dark:text-white">{turn.chartPreview.symbol}</span>
-                                  <span className="text-[10px] text-ink-500 dark:text-ink-300">{turn.chartPreview.name}</span>
+                                  <span className="font-display text-xs font-bold text-ink-900">{turn.chartPreview.symbol}</span>
+                                  <span className="text-[10px] text-ink-500">{turn.chartPreview.name}</span>
                                 </div>
-                                <span className={cn("text-[10px] font-semibold", turn.chartPreview.isLive ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}>
+                                <span className={cn("text-[10px] font-semibold", turn.chartPreview.isLive ? "text-emerald-600" : "text-amber-600")}>
                                   {turn.chartPreview.change}
                                 </span>
                               </div>
                               <div className="mt-1 flex items-baseline justify-between">
-                                <span className="font-display text-base font-bold text-ink-900 dark:text-white">{turn.chartPreview.price}</span>
-                                <span className="text-[9px] text-ink-400 dark:text-ink-400">X Layer · Chain 196</span>
+                                <span className="font-display text-base font-bold text-ink-900">{turn.chartPreview.price}</span>
+                                <span className="text-[9px] text-ink-400">X Layer · Chain 196</span>
                               </div>
                               <div className="mt-1.5 h-6 w-full">
                                 <svg viewBox="0 0 100 24" className="h-full w-full overflow-visible" preserveAspectRatio="none">
@@ -301,10 +301,10 @@ export function LiveAgentFeature() {
 
                       {loading && (
                         <div className="flex justify-start">
-                          <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white dark:bg-[#1f2c34] px-3 py-2.5 shadow-sm">
-                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400 dark:bg-ink-300" />
+                          <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white px-3 py-2.5 shadow-sm">
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400" />
                             <span
-                              className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400 dark:bg-ink-300"
+                              className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400"
                               style={{ animationDelay: "150ms" }}
                             />
                             <span
@@ -330,33 +330,33 @@ export function LiveAgentFeature() {
                   <span className="flex min-h-[34px] min-w-[44px] items-center justify-center rounded-full bg-accent-500 px-4 py-1.5 text-sm font-semibold leading-5 text-white md:text-base">
                     1
                   </span>
-                  <h3 className="min-w-0 flex-1 font-display text-xl font-medium leading-7 tracking-[-0.01em] text-ink-900 dark:text-ink-50 md:text-2xl md:leading-9 lg:text-[30px] lg:leading-[1.15]">
+                  <h3 className="min-w-0 flex-1 font-display text-xl font-medium leading-7 tracking-[-0.01em] text-ink-900 md:text-2xl md:leading-9 lg:text-[30px] lg:leading-[1.15]">
                     Trade stocks like sending a text
                   </h3>
                 </div>
 
-                <p className="mt-4 text-sm leading-relaxed text-ink-700 dark:text-ink-300 md:text-lg">
+                <p className="mt-4 text-sm leading-relaxed text-ink-700 md:text-lg">
                   Just type what you want to buy or sell. Meirei parses the mandate, grabs the best quote via OKX DEX, and executes on X Layer.
                 </p>
 
                 {/* Live Chatbox Console */}
-                <div className="mt-6 w-full rounded-2xl border border-ink-200/80 dark:border-surface-200 bg-surface-50 dark:bg-surface-100 p-4 shadow-sm md:p-5">
-                  <div className="flex items-center justify-between border-b border-ink-200/60 dark:border-surface-200 pb-2.5">
+                <div className="mt-6 w-full rounded-2xl border border-ink-200/80 bg-surface-50 p-4 shadow-sm md:p-5">
+                  <div className="flex items-center justify-between border-b border-ink-200/60 pb-2.5">
                     <div className="flex items-center gap-2">
                       <span className="relative flex h-2 w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
                         <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                       </span>
-                      <span className="font-display text-sm font-bold text-ink-900 dark:text-ink-50">
+                      <span className="font-display text-sm font-bold text-ink-900">
                         Interactive Live Agent
                       </span>
                     </div>
-                    <span className="rounded bg-accent-50 dark:bg-accent-950/60 px-2 py-0.5 font-mono text-[10px] font-medium text-accent-700 dark:text-accent-300">
+                    <span className="rounded bg-accent-50 px-2 py-0.5 font-mono text-[10px] font-medium text-accent-700">
                       Chain 196
                     </span>
                   </div>
 
-                  <p className="mt-2.5 text-xs text-ink-600 dark:text-ink-400">
+                  <p className="mt-2.5 text-xs text-ink-600">
                     Click a prompt or type below to test Meirei with live onchain data:
                   </p>
 
@@ -367,7 +367,7 @@ export function LiveAgentFeature() {
                         type="button"
                         onClick={() => sendMessage(sug)}
                         disabled={loading}
-                        className="rounded-full border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-0 px-2.5 py-1 text-[11px] font-medium text-ink-700 dark:text-ink-200 transition-colors hover:border-accent-500 hover:bg-accent-50 dark:hover:bg-surface-200 hover:text-accent-700 dark:hover:text-ink-50 disabled:opacity-50"
+                        className="rounded-full border border-ink-200 bg-white px-2.5 py-1 text-[11px] font-medium text-ink-700 transition-colors hover:border-accent-500 hover:bg-accent-50 hover:text-accent-700 disabled:opacity-50"
                       >
                         {sug}
                       </button>
@@ -387,7 +387,7 @@ export function LiveAgentFeature() {
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Ask Meirei (e.g. How much is my balance?)"
                       disabled={loading}
-                      className="flex-1 rounded-xl border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-0 px-3 py-2 text-xs text-ink-900 dark:text-ink-50 outline-none transition-all focus:border-accent-500 focus:ring-1 focus:ring-accent-500 disabled:opacity-50 md:text-sm"
+                      className="flex-1 rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs text-ink-900 outline-none transition-all focus:border-accent-500 focus:ring-1 focus:ring-accent-500 disabled:opacity-50 md:text-sm"
                     />
                     <button
                       type="submit"

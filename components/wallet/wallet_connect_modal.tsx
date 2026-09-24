@@ -86,47 +86,48 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="w-full max-w-md rounded-2xl bg-[#0D1017] border border-white/[0.1] shadow-2xl overflow-hidden flex flex-col"
+          className="w-full max-w-md rounded-2xl bg-white border border-ink-200 shadow-2xl overflow-hidden flex flex-col text-ink-900"
         >
           {/* Header */}
-          <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center justify-between">
+          <div className="p-4 sm:p-5 border-b border-ink-100 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="h-9 w-9 rounded-xl bg-[#3B99FC]/15 border border-[#3B99FC]/30 flex items-center justify-center">
                 <WalletConnectIcon className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-sm sm:text-base font-bold text-white">WalletConnect</h3>
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-semibold">
+                  <h3 className="text-sm sm:text-base font-bold text-ink-900">WalletConnect</h3>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
                     X Layer 196
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-400">Universal Web3 pairing protocol</p>
+                <p className="text-[11px] text-ink-500">Universal Web3 pairing protocol</p>
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="h-8 w-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-gray-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+              className="h-9 w-9 min-h-[36px] min-w-[36px] rounded-lg bg-surface-100 hover:bg-surface-200 text-ink-500 hover:text-ink-900 flex items-center justify-center transition cursor-pointer"
+              aria-label="Close modal"
             >
               ✕
             </button>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="grid grid-cols-2 p-1.5 bg-black/40 border-b border-white/[0.06] text-xs font-semibold">
+          <div className="grid grid-cols-2 p-1.5 bg-surface-100 border-b border-ink-200 text-xs font-semibold">
             <button
               type="button"
               onClick={() => setActiveTab("qr")}
-              className={`py-2 rounded-lg transition text-center cursor-pointer ${
+              className={`min-h-[44px] py-2 rounded-lg transition text-center cursor-pointer ${
                 activeTab === "qr"
-                  ? "bg-white/[0.08] text-white shadow-sm"
-                  : "text-gray-400 hover:text-gray-200"
+                  ? "bg-white text-ink-900 shadow-xs"
+                  : "text-ink-500 hover:text-ink-900"
               }`}
             >
               Scan QR Code
@@ -134,13 +135,13 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
             <button
               type="button"
               onClick={() => setActiveTab("mobile")}
-              className={`py-2 rounded-lg transition text-center cursor-pointer ${
+              className={`min-h-[44px] py-2 rounded-lg transition text-center cursor-pointer ${
                 activeTab === "mobile"
-                  ? "bg-white/[0.08] text-white shadow-sm"
-                  : "text-gray-400 hover:text-gray-200"
+                  ? "bg-white text-ink-900 shadow-xs"
+                  : "text-ink-500 hover:text-ink-900"
               }`}
             >
-              Mobile Apps & Deep Links
+              Mobile Apps &amp; Deep Links
             </button>
           </div>
 
@@ -149,7 +150,7 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
             {activeTab === "qr" ? (
               <div className="flex flex-col items-center justify-center space-y-4 text-center">
                 {/* QR Code Container */}
-                <div className="relative p-3.5 rounded-2xl bg-white shadow-lg border border-white/20">
+                <div className="relative p-3.5 rounded-2xl bg-white shadow-sm border border-ink-200">
                   {/* High contrast SVG QR matrix representation */}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -159,14 +160,14 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
                   >
                     <rect width="33" height="33" fill="#ffffff" />
                     {/* Top-Left Finder */}
-                    <path fill="#0D1017" d="M2 2h7v7H2zM3 3v5h5V3H3zM4 4h3v3H4z" />
+                    <path fill="#11141D" d="M2 2h7v7H2zM3 3v5h5V3H3zM4 4h3v3H4z" />
                     {/* Top-Right Finder */}
-                    <path fill="#0D1017" d="M24 2h7v7h-7zM25 3v5h5V3h-5zM26 4h3v3h-3z" />
+                    <path fill="#11141D" d="M24 2h7v7h-7zM25 3v5h5V3h-5zM26 4h3v3h-3z" />
                     {/* Bottom-Left Finder */}
-                    <path fill="#0D1017" d="M2 24h7v7H2zM3 25v5h5v-5H3zM4 26h3v3H4z" />
+                    <path fill="#11141D" d="M2 24h7v7H2zM3 25v5h5v-5H3zM4 26h3v3H4z" />
                     {/* Data modules */}
                     <path
-                      stroke="#0D1017"
+                      stroke="#11141D"
                       strokeWidth="1"
                       d="M11 2h2m2 0h2m3 0h1M11 4h1m4 0h2m-5 2h3m2 0h1M11 8h4m2 0h1M2 11h2m3 0h1m2 0h3m2 0h2m2 0h3m2 0h2m2 0h1M3 13h1m3 0h2m2 0h1m3 0h2m3 0h1m3 0h2M2 15h3m2 0h2m2 0h3m2 0h1m2 0h2m3 0h2M4 17h2m2 0h3m2 0h1m2 0h3m2 0h2m2 0h1M2 19h1m3 0h2m2 0h2m3 0h1m2 0h3m2 0h2M11 24h2m2 0h2m2 0h1M11 26h1m3 0h2m-4 2h4m2 0h1M11 30h2m3 0h2m2 0h1"
                     />
@@ -174,17 +175,17 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
 
                   {/* WalletConnect Center Badge */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="h-10 w-10 rounded-xl bg-[#0D1017] border-2 border-white flex items-center justify-center shadow-lg">
+                    <div className="h-10 w-10 rounded-xl bg-white border-2 border-ink-200 flex items-center justify-center shadow-md">
                       <WalletConnectIcon className="w-6 h-6" />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-xs text-gray-300 font-medium">
+                  <p className="text-xs text-ink-700 font-medium">
                     Scan with OKX Mobile App, MetaMask, or any WalletConnect wallet
                   </p>
-                  <p className="text-[11px] text-gray-500">
+                  <p className="text-[11px] text-ink-400">
                     Target Network: OKX X Layer (Chain ID 196 / 0xc4)
                   </p>
                 </div>
@@ -194,7 +195,7 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
                   <button
                     type="button"
                     onClick={handleCopyUri}
-                    className="flex-1 py-2 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-mono text-gray-300 transition flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-surface-50 hover:bg-surface-100 border border-ink-200 text-xs font-mono text-ink-700 transition flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>{copied ? "URI Copied to Clipboard" : "Copy Connection URI"}</span>
                   </button>
@@ -202,7 +203,7 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
                     type="button"
                     onClick={handleDetectInAppProvider}
                     disabled={isConnecting}
-                    className="py-2 px-3 rounded-xl bg-[#3B99FC]/20 hover:bg-[#3B99FC]/30 border border-[#3B99FC]/40 text-[#3B99FC] text-xs font-semibold transition cursor-pointer"
+                    className="min-h-[44px] py-2 px-4 rounded-xl bg-[#3B99FC]/15 hover:bg-[#3B99FC]/25 border border-[#3B99FC]/30 text-[#257cd6] text-xs font-semibold transition cursor-pointer"
                   >
                     Detect
                   </button>
@@ -210,87 +211,87 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-ink-500">
                   Tap your wallet app to launch directly into Project Meirei on OKX X Layer:
                 </p>
 
                 {/* App 1: OKX Mobile App */}
                 <a
                   href={`okx://wallet/dapp/url?dappUrl=${encodeURIComponent(currentDappUrl)}`}
-                  className="w-full p-3.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition flex items-center justify-between group"
+                  className="w-full min-h-[44px] p-3.5 rounded-xl bg-surface-50 hover:bg-surface-100 border border-ink-200 transition flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-[#FF6B4E] text-white font-bold text-xs flex items-center justify-center shadow-md">
+                    <div className="h-9 w-9 rounded-lg bg-[#FF6B4E] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                       OKX
                     </div>
                     <div className="text-left">
-                      <div className="text-xs font-semibold text-white group-hover:text-[#FF6B4E] transition-colors flex items-center gap-1.5">
+                      <div className="text-xs font-semibold text-ink-900 group-hover:text-[#FF6B4E] transition-colors flex items-center gap-1.5">
                         <span>OKX Mobile App</span>
-                        <span className="text-[9px] bg-[#FF6B4E]/20 text-[#FF6B4E] font-bold px-1 py-0.2 rounded">
+                        <span className="text-[9px] bg-[#FF6B4E]/15 text-[#FF6B4E] font-bold px-1 py-0.2 rounded border border-[#FF6B4E]/20">
                           NATIVE
                         </span>
                       </div>
-                      <div className="text-[10px] text-gray-400">Direct X Layer Mainnet execution</div>
+                      <div className="text-[10px] text-ink-500">Direct X Layer Mainnet execution</div>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400 group-hover:text-white font-mono">Open →</span>
+                  <span className="text-xs text-ink-400 group-hover:text-ink-900 font-mono">Open →</span>
                 </a>
 
                 {/* App 2: MetaMask Mobile */}
                 <a
                   href={`https://metamask.app.link/dapp/${typeof window !== "undefined" ? window.location.host + window.location.pathname : "meirei-rho.vercel.app/app"}`}
-                  className="w-full p-3.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition flex items-center justify-between group"
+                  className="w-full min-h-[44px] p-3.5 rounded-xl bg-surface-50 hover:bg-surface-100 border border-ink-200 transition flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-[#F6851B] text-white font-bold text-xs flex items-center justify-center shadow-md">
+                    <div className="h-9 w-9 rounded-lg bg-[#F6851B] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                       MM
                     </div>
                     <div className="text-left">
-                      <div className="text-xs font-semibold text-white group-hover:text-[#F6851B] transition-colors">
+                      <div className="text-xs font-semibold text-ink-900 group-hover:text-[#F6851B] transition-colors">
                         MetaMask Mobile
                       </div>
-                      <div className="text-[10px] text-gray-400">Connect via MetaMask mobile app</div>
+                      <div className="text-[10px] text-ink-500">Connect via MetaMask mobile app</div>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400 group-hover:text-white font-mono">Open →</span>
+                  <span className="text-xs text-ink-400 group-hover:text-ink-900 font-mono">Open →</span>
                 </a>
 
                 {/* App 3: Trust Wallet */}
                 <a
                   href={`https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(currentDappUrl)}`}
-                  className="w-full p-3.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] transition flex items-center justify-between group"
+                  className="w-full min-h-[44px] p-3.5 rounded-xl bg-surface-50 hover:bg-surface-100 border border-ink-200 transition flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-[#3375BB] text-white font-bold text-xs flex items-center justify-center shadow-md">
+                    <div className="h-9 w-9 rounded-lg bg-[#3375BB] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                       TW
                     </div>
                     <div className="text-left">
-                      <div className="text-xs font-semibold text-white group-hover:text-[#3375BB] transition-colors">
+                      <div className="text-xs font-semibold text-ink-900 group-hover:text-[#3375BB] transition-colors">
                         Trust Wallet
                       </div>
-                      <div className="text-[10px] text-gray-400">Multi-chain mobile wallet</div>
+                      <div className="text-[10px] text-ink-500">Multi-chain mobile wallet</div>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-400 group-hover:text-white font-mono">Open →</span>
+                  <span className="text-xs text-ink-400 group-hover:text-ink-900 font-mono">Open →</span>
                 </a>
 
                 {/* App 4: Universal WalletConnect URI link */}
                 <a
                   href={pairingUri || "wc:"}
-                  className="w-full p-3.5 rounded-xl bg-[#3B99FC]/10 hover:bg-[#3B99FC]/20 border border-[#3B99FC]/30 transition flex items-center justify-between group"
+                  className="w-full min-h-[44px] p-3.5 rounded-xl bg-[#3B99FC]/10 hover:bg-[#3B99FC]/15 border border-[#3B99FC]/30 transition flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-[#3B99FC] text-white font-bold text-xs flex items-center justify-center shadow-md">
+                    <div className="h-9 w-9 rounded-lg bg-[#3B99FC] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                       <WalletConnectIcon className="w-5 h-5 text-white" />
                     </div>
                     <div className="text-left">
-                      <div className="text-xs font-semibold text-white group-hover:text-[#3B99FC] transition-colors">
+                      <div className="text-xs font-semibold text-ink-900 group-hover:text-[#3B99FC] transition-colors">
                         Universal WalletConnect Link
                       </div>
-                      <div className="text-[10px] text-gray-400">Opens default registered Web3 wallet</div>
+                      <div className="text-[10px] text-ink-500">Opens default registered Web3 wallet</div>
                     </div>
                   </div>
-                  <span className="text-xs text-[#3B99FC] font-mono">Launch →</span>
+                  <span className="text-xs text-[#257cd6] font-mono">Launch →</span>
                 </a>
 
                 {/* In-App Detection Trigger */}
@@ -298,7 +299,7 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
                   type="button"
                   onClick={handleDetectInAppProvider}
                   disabled={isConnecting}
-                  className="w-full py-2.5 px-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-gray-300 transition cursor-pointer"
+                  className="w-full min-h-[44px] py-2.5 px-3 rounded-xl bg-surface-50 hover:bg-surface-100 border border-ink-200 text-xs font-medium text-ink-700 transition cursor-pointer"
                 >
                   {isConnecting ? "Checking In-App Browser..." : "Already Inside a Wallet Browser? Tap Here to Connect"}
                 </button>
@@ -306,12 +307,12 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
             )}
 
             {/* Status indicator */}
-            <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-[11px]">
-              <div className="flex items-center gap-1.5 text-gray-400">
+            <div className="pt-2 border-t border-ink-100 flex items-center justify-between text-[11px]">
+              <div className="flex items-center gap-1.5 text-ink-500">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#3B99FC] animate-pulse" />
                 <span>{connectionStatus}</span>
               </div>
-              <span className="font-mono text-gray-500">Chain 196</span>
+              <span className="font-mono text-ink-400">Chain 196</span>
             </div>
           </div>
         </motion.div>

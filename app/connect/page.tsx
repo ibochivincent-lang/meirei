@@ -501,26 +501,26 @@ function ConnectWalletContent() {
   const ActiveLogo = activeConfig.logo;
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-white flex flex-col items-center justify-center p-4 selection:bg-[#FF6B4E]/30 selection:text-white relative">
+    <div className="min-h-screen bg-surface-50 text-ink-900 flex flex-col items-center justify-center p-4 selection:bg-accent-500/20 selection:text-ink-950 relative">
       <div className="w-full max-w-lg">
         {/* Brand Header */}
         <div className="flex items-center justify-between mb-8">
           <Link href="/" className="transition hover:opacity-90">
             <BrandMark />
           </Link>
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-[11px] text-gray-400 font-mono">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-ink-200 text-[11px] text-ink-700 font-mono shadow-xs">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             OKX X Layer (196)
           </div>
         </div>
 
         {/* Main Connect Card */}
-        <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-6 backdrop-blur-xl shadow-2xl">
+        <div className="rounded-2xl bg-white border border-ink-200 p-6 shadow-sm">
           <div className="mb-6">
-            <h1 className="text-xl font-bold tracking-tight text-white">
+            <h1 className="text-xl font-bold tracking-tight text-ink-950">
               Connect & Manage Wallet
             </h1>
-            <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">
+            <p className="text-sm text-ink-600 mt-1.5 leading-relaxed">
               Select your preferred social platform to interface with, then anchor your Web3
               wallet for autonomous execution on OKX X Layer.
             </p>
@@ -529,10 +529,10 @@ function ConnectWalletContent() {
           {/* Social Media Platform Selector */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2.5">
-              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-ink-700 uppercase tracking-wider">
                 Preferred Interface Platform
               </label>
-              <span className="text-[11px] text-gray-500 font-mono">Select to switch</span>
+              <span className="text-[11px] text-ink-400 font-mono">Select to switch</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -546,10 +546,10 @@ function ConnectWalletContent() {
                     key={platformId}
                     type="button"
                     onClick={() => handleSelectPlatform(platformId)}
-                    className={`p-3 rounded-xl border text-left transition flex flex-col justify-between gap-2.5 cursor-pointer relative group ${
+                    className={`p-3 min-h-[44px] rounded-xl border text-left transition flex flex-col justify-between gap-2.5 cursor-pointer relative group ${
                       isSelected
-                        ? `${conf.activeBg} ${conf.activeBorder} shadow-lg ${conf.activeGlow}`
-                        : "bg-white/[0.02] border-white/[0.08] hover:bg-white/[0.05] hover:border-white/[0.15]"
+                        ? `${conf.activeBg} ${conf.activeBorder} shadow-xs ring-1 ring-ink-300`
+                        : "bg-surface-50 border-ink-200 hover:bg-white hover:border-ink-300"
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
@@ -557,27 +557,27 @@ function ConnectWalletContent() {
                         className={`p-2 rounded-lg transition ${
                           isSelected
                             ? conf.activeBadge
-                            : "bg-white/[0.04] text-gray-400 group-hover:text-white"
+                            : "bg-surface-100 text-ink-600 group-hover:text-ink-900 border border-ink-200/60"
                         }`}
                       >
                         <LogoComponent className="w-4 h-4" />
                       </div>
                       {isSelected ? (
-                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                       ) : (
-                        <span className="h-2 w-2 rounded-full bg-white/10" />
+                        <span className="h-2 w-2 rounded-full bg-ink-200" />
                       )}
                     </div>
 
                     <div>
                       <div
                         className={`text-xs font-bold transition ${
-                          isSelected ? "text-white" : "text-gray-300 group-hover:text-white"
+                          isSelected ? "text-ink-950" : "text-ink-700 group-hover:text-ink-950"
                         }`}
                       >
                         {conf.name}
                       </div>
-                      <div className="text-[10px] text-gray-500 truncate mt-0.5">
+                      <div className="text-[10px] text-ink-500 truncate mt-0.5">
                         {conf.tagline}
                       </div>
                     </div>
@@ -589,30 +589,30 @@ function ConnectWalletContent() {
 
           {/* Account Identifier Input OR Direct Web Chat Routing */}
           {selectedChannel === "web" ? (
-            <div className="mb-6 p-5 rounded-2xl bg-gradient-to-b from-[#FF6B4E]/15 to-[#FF6B4E]/5 border border-[#FF6B4E]/30 space-y-3 shadow-lg shadow-[#FF6B4E]/5">
+            <div className="mb-6 p-5 rounded-2xl bg-accent-50/50 border border-accent-200 space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-[#FF6B4E]/20 text-[#FF6B4E]">
+                  <div className="p-2 rounded-lg bg-accent-100 text-accent-700 border border-accent-200">
                     <SimpleWebLogo className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">Meirei Conversational Chat</h3>
-                    <p className="text-[11px] text-gray-400 font-mono">Direct Browser Access · OKX X Layer</p>
+                    <h3 className="text-sm font-bold text-ink-950">Meirei Conversational Chat</h3>
+                    <p className="text-[11px] text-accent-700 font-mono">Direct Browser Access · OKX X Layer</p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold">
                   Active Web3 Session
                 </span>
               </div>
 
-              <p className="text-xs text-gray-300 leading-relaxed">
+              <p className="text-xs text-ink-700 leading-relaxed">
                 You are accessing Meirei directly on the website. Launch the conversational chat to query real-time stock prices, inspect your non-custodial smart wallet balance, or execute natural-language portfolio rebalancing mandates with 100% gas sponsorship.
               </p>
 
               <div className="pt-1">
                 <Link
                   href="/app#conversational-chat"
-                  className="w-full py-3 px-4 rounded-xl bg-[#FF6B4E] hover:bg-[#ff5733] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B4E]/25 transition-all cursor-pointer group"
+                  className="w-full min-h-[44px] py-3 px-4 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer group"
                 >
                   <span>Open Meirei Conversational Chat on Website</span>
                   <span className="transition-transform group-hover:translate-x-1">→</span>
@@ -620,13 +620,13 @@ function ConnectWalletContent() {
               </div>
             </div>
           ) : (
-            <div className="mb-6 p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-2.5">
+            <div className="mb-6 p-4 rounded-xl bg-surface-50 border border-ink-200 space-y-2.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-gray-300">
+                <label className="text-xs font-semibold text-ink-700">
                   {activeConfig.handleLabel}
                 </label>
-                <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-mono">
-                  <ActiveLogo className="w-3.5 h-3.5 text-gray-400" />
+                <div className="flex items-center gap-1.5 text-[10px] text-ink-500 font-mono">
+                  <ActiveLogo className="w-3.5 h-3.5 text-ink-600" />
                   <span>{activeConfig.name}</span>
                 </div>
               </div>
@@ -636,25 +636,25 @@ function ConnectWalletContent() {
                 value={channelHandle}
                 onChange={(e) => setChannelHandle(e.target.value)}
                 placeholder={activeConfig.handlePlaceholder}
-                className="w-full py-2.5 px-3 rounded-lg bg-black/60 border border-white/[0.1] text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-[#FF6B4E] transition"
+                className="w-full min-h-[44px] py-2.5 px-3 rounded-lg bg-white border border-ink-200 text-xs font-mono text-ink-900 placeholder-ink-400 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 transition shadow-xs"
               />
 
-              <p className="text-[11px] text-gray-500 leading-relaxed">
+              <p className="text-[11px] text-ink-500 leading-relaxed">
                 {activeConfig.helperText}
               </p>
             </div>
           )}
 
           {infoMessage && (
-            <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs text-emerald-300 leading-relaxed flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+            <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 leading-relaxed flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
               <span>{infoMessage}</span>
             </div>
           )}
 
           {errorMessage && (
-            <div className="mb-5 p-3.5 rounded-xl bg-red-500/10 border border-red-500/25 text-xs text-red-300 leading-relaxed flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" />
+            <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 leading-relaxed flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -662,39 +662,39 @@ function ConnectWalletContent() {
           {linkSuccess ? (
             <div className="space-y-4">
               {/* Linked Confirmation Banner */}
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300">
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900">
                 <div className="flex items-center gap-3 mb-2">
                   <div className={`p-2 rounded-lg ${activeConfig.activeBadge} border`}>
                     <ActiveLogo className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-white">
+                    <div className="text-sm font-bold text-ink-950">
                       Wallet Successfully Linked to {activeConfig.name}
                     </div>
-                    <div className="text-xs text-emerald-400/90 font-mono mt-0.5">
+                    <div className="text-xs text-emerald-700 font-mono mt-0.5">
                       {effectiveHandle}
                     </div>
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-300 leading-relaxed pt-1">
+                <div className="text-xs text-ink-700 leading-relaxed pt-1">
                   Your address{" "}
-                  <span className="font-mono font-bold text-white">
+                  <span className="font-mono font-bold text-ink-950">
                     {formatShortAddress(connectedAddress || "")}
                   </span>{" "}
                   ({activeWalletName || "Web3 Wallet"}) is now securely anchored to your{" "}
-                  <span className="text-white font-medium">{activeConfig.name}</span> account on OKX X Layer.
+                  <span className="text-ink-950 font-medium">{activeConfig.name}</span> account on OKX X Layer.
                 </div>
               </div>
 
               {/* Dynamic Next Steps */}
-              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-gray-300 space-y-2">
-                <div className="font-semibold text-white flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-surface-50 border border-ink-200 text-xs text-ink-700 space-y-2">
+                <div className="font-semibold text-ink-950 flex items-center justify-between">
                   <span>Next Steps for {activeConfig.name}:</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">Status: Ready</span>
+                  <span className="text-[10px] text-emerald-700 font-mono">Status: Ready</span>
                 </div>
                 {activeConfig.nextSteps.map((step, idx) => (
-                  <p key={idx} className="text-gray-400 leading-relaxed">
+                  <p key={idx} className="text-ink-600 leading-relaxed">
                     {step}
                   </p>
                 ))}
@@ -707,11 +707,11 @@ function ConnectWalletContent() {
                   target={selectedChannel === "web" ? "_self" : "_blank"}
                   rel="noopener noreferrer"
                   className={cn(
-                    "w-full py-3 px-4 rounded-xl text-white font-semibold text-sm text-center transition shadow-lg flex items-center justify-center gap-2",
-                    selectedChannel === "whatsapp" && "bg-[#25D366] hover:bg-[#20ba5a] shadow-[#25D366]/25",
-                    selectedChannel === "telegram" && "bg-[#229ED9] hover:bg-[#1c8ec4] shadow-[#229ED9]/25",
-                    selectedChannel === "instagram" && "bg-[#E1306C] hover:bg-[#c9255c] shadow-[#E1306C]/25",
-                    selectedChannel === "web" && "bg-[#FF6B4E] hover:bg-[#ff5533] shadow-[#FF6B4E]/25"
+                    "w-full min-h-[44px] py-3 px-4 rounded-xl text-white font-semibold text-sm text-center transition shadow-xs flex items-center justify-center gap-2",
+                    selectedChannel === "whatsapp" && "bg-emerald-600 hover:bg-emerald-700",
+                    selectedChannel === "telegram" && "bg-sky-600 hover:bg-sky-700",
+                    selectedChannel === "instagram" && "bg-pink-600 hover:bg-pink-700",
+                    selectedChannel === "web" && "bg-accent-600 hover:bg-accent-700"
                   )}
                 >
                   <ActiveLogo className="w-4 h-4 text-white" />
@@ -722,14 +722,14 @@ function ConnectWalletContent() {
                   <button
                     type="button"
                     onClick={handleDisconnectWallet}
-                    className="w-full py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium text-center transition border border-red-500/25 cursor-pointer"
+                    className="w-full min-h-[44px] py-2.5 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-medium text-center transition border border-red-200 cursor-pointer"
                   >
                     Disconnect & Unlink
                   </button>
 
                   <Link
                     href="/app"
-                    className="w-full py-2.5 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 font-medium text-xs text-center transition border border-white/[0.08]"
+                    className="w-full min-h-[44px] py-2.5 px-3 rounded-xl bg-surface-50 hover:bg-surface-100 text-ink-800 font-medium text-xs text-center transition border border-ink-200 flex items-center justify-center"
                   >
                     Open Web Terminal
                   </Link>
@@ -739,38 +739,38 @@ function ConnectWalletContent() {
           ) : (
             <div className="space-y-4">
               {/* Account State Overview Card */}
-              <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-3">
+              <div className="p-4 rounded-xl bg-surface-50 border border-ink-200 space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Target Channel:</span>
-                  <div className="flex items-center gap-1.5 font-semibold text-white">
+                  <span className="text-ink-600">Target Channel:</span>
+                  <div className="flex items-center gap-1.5 font-semibold text-ink-950">
                     <ActiveLogo className="w-3.5 h-3.5" />
                     <span>{activeConfig.name}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Account Handle:</span>
-                  <span className="font-mono text-gray-200">{effectiveHandle}</span>
+                  <span className="text-ink-600">Account Handle:</span>
+                  <span className="font-mono text-ink-800">{effectiveHandle}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Target Network:</span>
-                  <span className="font-mono text-emerald-400">OKX X Layer (Chain 196)</span>
+                  <span className="text-ink-600">Target Network:</span>
+                  <span className="font-mono text-emerald-700 font-semibold">OKX X Layer (Chain 196)</span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs border-t border-white/[0.06] pt-3">
-                  <span className="text-gray-400">Wallet Status:</span>
+                <div className="flex items-center justify-between text-xs border-t border-ink-200 pt-3">
+                  <span className="text-ink-600">Wallet Status:</span>
                   {connectedAddress ? (
                     <div className="flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                      <span className="font-mono text-xs text-emerald-400 font-medium">
+                      <span className="font-mono text-xs text-emerald-700 font-medium">
                         {activeWalletName || "Connected"} ({formatShortAddress(connectedAddress)})
                       </span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full bg-amber-500" />
-                      <span className="font-mono text-xs text-amber-400">Not Connected</span>
+                      <span className="font-mono text-xs text-amber-700 font-medium">Not Connected</span>
                     </div>
                   )}
                 </div>
@@ -783,7 +783,7 @@ function ConnectWalletContent() {
                     type="button"
                     onClick={() => setShowWalletModal(true)}
                     disabled={isLoading}
-                    className="w-full py-3.5 px-4 rounded-xl bg-[#FF6B4E] hover:bg-[#FF5B3E] disabled:opacity-50 text-white font-semibold text-sm transition shadow-lg shadow-[#FF6B4E]/25 cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full min-h-[44px] py-3.5 px-4 rounded-xl bg-ink-900 hover:bg-ink-800 disabled:opacity-50 text-white font-semibold text-sm transition shadow-xs cursor-pointer flex items-center justify-center gap-2"
                   >
                     <span>Connect Wallet</span>
                     <span className="text-xs opacity-80 font-normal">
@@ -795,7 +795,7 @@ function ConnectWalletContent() {
                     <button
                       type="button"
                       onClick={() => setShowWalletConnectModal(true)}
-                      className="py-2.5 px-3 rounded-xl bg-[#3B99FC]/10 hover:bg-[#3B99FC]/20 text-[#3B99FC] text-xs font-semibold text-center transition border border-[#3B99FC]/30 cursor-pointer flex items-center justify-center gap-1.5"
+                      className="min-h-[44px] py-2.5 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-semibold text-center transition border border-sky-200 cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <WalletConnectIcon className="w-3.5 h-3.5" />
                       <span>WalletConnect</span>
@@ -806,7 +806,7 @@ function ConnectWalletContent() {
                           ? window.location.href
                           : "https://meirei-rho.vercel.app/connect"
                       )}`}
-                      className="py-2.5 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-gray-300 text-xs font-medium text-center transition border border-white/[0.06] flex items-center justify-center gap-1.5"
+                      className="min-h-[44px] py-2.5 px-3 rounded-xl bg-surface-50 hover:bg-surface-100 text-ink-700 text-xs font-medium text-center transition border border-ink-200 flex items-center justify-center gap-1.5"
                     >
                       <span>Open in OKX App</span>
                     </a>
@@ -819,11 +819,11 @@ function ConnectWalletContent() {
                     onClick={handleLinkToChannel}
                     disabled={isLinking}
                     className={cn(
-                      "w-full py-3.5 px-4 rounded-xl disabled:opacity-50 text-white font-semibold text-sm transition shadow-lg cursor-pointer flex items-center justify-center gap-2",
-                      selectedChannel === "whatsapp" && "bg-[#25D366] hover:bg-[#20ba5a] shadow-[#25D366]/25",
-                      selectedChannel === "telegram" && "bg-[#229ED9] hover:bg-[#1c8ec4] shadow-[#229ED9]/25",
-                      selectedChannel === "instagram" && "bg-[#E1306C] hover:bg-[#c9255c] shadow-[#E1306C]/25",
-                      selectedChannel === "web" && "bg-[#FF6B4E] hover:bg-[#ff5533] shadow-[#FF6B4E]/25"
+                      "w-full min-h-[44px] py-3.5 px-4 rounded-xl disabled:opacity-50 text-white font-semibold text-sm transition shadow-xs cursor-pointer flex items-center justify-center gap-2",
+                      selectedChannel === "whatsapp" && "bg-emerald-600 hover:bg-emerald-700",
+                      selectedChannel === "telegram" && "bg-sky-600 hover:bg-sky-700",
+                      selectedChannel === "instagram" && "bg-pink-600 hover:bg-pink-700",
+                      selectedChannel === "web" && "bg-accent-600 hover:bg-accent-700"
                     )}
                   >
                     <ActiveLogo className="w-4 h-4 text-white" />
@@ -839,7 +839,7 @@ function ConnectWalletContent() {
                       type="button"
                       onClick={() => setShowWalletModal(true)}
                       disabled={isLoading}
-                      className="py-2.5 px-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] text-gray-300 text-xs font-medium text-center transition border border-white/[0.06] cursor-pointer"
+                      className="min-h-[44px] py-2.5 px-3 rounded-xl bg-surface-50 hover:bg-surface-100 text-ink-700 text-xs font-medium text-center transition border border-ink-200 cursor-pointer"
                     >
                       Switch Wallet
                     </button>
@@ -847,7 +847,7 @@ function ConnectWalletContent() {
                       type="button"
                       onClick={handleDisconnectWallet}
                       disabled={isLoading}
-                      className="py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-medium text-center transition border border-red-500/25 cursor-pointer"
+                      className="min-h-[44px] py-2.5 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-medium text-center transition border border-red-200 cursor-pointer"
                     >
                       Disconnect
                     </button>
@@ -858,8 +858,8 @@ function ConnectWalletContent() {
           )}
 
           {/* Footer Security Note */}
-          <div className="mt-6 pt-4 border-t border-white/[0.06] text-center">
-            <p className="text-[11px] text-gray-500 leading-relaxed">
+          <div className="mt-6 pt-4 border-t border-ink-200 text-center">
+            <p className="text-[11px] text-ink-500 leading-relaxed">
               100% Non-Custodial. Your private keys never leave your device. Every user
               channel has a separate, isolated database record on OKX X Layer Mainnet.
             </p>
@@ -868,17 +868,17 @@ function ConnectWalletContent() {
 
         {/* Multi-Wallet Selection Modal */}
         {showWalletModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="w-full max-w-sm rounded-2xl bg-[#0D1017] border border-white/[0.1] p-6 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-sm rounded-2xl bg-white border border-ink-200 p-6 shadow-2xl space-y-4 text-ink-900">
+              <div className="flex items-center justify-between border-b border-ink-200 pb-3">
                 <div>
-                  <h3 className="text-base font-bold text-white">Select Web3 Wallet</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">Choose your wallet on OKX X Layer</p>
+                  <h3 className="text-base font-bold text-ink-950">Select Web3 Wallet</h3>
+                  <p className="text-xs text-ink-500 mt-0.5">Choose your wallet on OKX X Layer</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowWalletModal(false)}
-                  className="h-8 w-8 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-gray-400 hover:text-white flex items-center justify-center transition cursor-pointer"
+                  className="h-8 w-8 min-h-[32px] rounded-full bg-surface-100 hover:bg-surface-200 text-ink-600 hover:text-ink-950 flex items-center justify-center transition cursor-pointer"
                 >
                   ✕
                 </button>
@@ -892,22 +892,22 @@ function ConnectWalletContent() {
                     type="button"
                     onClick={() => handleConnectWallet(wallet.id)}
                     disabled={isLoading}
-                    className={`w-full p-3.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
+                    className={`w-full min-h-[44px] p-3.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
                       wallet.id === "okx"
-                        ? "bg-[#FF6B4E]/10 border-[#FF6B4E]/30 hover:bg-[#FF6B4E]/20"
+                        ? "bg-accent-50/60 border-accent-300 hover:bg-accent-50"
                         : wallet.id === "walletconnect"
-                        ? "bg-[#3B99FC]/10 border-[#3B99FC]/30 hover:bg-[#3B99FC]/20"
-                        : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.06]"
+                        ? "bg-sky-50/60 border-sky-300 hover:bg-sky-50"
+                        : "bg-surface-50 border-ink-200 hover:bg-white"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className={`h-9 w-9 rounded-lg flex items-center justify-center font-bold text-xs ${
                           wallet.id === "okx"
-                            ? "bg-[#FF6B4E] text-white"
+                            ? "bg-accent-600 text-white"
                             : wallet.id === "walletconnect"
-                            ? "bg-[#3B99FC] text-white"
-                            : "bg-white/[0.08] text-gray-200"
+                            ? "bg-sky-600 text-white"
+                            : "bg-surface-200 text-ink-700"
                         }`}
                       >
                         {wallet.id === "walletconnect" ? (
@@ -918,28 +918,28 @@ function ConnectWalletContent() {
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-semibold text-white">{wallet.name}</span>
+                          <span className="text-sm font-semibold text-ink-950">{wallet.name}</span>
                           {wallet.id === "okx" && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-[#FF6B4E]/20 text-[#FF6B4E]">
+                            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-accent-100 text-accent-700 border border-accent-200">
                               RECOMMENDED
                             </span>
                           )}
                           {wallet.id === "walletconnect" && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-[#3B99FC]/20 text-[#3B99FC]">
+                            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-sky-100 text-sky-700 border border-sky-200">
                               UNIVERSAL
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-gray-400">{wallet.description}</div>
+                        <div className="text-[11px] text-ink-500">{wallet.description}</div>
                       </div>
                     </div>
                     <div>
                       {wallet.isInstalled ? (
-                        <span className="text-[11px] font-medium text-emerald-400 font-mono">
+                        <span className="text-[11px] font-medium text-emerald-700 font-mono">
                           Ready
                         </span>
                       ) : (
-                        <span className="text-[11px] font-medium text-gray-500 font-mono">
+                        <span className="text-[11px] font-medium text-ink-400 font-mono">
                           Select
                         </span>
                       )}
@@ -949,14 +949,14 @@ function ConnectWalletContent() {
               </div>
 
               {/* Mobile Deep Link */}
-              <div className="pt-2 border-t border-white/[0.06]">
+              <div className="pt-2 border-t border-ink-200">
                 <a
                   href={`okx://wallet/dapp/url?dappUrl=${encodeURIComponent(
                     typeof window !== "undefined"
                       ? window.location.href
                       : "https://meirei-rho.vercel.app/connect"
                   )}`}
-                  className="w-full block py-2.5 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-center text-xs font-medium text-gray-300 transition"
+                  className="w-full min-h-[44px] flex items-center justify-center py-2.5 px-3 rounded-xl bg-surface-50 hover:bg-surface-100 text-center text-xs font-medium text-ink-700 transition border border-ink-200"
                 >
                   Open in OKX Mobile App
                 </a>
@@ -977,7 +977,7 @@ function ConnectWalletContent() {
         />
 
         {/* Bottom Helper Footer */}
-        <div className="mt-6 text-center text-xs text-gray-500">
+        <div className="mt-6 text-center text-xs text-ink-500">
           Project Meirei | Author: IboTV | OKX X Layer Mainnet
         </div>
       </div>
@@ -989,8 +989,8 @@ export default function ConnectWalletPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#07090E] text-white flex items-center justify-center">
-          <div className="font-mono text-xs text-gray-400">Loading connection portal...</div>
+        <div className="min-h-screen bg-surface-50 text-ink-900 flex items-center justify-center">
+          <div className="font-mono text-xs text-ink-500">Loading connection portal...</div>
         </div>
       }
     >

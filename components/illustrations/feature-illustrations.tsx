@@ -43,7 +43,7 @@ export function SendIllustration() {
 export function BalanceIllustration() {
   const stockTokens = [
     { symbol: "NVDAx", color: "border-[#76B900]/40 text-[#76B900] bg-[#76B900]/10" },
-    { symbol: "AAPLx", color: "border-ink-900/30 dark:border-ink-200/40 text-ink-900 dark:text-ink-100 bg-ink-900/5 dark:bg-white/10" },
+    { symbol: "AAPLx", color: "border-ink-900/30 text-ink-900 bg-ink-900/5" },
     { symbol: "MSFTx", color: "border-[#00A4EF]/40 text-[#00A4EF] bg-[#00A4EF]/10" },
     { symbol: "METAx", color: "border-[#0668E1]/40 text-[#0668E1] bg-[#0668E1]/10" },
     { symbol: "TSLAx", color: "border-[#E82127]/40 text-[#E82127] bg-[#E82127]/10" },
@@ -56,23 +56,23 @@ export function BalanceIllustration() {
     <div className="relative mx-auto w-fit">
       <PhoneFrame>
         {/* Instagram DM Theme Screen */}
-        <div className="flex h-full flex-col bg-white dark:bg-black text-ink-900 dark:text-white">
+        <div className="flex h-full flex-col bg-white text-ink-900">
           {/* Instagram DM Header */}
-          <div className="flex items-center justify-between border-b border-ink-100 dark:border-ink-800 bg-white dark:bg-[#121212] px-3 py-3 pt-12">
+          <div className="flex items-center justify-between border-b border-ink-100 bg-white px-3 py-3 pt-12">
             <div className="flex items-center gap-2.5">
               <div className="grid h-8 w-8 place-items-center rounded-full p-[1.5px] bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF]">
-                <div className="flex h-full w-full items-center justify-center rounded-full bg-white dark:bg-[#121212] font-display text-xs font-bold text-accent-500">
+                <div className="flex h-full w-full items-center justify-center rounded-full bg-white font-display text-xs font-bold text-accent-500">
                   命令
                 </div>
               </div>
               <div>
                 <div className="flex items-center gap-1">
-                  <p className="text-xs font-bold leading-none text-ink-900 dark:text-white">meirei.agent</p>
+                  <p className="text-xs font-bold leading-none text-ink-900">meirei.agent</p>
                   <svg viewBox="0 0 24 24" className="h-3 w-3 fill-[#0095F6]">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                   </svg>
                 </div>
-                <p className="mt-0.5 text-[9px] text-ink-400 dark:text-ink-400">Active now · OKX X Layer</p>
+                <p className="mt-0.5 text-[9px] text-ink-400">Active now · OKX X Layer</p>
               </div>
             </div>
 
@@ -84,7 +84,7 @@ export function BalanceIllustration() {
           </div>
 
           {/* Instagram Message Area */}
-          <div className="flex flex-1 flex-col gap-3 bg-[#FAFAFA] dark:bg-black p-3 text-[13px]">
+          <div className="flex flex-1 flex-col gap-3 bg-[#FAFAFA] p-3 text-[13px]">
             {/* User message */}
             <div className="flex justify-end">
               <div className="max-w-[78%] rounded-2xl rounded-br-sm bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F56040] px-3.5 py-2 text-[12px] font-medium text-white shadow-xs">
@@ -94,16 +94,16 @@ export function BalanceIllustration() {
 
             {/* Meirei Agent Response */}
             <div className="flex flex-col items-start gap-1">
-              <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-white dark:bg-[#1f2c34] p-3 text-ink-900 dark:text-white shadow-xs border border-ink-100/80 dark:border-ink-700/60">
-                <p className="text-[10px] uppercase font-semibold tracking-wider text-ink-400 dark:text-ink-300">
+              <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-white p-3 text-ink-900 shadow-xs border border-ink-100/80">
+                <p className="text-[10px] uppercase font-semibold tracking-wider text-ink-400">
                   X Layer Portfolio Balance
                 </p>
-                <p className="mt-1 font-sans text-2xl font-bold tabular-nums text-ink-900 dark:text-white">
+                <p className="mt-1 font-sans text-2xl font-bold tabular-nums text-ink-900">
                   $12,450.00 USDG
                 </p>
 
                 {/* Animated Converging Stock Symbols Cluster with Transparent Background */}
-                <p className="mt-3 text-[10px] uppercase font-semibold tracking-wider text-ink-400 dark:text-ink-300">
+                <p className="mt-3 text-[10px] uppercase font-semibold tracking-wider text-ink-400">
                   Active xStocks Combined
                 </p>
                 <div className="mt-1.5 flex flex-wrap gap-1">
@@ -120,12 +120,12 @@ export function BalanceIllustration() {
                   ))}
                 </div>
 
-                <div className="mt-3 flex items-center justify-between border-t border-ink-100 dark:border-ink-700/60 pt-2 text-[10px] text-ink-400 dark:text-ink-300">
+                <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-2 text-[10px] text-ink-400">
                   <span>Chain: X Layer (196)</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">● 7 of 7 Live</span>
+                  <span className="font-semibold text-emerald-600">● 7 of 7 Live</span>
                 </div>
               </div>
-              <span className="ml-1 text-[9px] text-ink-400 dark:text-ink-400">Meirei Agent · Just now</span>
+              <span className="ml-1 text-[9px] text-ink-400">Meirei Agent · Just now</span>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ export function BalanceIllustration() {
  */
 export function ReceiveIllustration() {
   const metrics = [
-    { label: "AAPLx Sleeve", weight: "20.0%", value: "$2,490.00", drift: "-0.2%", color: "bg-ink-900 dark:bg-white" },
+    { label: "AAPLx Sleeve", weight: "20.0%", value: "$2,490.00", drift: "-0.2%", color: "bg-ink-900" },
     { label: "NVDAx Sleeve", weight: "20.0%", value: "$2,490.00", drift: "+0.4%", color: "bg-[#76B900]" },
     { label: "MSFTx Sleeve", weight: "20.0%", value: "$2,490.00", drift: "-0.1%", color: "bg-[#00A4EF]" },
     { label: "METAx Sleeve", weight: "20.0%", value: "$2,490.00", drift: "+0.1%", color: "bg-[#0668E1]" },
@@ -149,26 +149,26 @@ export function ReceiveIllustration() {
   return (
     <div className="relative mx-auto w-fit">
       <PhoneFrame>
-        <div className="flex h-full flex-col bg-surface-50 dark:bg-[#0a0a0c]">
+        <div className="flex h-full flex-col bg-surface-50">
           <ChatScreen>
             <StaticBubble side="out" time="09:21">
               rebalance 20% each into mag7 and usdg
             </StaticBubble>
 
             {/* Rich Stock Metrics Card */}
-            <div className="rounded-2xl border border-ink-200/80 dark:border-ink-700/60 bg-white dark:bg-[#1f2c34] p-3.5 shadow-sm">
-              <div className="flex items-center justify-between border-b border-ink-100 dark:border-ink-700/60 pb-2">
-                <span className="font-display text-xs font-bold text-ink-900 dark:text-white">
+            <div className="rounded-2xl border border-ink-200/80 bg-white p-3.5 shadow-sm">
+              <div className="flex items-center justify-between border-b border-ink-100 pb-2">
+                <span className="font-display text-xs font-bold text-ink-900">
                   Mandate Rebalance Metrics
                 </span>
-                <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-300">
+                <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700">
                   Optimal
                 </span>
               </div>
 
               {/* Allocation Progress Bar */}
-              <div className="mt-2.5 flex h-2 w-full overflow-hidden rounded-full bg-surface-200 dark:bg-ink-800">
-                <div className="w-[20%] bg-ink-900 dark:bg-white" />
+              <div className="mt-2.5 flex h-2 w-full overflow-hidden rounded-full bg-surface-200">
+                <div className="w-[20%] bg-ink-900" />
                 <div className="w-[20%] bg-[#76B900]" />
                 <div className="w-[20%] bg-[#00A4EF]" />
                 <div className="w-[20%] bg-[#0668E1]" />
@@ -181,20 +181,20 @@ export function ReceiveIllustration() {
                   <div key={m.label} className="flex items-center justify-between text-[11px]">
                     <div className="flex items-center gap-1.5">
                       <span className={`h-2 w-2 rounded-full ${m.color}`} />
-                      <span className="text-ink-700 dark:text-ink-200 font-medium">{m.label}</span>
+                      <span className="text-ink-700 font-medium">{m.label}</span>
                     </div>
                     <div className="flex items-center gap-2 font-mono">
-                      <span className="text-ink-900 dark:text-white font-semibold">{m.weight}</span>
-                      <span className="text-ink-400 dark:text-ink-400 text-[9px]">{m.drift}</span>
+                      <span className="text-ink-900 font-semibold">{m.weight}</span>
+                      <span className="text-ink-400 text-[9px]">{m.drift}</span>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* Execution telemetry */}
-              <div className="mt-3 border-t border-ink-100 dark:border-ink-700/60 pt-2 flex justify-between text-[10px] text-ink-500 dark:text-ink-300">
+              <div className="mt-3 border-t border-ink-100 pt-2 flex justify-between text-[10px] text-ink-500">
                 <span>Finality: ~3.8s</span>
-                <span className="text-accent-600 dark:text-accent-400 font-semibold">OKX DEX Aggregator</span>
+                <span className="text-accent-600 font-semibold">OKX DEX Aggregator</span>
               </div>
             </div>
 
@@ -223,9 +223,9 @@ export function ContextIllustration() {
   return (
     <div className="relative mx-auto w-fit">
       <PhoneFrame>
-        <div className="flex h-full flex-col bg-surface-50 dark:bg-[#0a0a0c] p-3 pt-12 overflow-y-auto">
+        <div className="flex h-full flex-col bg-surface-50 p-3 pt-12 overflow-y-auto">
           {/* Header */}
-          <div className="rounded-xl bg-ink-900 dark:bg-[#1f2c34] p-3 text-white">
+          <div className="rounded-xl bg-ink-900 p-3 text-white">
             <div className="flex items-center justify-between">
               <span className="font-display text-sm font-bold">Talk Naturally</span>
               <span className="rounded bg-accent-500/20 px-1.5 py-0.5 text-[9px] font-semibold text-accent-300">
@@ -236,20 +236,20 @@ export function ContextIllustration() {
           </div>
 
           {/* Number 1: Connect */}
-          <div className="mt-3 rounded-xl border border-ink-200/80 dark:border-ink-700/60 bg-white dark:bg-[#1f2c34] p-3 shadow-xs">
+          <div className="mt-3 rounded-xl border border-ink-200/80 bg-white p-3 shadow-xs">
             <div className="flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-[10px] font-bold text-white">
                 1
               </span>
-              <p className="font-display text-xs font-bold text-ink-900 dark:text-white">Connect in One Tap</p>
+              <p className="font-display text-xs font-bold text-ink-900">Connect in One Tap</p>
             </div>
-            <p className="mt-1 text-[11px] text-ink-500 dark:text-ink-300">
+            <p className="mt-1 text-[11px] text-ink-500">
               Start on WhatsApp, Telegram, or Instagram. Your account connects instantly with zero passkeys or seed phrases.
             </p>
           </div>
 
           {/* Number 2: Key Words you can ask Meirei */}
-          <div className="mt-3 rounded-xl border border-ink-200/80 dark:border-ink-700/60 bg-white dark:bg-[#1f2c34] p-3 shadow-xs">
+          <div className="mt-3 rounded-xl border border-ink-200/80 bg-white p-3 shadow-xs">
             <div className="flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-[10px] font-bold text-white">
                 2
@@ -259,9 +259,9 @@ export function ContextIllustration() {
 
             <div className="mt-2 space-y-1.5">
               {keywords.map((k) => (
-                <div key={k.cmd} className="rounded-lg bg-surface-50 dark:bg-[#141d24] p-1.5 text-left border border-ink-100 dark:border-ink-700/60">
-                  <p className="font-mono text-[10px] font-semibold text-accent-700 dark:text-accent-400">{k.cmd}</p>
-                  <p className="text-[9px] text-ink-500 dark:text-ink-300">{k.desc}</p>
+                <div key={k.cmd} className="rounded-lg bg-surface-50 p-1.5 text-left border border-ink-100">
+                  <p className="font-mono text-[10px] font-semibold text-accent-700">{k.cmd}</p>
+                  <p className="text-[9px] text-ink-500">{k.desc}</p>
                 </div>
               ))}
             </div>

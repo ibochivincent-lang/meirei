@@ -9,7 +9,7 @@ export default function LegalLayout({
   return (
     <>
       <Navbar />
-      <main className="bg-surface-50 dark:bg-[#0B0E14] pt-32 pb-24 min-h-screen text-ink-900 dark:text-zinc-100 transition-colors">
+      <main className="bg-surface-50 pt-32 pb-24 min-h-screen text-ink-900">
         <article className="mx-auto max-w-3xl px-6">{children}</article>
       </main>
       <Footer />

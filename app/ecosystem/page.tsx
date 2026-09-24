@@ -39,16 +39,16 @@ export default function EcosystemPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#F6F5EE] dark:bg-surface-50 text-ink-900 dark:text-ink-100">
-        <div className="border-b border-ink-200/60 dark:border-surface-200 pt-28 pb-14 px-6 sm:px-12 md:pt-36 md:pb-16">
+      <main className="min-h-screen bg-[#F6F5EE] text-ink-900">
+        <div className="border-b border-ink-200/60 pt-28 pb-14 px-6 sm:px-12 md:pt-36 md:pb-16">
           <div className="mx-auto max-w-[1400px]">
-            <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#C4820A] dark:text-amber-400">
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#C4820A]">
               X LAYER PROTOCOL INFRASTRUCTURE
             </span>
-            <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-ink-950 dark:text-ink-50 sm:text-5xl">
+            <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-ink-950 sm:text-5xl">
               Meirei Ecosystem
             </h1>
-            <p className="mt-3 max-w-2xl text-base text-ink-700 dark:text-ink-300 sm:text-lg">
+            <p className="mt-3 max-w-2xl text-base text-ink-700 sm:text-lg">
               Meirei operates natively within the OKX Onchain OS and X Layer infrastructure, bridging traditional equity exposure with decentralized finance liquidity.
             </p>
           </div>
@@ -59,26 +59,26 @@ export default function EcosystemPage() {
             {ECOSYSTEM_PARTNERS.map((partner) => (
               <div
                 key={partner.name}
-                className="rounded-2xl border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-xs sm:p-8 flex flex-col justify-between"
+                className="rounded-2xl border border-ink-200 bg-white p-6 shadow-xs sm:p-8 flex flex-col justify-between"
               >
                 <div>
-                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-accent-700 dark:text-accent-400">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-accent-700">
                     {partner.role}
                   </span>
-                  <h2 className="font-display text-2xl font-bold text-ink-950 dark:text-ink-50 mt-1">
+                  <h2 className="font-display text-2xl font-bold text-ink-950 mt-1">
                     {partner.name}
                   </h2>
-                  <p className="mt-3 text-sm leading-relaxed text-ink-700 dark:text-ink-300">
+                  <p className="mt-3 text-sm leading-relaxed text-ink-700">
                     {partner.description}
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-ink-100 dark:border-surface-200 flex items-center justify-between">
+                <div className="mt-6 pt-4 border-t border-ink-100 flex items-center justify-between">
                   <a
                     href={partner.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-ink-900 dark:text-ink-100 hover:text-accent-600 dark:hover:text-accent-400 transition-colors"
+                    className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-ink-900 hover:text-accent-600 transition-colors"
                   >
                     <span>View Network Resource</span>
                     <span>↗</span>
@@ -89,53 +89,53 @@ export default function EcosystemPage() {
           </div>
 
           {/* Allowlisted Asset Bridge Section */}
-          <div className="mt-12 rounded-2xl border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-100 p-6 sm:p-8 shadow-xs">
-            <h2 className="font-display text-2xl font-bold text-ink-950 dark:text-ink-50 mb-3">
+          <div className="mt-12 rounded-2xl border border-ink-200 bg-white p-6 sm:p-8 shadow-xs">
+            <h2 className="font-display text-2xl font-bold text-ink-950 mb-3">
               Allowlisted Tokenized Stocks (xStocks)
             </h2>
-            <p className="text-sm text-ink-700 dark:text-ink-300 leading-relaxed mb-6">
+            <p className="text-sm text-ink-700 leading-relaxed mb-6">
               All tokenized equities on X Layer maintain verifiable proof of reserve and trade 24/7 without centralized market halts:
             </p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 font-mono text-xs">
-              <div className="rounded-xl border border-ink-200 dark:border-surface-300 bg-surface-50 dark:bg-surface-200 p-3">
-                <span className="font-bold text-ink-900 dark:text-ink-50 block">NVDAx</span>
-                <span className="text-ink-600 dark:text-ink-400">NVIDIA Corp.</span>
+              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                <span className="font-bold text-ink-900 block">NVDAx</span>
+                <span className="text-ink-600">NVIDIA Corp.</span>
               </div>
-              <div className="rounded-xl border border-ink-200 dark:border-surface-300 bg-surface-50 dark:bg-surface-200 p-3">
-                <span className="font-bold text-ink-900 dark:text-ink-50 block">AAPLx</span>
-                <span className="text-ink-600 dark:text-ink-400">Apple Inc.</span>
+              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                <span className="font-bold text-ink-900 block">AAPLx</span>
+                <span className="text-ink-600">Apple Inc.</span>
               </div>
-              <div className="rounded-xl border border-ink-200 dark:border-surface-300 bg-surface-50 dark:bg-surface-200 p-3">
-                <span className="font-bold text-ink-900 dark:text-ink-50 block">MSFTx</span>
-                <span className="text-ink-600 dark:text-ink-400">Microsoft Corp.</span>
+              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                <span className="font-bold text-ink-900 block">MSFTx</span>
+                <span className="text-ink-600">Microsoft Corp.</span>
               </div>
-              <div className="rounded-xl border border-ink-200 dark:border-surface-300 bg-surface-50 dark:bg-surface-200 p-3">
-                <span className="font-bold text-ink-900 dark:text-ink-50 block">TSLAx</span>
-                <span className="text-ink-600 dark:text-ink-400">Tesla Inc.</span>
+              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                <span className="font-bold text-ink-900 block">TSLAx</span>
+                <span className="text-ink-600">Tesla Inc.</span>
               </div>
-              <div className="rounded-xl border border-ink-200 dark:border-surface-300 bg-surface-50 dark:bg-surface-200 p-3">
-                <span className="font-bold text-ink-900 dark:text-ink-50 block">GOOGLx</span>
-                <span className="text-ink-600 dark:text-ink-400">Alphabet Inc.</span>
+              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                <span className="font-bold text-ink-900 block">GOOGLx</span>
+                <span className="text-ink-600">Alphabet Inc.</span>
               </div>
-              <div className="rounded-xl border border-ink-200 dark:border-surface-300 bg-surface-50 dark:bg-surface-200 p-3">
-                <span className="font-bold text-ink-900 dark:text-ink-50 block">AMZNx</span>
-                <span className="text-ink-600 dark:text-ink-400">Amazon.com</span>
+              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                <span className="font-bold text-ink-900 block">AMZNx</span>
+                <span className="text-ink-600">Amazon.com</span>
               </div>
-              <div className="rounded-xl border border-ink-200 dark:border-surface-300 bg-surface-50 dark:bg-surface-200 p-3">
-                <span className="font-bold text-ink-900 dark:text-ink-50 block">METAx</span>
-                <span className="text-ink-600 dark:text-ink-400">Meta Platforms</span>
+              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                <span className="font-bold text-ink-900 block">METAx</span>
+                <span className="text-ink-600">Meta Platforms</span>
               </div>
-              <div className="rounded-xl border border-ink-200 dark:border-surface-300 bg-surface-50 dark:bg-surface-200 p-3">
-                <span className="font-bold text-ink-900 dark:text-ink-50 block">USDG</span>
-                <span className="text-ink-600 dark:text-ink-400">Global Dollar</span>
+              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                <span className="font-bold text-ink-900 block">USDG</span>
+                <span className="text-ink-600">Global Dollar</span>
               </div>
             </div>
 
             <div className="mt-6 flex items-center justify-between">
-              <span className="text-xs text-ink-500 dark:text-ink-400 font-mono">Chain ID: 196 · Finality: 3.2s</span>
+              <span className="text-xs text-ink-500 font-mono">Chain ID: 196 · Finality: 3.2s</span>
               <Link
                 href="/app"
-                className="inline-flex items-center gap-1.5 rounded-full bg-ink-900 dark:bg-white dark:text-ink-950 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-ink-800 dark:hover:bg-ink-100"
+                className="inline-flex items-center gap-1.5 rounded-full bg-ink-900 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-ink-800"
               >
                 <span>Trade on X Layer</span>
                 <span className="text-xs font-bold leading-none">↗</span>

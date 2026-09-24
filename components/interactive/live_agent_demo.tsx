@@ -120,7 +120,7 @@ export function LiveAgentDemo() {
             <ChatHeader variant="compact" subtitle="Online · X Layer" />
             <div
               ref={scrollAreaRef}
-              className="flex flex-1 flex-col gap-2.5 overflow-y-auto bg-cover bg-center p-3.5 bg-[url('/whatsapp-bg.png')] dark:bg-none dark:bg-[#0b141a]"
+              className="flex flex-1 flex-col gap-2.5 overflow-y-auto bg-cover bg-center p-3.5 bg-[url('/whatsapp-bg.png')]"
               style={{ maxHeight: "430px" }}
             >
               {turns.map((turn) => (
@@ -133,14 +133,14 @@ export function LiveAgentDemo() {
                       "max-w-[84%] rounded-2xl px-3.5 py-2 text-[12px] leading-snug shadow-sm",
                       turn.side === "out"
                         ? "rounded-br-md bg-accent-500 text-white"
-                        : "rounded-bl-md bg-white dark:bg-[#1f2c34] text-ink-900 dark:text-white",
+                        : "rounded-bl-md bg-white text-ink-900",
                     )}
                   >
                     <p className="whitespace-pre-line">{turn.text}</p>
                     <span
                       className={cn(
                         "mt-1 block text-right text-[9px]",
-                        turn.side === "out" ? "text-white/70" : "text-ink-400 dark:text-ink-400",
+                        turn.side === "out" ? "text-white/70" : "text-ink-400",
                       )}
                     >
                       {turn.time}
@@ -164,14 +164,14 @@ export function LiveAgentDemo() {
 
               {loading && (
                 <div className="flex justify-start">
-                  <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white dark:bg-[#1f2c34] px-3 py-2.5 shadow-sm">
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400 dark:bg-ink-300" />
+                  <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white px-3 py-2.5 shadow-sm">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400" />
                     <span
-                      className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400 dark:bg-ink-300"
+                      className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400"
                       style={{ animationDelay: "150ms" }}
                     />
                     <span
-                      className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400 dark:bg-ink-300"
+                      className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400"
                       style={{ animationDelay: "300ms" }}
                     />
                   </div>
@@ -184,23 +184,23 @@ export function LiveAgentDemo() {
 
       {/* Interactive Chat Control Box */}
       <div className="order-1 flex flex-col items-start lg:order-2 lg:col-span-6">
-        <div className="w-full rounded-2xl border border-ink-200/80 dark:border-surface-200 bg-white dark:bg-surface-100 p-5 shadow-sm md:p-6">
-          <div className="flex items-center justify-between border-b border-ink-100 dark:border-surface-200 pb-3">
+        <div className="w-full rounded-2xl border border-ink-200/80 bg-white p-5 shadow-sm md:p-6">
+          <div className="flex items-center justify-between border-b border-ink-100 pb-3">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
               </span>
-              <span className="font-display text-sm font-semibold tracking-tight text-ink-900 dark:text-ink-50">
+              <span className="font-display text-sm font-semibold tracking-tight text-ink-900">
                 Live Meirei Agent Console
               </span>
             </div>
-            <span className="rounded bg-accent-50 dark:bg-accent-950/60 px-2 py-0.5 font-mono text-[10px] font-medium text-accent-700 dark:text-accent-300">
+            <span className="rounded bg-accent-50 px-2 py-0.5 font-mono text-[10px] font-medium text-accent-700">
               X Layer Chain 196
             </span>
           </div>
 
-          <p className="mt-3 text-xs text-ink-500 dark:text-ink-400 md:text-sm">
+          <p className="mt-3 text-xs text-ink-500 md:text-sm">
             Type any question or investment mandate below. Your message replicates into the live phone simulation in real time:
           </p>
 
@@ -212,7 +212,7 @@ export function LiveAgentDemo() {
                 type="button"
                 onClick={() => sendMessage(sug)}
                 disabled={loading}
-                className="rounded-full border border-ink-200 dark:border-surface-200 bg-surface-50 dark:bg-surface-0 px-3 py-1 text-[11px] font-medium text-ink-700 dark:text-ink-200 transition-all hover:border-accent-500 hover:bg-accent-50 dark:hover:bg-surface-200 hover:text-accent-700 dark:hover:text-ink-50 disabled:opacity-50"
+                className="rounded-full border border-ink-200 bg-surface-50 px-3 py-1 text-[11px] font-medium text-ink-700 transition-all hover:border-accent-500 hover:bg-accent-50 hover:text-accent-700 disabled:opacity-50"
               >
                 {sug}
               </button>
@@ -233,7 +233,7 @@ export function LiveAgentDemo() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="e.g. How much is my balance? or Price of AAPLx"
               disabled={loading}
-              className="flex-1 rounded-xl border border-ink-200 dark:border-surface-200 bg-surface-50 dark:bg-surface-0 px-3.5 py-2.5 text-sm text-ink-900 dark:text-ink-50 outline-none transition-all focus:border-accent-500 focus:bg-white dark:focus:bg-surface-50 focus:ring-1 focus:ring-accent-500 disabled:opacity-50"
+              className="flex-1 rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2.5 text-sm text-ink-900 outline-none transition-all focus:border-accent-500 focus:bg-white focus:ring-1 focus:ring-accent-500 disabled:opacity-50"
             />
             <button
               type="submit"

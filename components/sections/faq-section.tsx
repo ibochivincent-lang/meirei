@@ -25,7 +25,7 @@ export function FaqSection() {
             as="h2"
             text="Questions, answered."
             accent="answered."
-            className="mt-5 justify-center font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-ink-900 dark:text-ink-50"
+            className="mt-5 justify-center font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-ink-900"
           />
         </div>
 
@@ -57,7 +57,7 @@ function FaqRow({
   onToggle: () => void;
 }) {
   return (
-    <div className="border-b border-ink-200/70 dark:border-surface-200">
+    <div className="border-b border-ink-200/70">
       <button
         type="button"
         data-cursor="grow"
@@ -66,15 +66,15 @@ function FaqRow({
         onClick={onToggle}
         className="flex w-full cursor-pointer items-center justify-between gap-6 py-6 text-left"
       >
-        <h3 className="font-sans text-xl font-medium tracking-tight text-ink-900 dark:text-ink-50 sm:text-2xl">
+        <h3 className="font-sans text-xl font-medium tracking-tight text-ink-900 sm:text-2xl">
           {faq.question}
         </h3>
         <span
           aria-hidden="true"
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-ink-700 dark:text-ink-200 transition-[transform,background-color,border-color,color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-ink-700 transition-[transform,background-color,border-color,color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             open
               ? "rotate-45 border-accent-500 bg-accent-500 text-white"
-              : "border-ink-200 dark:border-surface-200"
+              : "border-ink-200"
           }`}
         >
           <svg viewBox="0 0 16 16" className="h-4 w-4">
@@ -99,7 +99,7 @@ function FaqRow({
             transition={{ duration: 0.4, ease: EASE }}
             className="overflow-hidden"
           >
-            <p className="max-w-2xl pb-7 pr-12 text-base leading-relaxed text-ink-500 dark:text-ink-400 md:text-lg">
+            <p className="max-w-2xl pb-7 pr-12 text-base leading-relaxed text-ink-500 md:text-lg">
               {faq.answer}
             </p>
           </motion.div>

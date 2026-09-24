@@ -225,11 +225,11 @@ function TurnView({ turn, channel }: { turn: Turn; channel: Channel }) {
         transition={{ duration: 0.25 }}
         className={`flex ${turn.side === "out" ? "justify-end" : "justify-start"}`}
       >
-        <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white dark:bg-[#1f2c34] px-3 py-2.5 shadow-sm">
+        <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-white px-3 py-2.5 shadow-sm">
           {[0, 150, 300].map((delay) => (
             <span
               key={delay}
-              className="inline-block h-1.5 w-1.5 rounded-full bg-ink-400 dark:bg-ink-300"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-ink-400"
               style={{
                 animation: `typing-dots 1.2s infinite ${delay}ms ease-in-out`,
               }}

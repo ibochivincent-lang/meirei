@@ -132,7 +132,7 @@ export const PROVIDERS: Record<MessageProvider, Provider> = {
     // always stored, so it is the canonical one and everything else
     // normalizes towards it.
     normalizeId: (raw) => (raw.startsWith("whatsapp:") ? raw : `whatsapp:${raw}`),
-    returnUrl: () => waLink(process.env.TWILIO_WHATSAPP_FROM),
+    returnUrl: () => "/coming-soon",
     sendText: twilioText,
     sendImage: twilioImage,
     sendChoices: twilioChoices,
@@ -149,8 +149,7 @@ export const PROVIDERS: Record<MessageProvider, Provider> = {
       const bare = raw.replace(/^whatsapp:/, "").replace(/^\+/, "");
       return `whatsapp:+${bare}`;
     },
-    returnUrl: () =>
-      waLink(process.env.META_WHATSAPP_DISPLAY_NUMBER ?? SITE.whatsappNumber),
+    returnUrl: () => "/coming-soon",
     sendText: metaText,
     sendImage: metaImage,
     // Three is the Cloud API's hard cap on quick replies; more than that
@@ -210,7 +209,6 @@ export function providerFor(id: MessageProvider): Provider {
  * Null rather than a bare "https://wa.me/" fallback: that opens WhatsApp
  * with no conversation, which looks like a working button and is not one.
  */
-function waLink(raw: string | undefined): string | null {
-  const digits = (raw ?? "").replace(/\D/g, "");
-  return digits ? `https://wa.me/${digits}` : null;
+function waLink(_raw: string | undefined): string | null {
+  return "/coming-soon";
 }

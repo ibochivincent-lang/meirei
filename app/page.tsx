@@ -30,15 +30,15 @@ export default function HomePage() {
 
         <HowItWorksWrapper>
           {/* Sticky header — pins below the navbar while the feature cards stack underneath */}
-          <div id="how-it-works" className="relative z-10 bg-[#FFF5F2] dark:bg-surface-50 md:sticky md:top-[72px]">
+          <div id="how-it-works" className="relative z-10 bg-[#FFF5F2] md:sticky md:top-[72px]">
             <div className="mx-auto max-w-[1440px] px-3 pb-6 pt-5 md:px-[72px] md:pt-10">
               <MaskReveal
                 as="h2"
                 text="How it works"
-                className="max-w-[760px] font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-black dark:text-ink-50"
+                className="max-w-[760px] font-display text-[32px] md:text-[52px] lg:text-[60px] font-medium leading-[1.04] tracking-[-0.02em] text-black"
               />
               <Reveal delay={0.15}>
-                <p className="mt-4 max-w-[680px] text-base leading-relaxed text-ink-700 dark:text-ink-300 md:text-xl">
+                <p className="mt-4 max-w-[680px] text-base leading-relaxed text-ink-700 md:text-xl">
                   From mandate to portfolio in seconds. Buy, sell, and rebalance
                   xStocks directly from WhatsApp, Telegram, and Instagram using simple natural language.
                 </p>

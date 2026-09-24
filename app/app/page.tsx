@@ -3567,26 +3567,26 @@ export default function AppDashboardPage() {
       {/* Transparent Non-Custodial Multi-Channel Connect Portal */}
       <AnimatePresence>
         {showLoginModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xl p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl border border-white/[0.12] bg-[#07090E]/90 p-6 shadow-2xl backdrop-blur-2xl text-white relative selection:bg-[#FF6B4E]/30"
+              className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl border border-ink-200 bg-white p-6 shadow-2xl text-ink-900 relative selection:bg-accent-500/20"
             >
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3.5">
+              <div className="flex items-center justify-between border-b border-ink-200 pb-3.5">
                 <div>
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-400">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-700">
                     OKX X Layer (Chain 196)
                   </span>
-                  <h3 className="font-display text-lg font-bold text-white">
+                  <h3 className="font-display text-lg font-bold text-ink-950">
                     Connect &amp; Manage Wallet
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(false)}
-                  className="rounded-full p-1.5 text-gray-400 hover:bg-white/[0.08] hover:text-white cursor-pointer transition-colors"
+                  className="rounded-full p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-ink-400 hover:bg-surface-100 hover:text-ink-950 cursor-pointer transition-colors"
                 >
                   <svg viewBox="0 0 16 16" className="h-4 w-4 stroke-current stroke-2 fill-none">
                     <path d="M4 4l8 8M12 4l-8 8" />
@@ -3594,15 +3594,15 @@ export default function AppDashboardPage() {
                 </button>
               </div>
 
-              <div className="mt-4 space-y-4 text-xs text-gray-300">
-                <p className="text-gray-400 leading-relaxed text-[11px]">
+              <div className="mt-4 space-y-4 text-xs text-ink-700">
+                <p className="text-ink-600 leading-relaxed text-[11px]">
                   Select your preferred social platform to interface with, then anchor your Web3
                   wallet for autonomous execution on OKX X Layer.
                 </p>
 
                 {/* 4 Social Platforms */}
                 <div>
-                  <label className="font-bold text-white uppercase text-[10px] tracking-wider mb-2 block">
+                  <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider mb-2 block">
                     Preferred Interface Platform
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -3611,36 +3611,36 @@ export default function AppDashboardPage() {
                         id: "whatsapp" as Platform,
                         name: "WhatsApp",
                         icon: SimpleWhatsAppLogo,
-                        color: "text-[#25D366]",
-                        border: "border-[#25D366]",
-                        bg: "bg-[#25D366]/15",
+                        color: "text-emerald-700",
+                        border: "border-emerald-500",
+                        bg: "bg-emerald-50",
                         tagline: "Coming Soon",
                       },
                       {
                         id: "telegram" as Platform,
                         name: "Telegram",
                         icon: SimpleTelegramLogo,
-                        color: "text-[#229ED9]",
-                        border: "border-[#229ED9]",
-                        bg: "bg-[#229ED9]/15",
+                        color: "text-sky-700",
+                        border: "border-sky-500",
+                        bg: "bg-sky-50",
                         tagline: "Direct Bot (Live)",
                       },
                       {
                         id: "instagram" as Platform,
                         name: "Instagram",
                         icon: SimpleInstagramLogo,
-                        color: "text-[#E1306C]",
-                        border: "border-[#E1306C]",
-                        bg: "bg-[#E1306C]/15",
+                        color: "text-pink-700",
+                        border: "border-pink-500",
+                        bg: "bg-pink-50",
                         tagline: "Coming Soon",
                       },
                       {
                         id: "web" as Platform,
                         name: "Web Platform",
                         icon: SimpleWebLogo,
-                        color: "text-[#FF6B4E]",
-                        border: "border-[#FF6B4E]",
-                        bg: "bg-[#FF6B4E]/15",
+                        color: "text-accent-700",
+                        border: "border-accent-500",
+                        bg: "bg-accent-50",
                         tagline: "Browser Console",
                       },
                     ].map((p) => {
@@ -3663,15 +3663,15 @@ export default function AppDashboardPage() {
                             }
                           }}
                           className={cn(
-                            "rounded-xl border p-2.5 text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5",
+                            "rounded-xl border p-2.5 min-h-[44px] text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5",
                             isSelected
-                              ? `${p.border} ${p.bg} ${p.color} shadow-lg shadow-black/40`
-                              : "border-white/[0.08] bg-white/[0.02] text-gray-400 hover:bg-white/[0.05] hover:text-white"
+                              ? `${p.border} ${p.bg} ${p.color} shadow-xs ring-1 ring-ink-300`
+                              : "border-ink-200 bg-surface-50 text-ink-700 hover:bg-white hover:border-ink-300"
                           )}
                         >
                           <Icon className="w-4 h-4" />
                           <span className="text-[11px]">{p.name}</span>
-                          <span className="text-[9px] text-gray-500 font-normal">{p.tagline}</span>
+                          <span className="text-[9px] text-ink-500 font-normal">{p.tagline}</span>
                         </button>
                       );
                     })}
@@ -3679,23 +3679,23 @@ export default function AppDashboardPage() {
                 </div>
 
                 {connectChannel === "web" ? (
-                  <div className="rounded-2xl border border-[#FF6B4E]/30 bg-gradient-to-b from-[#FF6B4E]/15 to-[#FF6B4E]/5 p-5 space-y-3.5 shadow-lg shadow-[#FF6B4E]/5">
+                  <div className="rounded-2xl border border-accent-200 bg-accent-50/50 p-5 space-y-3.5 shadow-xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-[#FF6B4E]/20 text-[#FF6B4E]">
+                        <div className="p-2 rounded-xl bg-accent-100 text-accent-700 border border-accent-200">
                           <SimpleWebLogo className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="text-sm font-bold text-white">Meirei Conversational Chat</h4>
-                          <p className="text-[11px] text-gray-400 font-mono">Website Direct Access · Chain 196</p>
+                          <h4 className="text-sm font-bold text-ink-950">Meirei Conversational Chat</h4>
+                          <p className="text-[11px] text-accent-700 font-mono">Website Direct Access · Chain 196</p>
                         </div>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold">
                         Live Web3 Console
                       </span>
                     </div>
 
-                    <p className="text-xs text-gray-300 leading-relaxed">
+                    <p className="text-xs text-ink-700 leading-relaxed">
                       You are interacting directly on the website. Use the built-in Conversational Chat Console on this page to query real-time stock prices, inspect your smart wallet balance, or execute natural-language trades with 100% gas sponsorship.
                     </p>
 
@@ -3712,7 +3712,7 @@ export default function AppDashboardPage() {
                           setTimeout(() => chatInput.focus(), 350);
                         }
                       }}
-                      className="w-full py-3 px-4 rounded-xl bg-[#FF6B4E] hover:bg-[#ff5533] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#FF6B4E]/25 transition-all cursor-pointer group"
+                      className="w-full min-h-[44px] py-3 px-4 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer group"
                     >
                       <span>Open Meirei Conversational Chat</span>
                       <span className="transition-transform group-hover:translate-x-1">→</span>
@@ -3723,12 +3723,12 @@ export default function AppDashboardPage() {
                     {/* Handle Input */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="font-bold text-white uppercase text-[10px] tracking-wider">
+                        <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider">
                           {connectChannel === "whatsapp" && "WhatsApp Phone Number"}
                           {connectChannel === "telegram" && "Telegram Handle or ID"}
                           {connectChannel === "instagram" && "Instagram Username"}
                         </label>
-                        <span className="font-mono text-[10px] text-gray-400">
+                        <span className="font-mono text-[10px] text-ink-500">
                           {connectChannel === "telegram" ? "@MeireiXLayerBot" : "Channel Identity"}
                         </span>
                       </div>
@@ -3743,34 +3743,34 @@ export default function AppDashboardPage() {
                             ? "@MeireiXLayerBot or username"
                             : "@your_instagram"
                         }
-                        className="w-full rounded-xl border border-white/[0.1] bg-black/60 p-3 text-xs font-mono text-white placeholder-gray-600 outline-none focus:border-[#FF6B4E] transition-colors"
+                        className="w-full min-h-[44px] rounded-xl border border-ink-200 bg-surface-50 p-3 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-accent-500 focus:bg-white transition-colors"
                       />
                     </div>
 
                     {/* Wallet Status Box */}
-                    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3.5 space-y-2">
+                    <div className="rounded-xl border border-ink-200 bg-surface-50 p-3.5 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-400 text-[11px]">OKX X Layer Wallet:</span>
+                        <span className="text-ink-600 text-[11px]">OKX X Layer Wallet:</span>
                         {connectAddress ? (
-                          <div className="flex items-center gap-1.5 font-mono text-emerald-400 font-semibold text-[11px]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                          <div className="flex items-center gap-1.5 font-mono text-emerald-700 font-semibold text-[11px]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                             <span>{formatShortAddress(connectAddress)}</span>
-                            <span className="text-gray-500 font-normal">({connectWalletName || "Connected"})</span>
+                            <span className="text-ink-500 font-normal">({connectWalletName || "Connected"})</span>
                           </div>
                         ) : (
-                          <span className="font-mono text-amber-400 text-[11px]">Not Connected</span>
+                          <span className="font-mono text-amber-700 text-[11px]">Not Connected</span>
                         )}
                       </div>
                       <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-gray-400">Network:</span>
-                        <span className="font-mono text-emerald-400">OKX X Layer (196)</span>
+                        <span className="text-ink-600">Network:</span>
+                        <span className="font-mono text-emerald-700 font-medium">OKX X Layer (196)</span>
                       </div>
                     </div>
 
                     {/* Wallet Selection Buttons */}
                     {!connectAddress ? (
                       <div className="space-y-2">
-                        <label className="font-bold text-white uppercase text-[10px] tracking-wider block">
+                        <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider block">
                           Connect Web3 Wallet
                         </label>
                         <div className="grid grid-cols-2 gap-2">
@@ -3778,16 +3778,16 @@ export default function AppDashboardPage() {
                             type="button"
                             onClick={() => handleConnectWalletType("okx")}
                             disabled={isWalletConnecting}
-                            className="p-2.5 rounded-xl border border-[#FF6B4E]/30 bg-[#FF6B4E]/10 hover:bg-[#FF6B4E]/20 text-white font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                            className="p-2.5 min-h-[44px] rounded-xl border border-accent-200 bg-accent-50/70 hover:bg-accent-100 text-ink-950 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
                           >
                             <span>OKX Wallet</span>
-                            <span className="text-[9px] bg-[#FF6B4E]/30 text-[#FF6B4E] font-bold px-1 py-0.2 rounded">TOP</span>
+                            <span className="text-[9px] bg-accent-200 text-accent-800 font-bold px-1.5 py-0.5 rounded">TOP</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleConnectWalletType("metamask")}
                             disabled={isWalletConnecting}
-                            className="p-2.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-gray-200 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                            className="p-2.5 min-h-[44px] rounded-xl border border-ink-200 bg-white hover:bg-surface-50 text-ink-900 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
                           >
                             MetaMask
                           </button>
@@ -3797,16 +3797,16 @@ export default function AppDashboardPage() {
                           <button
                             type="button"
                             onClick={() => setShowWalletConnectModal(true)}
-                            className="p-2.5 rounded-xl border border-[#3B99FC]/30 bg-[#3B99FC]/10 hover:bg-[#3B99FC]/20 text-white font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                            className="p-2.5 min-h-[44px] rounded-xl border border-sky-200 bg-sky-50/70 hover:bg-sky-100 text-sky-800 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
                           >
-                            <WalletConnectIcon className="w-4 h-4 text-[#3B99FC]" />
+                            <WalletConnectIcon className="w-4 h-4 text-sky-600" />
                             <span>WalletConnect</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleConnectWalletType("injected")}
                             disabled={isWalletConnecting}
-                            className="p-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] text-gray-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                            className="p-2.5 min-h-[44px] rounded-xl border border-ink-200 bg-surface-50 hover:bg-white text-ink-800 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
                           >
                             Browser Injected
                           </button>
@@ -3820,10 +3820,10 @@ export default function AppDashboardPage() {
                             onClick={handleConfirmChannelLink}
                             disabled={isChannelLinking}
                             className={cn(
-                              "flex-1 py-3 px-4 rounded-xl disabled:opacity-50 text-white font-bold text-xs shadow-lg cursor-pointer transition-all flex items-center justify-center gap-2",
-                              connectChannel === "whatsapp" && "bg-[#25D366] hover:bg-[#20ba5a] shadow-[#25D366]/25",
-                              connectChannel === "telegram" && "bg-[#229ED9] hover:bg-[#1c8ec4] shadow-[#229ED9]/25",
-                              connectChannel === "instagram" && "bg-[#E1306C] hover:bg-[#c9255c] shadow-[#E1306C]/25"
+                              "flex-1 min-h-[44px] py-3 px-4 rounded-xl disabled:opacity-50 text-white font-bold text-xs shadow-xs cursor-pointer transition-all flex items-center justify-center gap-2",
+                              connectChannel === "whatsapp" && "bg-emerald-600 hover:bg-emerald-700",
+                              connectChannel === "telegram" && "bg-sky-600 hover:bg-sky-700",
+                              connectChannel === "instagram" && "bg-pink-600 hover:bg-pink-700"
                             )}
                           >
                             {connectChannel === "whatsapp" && <SimpleWhatsAppLogo className="w-4 h-4 text-white" />}
@@ -3835,7 +3835,7 @@ export default function AppDashboardPage() {
                             type="button"
                             onClick={handleDisconnectChannelWallet}
                             disabled={isWalletConnecting}
-                            className="py-3 px-3 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-semibold cursor-pointer transition-colors"
+                            className="py-3 px-3 min-h-[44px] rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold cursor-pointer transition-colors"
                           >
                             Disconnect
                           </button>
@@ -3850,10 +3850,10 @@ export default function AppDashboardPage() {
                             }
                             {...(connectChannel === "telegram" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                             className={cn(
-                              "w-full py-2.5 px-4 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer",
-                              connectChannel === "whatsapp" && "bg-amber-600 hover:bg-amber-700 shadow-amber-600/25",
-                              connectChannel === "telegram" && "bg-[#229ED9] hover:bg-[#1c8ec4] shadow-[#229ED9]/25",
-                              connectChannel === "instagram" && "bg-amber-600 hover:bg-amber-700 shadow-amber-600/25"
+                              "w-full min-h-[44px] py-2.5 px-4 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer",
+                              connectChannel === "whatsapp" && "bg-amber-600 hover:bg-amber-700",
+                              connectChannel === "telegram" && "bg-sky-600 hover:bg-sky-700",
+                              connectChannel === "instagram" && "bg-amber-600 hover:bg-amber-700"
                             )}
                           >
                             <span>
@@ -3869,12 +3869,12 @@ export default function AppDashboardPage() {
 
                     {/* Feedback messages */}
                     {connectInfoMsg && (
-                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs">
+                      <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
                         {connectInfoMsg}
                       </div>
                     )}
                     {connectErrorMsg && (
-                      <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs">
+                      <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs">
                         {connectErrorMsg}
                       </div>
                     )}
@@ -3882,12 +3882,12 @@ export default function AppDashboardPage() {
                 )}
 
                 {/* External links */}
-                <div className="border-t border-white/[0.08] pt-3 flex items-center justify-between text-[11px] text-gray-400">
+                <div className="border-t border-ink-200 pt-3 flex items-center justify-between text-[11px] text-ink-500">
                   <a
                     href="https://t.me/MeireiXLayerBot"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-sky-400 flex items-center gap-1.5 transition-colors"
+                    className="hover:text-sky-600 flex items-center gap-1.5 transition-colors"
                   >
                     <SimpleTelegramLogo className="w-3.5 h-3.5" />
                     <span>Telegram Bot (@MeireiXLayerBot)</span>
@@ -3895,7 +3895,7 @@ export default function AppDashboardPage() {
                   <button
                     type="button"
                     onClick={() => setShowLoginModal(false)}
-                    className="text-gray-400 hover:text-white transition-colors cursor-pointer text-[11px]"
+                    className="min-h-[44px] px-3 py-2 text-ink-600 hover:text-ink-950 transition-colors cursor-pointer text-[11px] flex items-center justify-center"
                   >
                     Done &amp; Close
                   </button>
