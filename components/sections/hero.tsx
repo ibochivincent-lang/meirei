@@ -13,7 +13,6 @@ import { SITE } from "@/lib/data/site";
 import lightIcon from "@/public/icons/lightening.svg";
 import coinIcon from "@/public/icons/coin.svg";
 import lockIcon from "@/public/icons/lock.svg";
-import whatsappIcon from "@/public/icons/whatsapp.svg";
 import telegramIcon from "@/public/icons/telegram.svg";
 
 export function Hero() {
@@ -31,7 +30,7 @@ export function Hero() {
   return (
     <section
       ref={ref}
-      className="relative lg:h-screen overflow-hidden pt-8 sm:pt-14 lg:pt-[14px] px-[10px] sm:px-[72px]"
+      className="relative min-h-[calc(100vh-72px)] overflow-visible pt-6 sm:pt-10 lg:pt-8 pb-14 px-4 sm:px-8 lg:px-[72px]"
     >
       {/* Drifting accent aurora — parallaxed, sits behind everything */}
       <motion.div
@@ -53,7 +52,7 @@ export function Hero() {
       {/* Faint grain over the gradient so it reads as textured, not flat */}
       <div aria-hidden className="bg-grain pointer-events-none absolute inset-0 -z-10" />
 
-      <div className="mx-auto grid h-full max-w-[1400px] items-center gap-8 px-6 lg:grid-cols-12 lg:gap-12">
+      <div className="mx-auto grid h-full max-w-[1400px] items-center gap-8 lg:grid-cols-12 lg:gap-12">
         {/* Copy column */}
         <motion.div
           style={{ y: headlineY }}
@@ -63,13 +62,13 @@ export function Hero() {
         >
           <motion.div
             variants={fadeUp(0)}
-            className="mb-5 inline-flex items-center gap-2 rounded-full border border-ink-200 bg-white px-3.5 py-1.5 text-xs font-medium text-ink-700 shadow-xs md:text-sm"
-           >
-            <span className="relative flex h-1.5 w-1.5">
+            className="mb-4 inline-flex items-center gap-2 rounded-full border border-ink-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink-800 shadow-xs md:text-sm"
+          >
+            <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-            Live on Web &amp; Telegram · WhatsApp &amp; Instagram Coming Soon · OKX X Layer
+            Live on Web &amp; Telegram · OKX X Layer (Chain 196)
           </motion.div>
 
           <MaskReveal
@@ -78,40 +77,32 @@ export function Hero() {
             delay={0.12}
             text="AI Native Investment Mandate Agent"
             accent="Agent"
-            className="text-[34px] sm:text-[52px] lg:text-[64px] xl:text-[76px] font-semibold md:font-medium font-display leading-[1.02] tracking-[-0.02em] text-ink-900 lg:max-w-[640px]"
+            className="text-[34px] sm:text-[50px] lg:text-[60px] xl:text-[72px] font-semibold md:font-medium font-display leading-[1.03] tracking-[-0.02em] text-ink-900 lg:max-w-[640px]"
           />
 
           <motion.p
             variants={fadeUp(0.55)}
-            className="mt-7 max-w-xl text-base md:text-xl leading-relaxed text-ink-700"
+            className="mt-6 max-w-xl text-base md:text-lg lg:text-xl leading-relaxed text-ink-700"
           >
-            Financial inclusion for everyone — old and young alike. We bring Wall Street equities directly to social media where billions already spend their time. Give an investment mandate from anywhere, receive automated weekly progress updates, and stay 100% in control on OKX X Layer.
+            Financial inclusion for everyone — old and young alike. We bring Wall Street equities directly to social channels where billions already spend their time. Give an investment mandate from anywhere, receive automated weekly progress updates, and stay 100% in control on OKX X Layer.
           </motion.p>
 
           <motion.div
             variants={fadeUp(0.68)}
-            className="mt-8 md:mt-11 flex flex-wrap items-center gap-3 sm:gap-4 md:gap-5"
+            className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4"
           >
             <MagneticCta
               href="/app"
-              className="group relative isolate overflow-hidden flex items-center justify-center min-h-[44px] gap-2 text-base md:text-lg px-6 md:!px-8 py-3 md:!py-4 shadow-accent transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_44px_-8px_rgb(255_91_62/0.6)]"
+              className="group relative isolate overflow-hidden flex items-center justify-center min-h-[46px] gap-2 text-base px-6 md:!px-8 py-3 shadow-accent transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_44px_-8px_rgb(255_91_62/0.6)]"
             >
               <span
                 aria-hidden
                 className="pointer-events-none absolute inset-0 -z-10 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
               />
-              <span className="text-white font-medium">Try the app</span>
+              <span className="text-white font-semibold">Launch Web Terminal</span>
               <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 fill-none stroke-current stroke-2">
                 <path d="M2 6h8m0 0L6 2m4 4L6 10" />
               </svg>
-            </MagneticCta>
-
-            <MagneticCta
-              href="/coming-soon"
-              className="group relative isolate overflow-hidden flex items-center justify-center min-h-[44px] gap-2 text-sm md:text-base px-4 md:!px-5 py-2.5 md:!py-3.5 !bg-ink-100 text-ink-700 transition-transform duration-300 hover:-translate-y-0.5 border border-ink-200"
-            >
-              <Image src={whatsappIcon} alt="" width={18} height={18} className="opacity-70" />
-              <span className="font-medium text-xs sm:text-sm">WhatsApp (Coming Soon)</span>
             </MagneticCta>
 
             {SITE.telegramLink && (
@@ -119,33 +110,21 @@ export function Hero() {
                 href={SITE.telegramLink}
                 target="_blank"
                 rel="noopener"
-                className="group relative isolate overflow-hidden flex items-center justify-center min-h-[44px] gap-2 !bg-ink-900 text-sm md:text-base px-5 md:!px-6 py-2.5 md:!py-3.5 transition-transform duration-300 hover:-translate-y-0.5"
+                className="group relative isolate overflow-hidden flex items-center justify-center min-h-[46px] gap-2 !bg-ink-900 text-base px-6 py-3 transition-transform duration-300 hover:-translate-y-0.5"
               >
                 <span
                   aria-hidden
                   className="pointer-events-none absolute inset-0 -z-10 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
                 />
                 <Image src={telegramIcon} alt="" width={18} height={18} />
-                <span className="text-white font-medium">Telegram</span>
+                <span className="text-white font-semibold">Telegram Agent</span>
               </MagneticCta>
             )}
 
-            <MagneticCta
-              href="/coming-soon"
-              className="group relative isolate overflow-hidden flex items-center justify-center min-h-[44px] gap-2 text-sm md:text-base px-4 md:!px-5 py-2.5 md:!py-3.5 !bg-ink-100 text-ink-700 transition-transform duration-300 hover:-translate-y-0.5 border border-ink-200"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-70">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-              <span className="font-medium text-xs sm:text-sm">Instagram (Coming Soon)</span>
-            </MagneticCta>
-
             <a
-              href="#features"
+              href="#how-it-works"
               data-cursor="grow"
-              className="group inline-flex items-center min-h-[44px] gap-2 text-sm md:text-base font-medium text-ink-900 underline-offset-4 transition-colors hover:underline"
+              className="group inline-flex items-center min-h-[46px] gap-2 text-sm md:text-base font-semibold text-ink-900 underline-offset-4 transition-colors hover:underline px-2"
             >
               See how it works
               <span
@@ -166,25 +145,24 @@ export function Hero() {
             </a>
           </motion.div>
 
-          {SITE.telegramLink && (
-            <motion.p
-              variants={fadeUp(0.75)}
-              className="mt-4 text-xs sm:text-sm text-ink-500"
-            >
-              Stay updated simply with your email or wallet address — no complex wallet extensions needed.
-            </motion.p>
-          )}
+          <motion.div
+            variants={fadeUp(0.75)}
+            className="mt-5 flex items-center gap-2 text-sm sm:text-base font-medium text-ink-800"
+          >
+            <span className="h-2 w-2 rounded-full bg-accent-500 shrink-0" />
+            <span>Stay updated simply with your email or wallet address — no complex wallet extensions needed.</span>
+          </motion.div>
 
-          {/* Trust strip — staggered, desktop */}
+          {/* Trust strip — visible & prominent on all devices */}
           <motion.div
             variants={stagger(0.08, 0.85)}
-            className="mt-12 hidden lg:flex flex-wrap items-center gap-x-4 gap-y-3 text-[15px] md:text-base text-ink-700"
+            className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2.5 text-sm sm:text-base font-semibold text-ink-800"
           >
-            <TrustItem icon={lockIcon} height={16} ratio={18 / 21} label="OKX AI Powered" />
+            <TrustItem icon={lockIcon} height={18} ratio={18 / 21} label="OKX AI Powered" />
             <span aria-hidden="true" className="inline-block h-3.5 w-px shrink-0 self-center bg-ink-300" />
-            <TrustItem icon={coinIcon} height={16} ratio={1} label="xStocks & USDG native" />
+            <TrustItem icon={coinIcon} height={18} ratio={1} label="xStocks & USDG native" />
             <span aria-hidden="true" className="inline-block h-3.5 w-px shrink-0 self-center bg-ink-300" />
-            <TrustItem icon={lightIcon} height={14} ratio={17 / 23} label="Sub second finality" />
+            <TrustItem icon={lightIcon} height={16} ratio={17 / 23} label="Sub second finality" />
           </motion.div>
         </motion.div>
 
@@ -197,20 +175,6 @@ export function Hero() {
           className="relative lg:col-span-5"
         >
           <HeroPhone />
-        </motion.div>
-
-        {/* Trust strip — mobile */}
-        <motion.div
-          variants={stagger(0.08, 0.2)}
-          initial="hidden"
-          animate="visible"
-          className="lg:hidden flex flex-wrap justify-center items-center text-center gap-x-3 gap-y-2 text-xs sm:text-sm text-ink-700 pt-6"
-        >
-          <TrustItem icon={lockIcon} height={16} ratio={18 / 21} label="OKX AI Powered" />
-          <span aria-hidden="true" className="inline-block h-3.5 w-px shrink-0 self-center bg-ink-300" />
-          <TrustItem icon={coinIcon} height={16} ratio={1} label="xStocks & USDG native" />
-          <span aria-hidden="true" className="inline-block h-3.5 w-px shrink-0 self-center bg-ink-300" />
-          <TrustItem icon={lightIcon} height={14} ratio={17 / 23} label="Sub second finality" />
         </motion.div>
       </div>
 

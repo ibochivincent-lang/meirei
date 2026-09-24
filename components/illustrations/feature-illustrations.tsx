@@ -244,7 +244,7 @@ export function ContextIllustration() {
               <p className="font-display text-xs font-bold text-ink-900">Connect in One Tap</p>
             </div>
             <p className="mt-1 text-[11px] text-ink-500">
-              Start on WhatsApp, Telegram, or Instagram. Your account connects instantly with zero passkeys or seed phrases.
+              Start on Telegram or the Web Terminal. Connect your wallet instantly with non-custodial signing on OKX X Layer.
             </p>
           </div>
 

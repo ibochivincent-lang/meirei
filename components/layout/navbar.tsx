@@ -63,14 +63,6 @@ export function Navbar() {
                 </a>
               </li>
             ))}
-            <li>
-              <Link
-                href="/cookies"
-                className="group relative transition-colors hover:text-ink-900"
-              >
-                Cookies
-              </Link>
-            </li>
           </ul>
         </nav>
 
@@ -141,15 +133,6 @@ export function Navbar() {
                     </a>
                   </li>
                 ))}
-                <li>
-                  <Link
-                    href="/cookies"
-                    onClick={() => setOpen(false)}
-                    className="block rounded-md py-3 min-h-[44px] flex items-center transition-colors hover:text-ink-900"
-                  >
-                    Cookies &amp; Privacy
-                  </Link>
-                </li>
                 <li className="pt-3">
                   <MagneticCta
                     href="/app"

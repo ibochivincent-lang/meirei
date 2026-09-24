@@ -43,9 +43,10 @@ export const SITE = {
 export const HAS_PLACEHOLDER_CONTACT = false;
 
 export const NAV_LINKS = [
-  { label: "How it works", href: "/#how-it-works" },
+  { label: "Product", href: "/#how-it-works" },
+  { label: "Roadmap", href: "/#roadmap" },
+  { label: "Ecosystem", href: "/ecosystem" },
   { label: "Docs", href: "/docs" },
   { label: "Whitepaper", href: "/whitepaper" },
-  { label: "Research", href: "/research" },
 ] as const;
 

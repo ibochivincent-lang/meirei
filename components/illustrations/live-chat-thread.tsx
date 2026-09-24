@@ -23,8 +23,8 @@ type Turn =
  * a loop so the product reads as genuinely dual-channel rather than
  * WhatsApp with Telegram bolted on as an afterthought.
  */
-const SCRIPTS: Record<Channel, { turn: Turn; displayMs: number }[]> = {
-  whatsapp: [
+const TELEGRAM_SCRIPTS: { turn: Turn; displayMs: number }[][] = [
+  [
     {
       turn: { kind: "bubble", side: "out", text: "buy 500 USDG of AAPLx", time: "9:14" },
       displayMs: 1400,
@@ -34,13 +34,13 @@ const SCRIPTS: Record<Channel, { turn: Turn; displayMs: number }[]> = {
       turn: {
         kind: "bubble",
         side: "in",
-        text: "You want to buy 500 USDG of AAPLx on X Layer. The current price is ~223.50 USDG. Reply yes to confirm.",
+        text: "You want to buy 500 USDG of AAPLx on OKX X Layer (Chain 196). Live price: ~223.50 USDG. Gas is sponsored. Confirm trade?",
         time: "9:14",
       },
       displayMs: 2400,
     },
     {
-      turn: { kind: "bubble", side: "out", text: "yes", time: "9:14" },
+      turn: { kind: "bubble", side: "out", text: "confirm", time: "9:14" },
       displayMs: 1100,
     },
     { turn: { kind: "typing", side: "in" }, displayMs: 700 },
@@ -50,90 +50,58 @@ const SCRIPTS: Record<Channel, { turn: Turn; displayMs: number }[]> = {
         status: "Trade Executed",
         statusTone: "confirmed",
         amount: "+ 2.23 AAPLx",
-        detail: "Swapped 500 USDG",
+        detail: "Swapped 500 USDG on X Layer",
         reference: "tx_8K2L9F",
         time: "9:14",
       },
       displayMs: 3500,
     },
   ],
-  telegram: [
+  [
     {
-      turn: {
-        kind: "receipt",
-        status: "Trade Executed",
-        statusTone: "new",
-        amount: "+ 10.00 NVDAx",
-        detail: "Swapped 1,200 USDG",
-        reference: "tx_3M9XQP",
-        time: "16:20",
-      },
-      displayMs: 2200,
+      turn: { kind: "bubble", side: "out", text: "/portfolio", time: "16:20" },
+      displayMs: 1200,
     },
     { turn: { kind: "typing", side: "in" }, displayMs: 700 },
     {
       turn: {
-        kind: "bubble",
-        side: "in",
-        text: "Your trade is complete. Your portfolio is now $3,450.20 and is actively managed by Meirei.",
-        time: "16:20",
-      },
-      displayMs: 3500,
-    },
-  ],
-  instagram: [
-    {
-      turn: { kind: "bubble", side: "out", text: "Price of NVDAx", time: "14:40" },
-      displayMs: 1400,
-    },
-    { turn: { kind: "typing", side: "in" }, displayMs: 700 },
-    {
-      turn: {
-        kind: "bubble",
-        side: "in",
-        text: "1 NVDAx = $213.90 USDG on X Layer (chain 196). Live execution via OKX DEX Aggregator.",
-        time: "14:40",
-      },
-      displayMs: 3000,
-    },
-    {
-      turn: {
         kind: "receipt",
-        status: "Live Quote Ready",
+        status: "Active Holdings",
         statusTone: "confirmed",
-        amount: "$213.90 USDG",
-        detail: "1 NVDAx on X Layer",
-        reference: "tx_NVDA21",
-        time: "14:40",
+        amount: "$3,450.20 USDG",
+        detail: "AAPLx · NVDAx · MSFTx · GOOGLx",
+        reference: "okx_chain196",
+        time: "16:20",
+      },
+      displayMs: 2400,
+    },
+    {
+      turn: {
+        kind: "bubble",
+        side: "in",
+        text: "Meirei is actively monitoring drift across your 20 allowlisted equities with OKX AI market analytics.",
+        time: "16:20",
       },
       displayMs: 3500,
     },
   ],
-};
+];
 
-const LOOP_GAP_MS = 1200; // pause after the last turn before switching channels
+const LOOP_GAP_MS = 1400;
 
-/**
- * LiveChatThread
- *
- * Auto-plays a scripted conversation on a loop, alternating between
- * WhatsApp, Telegram, and Instagram scripts each time around.
- */
 export function LiveChatThread() {
-  const [channel, setChannel] = useState<Channel>("whatsapp");
   const [visibleTurns, setVisibleTurns] = useState<Turn[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
-    let activeChannel: Channel = "whatsapp";
+    let scriptIndex = 0;
 
     function runScript() {
       if (cancelled) return;
-      setChannel(activeChannel);
       setVisibleTurns([]);
 
-      const script = SCRIPTS[activeChannel];
+      const script = TELEGRAM_SCRIPTS[scriptIndex];
       let cumulativeDelay = 200;
       script.forEach(({ turn, displayMs }, idx) => {
         const t = setTimeout(() => {
@@ -158,12 +126,7 @@ export function LiveChatThread() {
 
           if (idx === script.length - 1) {
             const restart = setTimeout(() => {
-              activeChannel =
-                activeChannel === "whatsapp"
-                  ? "telegram"
-                  : activeChannel === "telegram"
-                  ? "instagram"
-                  : "whatsapp";
+              scriptIndex = (scriptIndex + 1) % TELEGRAM_SCRIPTS.length;
               runScript();
             }, displayMs + LOOP_GAP_MS);
             timeouts.push(restart);
@@ -182,28 +145,19 @@ export function LiveChatThread() {
     };
   }, []);
 
-  const isTelegram = channel === "telegram";
-
   return (
     <div className="flex h-full flex-col">
       <ChatHeader
         variant="full"
-        channel={channel}
-        subtitle={isTelegram ? "via Telegram" : "Online"}
+        channel="telegram"
+        subtitle="@MeireiXLayerBot"
       />
 
       {/* Messages */}
-      <div
-        className={cn(
-          "flex flex-1 flex-col justify-end gap-2 overflow-hidden bg-cover bg-center p-3",
-          channel === "whatsapp" && "bg-[url('/whatsapp-bg.png')] dark:bg-none dark:bg-[#0b141a]",
-          channel === "instagram" && "bg-[#FAFAFA] dark:bg-black",
-          channel === "telegram" && "bg-[#DCEAF5] dark:bg-[#0e1621] [background-image:radial-gradient(rgba(51,144,236,0.14)_1px,transparent_1px)] dark:[background-image:radial-gradient(rgba(51,144,236,0.18)_1px,transparent_1px)] [background-size:14px_14px]",
-        )}
-      >
+      <div className="flex flex-1 flex-col justify-end gap-2 overflow-hidden bg-cover bg-center p-3 bg-[#DCEAF5] dark:bg-[#0e1621] [background-image:radial-gradient(rgba(51,144,236,0.14)_1px,transparent_1px)] dark:[background-image:radial-gradient(rgba(51,144,236,0.18)_1px,transparent_1px)] [background-size:14px_14px]">
         <AnimatePresence initial={false}>
           {visibleTurns.map((turn, idx) => (
-            <TurnView key={`${idx}-${turn.kind}`} turn={turn} channel={channel} />
+            <TurnView key={`${idx}-${turn.kind}`} turn={turn} channel="telegram" />
           ))}
         </AnimatePresence>
       </div>

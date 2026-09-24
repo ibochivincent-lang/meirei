@@ -10,7 +10,6 @@ import { FaqSection } from "@/components/sections/faq-section";
 import { ClosingCta } from "@/components/sections/closing-cta";
 import { HowItWorksWrapper } from "@/components/sections/how-it-works-wrapper";
 import { LiveAgentFeature } from "@/components/interactive/live_agent_feature";
-import { StockSelectorGrid } from "@/components/interactive/stock_selector_grid";
 import {
   BalanceIllustration,
   ReceiveIllustration,
@@ -62,8 +61,19 @@ export default function HomePage() {
             description="Say 'allocate 20% each into mag7 and usdg' and Meirei will calculate the diff and execute the necessary swaps instantly."
             visual={<ReceiveIllustration />}
           >
-            <div className="mt-2 w-full">
-              <StockSelectorGrid />
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+              <div className="rounded-xl border border-ink-200/80 bg-surface-50 p-3.5 shadow-2xs">
+                <span className="font-mono text-xs font-bold text-accent-700">Sub-Second Finality</span>
+                <p className="mt-1 text-xs text-ink-600 leading-relaxed">
+                  OKX X Layer (Chain 196) settles your multi-asset rebalance with sponsored gas and instant confirmations.
+                </p>
+              </div>
+              <div className="rounded-xl border border-ink-200/80 bg-surface-50 p-3.5 shadow-2xs">
+                <span className="font-mono text-xs font-bold text-accent-700">Drift Protection</span>
+                <p className="mt-1 text-xs text-ink-600 leading-relaxed">
+                  Meirei dynamically rebalances across 20 allowlisted equities and USDG cash to prevent unwanted portfolio drift.
+                </p>
+              </div>
             </div>
           </FeatureSection>
 
