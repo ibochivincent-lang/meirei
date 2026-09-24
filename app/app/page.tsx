@@ -1109,17 +1109,18 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
   // Computed live advisory plan based on user-selected allocation capital, duration, target date, and chosen mandate
   const currentAdvisoryPlan: AdvisoryPlan = useMemo(() => {
+    const chosenMandate = STRATEGY_MANDATES[selectedStrategyMandateIndex] || STRATEGY_MANDATES[0];
     const basePlan = generateAdvisoryPlan({
       horizon: advisoryHorizon,
       riskProfile: advisoryRisk,
+      mandateIndex: selectedStrategyMandateIndex,
       capitalUsd: advisoryCapital || 2500,
       customStocks: advisorySelectionMode === "custom" ? advisoryCustomStocks : undefined,
       stablecoin: advisoryStablecoin,
     });
-    const chosenMandate = STRATEGY_MANDATES[selectedStrategyMandateIndex] || STRATEGY_MANDATES[0];
     return {
       ...basePlan,
-      strategyName: `${basePlan.strategyName} (${advisoryDuration} · Target ${advisoryMaturityDate})`,
+      strategyName: `${chosenMandate.title} (${advisoryDuration} · Target ${advisoryMaturityDate})`,
       mandateRule: chosenMandate.rule,
     };
   }, [
@@ -1134,6 +1135,75 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     selectedStrategyMandateIndex,
     STRATEGY_MANDATES,
   ]);
+
+  // Live figurative trajectory matrix for selected mandate & duration
+  const mandateTrajectories = useMemo(() => {
+    if (advisoryHorizon === "short_term") {
+      const presets = [
+        [
+          { milestone: "1D", pct: 2.8, desc: "Intraday Breakout" },
+          { milestone: "7D", pct: 8.9, desc: "Momentum Swing" },
+          { milestone: "14D", pct: 15.6, desc: "Weekly Rotation" },
+          { milestone: "30D", pct: 27.8, desc: "Monthly Run" },
+          { milestone: "90D", pct: 44.5, desc: "Horizon Target" },
+        ],
+        [
+          { milestone: "1D", pct: 2.2, desc: "Whale Inflow Fill" },
+          { milestone: "7D", pct: 7.2, desc: "Institutional Wave" },
+          { milestone: "14D", pct: 13.4, desc: "Depth Expansion" },
+          { milestone: "30D", pct: 23.8, desc: "Flow Compounding" },
+          { milestone: "90D", pct: 38.2, desc: "Horizon Target" },
+        ],
+        [
+          { milestone: "1D", pct: 1.4, desc: "Sentiment Pulse" },
+          { milestone: "7D", pct: 4.8, desc: "Social Resonance" },
+          { milestone: "14D", pct: 8.5, desc: "14D Rotation" },
+          { milestone: "30D", pct: 15.2, desc: "Sustained Alpha" },
+          { milestone: "90D", pct: 26.5, desc: "Horizon Target" },
+        ],
+        [
+          { milestone: "1D", pct: 0.6, desc: "Pullback Buffer" },
+          { milestone: "7D", pct: 2.1, desc: "Dip Accumulation" },
+          { milestone: "14D", pct: 3.8, desc: "8% Profit Harvest" },
+          { milestone: "30D", pct: 6.5, desc: "Fortress Yield" },
+          { milestone: "90D", pct: 12.8, desc: "Horizon Target" },
+        ],
+      ];
+      return presets[selectedStrategyMandateIndex] || presets[0];
+    } else {
+      const presets = [
+        [
+          { milestone: "1M", pct: 3.4, desc: "DCA Inflow" },
+          { milestone: "3M", pct: 10.2, desc: "Tech Moat Alpha" },
+          { milestone: "6M", pct: 20.5, desc: "Semi-Annual Trim" },
+          { milestone: "1Y", pct: 39.8, desc: "Silicon Alpha" },
+          { milestone: "2Y", pct: 74.5, desc: "Multi-Year Moat" },
+        ],
+        [
+          { milestone: "1M", pct: 2.4, desc: "Market Cap Entry" },
+          { milestone: "3M", pct: 7.6, desc: "Quarterly Balance" },
+          { milestone: "6M", pct: 15.8, desc: "70/30 Sleeve" },
+          { milestone: "1Y", pct: 31.2, desc: "Annual Compounding" },
+          { milestone: "2Y", pct: 59.5, desc: "Core Institutional" },
+        ],
+        [
+          { milestone: "1M", pct: 1.4, desc: "Fortress Entry" },
+          { milestone: "3M", pct: 4.5, desc: "Low Volatility Base" },
+          { milestone: "6M", pct: 9.2, desc: "Cash Floor Buffer" },
+          { milestone: "1Y", pct: 18.4, desc: "Preserved Growth" },
+          { milestone: "2Y", pct: 34.0, desc: "Risk-Off Growth" },
+        ],
+        [
+          { milestone: "1M", pct: 2.8, desc: "Equal Spread" },
+          { milestone: "3M", pct: 8.9, desc: "Macro Momentum" },
+          { milestone: "6M", pct: 17.4, desc: "Semi-Annual Balance" },
+          { milestone: "1Y", pct: 34.5, desc: "All-Weather Base" },
+          { milestone: "2Y", pct: 66.0, desc: "Max Compound" },
+        ],
+      ];
+      return presets[selectedStrategyMandateIndex] || presets[0];
+    }
+  }, [advisoryHorizon, selectedStrategyMandateIndex]);
 
   // Stocks sorted strictly by momentumRank (1, 2, 3, ... 20)
   const rankedStocks = useMemo(() => {
@@ -3629,7 +3699,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                         </div>
                       </div>
 
-                      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[180px] overflow-y-auto pr-1">
+                      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
                         {STOCKS.map((stk) => {
                           const isSelected = advisoryCustomStocks.includes(stk.symbol);
                           const livePrice = stockPrices[stk.symbol] || getNumericPrice(stk);
@@ -3832,80 +3902,155 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       </div>
 
                       <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {STRATEGY_MANDATES.map((m, idx) => (
-                          <button
-                            key={m.id}
-                            type="button"
-                            onClick={() => setSelectedStrategyMandateIndex(idx)}
-                            className={cn(
-                              "rounded-xl border p-3 text-left transition-all cursor-pointer",
-                              selectedStrategyMandateIndex === idx
-                                ? "border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950"
-                                : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
-                            )}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span
-                                className={cn(
-                                  "font-mono text-xs font-bold px-1.5 py-0.5 rounded",
-                                  selectedStrategyMandateIndex === idx
-                                    ? "bg-white text-ink-950 font-bold"
-                                    : "bg-surface-200 text-ink-700 font-bold"
-                                )}
-                              >
-                                #{m.id}
-                              </span>
-                              <span className={cn(
-                                "text-[10px] font-mono",
-                                selectedStrategyMandateIndex === idx ? "text-accent-300 font-bold" : "text-accent-700 font-semibold"
+                        {STRATEGY_MANDATES.map((m, idx) => {
+                          const mandateRiskTag =
+                            advisoryHorizon === "short_term"
+                              ? idx === 0
+                                ? "Aggressive · Alpha Acceleration"
+                                : idx === 1
+                                ? "Smart Money · High Conviction"
+                                : idx === 2
+                                ? "Balanced · Sentiment Growth"
+                                : "Conservative · Capital Preservation"
+                              : idx === 0
+                              ? "Balanced · Blue Chip DCA"
+                              : idx === 1
+                              ? "Balanced · Market Cap Deep Flow"
+                              : idx === 2
+                              ? "Conservative · Low Beta Preservation"
+                              : "Conservative · Compounder Moat";
+
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedStrategyMandateIndex(idx);
+                                if (advisoryHorizon === "short_term") {
+                                  if (idx === 0 || idx === 1) setAdvisoryRisk("aggressive");
+                                  else if (idx === 2) setAdvisoryRisk("balanced");
+                                  else setAdvisoryRisk("conservative");
+                                } else {
+                                  if (idx === 0 || idx === 1) setAdvisoryRisk("balanced");
+                                  else setAdvisoryRisk("conservative");
+                                }
+                              }}
+                              className={cn(
+                                "rounded-xl border p-3 text-left transition-all cursor-pointer relative",
+                                selectedStrategyMandateIndex === idx
+                                  ? "border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950"
+                                  : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className={cn(
+                                      "font-mono text-xs font-bold px-1.5 py-0.5 rounded",
+                                      selectedStrategyMandateIndex === idx
+                                        ? "bg-white text-ink-950 font-bold"
+                                        : "bg-surface-200 text-ink-700 font-bold"
+                                    )}
+                                  >
+                                    #{m.id}
+                                  </span>
+                                  <span className={cn(
+                                    "text-[9px] font-mono font-semibold px-1.5 py-0.2 rounded",
+                                    selectedStrategyMandateIndex === idx
+                                      ? "bg-white/10 text-white"
+                                      : "bg-surface-100 text-ink-500"
+                                  )}>
+                                    {mandateRiskTag}
+                                  </span>
+                                </div>
+                                <span className={cn(
+                                  "text-[10px] font-mono",
+                                  selectedStrategyMandateIndex === idx ? "text-accent-300 font-bold" : "text-accent-700 font-semibold"
+                                )}>
+                                  {m.tag}
+                                </span>
+                              </div>
+                              <p className={cn(
+                                "mt-1.5 font-display text-xs font-bold",
+                                selectedStrategyMandateIndex === idx ? "text-white" : "text-ink-900"
                               )}>
-                                {m.tag}
-                              </span>
-                            </div>
-                            <p className={cn(
-                              "mt-1 font-display text-xs font-bold",
-                              selectedStrategyMandateIndex === idx ? "text-white" : "text-ink-900"
-                            )}>
-                              {m.title}
-                            </p>
-                            <p className={cn(
-                              "mt-0.5 text-[11px] line-clamp-2 leading-relaxed",
-                              selectedStrategyMandateIndex === idx ? "text-white/80" : "text-ink-600"
-                            )}>
-                              {m.rule}
-                            </p>
-                          </button>
-                        ))}
+                                {m.title}
+                              </p>
+                              <p className={cn(
+                                "mt-0.5 text-[11px] line-clamp-2 leading-relaxed",
+                                selectedStrategyMandateIndex === idx ? "text-white/80" : "text-ink-600"
+                              )}>
+                                {m.rule}
+                              </p>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
 
-                  {/* Risk Profile Selection Bar */}
-                  <div className="mt-5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-ink-700">
-                      Select Investment Risk Profile
-                    </label>
-                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
-                      {(["conservative", "balanced", "aggressive"] as RiskProfile[]).map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => setAdvisoryRisk(r)}
-                          className={cn(
-                            "rounded-xl border p-3 text-left transition-all cursor-pointer",
-                            advisoryRisk === r
-                              ? "border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950"
-                              : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
-                          )}
-                        >
-                          <p className="font-display text-xs font-bold capitalize">{r}</p>
-                          <p className={cn("mt-0.5 text-[10px]", advisoryRisk === r ? "text-white/80" : "text-ink-500")}>
-                            {r === "conservative" && "Capital Preservation"}
-                            {r === "balanced" && "Strategic Growth"}
-                            {r === "aggressive" && "Alpha Acceleration"}
-                          </p>
-                        </button>
-                      ))}
+                  {/* Calibrated Risk & Volatility Status Strip (Natively Driven by Mandate Directives) */}
+                  <div className="mt-4 rounded-xl border border-ink-200/90 bg-surface-50/70 p-3 sm:p-3.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ink-200/60 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-500">
+                          Calibrated Risk Calibration
+                        </span>
+                        <span className="rounded bg-accent-100 px-1.5 py-0.2 text-[9px] font-bold text-accent-800">
+                          Auto-Synchronized
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-ink-500">Risk Profile:</span>
+                        <div className="flex items-center gap-1">
+                          {(["conservative", "balanced", "aggressive"] as RiskProfile[]).map((r) => (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => setAdvisoryRisk(r)}
+                              className={cn(
+                                "rounded-md px-2 py-0.5 text-[10px] font-mono font-bold capitalize transition-all cursor-pointer",
+                                advisoryRisk === r
+                                  ? r === "aggressive"
+                                    ? "bg-rose-600 text-white shadow-2xs"
+                                    : r === "balanced"
+                                    ? "bg-accent-600 text-white shadow-2xs"
+                                    : "bg-emerald-600 text-white shadow-2xs"
+                                  : "bg-white text-ink-600 border border-ink-200 hover:bg-surface-100"
+                              )}
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                      <div className="rounded-lg bg-white p-2.5 border border-ink-100 shadow-2xs">
+                        <span className="text-[10px] font-semibold text-ink-400 uppercase tracking-wider block">Risk Directive</span>
+                        <p className="font-mono font-bold text-ink-900 mt-0.5 capitalize flex items-center gap-1.5">
+                          <span className={cn(
+                            "h-2 w-2 rounded-full",
+                            advisoryRisk === "aggressive" ? "bg-rose-500" : advisoryRisk === "balanced" ? "bg-accent-500" : "bg-emerald-500"
+                          )} />
+                          {advisoryRisk === "aggressive" ? "Alpha Acceleration" : advisoryRisk === "balanced" ? "Strategic Growth" : "Capital Preservation"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-white p-2.5 border border-ink-100 shadow-2xs">
+                        <span className="text-[10px] font-semibold text-ink-400 uppercase tracking-wider block">Expected Volatility</span>
+                        <p className="font-mono font-bold text-ink-900 mt-0.5">
+                          {currentAdvisoryPlan.expectedVolatility}
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-white p-2.5 border border-ink-100 shadow-2xs">
+                        <span className="text-[10px] font-semibold text-ink-400 uppercase tracking-wider block">Downside Safeguard</span>
+                        <p className="font-mono font-bold text-ink-900 mt-0.5 truncate" title={currentAdvisoryPlan.downsideProtection}>
+                          {currentAdvisoryPlan.downsideProtection}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -3967,185 +4112,161 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       </div>
                     </div>
 
-                    {/* Interactive SVG Valuation & Alpha Trajectory Graph (Explicit X & Y Axes) */}
+                    {/* Live Horizon Trajectory Bar Visualizer & Figurative Valuation Model */}
                     <div className="mt-5 rounded-2xl border border-ink-200 bg-white p-4 sm:p-5 shadow-xs">
                       <div className="flex flex-col justify-between gap-2 border-b border-ink-100 pb-3 sm:flex-row sm:items-center">
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
-                              Trajectory Model (trading-plan-generator)
+                              Live Trajectory Model (trading-plan-generator)
                             </span>
                             <span className="rounded bg-sky-100 px-1.5 py-0.2 text-[9px] font-bold text-sky-800">
-                              OKX AI Skill
+                              OKX AI Skill Active
                             </span>
                           </div>
-                          <h4 className="font-display text-sm font-bold text-ink-900 sm:text-base">
+                          <h4 className="font-display text-sm font-bold text-ink-900 sm:text-base mt-0.5">
                             Projected Valuation &amp; Return Horizon Trajectory
                           </h4>
+                          <p className="text-[11px] text-ink-500">
+                            Dynamic figurative projection calibrated to your ${advisoryCapital.toLocaleString()} {advisoryStablecoin} allocation.
+                          </p>
                         </div>
-                        <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
-                          <span className="flex items-center gap-1.5 text-rose-600 font-semibold">
-                            <span className="h-2 w-2 rounded-full bg-rose-500" />
-                            Aggressive ({advisoryHorizon === "short_term" ? "Momentum" : "+44.5%"})
-                          </span>
-                          <span className="flex items-center gap-1.5 text-accent-600 font-semibold">
-                            <span className="h-2 w-2 rounded-full bg-accent-500" />
-                            Balanced ({advisoryHorizon === "short_term" ? "Swing" : "+26.5%"})
-                          </span>
-                          <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                            Conservative ({advisoryHorizon === "short_term" ? "Preserve" : "+12.8%"})
+
+                        {/* Top Terminal Valuation Summary */}
+                        <div className="flex flex-wrap items-center gap-2 rounded-xl bg-surface-50 border border-ink-200 p-2 text-right">
+                          <div>
+                            <span className="block text-[9px] font-mono text-ink-400 uppercase font-semibold">
+                              Terminal Target ({mandateTrajectories[mandateTrajectories.length - 1]?.milestone || advisoryDuration})
+                            </span>
+                            <span className="font-mono text-xs sm:text-sm font-bold text-accent-700">
+                              ${(advisoryCapital * (1 + (mandateTrajectories[mandateTrajectories.length - 1]?.pct || 0) / 100)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {advisoryStablecoin}
+                            </span>
+                          </div>
+                          <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-mono text-[10px] font-bold text-emerald-800">
+                            +{(mandateTrajectories[mandateTrajectories.length - 1]?.pct || 0).toFixed(1)}% (+$
+                            {(advisoryCapital * ((mandateTrajectories[mandateTrajectories.length - 1]?.pct || 0) / 100)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                           </span>
                         </div>
                       </div>
 
-                      <div className="mt-4">
-                        <svg
-                          viewBox="0 0 600 230"
-                          className="w-full h-auto overflow-hidden select-none"
-                          preserveAspectRatio="xMidYMid meet"
-                        >
-                          <defs>
-                            <linearGradient id="gradConservative" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-                              <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
-                            </linearGradient>
-                            <linearGradient id="gradBalanced" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" />
-                              <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
-                            </linearGradient>
-                            <linearGradient id="gradAggressive" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.3" />
-                              <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
-                            </linearGradient>
-                          </defs>
-
-                          {/* Grid Lines */}
-                          <line x1="50" y1="180" x2="590" y2="180" stroke="#e2e8f0" strokeDasharray="3 3" />
-                          <text x="42" y="184" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">0%</text>
-
-                          <line x1="50" y1="138" x2="590" y2="138" stroke="#e2e8f0" strokeDasharray="3 3" />
-                          <text x="42" y="142" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+12.5%</text>
-
-                          <line x1="50" y1="96" x2="590" y2="96" stroke="#e2e8f0" strokeDasharray="3 3" />
-                          <text x="42" y="100" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+25%</text>
-
-                          <line x1="50" y1="54" x2="590" y2="54" stroke="#e2e8f0" strokeDasharray="3 3" />
-                          <text x="42" y="58" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+37.5%</text>
-
-                          <line x1="50" y1="10" x2="590" y2="10" stroke="#e2e8f0" strokeDasharray="3 3" />
-                          <text x="42" y="14" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+50%</text>
-
-                          {/* Y-Axis Line */}
-                          <line x1="50" y1="10" x2="50" y2="180" stroke="#94a3b8" strokeWidth="1.5" />
-                          {/* X-Axis Line */}
-                          <line x1="50" y1="180" x2="590" y2="180" stroke="#94a3b8" strokeWidth="1.5" />
-
-                          {/* X-Axis Vertical Guide Ticks & Labels */}
-                          <line x1="80" y1="180" x2="80" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                          <text x="80" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">1D</text>
-
-                          <line x1="190" y1="180" x2="190" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                          <text x="190" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">7D</text>
-
-                          <line x1="310" y1="180" x2="310" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                          <text x="310" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">14D</text>
-
-                          <line x1="440" y1="180" x2="440" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                          <text x="440" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">30D</text>
-
-                          <line x1="570" y1="180" x2="570" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                          <text x="570" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">90D</text>
-
-                          {/* Axis Title Labels */}
-                          <text x="25" y="100" transform="rotate(-90 25 100)" textAnchor="middle" className="text-[9px] fill-zinc-400 font-mono font-semibold uppercase tracking-wider">
-                            Return (%)
-                          </text>
-                          <text x="325" y="215" textAnchor="middle" className="text-[9px] fill-zinc-400 font-mono font-semibold uppercase tracking-wider">
-                            Time Horizon
-                          </text>
-
-                          {/* Conservative Curve */}
-                          <path
-                            d="M 80 178 Q 190 173 310 167 T 570 136 L 570 180 L 80 180 Z"
-                            fill="url(#gradConservative)"
-                            opacity={advisoryRisk === "conservative" ? 1 : 0.4}
-                          />
-                          <path
-                            d="M 80 178 Q 190 173 310 167 T 570 136"
-                            fill="none"
-                            stroke="#10b981"
-                            strokeWidth={advisoryRisk === "conservative" ? 3 : 1.8}
-                            strokeDasharray={advisoryRisk === "conservative" ? "none" : "4 2"}
-                          />
-                          <circle cx="80" cy="178" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
-                          <circle cx="190" cy="173" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
-                          <circle cx="310" cy="167" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
-                          <circle cx="440" cy="158" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
-                          <circle cx="570" cy="136" r={advisoryRisk === "conservative" ? 5 : 3.5} fill="#10b981" />
-
-                          {/* Balanced Curve */}
-                          <path
-                            d="M 80 175 Q 190 164 310 151 T 570 90 L 570 180 L 80 180 Z"
-                            fill="url(#gradBalanced)"
-                            opacity={advisoryRisk === "balanced" ? 1 : 0.4}
-                          />
-                          <path
-                            d="M 80 175 Q 190 164 310 151 T 570 90"
-                            fill="none"
-                            stroke="#6366f1"
-                            strokeWidth={advisoryRisk === "balanced" ? 3 : 2}
-                          />
-                          <circle cx="80" cy="175" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
-                          <circle cx="190" cy="164" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
-                          <circle cx="310" cy="151" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
-                          <circle cx="440" cy="128" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
-                          <circle cx="570" cy="90" r={advisoryRisk === "balanced" ? 5 : 3.5} fill="#6366f1" />
-
-                          {/* Aggressive Curve */}
-                          <path
-                            d="M 80 170 Q 190 150 310 127 T 570 29 L 570 180 L 80 180 Z"
-                            fill="url(#gradAggressive)"
-                            opacity={advisoryRisk === "aggressive" ? 1 : 0.4}
-                          />
-                          <path
-                            d="M 80 170 Q 190 150 310 127 T 570 29"
-                            fill="none"
-                            stroke="#f43f5e"
-                            strokeWidth={advisoryRisk === "aggressive" ? 3.5 : 2}
-                          />
-                          <circle cx="80" cy="170" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
-                          <circle cx="190" cy="150" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
-                          <circle cx="310" cy="127" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
-                          <circle cx="440" cy="85" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
-                          <circle cx="570" cy="29" r={advisoryRisk === "aggressive" ? 6 : 4} fill="#f43f5e" />
-                        </svg>
-
-                        {/* Horizon Return Badges */}
-                        <div className="mt-2 grid grid-cols-5 gap-1 sm:gap-2 border-t border-ink-100 pt-3 text-center">
-                          {OKX_TRADING_PLAN_DATA.trajectories.map((traj) => {
-                            const val =
-                              advisoryRisk === "aggressive"
-                                ? traj.aggressiveReturnPct
-                                : advisoryRisk === "balanced"
-                                ? traj.balancedReturnPct
-                                : traj.conservativeReturnPct;
+                      {/* Milestone Horizon Dynamic Trajectory Bars */}
+                      <div className="mt-4 space-y-3">
+                        {(() => {
+                          const maxPct = Math.max(...mandateTrajectories.map((t) => t.pct), 1);
+                          return mandateTrajectories.map((traj) => {
+                            const estVal = advisoryCapital * (1 + traj.pct / 100);
+                            const estGain = advisoryCapital * (traj.pct / 100);
+                            const barWidthPct = Math.min(100, Math.max(14, (traj.pct / maxPct) * 100));
 
                             return (
-                              <div key={traj.timeHorizon} className="rounded-lg bg-surface-50 p-1 sm:p-2">
-                                <span className="block text-[9px] sm:text-[10px] font-bold text-ink-500 font-mono">
-                                  {traj.timeHorizon}
-                                </span>
-                                <span
-                                  className={cn(
-                                    "font-mono text-[11px] sm:text-xs font-bold",
-                                    advisoryRisk === "aggressive" && "text-rose-600",
-                                    advisoryRisk === "balanced" && "text-accent-600",
-                                    advisoryRisk === "conservative" && "text-emerald-600"
-                                  )}
-                                >
-                                  +{val.toFixed(1)}%
-                                </span>
+                              <div
+                                key={traj.milestone}
+                                className="group rounded-xl border border-ink-100 bg-surface-50/50 p-2.5 sm:p-3 transition-all hover:border-accent-300 hover:bg-white"
+                              >
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+                                  <div className="flex items-center gap-2">
+                                    <span className="rounded bg-ink-900 px-2 py-0.5 font-mono text-[11px] font-bold text-white shadow-2xs">
+                                      {traj.milestone}
+                                    </span>
+                                    <span className="font-semibold text-ink-800 text-[11px]">
+                                      {traj.desc}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 font-mono">
+                                    <span className="text-[11px] text-ink-500">Figurative Value:</span>
+                                    <span className="font-bold text-ink-950">
+                                      ${estVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {advisoryStablecoin}
+                                    </span>
+                                    <span className={cn(
+                                      "rounded px-1.5 py-0.2 text-[10px] font-bold",
+                                      advisoryRisk === "aggressive"
+                                        ? "bg-rose-100 text-rose-800"
+                                        : advisoryRisk === "balanced"
+                                        ? "bg-accent-100 text-accent-800"
+                                        : "bg-emerald-100 text-emerald-800"
+                                    )}>
+                                      +{traj.pct.toFixed(1)}% (+${estGain.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Animated Horizon Bar */}
+                                <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-surface-200">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all duration-500 ease-out shadow-xs",
+                                      advisoryRisk === "aggressive"
+                                        ? "bg-gradient-to-r from-rose-500 to-amber-500"
+                                        : advisoryRisk === "balanced"
+                                        ? "bg-gradient-to-r from-accent-500 to-indigo-500"
+                                        : "bg-gradient-to-r from-emerald-500 to-teal-500"
+                                    )}
+                                    style={{ width: `${barWidthPct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+
+                      {/* Dynamic Stock-by-Stock Expected Return Breakdown */}
+                      <div className="mt-5 border-t border-ink-100 pt-4">
+                        <div className="flex items-center justify-between">
+                          <h5 className="text-[11px] font-bold uppercase tracking-wider text-ink-700">
+                            Equities Allocation &amp; Expected Alpha Contribution
+                          </h5>
+                          <span className="text-[10px] font-mono text-ink-500">
+                            Synchronized to Mandate #{STRATEGY_MANDATES[selectedStrategyMandateIndex]?.id || 1}
+                          </span>
+                        </div>
+
+                        <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {currentAdvisoryPlan.allocations.map((alloc) => {
+                            const allocatedDollars = (advisoryCapital * alloc.weightPercent) / 100;
+                            const isStable = alloc.symbol === advisoryStablecoin;
+                            const terminalPct = mandateTrajectories[mandateTrajectories.length - 1]?.pct || 0;
+                            const stockExpectedReturnPct = isStable
+                              ? 0
+                              : Number((terminalPct * (1 + (alloc.weightPercent - 20) / 100)).toFixed(1));
+                            const stockProjectedVal = allocatedDollars * (1 + stockExpectedReturnPct / 100);
+
+                            return (
+                              <div
+                                key={alloc.symbol}
+                                className="rounded-xl border border-ink-200/80 bg-surface-50/60 p-2.5 text-xs"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-mono font-bold text-ink-900">
+                                      {alloc.symbol}
+                                    </span>
+                                    <span className="rounded bg-surface-200 px-1 py-0.2 text-[9px] font-medium text-ink-700">
+                                      {alloc.weightPercent}%
+                                    </span>
+                                  </div>
+                                  <span className="font-mono text-[11px] font-bold text-ink-800">
+                                    ${allocatedDollars.toFixed(2)} {advisoryStablecoin}
+                                  </span>
+                                </div>
+
+                                <p className="mt-1 text-[10px] text-ink-500 line-clamp-1">
+                                  {alloc.role}
+                                </p>
+
+                                <div className="mt-1.5 flex items-center justify-between border-t border-ink-100 pt-1 font-mono text-[10px]">
+                                  <span className="text-ink-400">Target Value:</span>
+                                  <span className="font-bold text-accent-700">
+                                    ${stockProjectedVal.toFixed(2)}{" "}
+                                    <span className={cn(
+                                      "font-semibold",
+                                      stockExpectedReturnPct > 0 ? "text-emerald-600" : "text-ink-400"
+                                    )}>
+                                      ({stockExpectedReturnPct > 0 ? `+${stockExpectedReturnPct}%` : "0%"})
+                                    </span>
+                                  </span>
+                                </div>
                               </div>
                             );
                           })}
