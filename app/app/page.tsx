@@ -821,6 +821,11 @@ export default function AppDashboardPage() {
   const [advisoryHorizon, setAdvisoryHorizon] = useState<AdvisoryHorizon>("short_term");
   const [advisoryRisk, setAdvisoryRisk] = useState<RiskProfile>("balanced");
   const [advisoryCapital, setAdvisoryCapital] = useState<number>(2500);
+  const [advisoryStablecoin, setAdvisoryStablecoin] = useState<"USDG" | "USDC" | "USDT">("USDG");
+  const [advisorySelectionMode, setAdvisorySelectionMode] = useState<"recommended" | "custom">("recommended");
+  const [advisoryCustomStocks, setAdvisoryCustomStocks] = useState<string[]>(["NVDAx", "MSFTx", "AAPLx"]);
+  const [showAuditLogs, setShowAuditLogs] = useState<boolean>(false);
+  const [lastTelemetryRefresh, setLastTelemetryRefresh] = useState<string>("Just now");
 
   // Computed live advisory plan
   const currentAdvisoryPlan: AdvisoryPlan = useMemo(() => {
@@ -828,8 +833,10 @@ export default function AppDashboardPage() {
       horizon: advisoryHorizon,
       riskProfile: advisoryRisk,
       capitalUsd: profile.portfolioValue || advisoryCapital,
+      customStocks: advisorySelectionMode === "custom" ? advisoryCustomStocks : undefined,
+      stablecoin: advisoryStablecoin,
     });
-  }, [advisoryHorizon, advisoryRisk, profile.portfolioValue, advisoryCapital]);
+  }, [advisoryHorizon, advisoryRisk, profile.portfolioValue, advisoryCapital, advisorySelectionMode, advisoryCustomStocks, advisoryStablecoin]);
 
   // Market News Catalyst Feed state (Advanced Mode)
   const [newsList, setNewsList] = useState<NewsCatalyst[]>([]);
