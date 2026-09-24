@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { getRedisClient } from "@/lib/redis/client";
 
 interface RateLimitRecord {
   tokens: number;
@@ -20,7 +21,7 @@ setInterval(() => {
 
 export interface RateLimitConfig {
   maxTokens: number;
-  refillRatePerSec: number; // Tokens added per second
+  refillRatePerSec: number;
 }
 
 export const RATE_LIMIT_TIERS = {
@@ -40,7 +41,44 @@ export interface RateLimitResult {
 }
 
 /**
- * Applies token bucket rate limiting based on client IP or wallet address.
+ * Sliding window rate limiting backed by Upstash Redis sorted sets.
+ * Evaluates request count within a sliding window and auto-expires keys.
+ */
+export async function checkRateLimitRedis(
+  identifier: string,
+  tier: keyof typeof RATE_LIMIT_TIERS = "read"
+): Promise<RateLimitResult> {
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const config = RATE_LIMIT_TIERS[tier];
+      const key = `ratelimit:${tier}:${identifier.trim().toLowerCase()}`;
+      const now = Date.now();
+      const windowMs = (config.maxTokens / config.refillRatePerSec) * 1000;
+      const windowStart = now - windowMs;
+
+      // Clean old timestamps and insert current request
+      await redis.zremrangebyscore(key, 0, windowStart);
+      const member = `${now}:${Math.random().toString(36).slice(2, 7)}`;
+      await redis.zadd(key, { score: now, member });
+      const count = await redis.zcard(key);
+      await redis.pexpire(key, Math.ceil(windowMs));
+
+      const allowed = count <= config.maxTokens;
+      const remaining = Math.max(0, config.maxTokens - count);
+      const resetSeconds = Math.ceil(windowMs / 1000);
+
+      return { allowed, remaining, limit: config.maxTokens, resetSeconds };
+    } catch (err) {
+      console.warn("[rate_limiter] Redis sliding window notice:", err);
+    }
+  }
+
+  return checkRateLimit(identifier, tier);
+}
+
+/**
+ * In-memory token bucket rate limiting (synchronous fallback for tests and offline execution).
  */
 export function checkRateLimit(
   identifier: string,

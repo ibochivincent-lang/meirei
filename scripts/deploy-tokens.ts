@@ -24,6 +24,11 @@ export const TOKEN_SPECS: TokenSpec[] = [
   { symbol: "AMZNx", name: "Amazon.com Inc. Tokenized Equity", decimals: 18, initialSupply: 50_000 },
   { symbol: "METAx", name: "Meta Platforms Inc. Tokenized Equity", decimals: 18, initialSupply: 50_000 },
   { symbol: "TSLAx", name: "Tesla Inc. Tokenized Equity", decimals: 18, initialSupply: 50_000 },
+  { symbol: "COINx", name: "Coinbase Global Tokenized Equity", decimals: 18, initialSupply: 50_000 },
+  { symbol: "SPYx", name: "S&P 500 ETF Tokenized Asset", decimals: 18, initialSupply: 25_000 },
+  { symbol: "QQQx", name: "Invesco QQQ Nasdaq-100 Tokenized Asset", decimals: 18, initialSupply: 25_000 },
+  { symbol: "AMDx", name: "Advanced Micro Devices Tokenized Equity", decimals: 18, initialSupply: 50_000 },
+  { symbol: "CRWDx", name: "CrowdStrike Holdings Tokenized Equity", decimals: 18, initialSupply: 50_000 },
 ];
 
 export const NETWORK_CONFIG = {

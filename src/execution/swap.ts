@@ -85,15 +85,28 @@ export async function executeSwaps(legs: Leg[], options: SwapOptions): Promise<S
   return { status: succeeded > 0 ? "executed" : "failed", txs, summary: { succeeded, failed } };
 }
 
-export function formatQuotes(quotes: Quote[]): string {
+export function formatSimulationBreakdown(leg: Leg, quote: Quote, slippagePercent = DEFAULT_SLIPPAGE_PERCENT): string {
+  const minOut = quote.estimatedOutput * (1 - slippagePercent / 100);
+  const feeUsd = 0.1;
+  if (leg.side === "buy") {
+    return `You pay ${leg.notionalUsd.toFixed(2)} USDG, you receive about ${quote.estimatedOutput.toFixed(3)} ${leg.symbol}, minimum ${minOut.toFixed(3)} after slippage (${slippagePercent.toFixed(2)}%), fee ${feeUsd.toFixed(2)} USDG.`;
+  } else {
+    return `You pay ${quote.estimatedOutput > 0 ? quote.estimatedOutput.toFixed(3) : "1.000"} ${leg.symbol}, you receive about $${leg.notionalUsd.toFixed(2)} USDG, minimum $${(leg.notionalUsd * (1 - slippagePercent / 100)).toFixed(2)} after slippage (${slippagePercent.toFixed(2)}%), fee ${feeUsd.toFixed(2)} USDG.`;
+  }
+}
+
+export function formatQuotes(quotes: Quote[], legs?: Leg[]): string {
   if (!quotes.length) return "  (no quotes)";
   return quotes
-    .map((q) => {
+    .map((q, idx) => {
       const impactPct = q.priceImpact * 100;
       // OKX reports price improvement as a negative impact.
       const impactText =
         impactPct < 0 ? `${Math.abs(impactPct).toFixed(2)}% (improvement)` : `${impactPct.toFixed(2)}%`;
-      return `  Leg ${q.legIndex}: ${q.route} | impact ${impactText} | est. out ${q.estimatedOutput.toFixed(6)}`;
+      const baseLine = `  Leg ${q.legIndex}: ${q.route} | impact ${impactText} | est. out ${q.estimatedOutput.toFixed(6)}`;
+      const leg = legs ? legs[idx] : undefined;
+      const sim = leg ? `\n    Simulation: ${formatSimulationBreakdown(leg, q)}` : "";
+      return baseLine + sim;
     })
     .join("\n");
 }

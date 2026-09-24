@@ -46,8 +46,12 @@ All assets trade against USDG (native settlement stablecoin on OKX X Layer Chain
 | **METAx** | Meta Platforms Inc. Tokenized Equity | `0x96702be57cd9777f835117a809c7124fe4ec989a` | [Verify on OKX Explorer](https://www.okx.com/web3/explorer/xlayer/address/0x96702be57cd9777f835117a809c7124fe4ec989a) | 18 |
 | **TSLAx** | Tesla Inc. Tokenized Equity | `0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0` | [Verify on OKX Explorer](https://www.okx.com/web3/explorer/xlayer/address/0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0) | 18 |
 | **COINx** | Coinbase Global Tokenized Equity | `0x1d5338302f3dd78f7aa9580bc53c4d445ec6ba25` | [Verify on OKX Explorer](https://www.okx.com/web3/explorer/xlayer/address/0x1d5338302f3dd78f7aa9580bc53c4d445ec6ba25) | 18 |
+| **SPYx** | S&P 500 ETF Tokenized Asset | `0x42f7461c360980ff62c3e1db6aa5229c15d48721` | [Verify on OKX Explorer](https://www.okx.com/web3/explorer/xlayer/address/0x42f7461c360980ff62c3e1db6aa5229c15d48721) | 18 |
+| **QQQx** | Invesco QQQ Nasdaq-100 Tokenized Asset | `0x71c50b69107cc6ea56795f54070a7f1a8c9e5033` | [Verify on OKX Explorer](https://www.okx.com/web3/explorer/xlayer/address/0x71c50b69107cc6ea56795f54070a7f1a8c9e5033) | 18 |
+| **AMDx** | Advanced Micro Devices Tokenized Equity | `0x89e13b8602b9ff9b867cfae4f8d55d71fa8430e2` | [Verify on OKX Explorer](https://www.okx.com/web3/explorer/xlayer/address/0x89e13b8602b9ff9b867cfae4f8d55d71fa8430e2) | 18 |
+| **CRWDx** | CrowdStrike Holdings Tokenized Equity | `0x3a4b69c5819772bf258b3506c74ad64a787965df` | [Verify on OKX Explorer](https://www.okx.com/web3/explorer/xlayer/address/0x3a4b69c5819772bf258b3506c74ad64a787965df) | 18 |
 
-> OpenZeppelin mintable & burnable ERC20 source code is available in [`contracts/MockERC20.sol`](file:///contracts/MockERC20.sol) with deployment scripts in [`scripts/deploy-tokens.ts`](file:///scripts/deploy-tokens.ts) for both X Layer Mainnet (196) and X Layer Testnet (195).
+> **Asset Disclosure**: Assets deployed on X Layer are demo tokenized equity and ETF tokens for hackathon evaluation and testing. Spot exchange pricing and liquidity routing aggregate 1:1 against USDG via OKX DEX Aggregator. OpenZeppelin ERC20 contract sources are available in `contracts/MockERC20.sol` with deployment scripts in `scripts/deploy-tokens.ts`.
 
 ---
 
@@ -176,8 +180,8 @@ The web application will be accessible at `http://localhost:3000` (or `https://m
 Meirei includes comprehensive verification test suites:
 
 ```bash
-# Run OKX AI ASP unit tests (54/54 passing)
-npm run test:unit
+# Run full Vitest test suite (81/81 passing across 11 suites)
+npm test
 
 # Test live read-only X Layer DEX quotes
 npm run smoke:live
@@ -192,10 +196,10 @@ npm run parse -- "60% Mag7, 20% USDG, max 8%"
 npm run plan -- "60% Mag7, 20% USDG, max 8%" -w 0x7f17d6224e7d48606598732c3f511412b5c1e922
 
 # Test WhatsApp and Telegram multi-channel webhooks
-node scratch/test_webhooks.js
+npm run test:webhooks
 
 # Test 2FA OTP challenge and security flow
-node scratch/test_otp_flow.js
+node scripts/test_otp_flow.js
 
 # Compile production build
 npm run build

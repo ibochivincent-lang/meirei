@@ -19,6 +19,7 @@ import { logger } from "@/lib/observability/logger";
 import { resolveUserIdentity } from "@/lib/auth/user_identity";
 import { freezeAccount, unfreezeAccount, isAccountFrozenInMemory } from "@/lib/users/freeze";
 import { transcribeAudioBuffer } from "@/lib/voice/transcribe";
+import { checkSanctions } from "@/lib/security/sanctions";
 
 const DEFAULT_WALLET = process.env.MEIREI_WALLET || "0x7f17d6224e7d48606598732c3f511412b5c1e922";
 
@@ -45,6 +46,18 @@ export async function POST(req: NextRequest) {
     let message = (body.message || body.mandate || "").trim();
     const walletAddress = (body.walletAddress || DEFAULT_WALLET).trim();
     const confirm = Boolean(body.confirm);
+
+    // Sanctions screening prior to quote generation or trade execution
+    const sanctionsCheck = await checkSanctions(walletAddress);
+    if (sanctionsCheck.isSanctioned) {
+      return NextResponse.json(
+        {
+          error: "Sanctions restriction: This wallet address has been identified on an OFAC / international sanctions registry.",
+          reply: "Trading prohibited: This wallet address is subject to international sanctions and cannot execute mandates or receive quotes.",
+        },
+        { status: 403 }
+      );
+    }
 
     // Voice note audio transcription support on Web Platform (matching WhatsApp & Telegram)
     if (!message && body.audio_base64) {
@@ -602,14 +615,25 @@ export async function POST(req: NextRequest) {
             timestamp: Date.now(),
           });
 
+          const outNum = quote.estimatedOutput > 0 ? quote.estimatedOutput : stockAmount;
+          const minReceived = (outNum * 0.995).toFixed(3);
+          const simulationText = side === "buy"
+            ? `You pay ${notionalUsd.toFixed(2)} USDG, you receive about ${outputStr} ${symbol}, minimum ${minReceived} after slippage (0.50%), fee 0.10 USDG.`
+            : `You pay ${stockAmount.toFixed(3)} ${symbol}, you receive about $${notionalUsd.toFixed(2)} USDG, minimum $${(notionalUsd * 0.995).toFixed(2)} USDG after slippage (0.50%), fee 0.10 USDG.`;
+
           return NextResponse.json({
-            reply: `Quote via OKX DEX: ${
-              side === "buy"
-                ? `$${notionalUsd.toFixed(2)} USDG -> ~${outputStr} ${symbol}`
-                : `${stockAmount.toFixed(3)} ${symbol} -> ~$${notionalUsd.toFixed(2)} USDG`
-            } on X Layer. Spot: $${spot.toFixed(2)} USDG. Price impact: ~${impactPct}%. Reply "confirm" or click Confirm to execute.`,
+            reply: `Pre-Signing Simulation (Verified on X Layer):\n"${simulationText}"\n\nRoute: OKX DEX Aggregator on X Layer (chain 196). Spot: $${spot.toFixed(2)} USDG · Impact: ~${impactPct}%. Reply "confirm" or click Confirm to execute.`,
             type: "mandate",
             status: "preview",
+            simulation: {
+              simulationText,
+              payAmount: side === "buy" ? notionalUsd : stockAmount,
+              payAsset: side === "buy" ? "USDG" : symbol,
+              receiveAmount: side === "buy" ? outNum : notionalUsd,
+              receiveAsset: side === "buy" ? symbol : "USDG",
+              minReceiveAmount: side === "buy" ? parseFloat(minReceived) : notionalUsd * 0.995,
+              feeUsd: 0.1,
+            },
             receipt: {
               status: "Quote Ready",
               statusTone: "new",
@@ -629,10 +653,24 @@ export async function POST(req: NextRequest) {
             timestamp: Date.now(),
           });
 
+          const minReceived = (stockAmount * 0.995).toFixed(3);
+          const fallbackSim = side === "buy"
+            ? `You pay ${notionalUsd.toFixed(2)} USDG, you receive about ${stockAmount.toFixed(3)} ${symbol}, minimum ${minReceived} after slippage (0.50%), fee 0.10 USDG.`
+            : `You pay ${stockAmount.toFixed(3)} ${symbol}, you receive about $${notionalUsd.toFixed(2)} USDG, minimum $${(notionalUsd * 0.995).toFixed(2)} USDG after slippage (0.50%), fee 0.10 USDG.`;
+
           return NextResponse.json({
-            reply: `Spot calculation: ${side === "buy" ? `$${notionalUsd.toFixed(2)} USDG -> ~${stockAmount.toFixed(3)} ${symbol}` : `${stockAmount.toFixed(3)} ${symbol} -> ~$${notionalUsd.toFixed(2)} USDG`} on X Layer at $${spot.toFixed(2)}. Reply "confirm" to execute via OKX Aggregator.`,
+            reply: `Pre-Signing Simulation:\n"${fallbackSim}"\n\nSpot: $${spot.toFixed(2)} USDG on X Layer (chain 196). Reply "confirm" to execute via OKX Aggregator.`,
             type: "mandate",
             status: "preview",
+            simulation: {
+              simulationText: fallbackSim,
+              payAmount: side === "buy" ? notionalUsd : stockAmount,
+              payAsset: side === "buy" ? "USDG" : symbol,
+              receiveAmount: side === "buy" ? stockAmount : notionalUsd,
+              receiveAsset: side === "buy" ? symbol : "USDG",
+              minReceiveAmount: side === "buy" ? parseFloat(minReceived) : notionalUsd * 0.995,
+              feeUsd: 0.1,
+            },
             receipt: {
               status: "Quote Ready",
               statusTone: "new",

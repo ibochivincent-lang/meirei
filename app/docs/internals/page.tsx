@@ -102,7 +102,7 @@ export default function InternalsPage() {
                   </div>
                   <p className="font-bold text-white text-sm">OKX DEX Router</p>
                   <ul className="text-zinc-400 space-y-1 text-[11px]">
-                    <li>• 8 Allowlisted xStocks</li>
+                    <li>• 12 Allowlisted xStocks &amp; ETFs</li>
                     <li>• Multi-Pool Aggregation</li>
                     <li>• Sponsored Paymaster Gas</li>
                     <li>• Real-Time Tx Explorer Link</li>
@@ -170,17 +170,17 @@ subject to:
             </p>
           </section>
 
-          {/* Zero-Database Architecture */}
+          {/* Dual State Architecture */}
           <section className="space-y-4 rounded-2xl border border-ink-200 dark:border-surface-200 bg-white dark:bg-surface-100 p-6 sm:p-8 shadow-xs">
-            <h2 className="font-display text-2xl font-bold text-ink-950 dark:text-ink-50">3. Zero-Database In-Memory State &amp; Cryptographic Enclaves</h2>
+            <h2 className="font-display text-2xl font-bold text-ink-950 dark:text-ink-50">3. Dual State Architecture: Ephemeral Redis &amp; Durable Supabase</h2>
             <p className="text-ink-700 dark:text-ink-300 leading-relaxed">
-              Meirei is engineered with a strict zero-database requirement. All user identity derivation, rate-limiting buckets, idempotency hashes, and 2FA challenge nonces reside in deterministic in-memory caches and client-side WebAuthn hardware enclaves.
+              Meirei cleanly separates ephemeral high-frequency security state from durable user identity records:
             </p>
             <ul className="list-disc pl-6 space-y-2 text-sm text-ink-700 dark:text-ink-300">
-              <li><strong>Deterministic User Profiles:</strong> User identities are derived from verified email and messaging channel identifiers using SHA-256 digests.</li>
-              <li><strong>Zero Server-Held Private Keys:</strong> Transactions are signed client-side via WebAuthn hardware passkeys or user-connected Web3 wallets.</li>
+              <li><strong>Ephemeral Security State (Upstash Redis):</strong> Account freeze flags (<code>SET freeze:&#123;profileId&#125; 1</code>), atomic idempotency locks (<code>SET idem:&#123;hash&#125; 1 NX EX 86400</code>), sliding-window rate limit buckets, and HMAC-SHA256 OTP challenges bound to calldata digests.</li>
+              <li><strong>Durable Identity &amp; Audit State (Supabase):</strong> Persists the non-financial mapping between verified chat handles (WhatsApp, Telegram, email) and public X Layer EVM wallet addresses, alongside immutable transaction execution audit logs.</li>
+              <li><strong>Zero Server-Held Private Keys:</strong> Transactions are signed client-side via standard EOA wallets (OKX Wallet, MetaMask). Server-held private keys are strictly prohibited.</li>
               <li><strong>Live On-Chain State:</strong> Balances, allowances, and swap execution receipts are queried and verified directly against OKX X Layer Mainnet (Chain ID 196).</li>
-              <li><strong>In-Memory Idempotency:</strong> Webhook deliveries and trade requests maintain short-lived cryptographic hash sets to prevent duplicate operations.</li>
             </ul>
           </section>
 

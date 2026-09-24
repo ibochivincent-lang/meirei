@@ -15,7 +15,7 @@ export const FAQS: FaqItem[] = [
     id: "what-can-i-trade",
     question: "What stocks and assets can I trade?",
     answer:
-      "You can trade allowlisted tokenized stocks on X Layer including AAPLx (Apple), NVDAx (NVIDIA), MSFTx (Microsoft), GOOGLx (Alphabet), AMZNx (Amazon), METAx (Meta), and TSLAx (Tesla), settled in USDG and USDC. Unlisted tokens and memecoins are strictly blocked for your safety.",
+      "You can trade allowlisted tokenized stocks and ETFs on X Layer including AAPLx (Apple), NVDAx (NVIDIA), MSFTx (Microsoft), GOOGLx (Alphabet), AMZNx (Amazon), METAx (Meta), TSLAx (Tesla), COINx (Coinbase), SPYx (S&P 500 ETF), QQQx (Nasdaq-100 ETF), AMDx (AMD), and CRWDx (CrowdStrike), settled in USDG and USDC. Unlisted tokens and memecoins are strictly blocked for your safety.",
   },
   {
     id: "channels",
@@ -25,9 +25,9 @@ export const FAQS: FaqItem[] = [
   },
   {
     id: "login-passkey",
-    question: "How do I access my personalized account without a passkey?",
+    question: "How does non-custodial wallet signing work?",
     answer:
-      "Zero passkeys, zero codes, and zero seed phrases. Your verified chat identity on WhatsApp, Telegram, or Instagram automatically maps to your personalized OKX Onchain OS smart account on X Layer (chain 196).",
+      "Meirei is strictly non-custodial. When you set an investment mandate via chat, Meirei calculates the rebalance route and calldata, then sends an Approve link. You review and sign directly in your OKX Wallet or MetaMask. Your private keys never leave your device.",
   },
   {
     id: "how-it-works",

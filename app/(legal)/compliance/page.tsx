@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "International Regulatory Compliance & Standards — Meirei",
+  title: "Regulatory Compliance Architecture — Meirei",
   description:
-    "Comprehensive disclosure of Meirei's adherence to international standards, including FATF Travel Rule, OFAC sanctions screening, tiered KYC/AML policies, and non-custodial smart contract custody on X Layer.",
+    "Honest breakdown of Meirei's compliance architecture on OKX X Layer: what is implemented today, what is planned on the roadmap, and what is strictly out of scope.",
 };
 
 export default function CompliancePage() {
@@ -12,238 +12,162 @@ export default function CompliancePage() {
     <div className="space-y-12">
       <header className="space-y-4 border-b border-ink-200/60 pb-8">
         <p className="font-mono text-xs uppercase tracking-widest text-accent-600">
-          Regulatory Architecture
+          Regulatory Architecture & Disclosures
         </p>
         <h1 className="font-display text-4xl font-normal text-ink-900 sm:text-5xl">
-          International Compliance & Standards
+          Compliance & Operational Scope
         </h1>
         <p className="text-sm text-ink-500">
-          Effective Date: September 17, 2026 · Author: IboTV · Version 2.4
+          Effective Date: September 2026 · Author: IboTV · Network: OKX X Layer (Chain ID 196)
         </p>
       </header>
 
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl text-ink-900">
-          1. Global Regulatory Framework Overview
-        </h2>
-        <div className="legal-prose space-y-3">
+      <section className="space-y-6">
+        <div className="rounded-xl border border-ink-200 bg-surface-50 p-6 text-sm text-ink-700">
           <p>
-            Meirei operates as an autonomous, AI-native investment mandate routing agent
-            deployed on OKX Chain (X Layer, Chain ID 196). We are committed to strict
-            compliance with international regulatory standards, financial crime prevention
-            protocols, and non-custodial security principles.
-          </p>
-          <p>
-            Our compliance architecture is designed in alignment with guidelines from the
-            Financial Action Task Force (FATF), the United States Office of Foreign Assets Control
-            (OFAC), the European Union Anti-Money Laundering Directives (AMLD 5/6), the UK Financial
-            Conduct Authority (FCA) guidance on automated financial advisory algorithms, and global
-            data protection mandates (EU GDPR and NDPA).
+            Meirei operates as an AI-assisted interface for executing self-directed investment mandates
+            on OKX X Layer (Chain ID 196). Below is an honest, verified account of our technical
+            controls, roadmap milestones, and operational boundaries.
           </p>
         </div>
-      </section>
 
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl text-ink-900">
-          2. Non-Custodial Architecture & Private Key Governance
-        </h2>
-        <div className="legal-prose space-y-3">
-          <p>
-            <strong>Strict Non-Custodial Principle:</strong> Meirei does not hold, manage,
-            store, or have access to user private keys, recovery seed phrases, or unencrypted
-            signing material at any point in its operation.
-          </p>
-          <ul>
-            <li>
-              <strong>Key Storage Location:</strong> All cryptographic signing keys remain
-              exclusively within the user&apos;s own OKX Layer wallet, WebAuthn Passkey secure enclave,
-              or self-hosted signer.
-            </li>
-            <li>
-              <strong>Database Separation:</strong> The Meirei database only maintains a linkage
-              between the user&apos;s verified email (the universal identity anchor across WhatsApp,
-              Telegram, and Web sessions) and their public X Layer EVM address (e.g., 0x...).
-            </li>
-            <li>
-              <strong>Smart Contract Execution:</strong> Every asset allocation, swap, or rebalance
-              requires explicit cryptographic authorization via signed ERC-4337 UserOperations or
-              2FA challenge proofs. Meirei algorithms cannot execute unilateral transfers or withdraw
-              funds to unauthorized external destinations.
-            </li>
-          </ul>
+        {/* Section 1: Implemented Today */}
+        <div className="space-y-4">
+          <h2 className="font-display text-2xl text-ink-900 border-b border-ink-200/60 pb-2">
+            1. What is Implemented Today
+          </h2>
+          <div className="legal-prose space-y-4 text-sm text-ink-800">
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Non-Custodial Client-Side Signing</h3>
+              <p>
+                All on-chain transactions are signed exclusively on the client side through standard EOA
+                wallets (OKX Wallet, MetaMask, or WalletConnect). Meirei servers never generate, store,
+                or transmit private keys, seed phrases, or unencrypted signing credentials.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Sanctions Screening Prior to Quote Generation</h3>
+              <p>
+                Every wallet address is screened against the Chainalysis Sanctions Oracle and known OFAC
+                Specially Designated Nationals (SDN) registries before any swap quote, calldata, or mandate
+                is synthesized. Flagged addresses are immediately denied service.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Architectural LLM Boundary Enforcement</h3>
+              <p>
+                Natural language commands are strictly parsed into typed Zod intent schemas with bounded
+                slippage, hard spend caps, and an immutable 10-token asset allowlist. The language model
+                has zero discretionary authority to route to unlisted contracts or execute transfers.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Ephemeral Security State in Redis</h3>
+              <p>
+                High-frequency security state (account freezes, atomic idempotency deduplication with NX locks,
+                and sliding-window rate limiting) is stored in Upstash Redis. Account freezes immediately block
+                quote generation and message processing.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Durable Identity Linkage in Supabase</h3>
+              <p>
+                Supabase is utilized strictly for durable application state: mapping verified communication
+                channels (email, WhatsApp, Telegram) to public EVM wallet addresses and maintaining audit
+                trails. No financial secrets reside in the database.
+              </p>
+            </div>
+          </div>
         </div>
-      </section>
 
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl text-ink-900">
-          3. Know Your Customer (KYC) & Verification Tiers
-        </h2>
-        <div className="legal-prose space-y-3">
-          <p>
-            To balance financial inclusion with global anti-money laundering requirements, Meirei
-            implements a risk-based, tiered verification framework:
-          </p>
-          <div className="overflow-x-auto rounded-xl border border-ink-200">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-surface-100 text-ink-900 font-semibold border-b border-ink-200">
-                <tr>
-                  <th className="p-3">Tier Level</th>
-                  <th className="p-3">Verification Required</th>
-                  <th className="p-3">24-Hour Spending Cap</th>
-                  <th className="p-3">Eligible Capabilities</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-200/60 bg-white text-ink-700">
-                <tr>
-                  <td className="p-3 font-semibold text-ink-900">Tier 0 (Read-Only)</td>
-                  <td className="p-3">Public session / No credentials</td>
-                  <td className="p-3 font-mono">$0 USDG</td>
-                  <td className="p-3">Market research, catalyst inspection, chart visualization</td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-semibold text-ink-900">Tier 1 (Standard)</td>
-                  <td className="p-3">Verified Email + Multi-Channel 2FA (OTP/Passkey)</td>
-                  <td className="p-3 font-mono">$2,500 USDG / day</td>
-                  <td className="p-3">Simple Mode trades, natural language mandates, social bot</td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-semibold text-ink-900">Tier 2 (Advanced)</td>
-                  <td className="p-3">Government ID + Automated Liveness + Address</td>
-                  <td className="p-3 font-mono">$25,000 USDG / day</td>
-                  <td className="p-3">Institutional Advisory Studio, momentum rebalancing, API webhooks</td>
-                </tr>
-                <tr>
-                  <td className="p-3 font-semibold text-ink-900">Tier 3 (Institutional)</td>
-                  <td className="p-3">Corporate Entity KYB + UBO Review + Source of Funds</td>
-                  <td className="p-3 font-mono">Custom / $250,000+ USDG</td>
-                  <td className="p-3">Unlimited mandate band execution, custom liquidity routes</td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Section 2: What is Planned */}
+        <div className="space-y-4 pt-6">
+          <h2 className="font-display text-2xl text-ink-900 border-b border-ink-200/60 pb-2">
+            2. What is Planned (Roadmap)
+          </h2>
+          <div className="legal-prose space-y-4 text-sm text-ink-800">
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">ERC-4337 Account Abstraction & Passkey Signers</h3>
+              <p>
+                Transitioning from direct EOA signing to ERC-4337 smart accounts governed by WebAuthn
+                (P-256) passkey signers. This will enable session keys with contract-level spend caps,
+                removing seed phrases without introducing custody.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Cryptographic On-Chain Mandate Guardrails</h3>
+              <p>
+                Enforcing drawdown breakers, single-asset maximum weights, and daily expenditure caps
+                directly inside smart contract session-key validators rather than relying exclusively on
+                off-chain middleware verification.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Jurisdictional Licensing & Securities Legal Review</h3>
+              <p>
+                Engaging legal counsel to establish jurisdictional clarity regarding retail access to
+                synthetic equity derivatives (xStocks) across key distribution markets, ensuring full
+                regulatory alignment before expanding fiat on-ramps.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Automated Travel Rule & Institutional KYB</h3>
+              <p>
+                Integrating standardized VASP-to-VASP messaging protocols and automated identity
+                verification for transactions exceeding applicable regulatory thresholds.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: What is Out of Scope */}
+        <div className="space-y-4 pt-6">
+          <h2 className="font-display text-2xl text-ink-900 border-b border-ink-200/60 pb-2">
+            3. What is Out of Scope
+          </h2>
+          <div className="legal-prose space-y-4 text-sm text-ink-800">
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Custodial Asset Holding</h3>
+              <p>
+                Meirei does not hold, pool, or custody user assets, stablecoins, or equity tokens. Users
+                retain complete and sole custody of their private keys and assets at all times.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Internal Exchange Matching & Market Making</h3>
+              <p>
+                Meirei is not an exchange, broker-dealer, or market maker. All swaps and rebalancing operations
+                route through decentralized automated market makers and aggregators on X Layer (Chain ID 196).
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-ink-900 text-base">Discretionary Investment Management</h3>
+              <p>
+                Meirei does not exercise independent discretion over funds. The software acts purely as an
+                automated execution translator for explicit, user-defined mandate rules.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl text-ink-900">
-          4. FATF Travel Rule Compliance (Recommendation 16)
-        </h2>
-        <div className="legal-prose space-y-3">
-          <p>
-            In compliance with Financial Action Task Force (FATF) Recommendation 16 for Virtual
-            Asset Service Providers (VASPs) and cross-border transactions:
-          </p>
-          <ul>
-            <li>
-              Transactions exceeding 1,000 USDG or national thresholds transmit originator and
-              beneficiary metadata through standardized, encrypted inter-VASP protocols.
-            </li>
-            <li>
-              Counterparty wallet addresses are screened against known unhosted wallet criteria and
-              verified institutional liquidity pools before order settlement on X Layer.
-            </li>
-            <li>
-              Audit logs of transactional metadata are immutably retained in tamper-evident storage
-              for five (5) years in compliance with international statute of limitations.
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl text-ink-900">
-          5. Sanctions Screening & Prohibited Jurisdictions
-        </h2>
-        <div className="legal-prose space-y-3">
-          <p>
-            Meirei employs automated, real-time sanctions screening across all incoming messaging
-            interactions and smart contract interactions. We cross-reference addresses and counterparty
-            data against:
-          </p>
-          <ul>
-            <li>US Office of Foreign Assets Control (OFAC) Specially Designated Nationals (SDN) list.</li>
-            <li>United Nations Security Council Sanctions Committee lists.</li>
-            <li>European Union Consolidated Financial Sanctions List.</li>
-            <li>UK HM Treasury Sanctions List.</li>
-          </ul>
-          <p>
-            Users located in, organized under, or resident of sanctioned jurisdictions (including Cuba,
-            Iran, North Korea, Syria, and restricted regions of Ukraine) are strictly barred from
-            initiating mandate executions. Any flagged transaction will be immediately aborted.
-          </p>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl text-ink-900">
-          6. Age Verification & Legal Capacity
-        </h2>
-        <div className="legal-prose space-y-3">
-          <p>
-            Meirei services are strictly prohibited for minors. By deploying a mandate or connecting
-            a chat channel (WhatsApp, Telegram, Instagram) to Meirei, you certify under penalty of
-            perjury that:
-          </p>
-          <ul>
-            <li>You are at least eighteen (18) years of age, or the legal age of majority in your jurisdiction.</li>
-            <li>You possess full legal capacity to enter into binding financial arrangements.</li>
-            <li>You are the authorized holder of the linked email address and non-custodial smart wallet.</li>
-          </ul>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl text-ink-900">
-          7. Data Protection, Privacy & GDPR Rights
-        </h2>
-        <div className="legal-prose space-y-3">
-          <p>
-            Meirei is engineered according to the principle of Privacy by Design:
-          </p>
-          <ul>
-            <li>
-              <strong>Data Minimization:</strong> We never harvest extraneous telemetry. Only the
-              user&apos;s verified email, messaging channel identifier, and public wallet address are
-              stored for routing purposes.
-            </li>
-            <li>
-              <strong>Right to Erasure (GDPR Art. 17):</strong> Users may submit an off-chain data
-              deletion request at any time by contacting{" "}
-              <a href="mailto:privacy@meirei.app" className="legal-link">
-                privacy@meirei.app
-              </a>. All associated messaging logs and device fingerprints will be purged within thirty (30) days.
-            </li>
-            <li>
-              <strong>Zero Data Monetization:</strong> We do not sell, rent, or commercialize user
-              data, trading prompts, or portfolio balances to third-party advertisers.
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="font-display text-2xl text-ink-900">
-          8. Contact Compliance Officers
-        </h2>
-        <div className="legal-prose space-y-3">
-          <p>
-            For compliance inquiries, legal process service, or law enforcement coordination, contact
-            the Meirei Compliance and Legal Operations Department:
-          </p>
-          <div className="rounded-xl border border-ink-200 bg-surface-100 p-4 font-mono text-xs text-ink-800 space-y-1">
-            <p><strong>Compliance Email:</strong> compliance@meirei.app</p>
-            <p><strong>Data Protection Officer:</strong> dpo@meirei.app</p>
-            <p><strong>Chief Architect:</strong> IboTV</p>
-            <p><strong>Network:</strong> OKX Chain / X Layer (Chain ID 196)</p>
-          </div>
-          <p>
-            Related documentation:{" "}
-            <Link href="/terms" className="legal-link">Terms of Service</Link> ·{" "}
-            <Link href="/privacy" className="legal-link">Privacy Policy</Link> ·{" "}
-            <Link href="/cookies" className="legal-link">Cookie Policy</Link>
-          </p>
-        </div>
-      </section>
+      <footer className="border-t border-ink-200/60 pt-6 text-xs text-ink-500">
+        <p>
+          Related legal documentation:{" "}
+          <Link href="/terms" className="underline hover:text-ink-900">Terms of Service</Link> ·{" "}
+          <Link href="/privacy" className="underline hover:text-ink-900">Privacy Policy</Link> ·{" "}
+          <Link href="/cookies" className="underline hover:text-ink-900">Cookie Policy</Link>
+        </p>
+      </footer>
     </div>
   );
 }

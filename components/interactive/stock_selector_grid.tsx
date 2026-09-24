@@ -162,6 +162,74 @@ export const STOCKS: StockItem[] = [
       </svg>
     ),
   },
+  {
+    symbol: "SPYx",
+    name: "S&P 500 ETF",
+    price: "$572.50",
+    isLive: true,
+    color: "#1E3A8A",
+    change24h: "+0.78%",
+    high24h: "$574.80",
+    low24h: "$569.20",
+    volume24h: "$4.12M USDG",
+    chartPoints: [569.2, 570.1, 571.4, 570.8, 572.0, 571.5, 573.1, 574.8, 573.6, 572.5],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M4 18h16v2H4v-2zm0-5h16v2H4v-2zm0-5h16v2H4V8zm0-5h16v2H4V3z" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "QQQx",
+    name: "Invesco QQQ",
+    price: "$495.20",
+    isLive: true,
+    color: "#6D28D9",
+    change24h: "+1.24%",
+    high24h: "$498.40",
+    low24h: "$491.10",
+    volume24h: "$3.85M USDG",
+    chartPoints: [491.1, 492.5, 494.0, 493.2, 495.8, 497.1, 496.5, 498.4, 496.9, 495.2],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "AMDx",
+    name: "AMD",
+    price: "$156.40",
+    isLive: true,
+    color: "#ED1C24",
+    change24h: "+2.85%",
+    high24h: "$159.20",
+    low24h: "$153.50",
+    volume24h: "$1.92M USDG",
+    chartPoints: [153.5, 154.2, 155.6, 154.8, 156.9, 158.1, 157.4, 159.2, 157.8, 156.4],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+      </svg>
+    ),
+  },
+  {
+    symbol: "CRWDx",
+    name: "CrowdStrike",
+    price: "$318.20",
+    isLive: true,
+    color: "#DC2626",
+    change24h: "+1.65%",
+    high24h: "$322.00",
+    low24h: "$314.10",
+    volume24h: "$1.45M USDG",
+    chartPoints: [314.1, 315.6, 317.0, 316.2, 318.5, 320.1, 319.4, 322.0, 320.5, 318.2],
+    logo: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
+        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+      </svg>
+    ),
+  },
 ];
 
 interface StockSelectorGridProps {

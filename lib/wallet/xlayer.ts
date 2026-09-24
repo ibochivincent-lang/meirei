@@ -69,7 +69,7 @@ export interface XLayerWalletSnapshot {
 }
 
 /** Standard allowlist definitions on X Layer Mainnet */
-const XLAYER_MONITORED_TOKENS = [
+export const XLAYER_MONITORED_TOKENS = [
   { symbol: "USDG", address: "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8", decimals: 6, name: "Global Dollar", isCash: true },
   { symbol: "USDC", address: "0xb6ceceab302e2e4948951ee7843fc24e92933061", decimals: 6, name: "USD Coin", isCash: true },
   { symbol: "NVDAx", address: "0xc845b2894dbddd03858fd2d643b4ef725fe0849d", decimals: 18, name: "NVIDIA xStock", isCash: false },
@@ -79,10 +79,15 @@ const XLAYER_MONITORED_TOKENS = [
   { symbol: "GOOGLx", address: "0xe92f673ca36c5e2efd2de7628f815f84807e803f", decimals: 18, name: "Alphabet xStock", isCash: false },
   { symbol: "AMZNx", address: "0x3557ba345b01efa20a1bddc61f573bfd87195081", decimals: 18, name: "Amazon.com xStock", isCash: false },
   { symbol: "METAx", address: "0x96702be57cd9777f835117a809c7124fe4ec989a", decimals: 18, name: "Meta xStock", isCash: false },
+  { symbol: "COINx", address: "0x1d5338302f3dd78f7aa9580bc53c4d445ec6ba25", decimals: 18, name: "Coinbase xStock", isCash: false },
+  { symbol: "SPYx", address: "0x42f7461c360980ff62c3e1db6aa5229c15d48721", decimals: 18, name: "S&P 500 ETF xStock", isCash: false },
+  { symbol: "QQQx", address: "0x71c50b69107cc6ea56795f54070a7f1a8c9e5033", decimals: 18, name: "Invesco QQQ xStock", isCash: false },
+  { symbol: "AMDx", address: "0x89e13b8602b9ff9b867cfae4f8d55d71fa8430e2", decimals: 18, name: "Advanced Micro Devices xStock", isCash: false },
+  { symbol: "CRWDx", address: "0x3a4b69c5819772bf258b3506c74ad64a787965df", decimals: 18, name: "CrowdStrike xStock", isCash: false },
 ];
 
 /** Standard fallback spot reference prices for USD valuation */
-const REFERENCE_PRICES: Record<string, number> = {
+export const REFERENCE_PRICES: Record<string, number> = {
   USDG: 1.0,
   USDC: 1.0,
   NVDAx: 178.4,
@@ -92,6 +97,11 @@ const REFERENCE_PRICES: Record<string, number> = {
   GOOGLx: 205.1,
   AMZNx: 228.7,
   METAx: 742.3,
+  COINx: 245.5,
+  SPYx: 572.5,
+  QQQx: 495.2,
+  AMDx: 156.4,
+  CRWDx: 318.2,
 };
 
 /**

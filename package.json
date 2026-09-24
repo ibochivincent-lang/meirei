@@ -22,7 +22,7 @@
     "bot:chat": "tsx src/cli/bot_chat.ts",
     "bot:poll": "tsx src/cli/telegram_poller.ts",
     "bot:webhook": "tsx src/cli/set_webhook.ts",
-    "test:webhooks": "node scratch/test_webhooks.js"
+    "test:webhooks": "node scripts/test_webhooks.js"
   },
   "dependencies": {
     "@simplewebauthn/browser": "^13.3.0",
@@ -45,6 +45,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "fast-check": "^4.10.2",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^3.0.7"

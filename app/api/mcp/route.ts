@@ -65,6 +65,30 @@ const TOKEN_REGISTRY: Record<
     address: "0x1d5338302f3dd78f7aa9580bc53c4d445ec6ba25",
     decimals: 18,
   },
+  SPYx: {
+    name: "S&P 500 ETF Tokenized Asset",
+    price: 572.5,
+    address: "0x42f7461c360980ff62c3e1db6aa5229c15d48721",
+    decimals: 18,
+  },
+  QQQx: {
+    name: "Invesco QQQ Nasdaq-100 Tokenized Asset",
+    price: 495.2,
+    address: "0x71c50b69107cc6ea56795f54070a7f1a8c9e5033",
+    decimals: 18,
+  },
+  AMDx: {
+    name: "Advanced Micro Devices Tokenized Equity",
+    price: 156.4,
+    address: "0x89e13b8602b9ff9b867cfae4f8d55d71fa8430e2",
+    decimals: 18,
+  },
+  CRWDx: {
+    name: "CrowdStrike Holdings Tokenized Equity",
+    price: 318.2,
+    address: "0x3a4b69c5819772bf258b3506c74ad64a787965df",
+    decimals: 18,
+  },
 };
 
 const MCP_TOOLS = [
@@ -261,15 +285,15 @@ export async function POST(req: NextRequest) {
 
       switch (toolName) {
         case "meirei_xstock_quote": {
-          const ticker = (args.ticker || "").toUpperCase();
-          const info = TOKEN_REGISTRY[ticker];
+          const rawTicker = (args.ticker || "").trim();
+          const info = Object.entries(TOKEN_REGISTRY).find(([k]) => k.toUpperCase() === rawTicker.toUpperCase())?.[1];
           if (!info) {
             return NextResponse.json({
               jsonrpc: jsonrpc || "2.0",
               id,
               error: {
                 code: -32602,
-                message: `Unknown asset ticker: ${ticker}. Allowlisted: ${Object.keys(TOKEN_REGISTRY).join(", ")}`,
+                message: `Unknown asset ticker: ${rawTicker}. Allowlisted: ${Object.keys(TOKEN_REGISTRY).join(", ")}`,
               },
             });
           }
@@ -286,7 +310,7 @@ export async function POST(req: NextRequest) {
                   type: "text",
                   text: JSON.stringify(
                     {
-                      ticker,
+                      ticker: rawTicker,
                       name: info.name,
                       spot_price_usdg: info.price,
                       contract_address: info.address,

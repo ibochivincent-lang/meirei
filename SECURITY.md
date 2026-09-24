@@ -11,31 +11,35 @@ Please do not open a public issue for security vulnerabilities. Report privately
 
 The `main` branch is the actively supported surface.
 
-## Non-Custodial Security Architecture
+## Non-Custodial Architecture & Signing Model
 
 Meirei is strictly **non-custodial**:
 
-- **Zero Server-Held Keys**: Private keys and seed phrases are never generated, ingested, or stored on servers.
-- **Client-Side Hardware Signing**: Transaction signatures are performed directly in user client environments via WebAuthn hardware passkeys (Face ID, Touch ID, security keys) or through connected Web3 wallets (OKX Wallet, MetaMask).
-- **OKX Onchain OS Protocol Bridge**: Swaps and portfolio rebalances execute on OKX X Layer (Chain ID 196) via the OKX DEX Aggregator router using verified contract allowlists.
+- **Live Implementation (Option A - EOA Signing)**: All transactions are signed client-side through standard EOA wallets (OKX Wallet, MetaMask, or WalletConnect). Private keys never leave the user's browser or device. The server acts purely as a deterministic solver synthesizing transaction parameters.
+- **Phase 2 Roadmap (Option B - ERC-4337 Smart Accounts)**: Transitioning to ERC-4337 smart accounts governed by P-256 WebAuthn passkeys with on-chain session key permissions, daily spending caps, and cryptographic calldata validation.
+- **Zero Server-Held Keys**: Meirei servers never generate, custody, or access private keys or recovery seed phrases.
 
-## Two-Factor Authorization (2FA)
+## State Architecture
 
-High-impact transactions require explicit two-factor confirmation:
+Meirei clearly separates ephemeral and durable state:
 
-- **2FA OTP Challenge**: Executing swaps or deploying active mandates requires a 6-digit cryptographic OTP challenge.
-- **HMAC-SHA256 Session Tokens**: Verified OTP challenges issue short-lived (10-minute validity horizon) HMAC-SHA256 authorization tokens.
-- **Constant-Time Verification**: All security tokens and challenge codes are validated using constant-time comparison (`crypto.timingSafeEqual`) to prevent timing side-channel attacks.
-- **Rate Limiting & Tiered Throttle**: In-memory token-bucket rate limiters enforce distinct tiers for read queries versus trade execution intents.
+- **Ephemeral Security State (Upstash Redis)**:
+  - **Account Freeze**: `SET freeze:{profileId} 1` with no expiry, cleared only upon verified `/unfreeze`.
+  - **Atomic Idempotency**: `SET idem:{hash} 1 NX EX 86400` prevents webhook replay races.
+  - **Rate Limiting**: Sliding window on Redis sorted sets defending against automated brute-force attempts.
+  - **HMAC OTP State**: Stored as `HMAC-SHA256(server_secret, challengeId || code || tradeDigest)` preventing offline dictionary attacks against Redis dumps.
+- **Durable Identity State (Supabase)**:
+  - Stores non-financial records: mapping verified user communication channels (email, WhatsApp, Telegram) to public EVM wallet addresses.
+  - Retains immutable audit trails for dispute resolution.
 
-## Emergency Circuit Breakers
+## Two-Factor Authorization (2FA) & Cryptographic OTP
 
-- **In-Chat Freeze**: Users can freeze their trading profile from any channel (Telegram, WhatsApp, or Web) by sending `/freeze`.
-- **Immediate Embargo**: Freezing invalidates all active 2FA authorization tokens and prevents any on-chain mandate executions.
-- **Cryptographic Unfreeze**: Unfreezing requires providing the specific 6-digit recovery code issued at freeze time (`/unfreeze <code>`).
+- **Transaction Parameter Binding**: Every OTP is cryptographically bound to the exact transaction parameters (asset, notional amount, trade calldata hash). An OTP issued for a $100 purchase cannot approve an alternate or expanded trade.
+- **Lockout & Cooldown**: Enforces a strict 3-attempt lockout. After 3 invalid attempts, a 15-minute profile cooldown is enforced in Redis (`cooldown:otp:{id}`).
+- **True Second Factor**: On-chain wallet signatures over verified calldata remain the ultimate cryptographic authorization for all fund movements.
 
-## Network & Asset Integrity
+## Sanctions & Asset Integrity
 
-- **Strict Allowlist**: Trading is restricted to allowlisted tokenized equities on OKX X Layer (`NVDAx`, `AAPLx`, `MSFTx`, `METAx`, `GOOGLx`, `AMZNx`, `TSLAx`) and native stablecoins (`USDG`, `USDC`).
-- **Slippage Bounds**: Max slippage bounds are enforced on swap quotes to protect against front-running and illiquidity.
-- **Idempotency & Replay Protection**: Inbound webhook messages and trade instructions are tracked using cryptographic operation hashes to eliminate duplicate execution.
+- **Pre-Quote Sanctions Screening**: Every wallet address is verified against the Chainalysis Sanctions Oracle and known OFAC Specially Designated Nationals (SDN) lists before any quote or calldata is generated.
+- **Strict Allowlist**: Trading is restricted to allowlisted demo tokenized equities and ETFs on OKX X Layer (`AAPLx`, `MSFTx`, `NVDAx`, `GOOGLx`, `AMZNx`, `METAx`, `TSLAx`, `COINx`, `SPYx`, `QQQx`, `AMDx`, `CRWDx`) and cash stablecoins (`USDG`, `USDC`).
+- **Slippage Bounds**: Max slippage bounds are enforced to protect users from front-running and execution drift.

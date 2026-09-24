@@ -16,12 +16,19 @@ export const ALLOWLIST: AllowlistEntry[] = [
   { symbol: "METAx", address: "0x96702be57cd9777f835117a809c7124fe4ec989a", decimals: 18, name: "Meta xStock" },
   { symbol: "TSLAx", address: "0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0", decimals: 18, name: "Tesla xStock" },
   { symbol: "COINx", address: "0x1d5338302f3dd78f7aa9580bc53c4d445ec6ba25", decimals: 18, name: "Coinbase xStock" },
+  { symbol: "SPYx", address: "0x42f7461c360980ff62c3e1db6aa5229c15d48721", decimals: 18, name: "S&P 500 ETF xStock" },
+  { symbol: "QQQx", address: "0x71c50b69107cc6ea56795f54070a7f1a8c9e5033", decimals: 18, name: "Invesco QQQ xStock" },
+  { symbol: "AMDx", address: "0x89e13b8602b9ff9b867cfae4f8d55d71fa8430e2", decimals: 18, name: "Advanced Micro Devices xStock" },
+  { symbol: "CRWDx", address: "0x3a4b69c5819772bf258b3506c74ad64a787965df", decimals: 18, name: "CrowdStrike xStock" },
   { symbol: "USDG", address: "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8", decimals: 6, name: "Global Dollar" },
   { symbol: "USDC", address: "0xb6ceceab302e2e4948951ee7843fc24e92933061", decimals: 6, name: "USD Coin" },
 ];
 
 /** Mag7 sleeve members. `GOOGx` does not exist on X Layer — the token is `GOOGLx`. */
 export const MAG7_SYMBOLS = ["AAPLx", "MSFTx", "NVDAx", "GOOGLx", "AMZNx", "METAx", "TSLAx"] as const;
+
+/** Broad Market and Tech ETF members available on X Layer. */
+export const ETF_SYMBOLS = ["SPYx", "QQQx"] as const;
 
 export const CASH_SYMBOLS: CashSymbol[] = ["USDG", "USDC"];
 
@@ -45,6 +52,16 @@ const SYMBOL_ALIASES: Record<string, string> = {
   COIN: "COINx",
   COINBASE: "COINx",
   COINX: "COINx",
+  SPY: "SPYx",
+  SP500: "SPYx",
+  "S&P500": "SPYx",
+  "S&P": "SPYx",
+  QQQ: "QQQx",
+  NASDAQ: "QQQx",
+  AMD: "AMDx",
+  ADVANCEDMICRODEVICES: "AMDx",
+  CRWD: "CRWDx",
+  CROWDSTRIKE: "CRWDx",
 };
 
 export const CHAIN_INDEX = 196;

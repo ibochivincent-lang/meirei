@@ -325,6 +325,10 @@ export const MOCK_PRICES: Record<string, number> = {
   METAx: 742.3,
   TSLAx: 412.6,
   COINx: 286.7,
+  SPYx: 572.5,
+  QQQx: 495.2,
+  AMDx: 156.4,
+  CRWDx: 318.2,
   USDG: 1,
   USDC: 1,
 };
@@ -412,6 +416,7 @@ export function mockQuote(leg: Leg, legIndex: number, from: AllowlistEntry, to: 
 
 const ESTIMATED_IMPACT_PERCENT: Record<string, number> = {
   AAPLx: 0.3, MSFTx: 0.25, NVDAx: 0.4, GOOGLx: 0.3, AMZNx: 0.35, METAx: 0.3, TSLAx: 0.5,
+  COINx: 0.4, SPYx: 0.15, QQQx: 0.2, AMDx: 0.35, CRWDx: 0.45,
   USDG: 0.05, USDC: 0.05,
 };
 
