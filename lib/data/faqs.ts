@@ -65,4 +65,22 @@ export const FAQS: FaqItem[] = [
     answer:
       "You can access the Emergency Security Portal from any web browser to freeze your account in two clicks. All automated mandates and trading activity pause immediately until you complete verified unfreeze.",
   },
+  {
+    id: "financial-inclusion",
+    question: "How does Meirei make investing accessible to everyone, young and old?",
+    answer:
+      "Meirei is built for radical financial inclusion. Rather than forcing users through intimidating DEX interfaces, seed phrases, and gas management, Meirei brings equity investing directly to social media apps where billions of people already spend their time. Both college students starting early and grandparents preserving wealth can simply send a message like 'Put $50 into AAPLx monthly'. You stay updated with automated weekly progress reports and remain in complete non-custodial control at all times.",
+  },
+  {
+    id: "no-extension-onboarding",
+    question: "Can I stay updated without connecting or installing a crypto wallet extension?",
+    answer:
+      "Yes! You do not need to install browser extensions or deal with confusing popups to start. Simply verify your identity by confirming your email or public wallet address in Telegram or WhatsApp. Meirei keeps your portfolio pipeline monitored and delivers automated weekly performance digests, PnL summaries, and allocation updates right to your chat. When you wish to sign transactions on-chain, you can execute via gasless session keys or review and sign client-side.",
+  },
+  {
+    id: "product-roadmap",
+    question: "What is Meirei's product roadmap from social media to a full mobile app?",
+    answer:
+      "Our roadmap progresses across four distinct phases: (1) Social-first onboarding and execution on Telegram (@MeireiXLayerBot) followed by WhatsApp, where users link identity via email/wallet with zero extension friction; (2) Conversational mandate execution with automated weekly progress digests and 1-word commands; (3) Institutional Web Terminal (/app) featuring Basic Mode, Advanced Mode with OKX AI skills, and EIP-2612 non-custodial permits; and (4) Native iOS and Android mobile apps with biometric WebAuthn/FaceID passkeys, instant fiat-to-USDG onramps, and push notifications.",
+  },
 ];

@@ -85,7 +85,7 @@ export function Hero() {
             variants={fadeUp(0.55)}
             className="mt-7 max-w-xl text-base md:text-xl leading-relaxed text-ink-700"
           >
-            Dollar-denominated equity investing by message designed for high-inflation economies. Automate simple mandates like &ldquo;$50 into AAPLx monthly&rdquo; on OKX X Layer with zero custodial risk.
+            Financial inclusion for everyone — old and young alike. We bring Wall Street equities directly to social media where billions already spend their time. Give an investment mandate from anywhere, receive automated weekly progress updates, and stay 100% in control on OKX X Layer.
           </motion.p>
 
           <motion.div
@@ -171,7 +171,7 @@ export function Hero() {
               variants={fadeUp(0.75)}
               className="mt-4 text-xs sm:text-sm text-ink-500"
             >
-              Same wallet either way, nothing to reconnect.
+              Stay updated simply with your email or wallet address — no complex wallet extensions needed.
             </motion.p>
           )}
 

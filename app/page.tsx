@@ -39,8 +39,7 @@ export default function HomePage() {
               />
               <Reveal delay={0.15}>
                 <p className="mt-4 max-w-[680px] text-base leading-relaxed text-ink-700 md:text-xl">
-                  From mandate to portfolio in seconds. Buy, sell, and rebalance
-                  xStocks directly from WhatsApp, Telegram, and Instagram using simple natural language.
+                  Financial inclusion for everyone — old and young alike. Bridging billions of everyday social media users to tokenized equities on OKX X Layer. Issue mandates anywhere, receive automated weekly progress updates, and stay in complete control.
                 </p>
               </Reveal>
             </div>
@@ -51,7 +50,7 @@ export default function HomePage() {
           <FeatureSection
             index='2'
             heading='Your portfolio, one message away'
-            description="Ask for your holdings in Instagram, Telegram, or WhatsApp and get instant updates with your combined asset cluster."
+            description="Check your holdings, track weekly progress, and stay updated simply by providing your email or wallet address — no complex wallet extensions required."
             visual={<BalanceIllustration />}
             reverse
           />
