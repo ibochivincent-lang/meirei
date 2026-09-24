@@ -28,6 +28,7 @@ export async function handleMandate(input: AgentInput): Promise<AgentOutput> {
     const swap = await executeSwaps(plan.legs, {
       confirm: input.confirm ?? false,
       slippagePercent: input.slippagePercent,
+      walletAddress: input.walletAddress,
     });
 
     if (swap.status === "preview") {

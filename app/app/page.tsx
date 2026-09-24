@@ -117,6 +117,20 @@ interface ChatMessage {
   type?: string;
   status?: "preview" | "confirmed" | "failed" | "frozen" | "unfrozen";
   explorerUrl?: string;
+  delivery?: {
+    mandate?: {
+      targets?: Array<{ symbol: string; weight: number }>;
+      maxSingle?: number;
+      rebalanceBand?: number;
+    };
+    plan?: {
+      legs?: Array<{ side: "buy" | "sell"; symbol: string; notionalUsd: number }>;
+      quotes?: unknown;
+    };
+    txs?: Array<{ symbol: string; hash?: string; explorerUrl?: string; status?: string; error?: string }>;
+    fee?: { amount: string; asset: string; status: string; reason?: string };
+    portfolio?: { totalUsd: number; holdings: Array<{ symbol: string; valueUsd: number }> };
+  };
 }
 
 interface UserProfile {
@@ -176,6 +190,21 @@ interface ExecutionLogItem {
   type: "info" | "success" | "warn";
 }
 
+function SectionSeparator({ label }: { label: string }) {
+  return (
+    <div className="relative my-6 select-none" aria-hidden="true">
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full border-t border-ink-200/80 dark:border-zinc-800" />
+      </div>
+      <div className="relative flex justify-center">
+        <span className="bg-surface-50 dark:bg-[#0B0D13] px-3 font-mono text-[10px] uppercase font-bold tracking-wider text-ink-400 dark:text-zinc-500 border border-ink-200/60 dark:border-zinc-800 rounded-full shadow-2xs">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function AppDashboardPage() {
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isLoadingBalance, setIsLoadingBalance] = useState<boolean>(false);
@@ -184,6 +213,13 @@ export default function AppDashboardPage() {
 
   // 1-Click Demo Sandbox for Judges
   const [isDemoSandbox, setIsDemoSandbox] = useState<boolean>(false);
+
+  // Mandate Policy Creator Modal
+  const [showCreateMandateModal, setShowCreateMandateModal] = useState<boolean>(false);
+  const [newMandateTitle, setNewMandateTitle] = useState<string>("Mag7 Drift Guard");
+  const [newMandateType, setNewMandateType] = useState<"drift_rebalance" | "dca_recurring" | "circuit_breaker">("drift_rebalance");
+  const [newMandateTarget, setNewMandateTarget] = useState<string>("60% Mag7, 20% USDG, max 8%");
+  const [newMandateThreshold, setNewMandateThreshold] = useState<string>("5.0%");
 
   // Active Autonomous Mandates state
   const [mandatePolicies, setMandatePolicies] = useState<MandatePolicy[]>([
@@ -570,6 +606,65 @@ export default function AppDashboardPage() {
       },
       ...prev,
     ]);
+  };
+
+  const handleCreateMandate = () => {
+    if (!newMandateTitle.trim() || !newMandateTarget.trim()) return;
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 8);
+    const newPolicy: MandatePolicy = {
+      id: `mandate_${Date.now()}`,
+      title: newMandateTitle.trim(),
+      policyType: newMandateType,
+      target: newMandateTarget.trim(),
+      rule:
+        newMandateType === "drift_rebalance"
+          ? `Autonomous atomic rebalance when asset drift > ${newMandateThreshold} via OKX Exchange OS`
+          : newMandateType === "dca_recurring"
+          ? `Automated recurring accumulation according to preset schedule on X Layer`
+          : `Auto-liquidate equity positions to USDG if drawdown exceeds ${newMandateThreshold}`,
+      metricLabel:
+        newMandateType === "drift_rebalance"
+          ? "Current Drift"
+          : newMandateType === "dca_recurring"
+          ? "Next Execution"
+          : "24h Drawdown",
+      metricValue:
+        newMandateType === "drift_rebalance"
+          ? "0.0%"
+          : newMandateType === "dca_recurring"
+          ? "Next Cycle"
+          : "0.00%",
+      threshold: newMandateThreshold,
+      status: "active",
+      lastEvaluated: "Just registered",
+    };
+
+    setMandatePolicies((prev) => [...prev, newPolicy]);
+    setExecutionLogs((prev) => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: timeStr,
+        source: "Policy Manager",
+        message: `Registered new mandate policy [${newPolicy.title}] with rule: ${newPolicy.target} on OKX X Layer (Chain 196).`,
+        type: "success",
+      },
+      ...prev,
+    ]);
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: `msg-${Date.now()}`,
+        sender: "bot",
+        text: `Autonomous Mandate Registered: "${newPolicy.title}" (${newPolicy.target}). Monitoring on OKX X Layer with threshold ${newPolicy.threshold}.`,
+        timestamp: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        type: "mandate",
+        status: "confirmed",
+      },
+    ]);
+
+    setShowCreateMandateModal(false);
   };
 
   // Conversational Chat Console State (Just like Telegram and WhatsApp)
@@ -1088,6 +1183,7 @@ export default function AppDashboardPage() {
         explorerUrl: data.delivery?.txs?.[0]?.hash
           ? `https://www.oklink.com/xlayer/tx/${data.delivery.txs[0].hash}`
           : undefined,
+        delivery: data.delivery,
       };
 
       setChatMessages((prev) => [...prev, botMsg]);
@@ -2240,6 +2336,9 @@ export default function AppDashboardPage() {
                   </div>
                 </div>
 
+                {/* Section Separator */}
+                <SectionSeparator label="Autonomous Mandate Layer" />
+
                 {/* ========================================================================= */}
                 {/* ACTIVE INVESTMENT MANDATES (Autonomous Agent Policies on OKX X Layer)     */}
                 {/* ========================================================================= */}
@@ -2252,7 +2351,7 @@ export default function AppDashboardPage() {
                         </h3>
                         <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>3 Autonomous Policies Active</span>
+                          <span>{mandatePolicies.filter((m) => m.status === "active").length} Autonomous Policies Active</span>
                         </span>
                       </div>
                       <p className="mt-0.5 text-xs text-ink-500 dark:text-zinc-400">
@@ -2272,10 +2371,19 @@ export default function AppDashboardPage() {
                       <button
                         type="button"
                         onClick={handleTriggerSimulatedRebalance}
-                        className="rounded-lg bg-ink-900 dark:bg-white text-white dark:text-ink-950 px-3 py-1.5 text-xs font-bold shadow-xs hover:bg-accent-500 hover:text-white cursor-pointer transition-colors"
+                        className="rounded-lg border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3 py-1.5 text-xs font-semibold text-ink-700 dark:text-zinc-300 hover:bg-surface-100 dark:hover:bg-[#202736] cursor-pointer transition-colors"
                         title="Simulate drift shock to test automated solver"
                       >
-                        Simulate Shock Rebalance
+                        Simulate Shock
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateMandateModal(true)}
+                        className="rounded-lg bg-accent-500 hover:bg-accent-600 text-white px-3 py-1.5 text-xs font-bold shadow-xs cursor-pointer transition-colors flex items-center gap-1"
+                        title="Create and deploy a new autonomous mandate"
+                      >
+                        <span className="text-sm leading-none">+</span>
+                        <span>New Mandate</span>
                       </button>
                     </div>
                   </div>
@@ -2337,6 +2445,9 @@ export default function AppDashboardPage() {
                     ))}
                   </div>
                 </div>
+
+                {/* Section Separator */}
+                <SectionSeparator label="Conversational Agent Console" />
 
                 {/* ========================================================================= */}
                 {/* LIVE CONVERSATIONAL CHAT CONSOLE (WhatsApp & Telegram Experience)        */}
@@ -2432,6 +2543,98 @@ export default function AppDashboardPage() {
                             )}
                           >
                             {msg.text}
+
+                            {/* Rich Visual Mandate Target Allocation Grid & Execution Legs */}
+                            {msg.delivery?.mandate?.targets && (
+                              <div className="mt-3 rounded-xl border border-ink-200/80 dark:border-zinc-800 bg-white/70 dark:bg-black/40 p-3 select-none">
+                                <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-accent-600 dark:text-accent-400 mb-2 flex items-center justify-between">
+                                  <span>Target Portfolio Allocations</span>
+                                  <span className="text-[9px] text-ink-400 dark:text-zinc-500 font-normal">
+                                    Band: {((msg.delivery.mandate.rebalanceBand ?? 0.05) * 100).toFixed(0)}%
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                                  {msg.delivery.mandate.targets.map((t, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center justify-between rounded-lg bg-surface-100/80 dark:bg-[#11141D] px-2 py-1 text-[11px] font-mono border border-ink-100 dark:border-zinc-800"
+                                    >
+                                      <span className="font-bold text-ink-900 dark:text-white">{t.symbol}</span>
+                                      <span className="text-accent-600 dark:text-accent-400 font-semibold">
+                                        {(t.weight * 100).toFixed(0)}%
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {msg.delivery.plan?.legs && msg.delivery.plan.legs.length > 0 && (
+                                  <div className="mt-2.5 pt-2 border-t border-ink-100 dark:border-zinc-800">
+                                    <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-ink-500 dark:text-zinc-400 mb-1.5">
+                                      Planned Rebalance Legs (OKX DEX)
+                                    </div>
+                                    <div className="space-y-1">
+                                      {msg.delivery.plan.legs.map((leg, lIdx) => (
+                                        <div
+                                          key={lIdx}
+                                          className="flex items-center justify-between text-[11px] font-mono rounded bg-surface-50 dark:bg-zinc-900/60 px-2 py-0.5"
+                                        >
+                                          <div className="flex items-center gap-1.5">
+                                            <span
+                                              className={cn(
+                                                "px-1 py-0.2 rounded text-[9px] font-bold uppercase",
+                                                leg.side === "buy"
+                                                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                                                  : "bg-rose-500/20 text-rose-600 dark:text-rose-400"
+                                              )}
+                                            >
+                                              {leg.side}
+                                            </span>
+                                            <span className="font-bold text-ink-900 dark:text-zinc-200">
+                                              {leg.symbol}
+                                            </span>
+                                          </div>
+                                          <span className="text-ink-600 dark:text-zinc-300">
+                                            ${leg.notionalUsd.toFixed(2)} USDG
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {msg.delivery.txs && msg.delivery.txs.length > 0 && (
+                                  <div className="mt-2.5 pt-2 border-t border-ink-100 dark:border-zinc-800">
+                                    <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 mb-1.5 flex items-center gap-1">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                      Broadcast Transactions on OKX X Layer
+                                    </div>
+                                    <div className="space-y-1">
+                                      {msg.delivery.txs.map((tx, tIdx) => (
+                                        <div
+                                          key={tIdx}
+                                          className="flex items-center justify-between text-[10px] font-mono rounded bg-surface-50 dark:bg-zinc-900/60 px-2 py-0.5"
+                                        >
+                                          <span className="font-bold text-ink-900 dark:text-white">{tx.symbol}</span>
+                                          {tx.explorerUrl ? (
+                                            <a
+                                              href={tx.explorerUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-accent-600 dark:text-accent-400 hover:underline flex items-center gap-1"
+                                            >
+                                              <span>{tx.hash ? `${tx.hash.slice(0, 8)}...${tx.hash.slice(-6)}` : "View OKLink"}</span>
+                                              <span className="text-[8px] bg-accent-500/20 px-1 rounded">OKLink</span>
+                                            </a>
+                                          ) : (
+                                            <span className="text-zinc-400">{tx.hash}</span>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             {msg.reference && (
                               <div className="mt-2 pt-1.5 border-t border-white/10 dark:border-zinc-700/60 font-mono text-[10px] opacity-80">
@@ -2596,6 +2799,9 @@ export default function AppDashboardPage() {
                     </button>
                   </form>
                 </div>
+
+                {/* Section Separator */}
+                <SectionSeparator label="Real-Time Allocation Estimator" />
 
                 {/* Integrated Price Comparison & Units Calculator */}
                 <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
@@ -3812,6 +4018,175 @@ export default function AppDashboardPage() {
                     {isVerifyingOtp ? "Authorizing..." : "Verify & Authorize"}
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Create New Investment Mandate Policy Modal */}
+      <AnimatePresence>
+        {showCreateMandateModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              className="w-full max-w-lg rounded-3xl border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent-500/15 text-accent-600 dark:text-accent-400 font-bold text-sm">
+                    M
+                  </div>
+                  <div>
+                    <h3 className="font-display text-base font-bold text-ink-900 dark:text-white">
+                      Create Autonomous Mandate
+                    </h3>
+                    <p className="text-[11px] text-ink-500 dark:text-zinc-400">
+                      Configure autonomous execution policies on OKX X Layer
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateMandateModal(false)}
+                  className="rounded-full p-1.5 text-ink-400 hover:bg-surface-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  <svg viewBox="0 0 16 16" className="h-4 w-4 stroke-current stroke-2 fill-none">
+                    <path d="M4 4l8 8M12 4l-8 8" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                {/* Policy Type Selection */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 dark:text-zinc-400 mb-1.5">
+                    Policy Type
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { type: "drift_rebalance" as const, label: "Drift Rebalance" },
+                      { type: "dca_recurring" as const, label: "DCA Accumulation" },
+                      { type: "circuit_breaker" as const, label: "Circuit Breaker" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.type}
+                        type="button"
+                        onClick={() => {
+                          setNewMandateType(opt.type);
+                          if (opt.type === "drift_rebalance") {
+                            setNewMandateTitle("Portfolio Drift Guard");
+                            setNewMandateTarget("60% Mag7, 20% USDG, max 8%");
+                            setNewMandateThreshold("5.0%");
+                          } else if (opt.type === "dca_recurring") {
+                            setNewMandateTitle("Weekly TSLAx DCA");
+                            setNewMandateTarget("50 USDG into TSLAx every Monday at 08:00 UTC");
+                            setNewMandateThreshold("50 USDG");
+                          } else {
+                            setNewMandateTitle("Drawdown Circuit Breaker");
+                            setNewMandateTarget("Auto-liquidate positions to USDG if 24h drawdown > 7%");
+                            setNewMandateThreshold("-7.00%");
+                          }
+                        }}
+                        className={cn(
+                          "rounded-xl border py-2 px-2 text-center text-xs font-bold transition-all cursor-pointer",
+                          newMandateType === opt.type
+                            ? "border-accent-500 bg-accent-500/10 text-accent-600 dark:text-accent-400"
+                            : "border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] text-ink-600 dark:text-zinc-400"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mandate Policy Name */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 dark:text-zinc-400 mb-1.5">
+                    Policy Title
+                  </label>
+                  <input
+                    type="text"
+                    value={newMandateTitle}
+                    onChange={(e) => setNewMandateTitle(e.target.value)}
+                    placeholder="e.g. Mag7 Drift Guard"
+                    className="w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3.5 py-2 text-xs font-medium text-ink-900 dark:text-white outline-none focus:border-accent-500"
+                  />
+                </div>
+
+                {/* Natural-Language Target & Rules */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-ink-600 dark:text-zinc-400">
+                      Executable Target / Rule
+                    </label>
+                    <span className="text-[10px] text-ink-400 dark:text-zinc-500">Natural-Language</span>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={newMandateTarget}
+                    onChange={(e) => setNewMandateTarget(e.target.value)}
+                    placeholder="e.g. 60% Mag7, 20% USDG, max 8%"
+                    className="w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3.5 py-2 text-xs font-mono text-ink-900 dark:text-white outline-none focus:border-accent-500"
+                  />
+                </div>
+
+                {/* Presets Chips */}
+                <div>
+                  <span className="text-[10px] font-mono text-ink-400 dark:text-zinc-500">Quick Presets:</span>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {[
+                      "60% Mag7, 20% USDG, max 8%",
+                      "70% NVDAx / 30% AAPLx",
+                      "50 USDG into TSLAx weekly",
+                      "Liquidate to USDG if drawdown > 7%",
+                    ].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setNewMandateTarget(preset)}
+                        className="rounded-lg border border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] px-2 py-0.5 text-[10px] font-mono text-ink-600 dark:text-zinc-400 hover:text-accent-500 transition-colors cursor-pointer"
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Threshold Input */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 dark:text-zinc-400 mb-1.5">
+                    Trigger Threshold / Limit
+                  </label>
+                  <input
+                    type="text"
+                    value={newMandateThreshold}
+                    onChange={(e) => setNewMandateThreshold(e.target.value)}
+                    placeholder="e.g. 5.0%"
+                    className="w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3.5 py-2 text-xs font-mono text-ink-900 dark:text-white outline-none focus:border-accent-500"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-ink-100 dark:border-zinc-800 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateMandateModal(false)}
+                  className="rounded-xl border border-ink-200 dark:border-zinc-700 px-4 py-2 text-xs font-semibold text-ink-600 dark:text-zinc-400 hover:bg-surface-50 dark:hover:bg-[#161B26] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateMandate}
+                  className="rounded-xl bg-accent-500 hover:bg-accent-600 text-white px-4 py-2 text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                >
+                  Deploy Mandate Policy
+                </button>
               </div>
             </motion.div>
           </div>

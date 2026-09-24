@@ -76,6 +76,7 @@ export type SwapOptions = {
   confirm: boolean;
   /** Slippage tolerance in PERCENT, matching `onchainos swap execute --slippage`. 0.5 = 0.5%. */
   slippagePercent?: number;
+  walletAddress?: string;
 };
 
 export type SwapResult = {

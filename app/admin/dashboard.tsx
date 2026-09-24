@@ -1,5 +1,4 @@
 import type { DashboardData, DayPoint, FunnelStage } from "@/lib/analytics/queries";
-import { isMainnet } from "@/lib/wallet/network";
 
 /**
  * The dashboard, rendered server-side as plain HTML and SVG.

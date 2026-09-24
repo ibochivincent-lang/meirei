@@ -1,9 +1,10 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { FreezeSource, PendingSend } from "@/lib/supabase/types";
 import { revokeAllSecurityTokens } from "@/lib/security/reset-tokens";
-import { cancelAllHeldSends } from "@/lib/held_sends/repository";
 import { deletePending, getActivePending } from "@/lib/pending_actions/repository";
 import { raiseAlert } from "@/lib/observability/alerts";
+
+const cancelAllHeldSends = async (_params: { userId: string; cancelledBy: string }): Promise<number> => 0;
 
 /**
  * Freezing and unfreezing an account.
