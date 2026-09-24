@@ -646,21 +646,24 @@ export default function AppDashboardPage() {
   const INITIAL_CHAT_MESSAGE: ChatMessage = {
     id: "welcome-1",
     sender: "bot",
-    text: `Hello! I'm Meirei, your AI Investment Mandate Assistant on OKX X Layer.
+    text: `Hello! I am Meirei, your AI Investment Mandate Assistant on OKX X Layer (Chain 196).
 
-I help you simulate and execute intelligent auto-investment mandates so you never have to guess or time the market:
-• Portfolio Drift Rebalance: Keeps your allocations balanced automatically when prices drift.
-• Weekly DCA Accumulation: Automatically accumulates stock units every week on autopilot.
-• Volatility Circuit Breaker: Halts or rotates to USDG if markets dip sharply (>8%).
-• Dip Buyer & Take-Profit Mandate: Automatically buys dips (e.g. -5%) and locks in profit at target gains (e.g. +15%).
-• Single-Stock Limit Mandate: Buy or take profit at specific target prices, or ignore mandates to execute instant spot swaps directly!
+I help you simulate, solve, and execute intelligent spot trades and auto-investment mandates:
+1. Spot Trading & Unit Calculations: Instant quotes and fractional share computation with 100% sponsored gas.
+2. Portfolio Drift Rebalance: Keeps your allocations balanced automatically when prices drift.
+3. Weekly DCA Accumulation: Automatically accumulates stock units on autopilot.
+4. Volatility Circuit Breaker: Halts or rotates to USDG if markets dip sharply (>8%).
+5. Dip Buyer & Take-Profit: Buys dips (e.g. -5%) and locks in profit at target gains (e.g. +15%).
 
-If any mandate seems confusing, tell me what's on your mind or pick a quick suggestion below and I'll explain and simulate it for you!`,
+Use the categorized keywords below or type any question to receive an immediate solution and step-by-step resolution.`,
     timestamp: "Just now",
   };
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([INITIAL_CHAT_MESSAGE]);
   const [chatInput, setChatInput] = useState<string>("");
   const [isChatSending, setIsChatSending] = useState<boolean>(false);
+  const [chatKeywordCategory, setChatKeywordCategory] = useState<string>("all");
+
+
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
   // Theme state: locked to crisp institutional light mode
@@ -902,6 +905,40 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
   // Stock selection & chart state
   const [selectedStock, setSelectedStock] = useState<StockItem>(STOCKS[0]);
+
+  const CHAT_KEYWORDS = useMemo(() => [
+    // Greetings
+    { category: "greetings", label: "Hello Meirei", query: "Hello Meirei", desc: "Start conversation & get overview" },
+    { category: "greetings", label: "Good Evening", query: "Good evening", desc: "Greeting & status check" },
+    { category: "greetings", label: "What is Meirei?", query: "What is Meirei?", desc: "Learn about the AI mandate agent" },
+    { category: "greetings", label: "How to Start", query: "How does Meirei work and how to start?", desc: "Step-by-step onboarding guide" },
+
+    // Inquiries & Balances
+    { category: "inquiries", label: "What is my balance?", query: "What is my balance?", desc: "Check live USDG & equities balance" },
+    { category: "inquiries", label: "Active Holdings", query: "Check my active holdings", desc: "Audit active xStock positions" },
+    { category: "inquiries", label: "Check Portfolio Drift", query: "Check portfolio drift", desc: "Monitor allocation variance" },
+    { category: "inquiries", label: "Explain Auto Mandates", query: "Explain auto mandates", desc: "How non-custodial mandates work" },
+    { category: "inquiries", label: "Deposit & Funding Guide", query: "How to deposit and fund wallet", desc: "Bridge or transfer funds on X Layer" },
+
+    // Spot Trades
+    { category: "trades", label: `Price of ${selectedStock.symbol}`, query: `Price of ${selectedStock.symbol}`, desc: "Live spot benchmark price" },
+    { category: "trades", label: `Buy 100 USDG ${selectedStock.symbol}`, query: `Buy 100 USDG of ${selectedStock.symbol}`, desc: "Quick trade execution" },
+    { category: "trades", label: "Quote TSLAx", query: "Quote TSLAx", desc: "Get real-time quote for TSLAx" },
+    { category: "trades", label: "Compare NVDAx vs MSFTx", query: "Compare NVDAx vs MSFTx", desc: "Relative price ratio comparison" },
+    { category: "trades", label: "Calculate 250 USDG Units", query: `Calculate $250 in ${selectedStock.symbol}`, desc: "Exact fractional share estimator" },
+
+    // Mandates
+    { category: "mandates", label: `Dip Buyer: ${selectedStock.symbol} -5%`, query: `Dip Buyer: ${selectedStock.symbol} -5% / TP +15%`, desc: "Accumulate pullbacks automatically" },
+    { category: "mandates", label: "Portfolio Drift Rebalance (5%)", query: "Drift Rebalance (5% band)", desc: "Maintain target allocation" },
+    { category: "mandates", label: "Weekly 50 USDG DCA", query: "Weekly Accumulation: 50 USDG", desc: "Automate recurring dollar-cost averaging" },
+    { category: "mandates", label: "Volatility Circuit Breaker (8%)", query: "Volatility Circuit Breaker (8%)", desc: "Downside drawdown capital preservation" },
+
+    // Security & Gas
+    { category: "security", label: "OKX Paymaster Gas Sponsorship", query: "How is gas sponsored on OKX X Layer?", desc: "Zero gas fee architecture" },
+    { category: "security", label: "Account Security Status", query: "Account security status and session keys", desc: "Non-custodial verification" },
+    { category: "security", label: "Emergency Freeze", query: "/freeze", desc: "Instantly halt trading and mandates" },
+    { category: "security", label: "Emergency Unfreeze", query: "/unfreeze", desc: "Restore access with 2FA code" },
+  ], [selectedStock]);
   const [timeframe, setTimeframe] = useState<string>("1D");
   const [chartType, setChartType] = useState<"line" | "candle">("candle");
   const [chartHoverIndex, setChartHoverIndex] = useState<number | null>(null);
@@ -1556,7 +1593,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     const confirmMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
       sender: "bot",
-      text: `✅ Autonomous Mandate Deployed on OKX X Layer!\n\nMandate ID: ${mandateId}\nStrategy: ${plan.strategyName}\nCapital: $${advisoryCapital.toLocaleString()} ${advisoryStablecoin}\nRule: ${plan.mandateRule}\nDownside Safeguard: ${plan.downsideProtection}\nStatus: Active · Monitored on OKX X Layer (Chain 196) with 100% sponsored gas.`,
+      text: `[Confirmed] Autonomous Mandate Deployed on OKX X Layer!\n\nMandate ID: ${mandateId}\nStrategy: ${plan.strategyName}\nCapital: $${advisoryCapital.toLocaleString()} ${advisoryStablecoin}\nRule: ${plan.mandateRule}\nDownside Safeguard: ${plan.downsideProtection}\nStatus: Active · Monitored on OKX X Layer (Chain 196) with 100% sponsored gas.`,
       timestamp: now,
       status: "confirmed",
       type: "mandate",
@@ -1611,7 +1648,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     const confirmMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
       sender: "bot",
-      text: `✅ Autonomous Stock Mandate Deployed on OKX X Layer!\n\nAsset: ${symbol} (Spot: $${stockPrice.toFixed(2)})\nRule: ${rule}\nStatus: Active · Monitored on OKX X Layer with 100% sponsored gas.`,
+      text: `[Confirmed] Autonomous Stock Mandate Deployed on OKX X Layer!\n\nAsset: ${symbol} (Spot: $${stockPrice.toFixed(2)})\nRule: ${rule}\nStatus: Active · Monitored on OKX X Layer with 100% sponsored gas.`,
       timestamp: now,
       status: "confirmed",
       type: "mandate",
@@ -1644,6 +1681,169 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
     const lowerQ = query.toLowerCase();
 
+    // 0a. Greetings & Onboarding Intent ("hello", "hi", "good evening", "what is meirei", etc.)
+    const isGreeting =
+      lowerQ === "hello" ||
+      lowerQ === "hi" ||
+      lowerQ === "hey" ||
+      lowerQ === "good evening" ||
+      lowerQ === "good morning" ||
+      lowerQ === "good afternoon" ||
+      lowerQ.startsWith("hello") ||
+      lowerQ.startsWith("hi ") ||
+      lowerQ.includes("good evening") ||
+      lowerQ.includes("good morning") ||
+      lowerQ.includes("good afternoon") ||
+      lowerQ.includes("greetings") ||
+      lowerQ.includes("what is meirei") ||
+      lowerQ.includes("who are you") ||
+      lowerQ.includes("how does meirei work") ||
+      lowerQ.includes("how to start");
+
+    if (isGreeting) {
+      const greetingMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `[Meirei Assistant | OKX X Layer Terminal]\n\nHello! I am Meirei, your AI-Native Investment Mandate Agent executing on OKX X Layer (Chain ID 196).\n\nDirect Solution:\nI empower you to trade 20 allowlisted tokenized US equities (xStocks) onchain, audit your active portfolio in real time, and deploy autonomous investment mandates without giving up custody of your keys. All transactions enjoy 100% sponsored gas subsidized by the OKX Paymaster.\n\nHow to Solve Your Goals Today:\n1. Check Portfolio & Balances: Inquire about available cash ($${currentUsdgBalance.toFixed(2)} USDG), active equity holdings, or portfolio drift.\n2. Spot Trades & Fractional Shares: Query live prices or calculate exact units for any stock (e.g. 'Price of ${selectedStock.symbol}' or 'Buy 100 USDG ${selectedStock.symbol}').\n3. Autonomous Mandates: Deploy hands-off strategies like Drift Rebalancing (5% band), Weekly DCA Accumulation, or Volatility Circuit Breakers (8%).\n\nSelect any keyword below or enter your trade mandate to begin:`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        mandateAction: {
+          title: `Direct Spot Swap: ${selectedStock.symbol}`,
+          rule: `Instant spot purchase of ${selectedStock.symbol} at live market benchmark ($${getNumericPrice(selectedStock).toFixed(2)}) with 100% sponsored gas`,
+          symbol: selectedStock.symbol,
+          price: getNumericPrice(selectedStock),
+        },
+      };
+
+      setChatMessages((prev) => [...prev, greetingMsg]);
+      setIsChatSending(false);
+      return;
+    }
+
+    // 0b. Balance & Active Holdings Inquiry Intent
+    const isBalanceQuery =
+      lowerQ.includes("balance") ||
+      lowerQ.includes("portfolio") ||
+      lowerQ.includes("how much do i have") ||
+      lowerQ.includes("my funds") ||
+      lowerQ.includes("holdings") ||
+      lowerQ.includes("assets") ||
+      lowerQ === "portfolio" ||
+      lowerQ === "balance";
+
+    if (isBalanceQuery) {
+      const equityVal = currentHoldings.reduce((sum, h) => {
+        const p = stockPrices[h.symbol] || (h.amount > 0 ? h.valueUsd / h.amount : 0);
+        return sum + h.amount * p;
+      }, 0);
+      const totalVal = equityVal + currentUsdgBalance;
+      const holdingsSummary =
+        currentHoldings.length > 0
+          ? currentHoldings
+              .map((h) => {
+                const p = stockPrices[h.symbol] || (h.amount > 0 ? h.valueUsd / h.amount : 0);
+                return `${h.symbol}: ${h.amount.toFixed(2)} units ($${(h.amount * p).toFixed(2)})`;
+              })
+              .join(" · ")
+          : "0 active stock positions (100% Cash Buffer)";
+
+      const balMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `[Active Portfolio & Holdings Resolution]\n\nDirect Solution:\n• Total Portfolio Valuation: $${totalVal.toLocaleString("en-US", { minimumFractionDigits: 2 })} USDG\n• Available Cash (USDG): $${currentUsdgBalance.toFixed(2)} USDG\n• Equities Exposure: $${equityVal.toFixed(2)} USDG\n• Positions Count: ${currentHoldings.length} ${currentHoldings.length === 1 ? "Position" : "Positions"}\n• Holdings Breakdown: ${holdingsSummary}\n• Execution Network: OKX X Layer (Chain 196) · 100% Gas Sponsored\n\nHow to Solve It:\n1. Add Trading Capital: In Simulation Sandbox, click '+ $10,000 USDG' above. In Live mode, deposit USDG to your wallet address.\n2. Execute a Spot Trade: Use the Unit Calculator or Allowlisted grid to buy fractional shares of any of the 20 equities.\n3. Protect Allocation: Deploy an autonomous Drift Rebalance mandate to keep your portfolio at target weights automatically.\n\nDeploy a mandate or execute an instant spot purchase below:`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        mandateAction: {
+          title: `Spot Trade: ${selectedStock.symbol}`,
+          rule: `Allocate 100.00 USDG into ${selectedStock.symbol} at spot $${getNumericPrice(selectedStock).toFixed(2)}`,
+          symbol: selectedStock.symbol,
+          price: getNumericPrice(selectedStock),
+        },
+      };
+
+      setChatMessages((prev) => [...prev, balMsg]);
+      setIsChatSending(false);
+      return;
+    }
+
+    // 0c. Price & Quote Inquiries
+    const isPriceQuery =
+      (lowerQ.includes("price") || lowerQ.includes("quote") || lowerQ.includes("how much is") || lowerQ.includes("rate")) &&
+      !lowerQ.includes("dip") &&
+      !lowerQ.includes("profit") &&
+      !lowerQ.includes("rebalance");
+
+    if (isPriceQuery) {
+      let targetStock = selectedStock;
+      for (const s of STOCKS) {
+        if (lowerQ.includes(s.symbol.toLowerCase()) || lowerQ.includes(s.name.toLowerCase())) {
+          targetStock = s;
+          break;
+        }
+      }
+      const spot = getNumericPrice(targetStock);
+      const unitsFor100 = 100 / (spot || 1);
+
+      const priceMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `[Live Spot Benchmark Resolution: ${targetStock.symbol}]\n\nDirect Solution:\n• Asset: ${targetStock.name} (${targetStock.symbol})\n• Live Spot Price: $${spot.toFixed(2)} USDG\n• 24h Price Change: ${targetStock.change24h || "+0.00%"}\n• 100 USDG Buys: ~${unitsFor100.toFixed(4)} ${targetStock.symbol}\n• Settlement Asset: USDG (OKX X Layer Chain 196)\n• Gas Sponsorship: $0.00 (100% Sponsored via OKX Paymaster)\n\nHow to Solve It:\n1. Unit Estimation: Enter your capital in the Unit Calculator above to see exact tokenized shares.\n2. Direct Spot Execution: Click below to buy fractional units with zero gas cost.\n3. Automated Entry: Deploy a Dip Buyer mandate to accumulate automatically if price pulls back 5%.\n\nExecute on spot or deploy an automated mandate:`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        mandateAction: {
+          title: `Spot Buy: 100 USDG in ${targetStock.symbol}`,
+          rule: `Instant purchase of ~${unitsFor100.toFixed(4)} ${targetStock.symbol} for $100.00 USDG at $${spot.toFixed(2)}`,
+          symbol: targetStock.symbol,
+          price: spot,
+        },
+      };
+
+      setChatMessages((prev) => [...prev, priceMsg]);
+      setIsChatSending(false);
+      return;
+    }
+
+    // 0d. Deposit & Funding Guide
+    const isFundingQuery =
+      lowerQ.includes("deposit") ||
+      lowerQ.includes("fund") ||
+      lowerQ.includes("how to fund") ||
+      lowerQ.includes("add funds") ||
+      lowerQ.includes("bridge");
+
+    if (isFundingQuery) {
+      const fundMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `[Funding & Deposit Guide Resolution]\n\nDirect Solution:\nYour Dedicated X Layer Address: ${profile.address}\nNetwork: OKX X Layer (Chain ID 196)\nSettlement Assets: USDG or USDC\nGas Token: Sponsored ($0.00 needed; OKX Paymaster subsidizes 100% of network fees).\n\nHow to Solve It:\n1. Simulation Testing: Simply click '+ $10,000 USDG' in the Active Portfolio toolbar above for instant demo paper liquidity.\n2. Direct Deposit: Send USDG or USDC on OKX X Layer directly to your wallet address above.\n3. Cross-Chain Bridge: If your assets are on Ethereum, Arbitrum, or Polygon, bridge them via OKX Web3 Bridge (web3.okx.com/bridge) to X Layer.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setChatMessages((prev) => [...prev, fundMsg]);
+      setIsChatSending(false);
+      return;
+    }
+
+    // 0e. Security, Gas & Paymaster Architecture
+    const isSecurityGasQuery =
+      lowerQ.includes("gas") ||
+      lowerQ.includes("paymaster") ||
+      lowerQ.includes("sponsored") ||
+      lowerQ.includes("session key") ||
+      lowerQ.includes("security") ||
+      lowerQ.includes("safe") ||
+      lowerQ.includes("custody");
+
+    if (isSecurityGasQuery && !lowerQ.includes("freeze") && !lowerQ.includes("circuit")) {
+      const secMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `[Security Architecture & Paymaster Gas Resolution]\n\nDirect Solution:\n• 100% Non-Custodial: You retain full sovereign ownership of your assets. Private keys never leave your browser/wallet.\n• 100% Sponsored Gas: Meirei uses Account Abstraction (ERC-4337 Paymaster) on OKX X Layer (Chain 196) so you never need OKB gas tokens for swaps or mandates.\n• Session Key Guard: Mandates execute within strict boundaries you approve (slippage < 0.05%, max rebalance caps).\n• Emergency Protection: You can freeze your account at any moment by sending '/freeze'.\n\nHow to Solve It:\n1. Trade freely without worrying about gas fees.\n2. Audit your portfolio holdings and active policies anytime in the terminal.\n3. Issue plain English mandates or execute direct spot trades with single-click confirmation.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setChatMessages((prev) => [...prev, secMsg]);
+      setIsChatSending(false);
+      return;
+    }
+
     // 1. Interactive Mandate Simulation & Educational Explanations
     if (lowerQ.includes("dip") || (lowerQ.includes("below") && lowerQ.includes("profit"))) {
       const sym = selectedStock?.symbol || "NVDAx";
@@ -1655,7 +1855,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       const simMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: `📈 Dip Buyer & Take-Profit Mandate Simulation:\n\n• What it means: Automatically accumulates units when ${sym} dips below a set percentage (-5%), then automatically locks in gains when price reaches your target profit (+15%). You never have to stare at charts.\n\n• Target Asset: ${sym} (Current Spot: $${spot.toFixed(2)})\n• Accumulation Dip Trigger: -5.0% ($${dipPrice} USDG)\n• Take-Profit Trigger: +15.0% ($${tpPrice} USDG)\n• Gas Sponsorship: 100% sponsored by Meirei on OKX X Layer (Chain 196).\n\nYou can deploy this mandate to run autonomously, or ignore the mandate and execute a direct spot purchase now:`,
+        text: `[Dip Buyer & Take-Profit Mandate Simulation]\n\n• Direct Solution: Automatically accumulates units when ${sym} dips below a set percentage (-5%), then automatically locks in gains when price reaches your target profit (+15%). You never have to stare at charts.\n\n• Target Asset: ${sym} (Current Spot: $${spot.toFixed(2)})\n• Accumulation Dip Trigger: -5.0% ($${dipPrice} USDG)\n• Take-Profit Trigger: +15.0% ($${tpPrice} USDG)\n• Gas Sponsorship: 100% sponsored by Meirei on OKX X Layer (Chain 196).\n\nHow to Solve It:\n1. Click 'Deploy Mandate to X Layer' below to activate autonomous execution.\n2. Alternatively, click 'Ignore Mandate & Buy Directly on Spot' to purchase ${sym} immediately without waiting for a dip.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mandateAction: {
           title: `Dip Buyer: ${sym} (-5% / +15%)`,
@@ -1675,7 +1875,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       const simMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: `⚖️ Portfolio Drift Rebalance Mandate Simulation:\n\n• What it means: Monitors your portfolio allocations continuously. If stock prices move and cause any equity to drift more than 5% from your target weight, Meirei executes an atomic rebalancing swap on OKX DEX to restore target weights.\n\n• Target Portfolio: 60% NVDAx / 20% AAPLx / 20% USDG\n• Threshold Band: ±5.0% Drift\n• Gas: Zero gas cost to you (100% sponsored via Paymaster on X Layer).\n\nDeploy this mandate below or ignore and buy directly on spot:`,
+        text: `[Portfolio Drift Rebalance Mandate Simulation]\n\n• Direct Solution: Monitors your portfolio allocations continuously. If stock prices move and cause any equity to drift more than 5% from your target weight, Meirei executes an atomic rebalancing swap on OKX DEX to restore target weights.\n\n• Target Portfolio: 60% NVDAx / 20% AAPLx / 20% USDG\n• Threshold Band: ±5.0% Drift\n• Gas: Zero gas cost to you (100% sponsored via Paymaster on X Layer).\n\nHow to Solve It:\n1. Click 'Deploy Mandate to X Layer' below to activate autonomous drift tracking.\n2. Or execute spot trades directly to manually balance your holdings.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mandateAction: {
           title: "Portfolio Drift Rebalance (5% Band)",
@@ -1698,7 +1898,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       const simMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: `📅 Weekly DCA Accumulation Mandate Simulation:\n\n• What it means: Automatically purchases a fixed 50.00 USDG dollar amount of ${sym} every week on autopilot. This averages out price volatility across market cycles without needing to time the market.\n\n• Target Asset: ${sym} (Spot: $${spot.toFixed(2)})\n• Frequency: Every Monday at 08:00 UTC (50.00 USDG)\n• Gas: 100% Sponsored on OKX X Layer.\n\nDeploy this recurring mandate below or execute a direct spot purchase:`,
+        text: `[Weekly DCA Accumulation Mandate Simulation]\n\n• Direct Solution: Automatically purchases a fixed 50.00 USDG dollar amount of ${sym} every week on autopilot. This averages out price volatility across market cycles without needing to time the market.\n\n• Target Asset: ${sym} (Spot: $${spot.toFixed(2)})\n• Frequency: Every Monday at 08:00 UTC (50.00 USDG)\n• Gas: 100% Sponsored on OKX X Layer.\n\nHow to Solve It:\n1. Click 'Deploy Mandate to X Layer' below to schedule weekly buys.\n2. Or click 'Ignore Mandate & Buy Directly on Spot' to buy $50 worth today.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mandateAction: {
           title: `Weekly DCA: ${sym} (50 USDG)`,
@@ -1718,7 +1918,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       const simMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: `🛡️ Volatility Circuit Breaker Mandate Simulation:\n\n• What it means: Downside risk preservation guardrail. If severe market volatility causes your portfolio to experience a drawdown greater than 8.0% within 24 hours, Meirei pauses all buying and rotates equity exposure into USDG stablecoin.\n\n• Protection Threshold: 8.0% 24h Drawdown\n• Execution Route: OKX DEX Aggregator on OKX X Layer\n• Gas: 100% Sponsored.\n\nDeploy this safety mandate below:`,
+        text: `[Volatility Circuit Breaker Mandate Simulation]\n\n• Direct Solution: Downside risk preservation guardrail. If severe market volatility causes your portfolio to experience a drawdown greater than 8.0% within 24 hours, Meirei pauses all buying and rotates equity exposure into USDG stablecoin.\n\n• Protection Threshold: 8.0% 24h Drawdown\n• Execution Route: OKX DEX Aggregator on OKX X Layer\n• Gas: 100% Sponsored.\n\nHow to Solve It:\n1. Deploy this safety mandate below to guard your open positions against flash crashes.\n2. All rotations execute atomically on OKX DEX.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mandateAction: {
           title: "Volatility Circuit Breaker (8%)",
@@ -1737,7 +1937,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       const simMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: `💡 What Are Auto-Investment Mandates?\n\nAuto-investment mandates are automated rules you set once, which Meirei executes autonomously on OKX X Layer (Chain 196):\n\n1. Drift Rebalance: Keeps your desired portfolio percentages intact.\n2. Weekly Accumulation: Dollar-cost averages on autopilot.\n3. Dip Buyer & Take-Profit: Buys dips (e.g. -5%) and sells at profit targets (e.g. +15%).\n4. Circuit Breakers: Protects capital during sudden market crashes.\n5. Single-Stock Limit: Buy or sell a single stock at a target price.\n\nYou can also ignore mandates entirely and execute direct spot buys anytime with 1 click!\n\nWhat strategy or stock would you like to simulate?`,
+        text: `[Auto-Investment Mandates Overview & Guide]\n\nAuto-investment mandates are automated rules you set once, which Meirei executes autonomously on OKX X Layer (Chain 196):\n\n1. Drift Rebalance: Keeps your desired portfolio percentages intact.\n2. Weekly Accumulation: Dollar-cost averages on autopilot.\n3. Dip Buyer & Take-Profit: Buys dips (e.g. -5%) and sells at profit targets (e.g. +15%).\n4. Circuit Breakers: Protects capital during sudden market crashes.\n5. Single-Stock Limit: Buy or sell a single stock at a target price.\n\nHow to Solve Your Portfolio Needs:\nSelect any of the quick suggestions below to simulate a strategy, or use the Unit Calculator above to trade directly on spot!`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
@@ -2335,7 +2535,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                 "rounded-full px-2.5 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold border shrink-0",
                 mode === "basic" ? "bg-accent-50 border-accent-200 text-accent-700" : "bg-ink-900 border-ink-800 text-white"
               )}>
-                {mode === "basic" ? "Basic Mode" : "Advanced Mode"}
+                Advanced Mode
               </span>
               <button
                 type="button"
@@ -2376,14 +2576,9 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
         </div>
 
         {/* Workspace Grid */}
-        <div className="grid gap-6 lg:grid-cols-12">
-          {/* Main Interactive Stage (Cols 1 to 8) */}
-          <div className="space-y-6 lg:col-span-8">
-            {/* ========================================================================= */}
-            {/* MODE 1: BASIC MODE (Clean, Fast Trades, Questions & Unit Comparisons)     */}
-            {/* ========================================================================= */}
-            {mode === "basic" && (
-              <>
+        {/* Workspace Layout: Basic Mode (Centered & Streamlined) vs Advanced Mode (12-Col Grid) */}
+        {mode === "basic" ? (
+          <div className="mx-auto max-w-4xl space-y-6">
                 {/* Channel & Bot Connectivity Status */}
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink-200/80 bg-white p-4 text-xs shadow-xs">
                   <div className="flex items-center gap-3">
@@ -2409,392 +2604,239 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   </div>
                 </div>
 
-                {/* ========================================================================= */}
-                {/* 1. INTERACTIVE TRADINGVIEW-STYLE STOCK CHART (Selected Equity)            */}
-                {/* ========================================================================= */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
-                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
-                          Interactive Stock Chart
-                        </span>
-                        <span className="rounded bg-accent-100 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-800">
-                          OKX X Layer (Chain 196)
-                        </span>
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <div
-                          className="flex h-6 w-6 items-center justify-center rounded-md shadow-xs text-white font-bold text-xs"
-                          style={{ backgroundColor: selectedStock.color }}
-                        >
-                          {selectedStock.logo}
-                        </div>
-                        <h3 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
-                          {selectedStock.name} ({selectedStock.symbol})
-                        </h3>
-                        <span className="font-mono text-lg font-bold text-ink-900 sm:text-xl">
-                          {currentDisplayPrice}
-                        </span>
-                        <span
-                          className={cn(
-                            "rounded px-2 py-0.5 font-mono text-xs font-bold",
-                            (selectedStock.change24h || "").startsWith("+")
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : "bg-rose-50 text-rose-700 border border-rose-200"
-                          )}
-                        >
-                          {selectedStock.change24h || "+0.00%"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Controls: Chart Type Toggle (Line | Candles) & Timeframe Selector */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Chart Type Toggle */}
-                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setChartType("line");
-                            setCandleHoverIndex(null);
-                          }}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-                            chartType === "line"
-                              ? "bg-white text-ink-900 shadow-xs"
-                              : "text-ink-500 hover:text-ink-900"
-                          )}
-                        >
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M2 11l4-5 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <span>Line</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setChartType("candle");
-                            setChartHoverIndex(null);
-                          }}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-                            chartType === "candle"
-                              ? "bg-white text-ink-900 shadow-xs"
-                              : "text-ink-500 hover:text-ink-900"
-                          )}
-                        >
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
-                            <rect x="3" y="4" width="3" height="7" rx="0.5" />
-                            <line x1="4.5" y1="2" x2="4.5" y2="4" stroke="currentColor" strokeWidth="1.5" />
-                            <line x1="4.5" y1="11" x2="4.5" y2="14" stroke="currentColor" strokeWidth="1.5" />
-                            <rect x="10" y="6" width="3" height="6" rx="0.5" />
-                            <line x1="11.5" y1="3" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1.5" />
-                            <line x1="11.5" y1="12" x2="11.5" y2="15" stroke="currentColor" strokeWidth="1.5" />
-                          </svg>
-                          <span>Candles</span>
-                        </button>
-                      </div>
-
-                      {/* Timeframe Selector (1m to 1M) */}
-                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
-                        {["1m", "5m", "15m", "1h", "4h", "1D", "1W", "1M"].map((tf) => (
-                          <button
-                            key={tf}
-                            type="button"
-                            onClick={() => setTimeframe(tf)}
-                            className={cn(
-                              "rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
-                              timeframe === tf
-                                ? "bg-white text-ink-900 shadow-xs"
-                                : "text-ink-500 hover:text-ink-900"
-                            )}
-                          >
-                            {tf}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+            {/* ========================================================================= */}
+            {/* 1. ACTIVE PORTFOLIO & HOLDINGS HUB (Replaces Chart in Basic Mode)         */}
+            {/* ========================================================================= */}
+            <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 pb-3.5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                      Active Portfolio &amp; Holdings
+                    </span>
+                    <span className="rounded bg-accent-100 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-800">
+                      OKX X Layer (Chain 196)
+                    </span>
                   </div>
+                  <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg mt-0.5">
+                    Portfolio Overview &amp; Asset Balances
+                  </h3>
+                  <p className="text-xs text-ink-500">
+                    Live onchain equity holdings, available USDG cash buffer, and autonomous mandate tracking.
+                  </p>
+                </div>
 
-                  {/* Candlestick OHLC Telemetry Bar (active in Candle mode) */}
-                  {chartType === "candle" && (
-                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 rounded-xl bg-surface-50 border border-ink-100 p-2.5 text-xs font-mono">
-                      {(() => {
-                        const activeBar =
-                          candleHoverIndex !== null && candleBars[candleHoverIndex]
-                            ? candleBars[candleHoverIndex]
-                            : candleBars[candleBars.length - 1];
-                        const barChange = activeBar ? ((activeBar.close - activeBar.open) / (activeBar.open || 1)) * 100 : 0;
-                        if (!activeBar) return null;
-                        return (
-                          <>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
-                              <span>Time:</span>
-                              <div className="flex items-center gap-1">
-                                <span className="font-bold text-ink-900">
-                                  {activeBar.time}
-                                </span>
-                                {activeBar.isLive && (
-                                  <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1 py-0.2 text-[8px] font-bold text-emerald-600 animate-pulse">
-                                    LIVE
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
-                              <span>Open:</span>
-                              <span className="font-bold text-ink-900">${activeBar.open.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
-                              <span>High:</span>
-                              <span className="font-bold text-emerald-600">${activeBar.high.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
-                              <span>Low:</span>
-                              <span className="font-bold text-rose-600">${activeBar.low.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 col-span-2 sm:col-span-1 text-ink-500">
-                              <span>Close:</span>
-                              <span
-                                className={cn(
-                                  "font-bold",
-                                  activeBar.isBullish ? "text-emerald-600" : "text-rose-600"
-                                )}
-                              >
-                                ${activeBar.close.toFixed(2)} ({barChange >= 0 ? "+" : ""}{barChange.toFixed(2)}%)
-                              </span>
-                            </div>
-                          </>
-                        );
-                      })()}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={cn(
+                    "rounded px-2.5 py-1 text-[10px] font-bold uppercase font-mono border",
+                    executionEnvironment === "live"
+                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                      : "bg-amber-50 text-amber-800 border-amber-300"
+                  )}>
+                    {executionEnvironment === "live" ? "Live Real Data" : "Simulation Sandbox"}
+                  </span>
+                  <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-mono font-medium text-emerald-800">
+                    {currentHoldings.length} {currentHoldings.length === 1 ? "Position" : "Positions"} Active
+                  </span>
+                </div>
+              </div>
+
+              {(() => {
+                const currentEquityVal = currentHoldings.reduce((sum, h) => {
+                  const p = stockPrices[h.symbol] || (h.amount > 0 ? h.valueUsd / h.amount : 0);
+                  return sum + (h.amount * p);
+                }, 0);
+                const currentTotalVal = currentEquityVal + currentUsdgBalance;
+
+                return (
+                  <div className="mt-4">
+                    {/* Top Valuation Stat Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-500 block">
+                          Total Portfolio Value
+                        </span>
+                        <p className="font-mono text-2xl font-bold tracking-tight text-ink-950 mt-1">
+                          ${currentTotalVal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </p>
+                        <span className="text-[10px] font-mono text-emerald-700 font-semibold block mt-0.5">
+                          OKX DEX Verified
+                        </span>
+                      </div>
+
+                      <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-500 block">
+                          Available Cash (USDG)
+                        </span>
+                        <p className="font-mono text-2xl font-bold tracking-tight text-accent-700 mt-1">
+                          ${currentUsdgBalance.toFixed(2)}
+                        </p>
+                        <span className="text-[10px] font-mono text-ink-500 font-medium block mt-0.5">
+                          Ready for instant spot trades
+                        </span>
+                      </div>
+
+                      <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-500 block">
+                          Equities Exposure
+                        </span>
+                        <p className="font-mono text-2xl font-bold tracking-tight text-ink-900 mt-1">
+                          ${currentEquityVal.toFixed(2)}
+                        </p>
+                        <span className="text-[10px] font-mono text-ink-500 font-medium block mt-0.5">
+                          Across {currentHoldings.length} tokenized {currentHoldings.length === 1 ? "stock" : "stocks"}
+                        </span>
+                      </div>
                     </div>
-                  )}
 
-                  {/* SVG Chart Canvas */}
-                  <div className="relative mt-4">
-                    <svg
-                      ref={chartSvgRef}
-                      viewBox={`0 0 ${width} ${height}`}
-                      className="w-full h-[180px] sm:h-[210px] overflow-visible select-none touch-none"
-                      onMouseLeave={() => {
-                        setChartHoverIndex(null);
-                        setCandleHoverIndex(null);
-                      }}
-                      onMouseMove={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const clientX = e.clientX;
-                        const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-                        const ratio = offsetX / rect.width;
+                    {/* Simulation Sandbox Top-Up Figures */}
+                    {executionEnvironment === "simulation" && (
+                      <div className="mt-3.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/80 p-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            Simulation Sandbox Figures
+                          </span>
+                          <span className="text-[10px] font-mono text-amber-700">Demo Paper Liquidity</span>
+                        </div>
+                        <p className="mt-1 text-[11px] text-amber-800 leading-snug">
+                          Add simulated test USDG to model trades and mandates without real capital:
+                        </p>
+                        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleAddSimulatedCapital(10000)}
+                            className="rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-mono font-bold text-[10px] px-3 py-1.5 shadow-2xs transition-colors cursor-pointer"
+                          >
+                            + $10,000 USDG
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddSimulatedCapital(20000)}
+                            className="rounded-lg bg-ink-900 hover:bg-ink-800 text-white font-mono font-bold text-[10px] px-3 py-1.5 shadow-2xs transition-colors cursor-pointer"
+                          >
+                            + $20,000 USDG
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSimulatedAdvancedUsdgBalance(20000);
+                            }}
+                            className="rounded-lg border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 font-mono text-[10px] font-semibold px-2.5 py-1.5 transition-colors cursor-pointer ml-auto"
+                          >
+                            Reset Demo
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
-                        if (chartType === "candle") {
-                          const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
-                          setCandleHoverIndex(Math.max(0, idx));
-                        } else {
-                          const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
-                          setChartHoverIndex(idx);
-                        }
-                      }}
-                      onTouchMove={(e) => {
-                        if (e.touches && e.touches[0]) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const clientX = e.touches[0].clientX;
-                          const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-                          const ratio = offsetX / rect.width;
+                    {/* Live On-Chain Verification */}
+                    {executionEnvironment === "live" && (
+                      <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-2 text-[11px] text-ink-500">
+                        <span>On-Chain Verification:</span>
+                        <span className="font-mono font-semibold text-emerald-600 flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          OKX X Layer (Chain 196) Real Data Only · Gas 100% Sponsored
+                        </span>
+                      </div>
+                    )}
 
-                          if (chartType === "candle") {
-                            const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
-                            setCandleHoverIndex(Math.max(0, idx));
-                          } else {
-                            const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
-                            setChartHoverIndex(idx);
-                          }
-                        }
-                      }}
-                      onTouchEnd={() => {
-                        setChartHoverIndex(null);
-                        setCandleHoverIndex(null);
-                      }}
-                    >
-                      <defs>
-                        <linearGradient id={chartGradId} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#FF5B3E" stopOpacity="0.28" />
-                          <stop offset="100%" stopColor="#FF5B3E" stopOpacity="0.0" />
-                        </linearGradient>
-                      </defs>
-
-                      {/* Subtle Gridlines */}
-                      <g className="stroke-ink-200/50 stroke-dashed" strokeDasharray="3 3">
-                        <line x1="0" y1={padY} x2={width} y2={padY} />
-                        <line x1="0" y1={height / 2} x2={width} y2={height / 2} />
-                        <line x1="0" y1={height - padY} x2={width} y2={height - padY} />
-                      </g>
-
-                      {/* LINE CHART MODE */}
-                      {chartType === "line" && (
-                        <>
-                          <path d={areaD} fill={`url(#${chartGradId})`} />
-                          <path
-                            d={pathD}
-                            fill="none"
-                            stroke="#FF5B3E"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          {chartHoverIndex !== null && coords[chartHoverIndex] && (
-                            <g>
-                              <line
-                                x1={coords[chartHoverIndex].x}
-                                y1={padY}
-                                x2={coords[chartHoverIndex].x}
-                                y2={height - padY}
-                                stroke="currentColor"
-                                strokeWidth="1"
-                                strokeDasharray="2 2"
-                                className="text-ink-400"
-                              />
-                              <circle
-                                cx={coords[chartHoverIndex].x}
-                                cy={coords[chartHoverIndex].y}
-                                r="5"
-                                fill="#FFFFFF"
-                                stroke="#FF5B3E"
-                                strokeWidth="2.5"
-                              />
-                            </g>
-                          )}
-                        </>
-                      )}
-
-                      {/* CANDLESTICK CHART MODE */}
-                      {chartType === "candle" && (
-                        <g>
-                          {candleBars.map((bar, idx) => {
-                            const numBars = candleBars.length;
-                            const barSpacing = width / numBars;
-                            const barW = Math.max(10, barSpacing * 0.62);
-                            const cx = (idx + 0.5) * barSpacing;
-                            const wickY1 = height - padY - ((bar.high - candleMin) / candleRange) * chartHeight;
-                            const wickY2 = height - padY - ((bar.low - candleMin) / candleRange) * chartHeight;
-                            const openY = height - padY - ((bar.open - candleMin) / candleRange) * chartHeight;
-                            const closeY = height - padY - ((bar.close - candleMin) / candleRange) * chartHeight;
-                            const bodyTop = Math.min(openY, closeY);
-                            const bodyH = Math.max(3, Math.abs(openY - closeY));
-                            const isHovered = candleHoverIndex === idx;
-                            const candleColor = bar.isBullish ? "#10B981" : "#F43F5E";
-
+                    {/* Active Positions List */}
+                    {currentHoldings.length === 0 ? (
+                      <div className="mt-4 rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
+                        <p className="text-xs font-semibold text-ink-800">
+                          {executionEnvironment === "live"
+                            ? (isLoggedIn ? "No active tokenized stock holdings on this account" : "Web3 Wallet Not Connected")
+                            : "No active stock holdings in Basic Mode Simulation"}
+                        </p>
+                        <p className="mt-1 text-[11px] text-ink-500 leading-relaxed max-w-lg mx-auto">
+                          {executionEnvironment === "live"
+                            ? (isLoggedIn
+                              ? "Your connected wallet currently holds 0 allowlisted xStocks on OKX X Layer."
+                              : "Connect your Web3 wallet (OKX Wallet, MetaMask) to load your authentic on-chain balances.")
+                            : "Select any of the 20 allowlisted equities below or use the Unit Calculator to make your first spot purchase."}
+                        </p>
+                        {executionEnvironment === "live" && !isLoggedIn && (
+                          <button
+                            type="button"
+                            onClick={() => setShowLoginModal(true)}
+                            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                          >
+                            Connect Web3 Wallet →
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-surface-100">
+                          {currentHoldings.map((h) => {
+                            const livePrice = stockPrices[h.symbol] || (h.amount > 0 ? h.valueUsd / h.amount : 0);
+                            const val = h.amount * livePrice;
+                            const pct = (val / (currentTotalVal || 1)) * 100;
                             return (
-                              <g key={`candle-${idx}`} className="transition-opacity">
-                                {isHovered && (
-                                  <rect
-                                    x={cx - barSpacing / 2}
-                                    y={0}
-                                    width={barSpacing}
-                                    height={height}
-                                    fill="currentColor"
-                                    className="text-accent-500/10"
-                                  />
-                                )}
-                                {/* Wick line */}
-                                <line
-                                  x1={cx}
-                                  y1={wickY1}
-                                  x2={cx}
-                                  y2={wickY2}
-                                  stroke={candleColor}
-                                  strokeWidth={isHovered ? "2.2" : "1.5"}
-                                />
-                                {/* Candle body */}
-                                <rect
-                                  x={cx - barW / 2}
-                                  y={bodyTop}
-                                  width={barW}
-                                  height={bodyH}
-                                  rx="1.5"
-                                  fill={candleColor}
-                                  stroke={candleColor}
-                                  strokeWidth="1"
-                                />
-                                {/* Live candle real-time pulse indicator on OKX X Layer */}
-                                {bar.isLive && (
-                                  <g>
-                                    <circle
-                                      cx={cx}
-                                      cy={closeY}
-                                      r="6"
-                                      fill={candleColor}
-                                      opacity="0.35"
-                                      className="animate-ping"
-                                    />
-                                    <circle
-                                      cx={cx}
-                                      cy={closeY}
-                                      r="3"
-                                      fill="#FFFFFF"
-                                      stroke={candleColor}
-                                      strokeWidth="1.5"
-                                    />
-                                  </g>
-                                )}
-                              </g>
+                              <div
+                                key={h.symbol}
+                                style={{ width: `${pct}%`, backgroundColor: h.color || "#10b981" }}
+                                title={`${h.symbol}: ${pct.toFixed(1)}%`}
+                              />
                             );
                           })}
-                        </g>
-                      )}
-                    </svg>
+                        </div>
 
-                    <div className="mt-2 flex justify-between font-mono text-[10px] text-ink-400">
-                      <span>
-                        {timeframe === "1m"
-                          ? "10m Ago"
-                          : timeframe === "5m"
-                          ? "50m Ago"
-                          : timeframe === "15m"
-                          ? "2.5h Ago"
-                          : timeframe === "1h"
-                          ? "10h Ago"
-                          : timeframe === "4h"
-                          ? "40h Ago"
-                          : timeframe === "1D"
-                          ? "09:30 AM EST"
-                          : timeframe === "1W"
-                          ? "7 Days Ago"
-                          : "30 Days Ago"}
-                      </span>
-                      <span>
-                        {timeframe === "1m"
-                          ? "5m Ago"
-                          : timeframe === "5m"
-                          ? "25m Ago"
-                          : timeframe === "15m"
-                          ? "1h Ago"
-                          : timeframe === "1h"
-                          ? "5h Ago"
-                          : timeframe === "4h"
-                          ? "20h Ago"
-                          : timeframe === "1D"
-                          ? "12:30 PM EST"
-                          : timeframe === "1W"
-                          ? "Midweek"
-                          : "15 Days Ago"}
-                      </span>
-                      <span className="flex items-center gap-1 font-semibold text-accent-600">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <span>
-                          {timeframe === "1D" || timeframe === "1m" || timeframe === "5m" || timeframe === "15m" || timeframe === "1h" || timeframe === "4h"
-                            ? "Live Tick (X Layer)"
-                            : "Today (Live X Layer)"}
-                        </span>
-                      </span>
-                    </div>
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          {currentHoldings.map((h) => {
+                            const livePrice = stockPrices[h.symbol];
+                            const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
+
+                            return (
+                              <div
+                                key={h.symbol}
+                                className="flex items-center justify-between rounded-xl border border-ink-100 bg-surface-50 p-2.5 hover:bg-white transition-colors"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: h.color || "#10b981" }}
+                                  />
+                                  <div>
+                                    <span className="font-bold text-ink-900 block">{h.symbol}</span>
+                                    <span className="text-[10px] text-ink-500 font-mono">
+                                      {h.amount.toFixed(2)} units {livePrice ? `@ $${livePrice.toFixed(2)}` : ""}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-mono font-bold text-ink-900 block">
+                                    ${currentVal.toFixed(2)}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const found = STOCKS.find(s => s.symbol === h.symbol);
+                                      if (found) setSelectedStock(found);
+                                      const el = document.getElementById("unit-calculator-terminal");
+                                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                                    }}
+                                    className="text-[10px] font-semibold text-accent-600 hover:underline cursor-pointer"
+                                  >
+                                    Trade Unit
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </> 
+                    )}
                   </div>
-                </div>
+                );
+              })()}
+            </div>
 
                 {/* ========================================================================= */}
                 {/* 2. PRICE COMPARISON & UNIT CALCULATOR (Placed Directly Below Chart)       */}
                 {/* ========================================================================= */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+            <div id="unit-calculator-terminal" className="scroll-mt-24 rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
                   <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-3.5 sm:flex-row sm:items-center">
                     <div>
                       <div className="flex items-center gap-2">
@@ -3323,7 +3365,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                                           {
                                             id: `msg-${Date.now()}`,
                                             sender: "bot",
-                                            text: `✅ Mandate [${msg.mandateAction!.title}] is now deployed on OKX X Layer (Chain 196) and active under Session Key Guard with 100% sponsored gas.`,
+                                            text: `[Confirmed] Mandate [${msg.mandateAction!.title}] is now deployed on OKX X Layer (Chain 196) and active under Session Key Guard with 100% sponsored gas.`,
                                             timestamp: now,
                                             status: "confirmed",
                                           },
@@ -3375,33 +3417,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     <div ref={chatBottomRef} />
                   </div>
 
-                  {/* Quick Suggestion Chips with Natural Mandate Prompts */}
-                  <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
-                    <span className="text-[10px] uppercase font-bold text-ink-400 tracking-wider shrink-0 mr-1">
-                      Quick:
-                    </span>
-                    {[
-                      `Dip Buyer: ${selectedStock.symbol} -5% / TP +15%`,
-                      `Drift Rebalance (5% band)`,
-                      `Weekly Accumulation: 50 USDG`,
-                      `Volatility Circuit Breaker (8%)`,
-                      `Buy TSLAx @ $390 / TP @ $450`,
-                      `Direct Buy ${selectedStock.symbol} on Spot`,
-                      "Explain Auto Mandates",
-                    ].map((chip) => (
-                      <button
-                        key={chip}
-                        type="button"
-                        onClick={() => handleSendChatMessage(chip)}
-                        disabled={isChatSending}
-                        className="rounded-full border border-ink-200 bg-surface-50 px-3 py-1 font-medium text-ink-700 hover:border-accent-500 hover:text-accent-600 whitespace-nowrap cursor-pointer transition-colors shrink-0"
-                      >
-                        {chip}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Chat Input Bar */}
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -3428,6 +3443,89 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       <SimpleTelegramLogo className="h-4 w-4" />
                     </button>
                   </form>
+
+                  {/* Categorized Keywords & Action Directory (Located Directly Under Chat Input) */}
+                  <div className="mt-4 pt-3.5 border-t border-ink-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                          Keywords &amp; Action Directory
+                        </span>
+                        <span className="text-[10px] text-ink-400 font-medium">
+                          Click any keyword for an instant solution
+                        </span>
+                      </div>
+
+                      {/* Category Filter Pills */}
+                      <div className="flex flex-wrap items-center gap-1">
+                        {[
+                          { id: "all", label: "All" },
+                          { id: "greetings", label: "Greetings" },
+                          { id: "inquiries", label: "Inquiries & Balance" },
+                          { id: "trades", label: "Spot Trades" },
+                          { id: "mandates", label: "Mandates" },
+                          { id: "security", label: "Security & Gas" },
+                        ].map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => setChatKeywordCategory(cat.id)}
+                            className={cn(
+                              "rounded-lg px-2 py-0.5 text-[10px] font-mono font-bold transition-all cursor-pointer",
+                              chatKeywordCategory === cat.id
+                                ? "bg-ink-900 text-white shadow-2xs"
+                                : "bg-surface-100 text-ink-600 hover:bg-surface-200 hover:text-ink-900"
+                            )}
+                          >
+                            {cat.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Keywords Grid / Chips */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {CHAT_KEYWORDS.filter(
+                        (k) => chatKeywordCategory === "all" || k.category === chatKeywordCategory
+                      ).map((item) => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => handleSendChatMessage(item.query)}
+                          disabled={isChatSending}
+                          className="group flex items-center gap-1.5 rounded-xl border border-ink-200 bg-surface-50 hover:bg-white hover:border-accent-500 hover:shadow-2xs px-2.5 py-1 text-left transition-all cursor-pointer disabled:opacity-50"
+                          title={item.desc}
+                        >
+                          <span
+                            className={cn(
+                              "rounded px-1.5 py-0.2 font-mono text-[9px] font-bold uppercase shrink-0",
+                              item.category === "greetings" && "bg-sky-100 text-sky-800",
+                              item.category === "inquiries" && "bg-emerald-100 text-emerald-800",
+                              item.category === "trades" && "bg-indigo-100 text-indigo-800",
+                              item.category === "mandates" && "bg-amber-100 text-amber-900",
+                              item.category === "security" && "bg-purple-100 text-purple-800"
+                            )}
+                          >
+                            {item.category === "greetings"
+                              ? "Greet"
+                              : item.category === "inquiries"
+                              ? "Inquire"
+                              : item.category === "trades"
+                              ? "Trade"
+                              : item.category === "mandates"
+                              ? "Mandate"
+                              : "Security"}
+                          </span>
+                          <span className="font-semibold text-xs text-ink-800 group-hover:text-accent-700">
+                            {item.label}
+                          </span>
+                          <span className="text-[10px] text-ink-400 group-hover:text-accent-500 group-hover:translate-x-0.5 transition-transform">
+                            →
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Section Separator */}
@@ -3542,13 +3640,14 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     ))}
                   </div>
                 </div>
-              </>
-            )}
-
-            {/* ========================================================================= */}
-            {/* MODE 2: ADVANCED MODE (Unified AI Mandate Advisory & Market Catalysts)     */}
-            {/* ========================================================================= */}
-            {mode === "advanced" && (
+          </div>
+        ) : (
+          <div className="grid gap-6 lg:grid-cols-12">
+            {/* Main Interactive Stage (Cols 1 to 8) */}
+            <div className="space-y-6 lg:col-span-8">
+              {/* ========================================================================= */}
+              {/* MODE 2: ADVANCED MODE (Unified AI Mandate Advisory & Market Catalysts)     */}
+              {/* ========================================================================= */}
               <div className="space-y-6">
                 {/* 1. Institutional AI Mandate Advisory Studio */}
 
@@ -4610,7 +4709,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   </div>
                 </div>
               </div>
-            )}
           </div>
 
           {/* Right Sidebar: Portfolio Summary (Cols 9 to 12) */}
@@ -4625,9 +4723,9 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   </span>
                   <span className={cn(
                     "rounded px-2 py-0.5 text-[9px] font-bold uppercase",
-                    mode === "basic" ? "bg-accent-100 text-accent-800" : "bg-ink-900 text-white"
+                    "bg-ink-900 text-white"
                   )}>
-                    {mode === "basic" ? "Basic Mode" : "Advanced Mode"}
+                    Advanced Mode
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -4691,12 +4789,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                           <button
                             type="button"
                             onClick={() => {
-                              if (mode === "basic") {
-                                setSimulatedBasicUsdgBalance(10000);
-                                setSimulatedBasicHoldings([]);
-                              } else {
-                                setSimulatedAdvancedUsdgBalance(20000);
-                              }
+                              setSimulatedAdvancedUsdgBalance(20000);
                             }}
                             className="rounded-lg border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 font-mono text-[10px] font-semibold px-2 py-1 transition-colors cursor-pointer ml-auto"
                           >
@@ -4722,16 +4815,14 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                         <p className="text-xs font-semibold text-ink-800">
                           {executionEnvironment === "live"
                             ? (isLoggedIn ? "No active tokenized stock holdings on this account" : "Web3 Wallet Not Connected")
-                            : `No active stock holdings in ${mode === "basic" ? "Basic Mode" : "Advanced Mode"} Simulation`}
+                            : `No active stock holdings in Advanced Mode Simulation`}
                         </p>
                         <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
                           {executionEnvironment === "live"
                             ? (isLoggedIn
                               ? "Your connected wallet currently holds 0 allowlisted xStocks on OKX X Layer."
                               : "Connect your Web3 wallet (OKX Wallet, MetaMask) to load your authentic on-chain balances.")
-                            : (mode === "basic"
-                              ? "Use Quick Buy on any of the 20 equities or the Unit Calculator above to test spot trades with your simulated paper balance."
-                              : "Configure and deploy an algorithmic mandate to start autonomous simulated execution.")}
+                            : "Configure and deploy an algorithmic mandate to start autonomous simulated execution."}
                         </p>
                         {executionEnvironment === "live" && !isLoggedIn && (
                           <button
@@ -5036,6 +5127,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
             )}
           </div>
         </div>
+        )}
       </main>
 
       {/* Terminal Footer with Cookie Controls, Privacy, and System Status */}
@@ -5332,7 +5424,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   <div className="pt-2 border-t border-ink-100 grid grid-cols-1 sm:grid-cols-2 gap-2 text-center">
                     <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-left">
                       <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[9px] font-bold text-amber-900 mb-1">
-                        <span>⏳</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                         <span>WhatsApp Assistant — COMING SOON</span>
                       </div>
                       <p className="text-[10px] text-ink-600 leading-snug">
@@ -5341,7 +5433,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     </div>
                     <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-left">
                       <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[9px] font-bold text-amber-900 mb-1">
-                        <span>⏳</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
                         <span>Instagram Direct Agent — COMING SOON</span>
                       </div>
                       <p className="text-[10px] text-ink-600 leading-snug">
@@ -6124,7 +6216,11 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
               <div className="mt-4 space-y-4 text-xs text-ink-700">
                 <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 text-amber-900 flex items-start gap-2.5">
-                  <span className="text-base leading-none">⚠️</span>
+                  <svg className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
                   <p className="text-[11px] leading-relaxed">
                     <strong>Notice:</strong> Advanced Mode provides access to autonomous investment mandate creation, algorithmic drift rebalancing, and direct telemetry from OKX AI skills. You must acknowledge the following disclosures before proceeding.
                   </p>

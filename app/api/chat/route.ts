@@ -185,8 +185,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 0c. Command Directory & Welcome (/start, /help, "help", "menu", "commands")
-    if (
+    // 0c. Command Directory & Welcome (/start, /help, "help", "menu", "commands", greetings)
+    const isGreeting =
       lower === "/start" ||
       lower === "/help" ||
       lower === "help" ||
@@ -194,25 +194,30 @@ export async function POST(req: NextRequest) {
       lower === "/menu" ||
       lower === "commands" ||
       lower === "/commands" ||
-      lower === "options"
-    ) {
+      lower === "options" ||
+      lower === "hello" ||
+      lower === "hi" ||
+      lower === "hey" ||
+      lower.startsWith("hello") ||
+      lower.startsWith("hi ") ||
+      lower.includes("good evening") ||
+      lower.includes("good morning") ||
+      lower.includes("good afternoon") ||
+      lower.includes("greetings");
+
+    if (isGreeting) {
       const shortAddr = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
       let welcome = `PROJECT MEIREI | OKX X LAYER TERMINAL\n\n`;
-      welcome += `Network: OKX X Layer Mainnet (Chain ID 196 / hex 0xc4)\n`;
-      welcome += `Connected Wallet: ${shortAddr}\n\n`;
-      welcome += `Supported Commands (Identical across Web, WhatsApp, and Telegram):\n`;
-      welcome += `• Buy Stocks: "Buy $250 in NVDAx" or "Buy 1 TSLAx"\n`;
-      welcome += `• Sell Stocks: "Sell 1 AAPLx" or "Exit TSLAx into USDG"\n`;
-      welcome += `• Check Prices: "Price of NVDAx", "Quote TSLAx"\n`;
-      welcome += `• Live Stock List: /stocks or "stocks" (all 20 allowlisted equities on OKX X Layer)\n`;
-      welcome += `• Compare Stocks: "Compare NVDAx vs MSFTx"\n`;
-      welcome += `• Unit Calculator: "Calculate $250 in NVDAx"\n`;
-      welcome += `• Portfolio Balance: /balance or "portfolio"\n`;
-      welcome += `• Deposit Funds: /deposit or "how to fund"\n`;
-      welcome += `• Auto Mandates: "Drift rebalance 5%", "Weekly accumulation 50 USDG", "Dip buyer -5% / TP +15%", "Circuit breaker 8%"\n`;
-      welcome += `• Emergency Freeze: /freeze or "panic"\n`;
-      welcome += `• Emergency Unfreeze: /unfreeze (with verification code)\n`;
-      welcome += `• About Meirei: /about or "what is meirei"\n\n`;
+      welcome += `Hello! I am Meirei, your AI-Native Investment Mandate Agent on OKX X Layer (Chain ID 196).\n\n`;
+      welcome += `Direct Solution:\n`;
+      welcome += `Connected Wallet: ${shortAddr}\n`;
+      welcome += `Network: OKX X Layer Mainnet (Chain ID 196) · 100% Sponsored Gas\n\n`;
+      welcome += `How to Solve Your Portfolio Goals Today:\n`;
+      welcome += `1. Spot Trades: "Price of NVDAx" or "Buy $250 in NVDAx" (Instant zero-gas execution)\n`;
+      welcome += `2. Portfolio Balances: /balance or "portfolio" (View live cash & tokenized holdings)\n`;
+      welcome += `3. Unit Calculations: "Calculate $250 in NVDAx" (Get exact fractional share units)\n`;
+      welcome += `4. Autonomous Mandates: "Drift rebalance 5%", "Weekly accumulation 50 USDG", "Dip buyer -5% / TP +15%", "Circuit breaker 8%"\n`;
+      welcome += `5. Emergency Protection: /freeze or "panic" to immediately halt automated execution\n\n`;
       welcome += `Non-custodial architecture: 100% client-side signing. Zero private keys stored.`;
 
       return NextResponse.json({
