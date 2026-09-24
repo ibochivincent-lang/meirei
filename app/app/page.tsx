@@ -689,6 +689,109 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
   // Trading mode state: strictly TWO MODES: "basic" | "advanced"
   const [mode, setMode] = useState<Mode>("basic");
+  const [showInitialModeModal, setShowInitialModeModal] = useState<boolean>(true);
+
+  // Check URL query parameters (?mode=basic or ?mode=advanced)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlMode = params.get("mode");
+      if (urlMode === "advanced") {
+        setMode("advanced");
+        setShowInitialModeModal(false);
+      } else if (urlMode === "basic") {
+        setMode("basic");
+        setShowInitialModeModal(false);
+      }
+    }
+  }, []);
+
+  // Separate Isolated Portfolios for Basic Mode vs. Advanced Mode
+  const [basicHoldings, setBasicHoldings] = useState<{ symbol: string; amount: number; valueUsd: number; color: string }[]>([
+    { symbol: "NVDAx", amount: 2.5, valueUsd: 446.0, color: "#10b981" },
+    { symbol: "AAPLx", amount: 3.0, valueUsd: 672.6, color: "#3b82f6" },
+    { symbol: "TSLAx", amount: 0.5, valueUsd: 127.05, color: "#f59e0b" },
+  ]);
+  const [basicUsdgBalance, setBasicUsdgBalance] = useState<number>(5000.0);
+
+  const [advancedHoldings, setAdvancedHoldings] = useState<{ symbol: string; amount: number; valueUsd: number; color: string }[]>([
+    { symbol: "NVDAx", amount: 6.0, valueUsd: 1070.4, color: "#10b981" },
+    { symbol: "TSLAx", amount: 3.2, valueUsd: 813.12, color: "#f59e0b" },
+    { symbol: "METAx", amount: 0.85, valueUsd: 495.04, color: "#8b5cf6" },
+  ]);
+  const [advancedUsdgBalance, setAdvancedUsdgBalance] = useState<number>(15000.0);
+
+  // Dynamic portfolio selector depending on active mode
+  const currentHoldings = mode === "basic" ? basicHoldings : advancedHoldings;
+  const currentUsdgBalance = mode === "basic" ? basicUsdgBalance : advancedUsdgBalance;
+
+  // Record a Quick Buy or Unit Calculator trade strictly into Basic Mode
+  const recordBasicBuy = (symbol: string, amountUsdg: number, units: number, price: number) => {
+    setBasicUsdgBalance((prev) => Math.max(0, prev - amountUsdg));
+    setBasicHoldings((prev) => {
+      const existing = prev.find((h) => h.symbol === symbol);
+      if (existing) {
+        return prev.map((h) =>
+          h.symbol === symbol
+            ? { ...h, amount: h.amount + units, valueUsd: (h.amount + units) * price }
+            : h
+        );
+      }
+      return [
+        ...prev,
+        {
+          symbol,
+          amount: units,
+          valueUsd: amountUsdg,
+          color: "#06b6d4",
+        },
+      ];
+    });
+  };
+
+  // Mandate editing state
+  const [editingMandate, setEditingMandate] = useState<MandatePolicy | null>(null);
+  const [editTarget, setEditTarget] = useState<string>("");
+  const [editRule, setEditRule] = useState<string>("");
+  const [editThreshold, setEditThreshold] = useState<string>("");
+  const [editStatus, setEditStatus] = useState<"active" | "paused">("active");
+
+  const handleOpenEditMandate = (mandate: MandatePolicy) => {
+    setEditingMandate(mandate);
+    setEditTarget(mandate.target);
+    setEditRule(mandate.rule);
+    setEditThreshold(mandate.threshold);
+    setEditStatus(mandate.status);
+  };
+
+  const handleSaveEditMandate = () => {
+    if (!editingMandate) return;
+    setMandatePolicies((prev) =>
+      prev.map((m) =>
+        m.id === editingMandate.id
+          ? {
+              ...m,
+              target: editTarget.trim() || m.target,
+              rule: editRule.trim() || m.rule,
+              threshold: editThreshold.trim() || m.threshold,
+              status: editStatus,
+              lastEvaluated: "Updated by operator",
+            }
+          : m
+      )
+    );
+    setExecutionLogs((prev) => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString(),
+        source: "Policy Manager",
+        message: `Policy "${editingMandate.title}" updated. Target: ${editTarget || editingMandate.target}, Threshold: ${editThreshold || editingMandate.threshold}, Status: ${editStatus.toUpperCase()}.`,
+        type: "success",
+      },
+      ...prev,
+    ]);
+    setEditingMandate(null);
+  };
 
   // Advanced Mode Terms & Conditions state: re-prompts on reload for comprehensive risk review
   const [hasAcceptedAdvancedTerms, setHasAcceptedAdvancedTerms] = useState<boolean>(false);
@@ -1134,6 +1237,33 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     };
 
     setMandatePolicies((prev) => [newPolicy, ...prev]);
+
+    // Allocate capital to Advanced Mode portfolio without touching Basic Mode portfolio
+    setAdvancedUsdgBalance((prev) => Math.max(0, prev - advisoryCapital));
+    setAdvancedHoldings((prev) => {
+      const updated = [...prev];
+      for (const alloc of plan.allocations) {
+        const allocUsd = (advisoryCapital * alloc.weightPercent) / 100;
+        const price = stockPrices[alloc.symbol] || 150;
+        const units = allocUsd / price;
+        const existingIdx = updated.findIndex((h) => h.symbol === alloc.symbol);
+        if (existingIdx >= 0) {
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            amount: updated[existingIdx].amount + units,
+            valueUsd: (updated[existingIdx].amount + units) * price,
+          };
+        } else {
+          updated.push({
+            symbol: alloc.symbol,
+            amount: units,
+            valueUsd: allocUsd,
+            color: "#6366f1",
+          });
+        }
+      }
+      return updated;
+    });
 
     setDeployedMandateReceipt({
       mandateId,
@@ -1894,50 +2024,54 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
           </div>
         )}
 
-        {/* Terminal Subheader & CONSOLIDATED TWO-MODE SWITCHER */}
+        {/* Terminal Subheader & DUAL-ENVIRONMENT MODE SWITCHER */}
         <div className="mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-display text-lg font-bold tracking-tight text-ink-900 sm:text-2xl">
-                Trading &amp; Mandate Terminal
+                {mode === "basic" ? "Spot Trading & Unit Terminal" : "Autonomous Investment Mandate Terminal"}
               </h1>
-              <span className="rounded-full bg-surface-100 border border-ink-200 px-2.5 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold text-ink-600">
-                OKX Chain (X Layer)
+              <span className={cn(
+                "rounded-full px-2.5 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold border",
+                mode === "basic" ? "bg-accent-50 border-accent-200 text-accent-700" : "bg-ink-900 border-ink-800 text-white"
+              )}>
+                {mode === "basic" ? "Basic Mode" : "Advanced Mode"}
               </span>
+              <button
+                type="button"
+                onClick={() => setShowInitialModeModal(true)}
+                className="text-[10px] font-mono text-ink-500 hover:text-ink-900 underline ml-1 cursor-pointer"
+              >
+                Change Environment
+              </button>
             </div>
             <p className="mt-1 text-xs text-ink-600 sm:text-sm">
-              Strictly non-custodial: No private keys stored. Authenticated via verified Email &amp; 2FA on X Layer.
+              {mode === "basic"
+                ? "Direct non-custodial spot execution across 20 allowlisted equities with interactive charts and USDG unit calculator."
+                : "Autonomous algorithmic mandate studio with 4 OKX AI skills, drift rebalancing, and downside risk guards."}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            {/* EXACTLY TWO MODES SWITCHER: Basic Mode vs Advanced Mode */}
-            <div className="flex items-center gap-1.5 rounded-xl border border-ink-200 bg-surface-100 p-1 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => setMode("basic")}
-                className={cn(
-                  "flex-1 sm:flex-initial text-center rounded-lg px-3 sm:px-4 py-2 text-xs font-bold transition-all cursor-pointer",
-                  mode === "basic"
-                    ? "bg-accent-500 text-white shadow-sm"
-                    : "text-ink-600 hover:text-ink-900"
-                )}
-              >
-                Basic Mode
-              </button>
+          <div className="flex items-center gap-3">
+            {mode === "basic" ? (
               <button
                 type="button"
                 onClick={handleSwitchToAdvanced}
-                className={cn(
-                  "flex-1 sm:flex-initial text-center rounded-lg px-3 sm:px-4 py-2 text-xs font-bold transition-all cursor-pointer",
-                  mode === "advanced"
-                    ? "bg-ink-900 text-white shadow-sm"
-                    : "text-ink-600 hover:text-ink-900"
-                )}
+                className="inline-flex items-center gap-2 rounded-xl bg-ink-950 hover:bg-accent-600 text-white px-4 py-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer group"
               >
-                Advanced Mode
+                <span>Move to Advanced Mode</span>
+                <span className="group-hover:translate-x-0.5 transition-transform">→</span>
               </button>
-            </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setMode("basic")}
+                className="inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white hover:bg-surface-100 text-ink-900 px-4 py-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer group"
+              >
+                <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+                <span>Move to Basic Mode</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -2639,14 +2773,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       >
                         Check Drift Now
                       </button>
-                      <button
-                        type="button"
-                        onClick={handleTriggerSimulatedRebalance}
-                        className="rounded-lg border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-surface-100 cursor-pointer transition-colors"
-                        title="Simulate drift shock to test automated solver"
-                      >
-                        Simulate Shock
-                      </button>
+
                       <button
                         type="button"
                         onClick={() => setShowCreateMandateModal(true)}
@@ -2678,18 +2805,28 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                               {mandate.policyType === "dca_recurring" && "DCA Policy"}
                               {mandate.policyType === "circuit_breaker" && "Circuit Breaker"}
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => toggleMandatePolicy(mandate.id)}
-                              className={cn(
-                                "rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer border",
-                                mandate.status === "active"
-                                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
-                                  : "bg-zinc-500/15 border-zinc-500/30 text-zinc-500"
-                              )}
-                            >
-                              {mandate.status === "active" ? "Active" : "Paused"}
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditMandate(mandate)}
+                                className="rounded px-2 py-0.5 font-mono text-[9px] font-bold text-ink-700 hover:text-ink-950 bg-white hover:bg-surface-100 border border-ink-200 cursor-pointer shadow-2xs transition-colors"
+                                title="Edit mandate parameters"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleMandatePolicy(mandate.id)}
+                                className={cn(
+                                  "rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer border",
+                                  mandate.status === "active"
+                                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
+                                    : "bg-zinc-500/15 border-zinc-500/30 text-zinc-500"
+                                )}
+                              >
+                                {mandate.status === "active" ? "Active" : "Paused"}
+                              </button>
+                            </div>
                           </div>
 
                           <h4 className="mt-2 font-display text-sm font-bold text-ink-900">
@@ -3937,91 +4074,113 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
           {/* Right Sidebar: Portfolio Summary (Cols 9 to 12) */}
           <div className="space-y-6 lg:col-span-4">
 
-            {/* Live Portfolio Breakdown Card - Unified Active Holdings */}
+            {/* Live Portfolio Breakdown Card - Mode-Isolated Active Holdings */}
             <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
               <div className="flex items-center justify-between border-b border-ink-100 pb-3">
-                <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
-                  Active Portfolio Holdings
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
+                    Active Portfolio
+                  </span>
+                  <span className={cn(
+                    "rounded px-2 py-0.5 text-[9px] font-bold uppercase",
+                    mode === "basic" ? "bg-accent-100 text-accent-800" : "bg-ink-900 text-white"
+                  )}>
+                    {mode === "basic" ? "Basic Mode" : "Advanced Mode"}
+                  </span>
+                </div>
                 <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                  {profile.holdings.length} {profile.holdings.length === 1 ? "Position" : "Positions"}
+                  {currentHoldings.length} {currentHoldings.length === 1 ? "Position" : "Positions"}
                 </span>
               </div>
 
-              <div className="mt-3">
-                <p className="font-mono text-3xl font-bold tracking-tight text-ink-900">
-                  ${profile.portfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </p>
-                <div className="mt-1 flex items-center justify-between text-xs text-ink-600">
-                  <span>Cash: <strong className="font-mono text-ink-900">${profile.usdgBalance.toFixed(2)} USDG</strong></span>
-                  <span>Equities: <strong className="font-mono text-ink-900">${Math.max(0, profile.portfolioValue - profile.usdgBalance).toFixed(2)} USDG</strong></span>
-                </div>
+              {(() => {
+                const currentEquityVal = currentHoldings.reduce((sum, h) => {
+                  const p = stockPrices[h.symbol] || (h.amount > 0 ? h.valueUsd / h.amount : 0);
+                  return sum + (h.amount * p);
+                }, 0);
+                const currentTotalVal = currentEquityVal + currentUsdgBalance;
 
-                {/* Spending Cap Telemetry */}
-                <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-2 text-[11px] text-ink-500">
-                  <span>OKX X Layer (Chain 196):</span>
-                  <span className="font-mono font-semibold text-emerald-600">On-Chain Verified</span>
-                </div>
-              </div>
+                return (
+                  <div className="mt-3">
+                    <p className="font-mono text-3xl font-bold tracking-tight text-ink-900">
+                      ${currentTotalVal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </p>
+                    <div className="mt-1 flex items-center justify-between text-xs text-ink-600">
+                      <span>Cash: <strong className="font-mono text-ink-900">${currentUsdgBalance.toFixed(2)} USDG</strong></span>
+                      <span>Equities: <strong className="font-mono text-ink-900">${currentEquityVal.toFixed(2)} USDG</strong></span>
+                    </div>
 
-              {profile.holdings.length === 0 ? (
-                <div className="mt-4 rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
-                  <p className="text-xs font-semibold text-ink-800">No active stock holdings</p>
-                  <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
-                    This wallet currently holds no tokenized equities on OKX X Layer (Chain 196). Use Quick Buy or submit an investment mandate to begin.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {/* Progress Bar Breakdown */}
-                  <div className="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-surface-100">
-                    {profile.holdings.map((h) => {
-                      const pct = (h.valueUsd / (profile.portfolioValue || 1)) * 100;
-                      return (
-                        <div
-                          key={h.symbol}
-                          style={{ width: `${pct}%`, backgroundColor: h.color }}
-                          title={`${h.symbol}: ${pct.toFixed(1)}%`}
-                        />
-                      );
-                    })}
-                  </div>
+                    {/* Spending Cap Telemetry */}
+                    <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-2 text-[11px] text-ink-500">
+                      <span>OKX X Layer (Chain 196):</span>
+                      <span className="font-mono font-semibold text-emerald-600">On-Chain Verified</span>
+                    </div>
 
-                  {/* Holdings List with live spot & units */}
-                  <div className="mt-4 space-y-2 text-xs">
-                    {profile.holdings.map((h) => {
-                      const livePrice = stockPrices[h.symbol];
-                      const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
-
-                      return (
-                        <div
-                          key={h.symbol}
-                          className="flex items-center justify-between rounded-lg border border-ink-100 bg-surface-50 px-3 py-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="h-2.5 w-2.5 rounded-full shrink-0"
-                              style={{ backgroundColor: h.color }}
-                            />
-                            <span className="font-bold text-ink-900">{h.symbol}</span>
-                            <span className="text-[10px] text-ink-500">
-                              {h.amount.toFixed(2)} units
-                            </span>
-                            {livePrice && (
-                              <span className="text-[9px] font-mono text-ink-400">
-                                @ ${livePrice.toFixed(2)}
-                              </span>
-                            )}
-                          </div>
-                          <span className="font-mono font-semibold text-ink-900">
-                            ${currentVal.toFixed(2)}
-                          </span>
+                    {currentHoldings.length === 0 ? (
+                      <div className="mt-4 rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
+                        <p className="text-xs font-semibold text-ink-800">No active stock holdings in {mode === "basic" ? "Basic Mode" : "Advanced Mode"}</p>
+                        <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
+                          {mode === "basic"
+                            ? "Use Quick Buy on any of the 20 allowlisted equities or the Unit Calculator to execute a spot trade."
+                            : "Deploy an algorithmic mandate or configure DCA to start autonomous execution on X Layer."}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Progress Bar Breakdown */}
+                        <div className="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-surface-100">
+                          {currentHoldings.map((h) => {
+                            const livePrice = stockPrices[h.symbol] || (h.amount > 0 ? h.valueUsd / h.amount : 0);
+                            const val = h.amount * livePrice;
+                            const pct = (val / (currentTotalVal || 1)) * 100;
+                            return (
+                              <div
+                                key={h.symbol}
+                                style={{ width: `${pct}%`, backgroundColor: h.color || "#10b981" }}
+                                title={`${h.symbol}: ${pct.toFixed(1)}%`}
+                              />
+                            );
+                          })}
                         </div>
-                      );
-                    })}
+
+                        {/* Holdings List with live spot & units */}
+                        <div className="mt-4 space-y-2 text-xs">
+                          {currentHoldings.map((h) => {
+                            const livePrice = stockPrices[h.symbol];
+                            const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
+
+                            return (
+                              <div
+                                key={h.symbol}
+                                className="flex items-center justify-between rounded-lg border border-ink-100 bg-surface-50 px-3 py-2"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: h.color || "#10b981" }}
+                                  />
+                                  <span className="font-bold text-ink-900">{h.symbol}</span>
+                                  <span className="text-[10px] text-ink-500">
+                                    {h.amount.toFixed(2)} units
+                                  </span>
+                                  {livePrice && (
+                                    <span className="text-[9px] font-mono text-ink-400">
+                                      @ ${livePrice.toFixed(2)}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="font-mono font-semibold text-ink-900">
+                                  ${currentVal.toFixed(2)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
                   </div>
-                </>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -4696,8 +4855,11 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
         userAddress={profile.address}
         onSuccess={(res) => {
           if (res.txHash) {
+            const executedAmount = res.executedAmountUsdg || web3ModalState.fromAmountUsdg;
+            const executedUnits = res.executedUnits || web3ModalState.estimatedUnits;
+            recordBasicBuy(web3ModalState.targetSymbol, executedAmount, executedUnits, web3ModalState.spotPrice);
             setMandateResult({
-              reply: `Signed non-custodially on X Layer for ${web3ModalState.estimatedUnits.toFixed(4)} ${web3ModalState.targetSymbol}.`,
+              reply: `Signed non-custodially on X Layer for ${executedUnits.toFixed(4)} ${web3ModalState.targetSymbol} ($${executedAmount.toFixed(2)} USDG).`,
               type: "mandate",
               hash: res.txHash,
               statusTone: "confirmed",
@@ -4705,6 +4867,244 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
           }
         }}
       />
+
+      {/* Edit Mandate Policy Modal */}
+      <AnimatePresence>
+        {editingMandate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              className="relative w-full max-w-md rounded-3xl border border-ink-200 bg-white p-6 shadow-2xl text-ink-900"
+            >
+              <div className="flex items-center justify-between pb-3.5 border-b border-ink-100">
+                <div>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-700">
+                    Policy Configuration · OKX X Layer
+                  </span>
+                  <h3 className="font-display text-base font-bold text-ink-950">
+                    Edit Mandate: {editingMandate.title}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingMandate(null)}
+                  className="rounded-full h-8 w-8 flex items-center justify-center text-ink-400 hover:bg-surface-100 hover:text-ink-950 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-3.5 text-xs">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-ink-700 mb-1">
+                    Target Assets / Sleeves
+                  </label>
+                  <input
+                    type="text"
+                    value={editTarget}
+                    onChange={(e) => setEditTarget(e.target.value)}
+                    placeholder="e.g. 60% NVDAx / 40% AAPLx"
+                    className="w-full rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2 font-mono text-ink-950 outline-none focus:border-accent-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-ink-700 mb-1">
+                    Operational Execution Rule
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editRule}
+                    onChange={(e) => setEditRule(e.target.value)}
+                    placeholder="Execution rule description..."
+                    className="w-full rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2 text-ink-950 outline-none focus:border-accent-500 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-ink-700 mb-1">
+                    Trigger Threshold / Limit
+                  </label>
+                  <input
+                    type="text"
+                    value={editThreshold}
+                    onChange={(e) => setEditThreshold(e.target.value)}
+                    placeholder="e.g. 3.5% or 100 USDG"
+                    className="w-full rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2 font-mono text-ink-950 outline-none focus:border-accent-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-ink-700 mb-1">
+                    Policy Status
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditStatus("active")}
+                      className={cn(
+                        "flex-1 py-2 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer",
+                        editStatus === "active"
+                          ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+                          : "border-ink-200 bg-white text-ink-600 hover:bg-surface-50"
+                      )}
+                    >
+                      Active
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditStatus("paused")}
+                      className={cn(
+                        "flex-1 py-2 rounded-xl border font-mono text-xs font-bold transition-all cursor-pointer",
+                        editStatus === "paused"
+                          ? "border-amber-500 bg-amber-50 text-amber-800"
+                          : "border-ink-200 bg-white text-ink-600 hover:bg-surface-50"
+                      )}
+                    >
+                      Paused
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-end gap-2 pt-3 border-t border-ink-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingMandate(null)}
+                  className="px-4 py-2 rounded-xl border border-ink-200 text-xs font-semibold text-ink-700 hover:bg-surface-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEditMandate}
+                  className="px-4 py-2 rounded-xl bg-accent-600 hover:bg-accent-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                >
+                  Save Policy Changes
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* First Screen: Mode Chooser with Transparent / Glassmorphism Backdrop */}
+      <AnimatePresence>
+        {showInitialModeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/70 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 14 }}
+              className="relative w-full max-w-2xl rounded-3xl border border-ink-200/80 bg-white/95 backdrop-blur-xl p-6 sm:p-8 shadow-2xl text-ink-900"
+            >
+              {/* Header */}
+              <div className="text-center space-y-2 pb-6 border-b border-ink-100">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 border border-accent-200 px-3 py-1 font-mono text-[11px] font-bold text-accent-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent-500 animate-pulse" />
+                  OKX X Layer (Chain ID 196) · Dual-Architecture Terminal
+                </span>
+                <h2 className="font-display text-2xl sm:text-3xl font-bold text-ink-950">
+                  Select Your Trading Environment
+                </h2>
+                <p className="text-xs sm:text-sm text-ink-600 max-w-lg mx-auto leading-relaxed">
+                  Meirei features two distinct operational modes. Executions in Basic Mode remain completely isolated from autonomous mandates in Advanced Mode.
+                </p>
+              </div>
+
+              {/* Mode Selection Cards */}
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {/* 1. Basic Mode Card */}
+                <div
+                  onClick={() => {
+                    setMode("basic");
+                    setShowInitialModeModal(false);
+                  }}
+                  className="rounded-2xl border-2 border-accent-200 bg-accent-50/40 hover:bg-accent-50/80 p-5 flex flex-col justify-between transition-all cursor-pointer hover:border-accent-500 hover:shadow-md group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">⚡</span>
+                      <span className="rounded-full bg-accent-100 px-2.5 py-0.5 font-mono text-[10px] font-bold text-accent-800">
+                        Spot &amp; Calculator
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-display text-lg font-bold text-ink-950 group-hover:text-accent-700 transition-colors">
+                        Basic Mode
+                      </h3>
+                      <p className="text-xs text-ink-600 mt-1 leading-relaxed">
+                        Instant spot equity trading across 20 allowlisted equities, interactive TradingView charts, and a real-time USDG unit calculator with sponsored zero-gas execution.
+                      </p>
+                    </div>
+                    <ul className="text-[11px] text-ink-700 space-y-1 font-medium pt-2 border-t border-accent-200/50">
+                      <li>✓ Curated 20 Allowlisted xStocks</li>
+                      <li>✓ Real-Time USDG Unit Calculator</li>
+                      <li>✓ Non-Custodial Quick Buy with 0 Gas</li>
+                      <li>✓ Completely Isolated Spot Portfolio</li>
+                    </ul>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="mt-5 w-full py-2.5 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <span>Enter Basic Mode</span>
+                    <span>→</span>
+                  </button>
+                </div>
+
+                {/* 2. Advanced Mode Card */}
+                <div
+                  onClick={() => {
+                    setShowInitialModeModal(false);
+                    handleSwitchToAdvanced();
+                  }}
+                  className="rounded-2xl border-2 border-ink-200 bg-surface-50/60 hover:bg-surface-50 p-5 flex flex-col justify-between transition-all cursor-pointer hover:border-ink-900 hover:shadow-md group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl">🧠</span>
+                      <span className="rounded-full bg-ink-200 px-2.5 py-0.5 font-mono text-[10px] font-bold text-ink-800">
+                        Autonomous Mandates
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-display text-lg font-bold text-ink-950 group-hover:text-ink-900 transition-colors">
+                        Advanced Mode
+                      </h3>
+                      <p className="text-xs text-ink-600 mt-1 leading-relaxed">
+                        Autonomous mandate orchestrator synchronizing 4 OKX AI skills, algorithmic drift rebalancing, recurring DCA schedules, and institutional market catalyst intelligence.
+                      </p>
+                    </div>
+                    <ul className="text-[11px] text-ink-700 space-y-1 font-medium pt-2 border-t border-ink-200/60">
+                      <li>✓ 4 OKX AI Skills Synchronized</li>
+                      <li>✓ Algorithmic Drift &amp; DCA Solvers</li>
+                      <li>✓ Volatility Circuit Breakers</li>
+                      <li>✓ Dedicated Mandate Capital Allocation</li>
+                    </ul>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="mt-5 w-full py-2.5 rounded-xl bg-ink-950 hover:bg-accent-600 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <span>Enter Advanced Mode</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-ink-100 flex items-center justify-between text-[11px] text-ink-500">
+                <span>Non-Custodial Session Keys on OKX X Layer (Chain 196)</span>
+                <span className="font-mono text-[10px]">Zero Server Custody</span>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Advanced Mode Terms & Conditions Risk Disclosure Modal */}
       <AnimatePresence>
