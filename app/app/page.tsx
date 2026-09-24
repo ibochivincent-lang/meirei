@@ -4552,21 +4552,24 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
             {/* Active Meirei AI Assistant Intelligence Engine: 4 Meirei Assistant Skills Synchronized (Directly Below Active Portfolio & Ontop Market Catalysts in Advanced Mode) */}
             {mode === "advanced" && (
-              <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
-                <div className="flex flex-col justify-between gap-2.5 border-b border-ink-100 pb-3.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
-                      Meirei AI Intelligence Architecture
-                    </span>
-                    <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 font-mono text-[9px] font-bold text-emerald-700 flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      4 Meirei Assistant Skills Synchronized
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-display text-sm font-bold text-ink-950 sm:text-base">
-                      Active Meirei AI Assistant Intelligence Engine
-                    </h3>
+              <div className="rounded-2xl border border-ink-200/90 bg-white p-5 shadow-xs">
+                <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-3.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                          MEIREI AI INTELLIGENCE ARCHITECTURE
+                        </span>
+                        <span className="rounded-full bg-emerald-50 border border-emerald-300/60 px-2 py-0.5 font-mono text-[9px] font-bold text-emerald-700 flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          4 Meirei Assistant Skills Synchronized
+                        </span>
+                      </div>
+                      <h3 className="mt-1 font-display text-base font-bold text-ink-950 sm:text-lg">
+                        Active Meirei AI Assistant Intelligence Engine
+                      </h3>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => {
@@ -4582,24 +4585,26 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                           ...prev.slice(0, 24),
                         ]);
                       }}
-                      className="rounded-lg border border-ink-200 bg-surface-50 px-2 py-1 text-[10px] font-semibold text-ink-700 hover:bg-white hover:text-ink-950 transition-colors cursor-pointer flex items-center gap-1 shrink-0 shadow-2xs"
+                      className="rounded-full border border-ink-200 bg-white hover:bg-surface-50 px-3 py-1.5 text-[11px] font-semibold text-ink-700 hover:text-ink-950 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
                       title="Refresh OKX AI skills telemetry"
                     >
-                      <span className="text-accent-600 font-bold">↻</span>
-                      <span>Refresh ({lastTelemetryRefresh})</span>
+                      <span className="text-accent-600 font-bold text-xs">↻</span>
+                      <span>Refresh Telemetry</span>
+                      <span className="text-[10px] text-ink-400 font-mono">({lastTelemetryRefresh})</span>
                     </button>
                   </div>
+
                   <p className="text-[11px] text-ink-600 leading-relaxed">
                     Synchronizing <strong className="text-ink-900 font-mono">trading-plan-generator</strong>, <strong className="text-ink-900 font-mono">okx-sentiment-tracker</strong>, <strong className="text-ink-900 font-mono">okx-cex-smartmoney</strong>, and <strong className="text-ink-900 font-mono">okx-cex-market</strong> across all 20 allowlisted equities on OKX X Layer (Chain 196).
                   </p>
                 </div>
 
-                {/* 4 Skills Cards Grid in Sidebar */}
+                {/* 4 Skills Cards Grid */}
                 <div className="mt-3.5 space-y-2.5">
                   {/* 1. trading-plan-generator */}
-                  <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-1.5">
+                  <div className="rounded-xl border border-ink-200/80 bg-white p-3 space-y-1.5 shadow-2xs hover:border-sky-300 transition-all">
                     <div className="flex items-center justify-between">
-                      <span className="rounded bg-sky-100 border border-sky-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-sky-800">
+                      <span className="rounded bg-sky-50 border border-sky-200 px-2 py-0.5 font-mono text-[9px] font-bold text-sky-700">
                         trading-plan-generator
                       </span>
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -4607,19 +4612,19 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     <h4 className="font-display text-xs font-bold text-ink-950">
                       Trading Plan Generator
                     </h4>
-                    <p className="text-[10px] text-ink-500 leading-relaxed">
+                    <p className="text-[11px] text-ink-600 leading-relaxed">
                       Generates institutional-grade rebalancing rules, dynamic drift bounds (1.5%–3.5%), and capital preservation ceilings.
                     </p>
-                    <div className="pt-1.5 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                    <div className="pt-2 border-t border-ink-100 flex items-center justify-between text-[11px]">
                       <span className="text-ink-500 font-mono">Telemetry:</span>
                       <span className="font-bold text-ink-900 font-mono">15 Trajectories Active</span>
                     </div>
                   </div>
 
                   {/* 2. okx-sentiment-tracker */}
-                  <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-1.5">
+                  <div className="rounded-xl border border-ink-200/80 bg-white p-3 space-y-1.5 shadow-2xs hover:border-indigo-300 transition-all">
                     <div className="flex items-center justify-between">
-                      <span className="rounded bg-indigo-100 border border-indigo-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-indigo-800">
+                      <span className="rounded bg-indigo-50 border border-indigo-200 px-2 py-0.5 font-mono text-[9px] font-bold text-indigo-700">
                         okx-sentiment-tracker
                       </span>
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -4627,19 +4632,19 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     <h4 className="font-display text-xs font-bold text-ink-950">
                       OKX Sentiment Tracker
                     </h4>
-                    <p className="text-[10px] text-ink-500 leading-relaxed">
+                    <p className="text-[11px] text-ink-600 leading-relaxed">
                       Aggregates 48.2K mentions, whale social sentiment, and retail vs institutional positioning divergence on X Layer.
                     </p>
-                    <div className="pt-1.5 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                    <div className="pt-2 border-t border-ink-100 flex items-center justify-between text-[11px]">
                       <span className="text-ink-500 font-mono">Sentiment Score:</span>
                       <span className="font-bold text-indigo-700 font-mono">82/100 (Bullish)</span>
                     </div>
                   </div>
 
                   {/* 3. okx-cex-smartmoney */}
-                  <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-1.5">
+                  <div className="rounded-xl border border-ink-200/80 bg-white p-3 space-y-1.5 shadow-2xs hover:border-emerald-300 transition-all">
                     <div className="flex items-center justify-between">
-                      <span className="rounded bg-emerald-100 border border-emerald-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-emerald-800">
+                      <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 font-mono text-[9px] font-bold text-emerald-700">
                         okx-cex-smartmoney
                       </span>
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -4647,19 +4652,19 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     <h4 className="font-display text-xs font-bold text-ink-950">
                       OKX CEX Smart Money
                     </h4>
-                    <p className="text-[10px] text-ink-500 leading-relaxed">
+                    <p className="text-[11px] text-ink-600 leading-relaxed">
                       Monitors whale wallet accumulation, exchange net flows, and top-trader long ratios on OKX CEX &amp; DEX bridges.
                     </p>
-                    <div className="pt-1.5 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                    <div className="pt-2 border-t border-ink-100 flex items-center justify-between text-[11px]">
                       <span className="text-ink-500 font-mono">Net Inflow 24h:</span>
                       <span className="font-bold text-emerald-700 font-mono">+$5.84M USDG</span>
                     </div>
                   </div>
 
                   {/* 4. okx-cex-market */}
-                  <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-1.5">
+                  <div className="rounded-xl border border-ink-200/80 bg-white p-3 space-y-1.5 shadow-2xs hover:border-amber-300 transition-all">
                     <div className="flex items-center justify-between">
-                      <span className="rounded bg-amber-100 border border-amber-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber-800">
+                      <span className="rounded bg-amber-50 border border-amber-200 px-2 py-0.5 font-mono text-[9px] font-bold text-amber-800">
                         okx-cex-market
                       </span>
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -4667,10 +4672,10 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     <h4 className="font-display text-xs font-bold text-ink-950">
                       OKX CEX Market Depth
                     </h4>
-                    <p className="text-[10px] text-ink-500 leading-relaxed">
+                    <p className="text-[11px] text-ink-600 leading-relaxed">
                       High-frequency orderbook spread metrics, liquidity depth, and 24h tokenized stock trading volume rankings.
                     </p>
-                    <div className="pt-1.5 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                    <div className="pt-2 border-t border-ink-100 flex items-center justify-between text-[11px]">
                       <span className="text-ink-500 font-mono">Liquidity Depth:</span>
                       <span className="font-bold text-amber-700 font-mono">$24.6M (2.1 bps)</span>
                     </div>
@@ -5425,13 +5430,193 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-ink-700 mb-1">
                     Target Assets / Sleeves
                   </label>
-                  <input
-                    type="text"
-                    value={editTarget}
-                    onChange={(e) => setEditTarget(e.target.value)}
-                    placeholder="e.g. 60% NVDAx / 40% AAPLx"
-                    className="w-full rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2 font-mono text-ink-950 outline-none focus:border-accent-500"
-                  />
+
+                  {/* Dynamic Interactive Selection Based on Mandate Type */}
+                  {(editingMandate.policyType === "drift_rebalance" || editingMandate.target.includes("%")) ? (
+                    <div className="space-y-3 rounded-2xl border border-accent-200 bg-accent-50/30 p-3.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-ink-900">Select Equities &amp; Split Percentages</span>
+                        <div className="flex items-center gap-1.5 font-mono text-[10px]">
+                          {["50/50", "60/40", "70/30", "80/20"].map((preset) => {
+                            const [w1, w2] = preset.split("/").map(Number);
+                            return (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() => {
+                                  if (editSelectedStocks.length >= 2) {
+                                    const s1 = editSelectedStocks[0];
+                                    const s2 = editSelectedStocks[1];
+                                    const newWeights = { ...editStockWeights, [s1]: w1, [s2]: w2 };
+                                    setEditStockWeights(newWeights);
+                                    setEditTarget(`${w1}% ${s1} / ${w2}% ${s2}`);
+                                  }
+                                }}
+                                className="rounded bg-white px-1.5 py-0.5 border border-ink-200 text-ink-700 hover:border-accent-500 hover:text-accent-700 cursor-pointer font-bold"
+                              >
+                                {preset}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Stock Selection Pills for Drift */}
+                      <div className="flex flex-wrap gap-1.5 max-h-[90px] overflow-y-auto pr-1">
+                        {STOCKS.map((s) => {
+                          const isSel = editSelectedStocks.includes(s.symbol);
+                          return (
+                            <button
+                              key={s.symbol}
+                              type="button"
+                              onClick={() => {
+                                let newStocks = [...editSelectedStocks];
+                                const newWeights = { ...editStockWeights };
+                                if (isSel) {
+                                  if (newStocks.length > 1) {
+                                    newStocks = newStocks.filter((x) => x !== s.symbol);
+                                    delete newWeights[s.symbol];
+                                  }
+                                } else {
+                                  newStocks.push(s.symbol);
+                                  newWeights[s.symbol] = Math.round(100 / newStocks.length);
+                                }
+                                setEditSelectedStocks(newStocks);
+                                setEditStockWeights(newWeights);
+                                setEditTarget(newStocks.map((sym) => `${newWeights[sym] || 0}% ${sym}`).join(" / "));
+                              }}
+                              className={cn(
+                                "rounded-lg px-2 py-1 font-mono text-[10px] font-bold border transition-all cursor-pointer",
+                                isSel
+                                  ? "border-accent-500 bg-accent-500 text-white shadow-2xs"
+                                  : "border-ink-200 bg-white text-ink-700 hover:bg-surface-100"
+                              )}
+                            >
+                              {s.symbol}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Percentage Inputs for Selected Stocks */}
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-accent-200/60">
+                        {editSelectedStocks.map((sym) => (
+                          <div key={sym} className="flex items-center justify-between rounded-xl bg-white p-2 border border-ink-200">
+                            <span className="font-mono text-xs font-bold text-ink-900">{sym}</span>
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="1"
+                                max="100"
+                                value={editStockWeights[sym] ?? 50}
+                                onChange={(e) => {
+                                  const val = Math.max(1, Math.min(100, Number(e.target.value) || 0));
+                                  const newWeights = { ...editStockWeights, [sym]: val };
+                                  setEditStockWeights(newWeights);
+                                  setEditTarget(editSelectedStocks.map((s) => `${newWeights[s] || 0}% ${s}`).join(" / "));
+                                }}
+                                className="w-14 rounded-lg border border-ink-200 bg-surface-50 py-1 px-1.5 text-center font-mono text-xs font-bold text-ink-950 outline-none focus:border-accent-500"
+                              />
+                              <span className="font-mono text-xs text-ink-500 font-bold">%</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="text-[10px] font-mono text-ink-500 flex items-center justify-between pt-1">
+                        <span>Configured Target:</span>
+                        <span className="font-bold text-accent-700 font-mono">{editTarget}</span>
+                      </div>
+                    </div>
+                  ) : (editingMandate.policyType === "dca_recurring" || editingMandate.target.toLowerCase().includes("into")) ? (
+                    <div className="space-y-3 rounded-2xl border border-accent-200 bg-accent-50/30 p-3.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-ink-600 mb-1">
+                            Select Tokenized Stock
+                          </label>
+                          <select
+                            value={editDcaStock}
+                            onChange={(e) => {
+                              const s = e.target.value;
+                              setEditDcaStock(s);
+                              setEditTarget(`${editDcaAmount} USDG into ${s}`);
+                            }}
+                            className="w-full rounded-xl border border-ink-200 bg-white p-2 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 cursor-pointer"
+                          >
+                            {STOCKS.map((stk) => (
+                              <option key={stk.symbol} value={stk.symbol}>
+                                {stk.symbol} — {stk.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-ink-600 mb-1">
+                            Recurring Capital (USDG)
+                          </label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-ink-400">
+                              $
+                            </span>
+                            <input
+                              type="number"
+                              min="10"
+                              step="10"
+                              value={editDcaAmount}
+                              onChange={(e) => {
+                                const amt = Math.max(1, Number(e.target.value) || 0);
+                                setEditDcaAmount(amt);
+                                setEditTarget(`${amt} USDG into ${editDcaStock}`);
+                                setEditThreshold(`${amt} USDG`);
+                              }}
+                              className="w-full rounded-xl border border-ink-200 bg-white py-2 pl-6 pr-12 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500"
+                            />
+                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-ink-400">
+                              USDG
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Quick DCA Amount Chips */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        {[25, 50, 100, 250, 500].map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => {
+                              setEditDcaAmount(amt);
+                              setEditTarget(`${amt} USDG into ${editDcaStock}`);
+                              setEditThreshold(`${amt} USDG`);
+                            }}
+                            className={cn(
+                              "rounded-lg px-2.5 py-1 text-[10px] font-mono font-bold transition-all cursor-pointer",
+                              editDcaAmount === amt
+                                ? "bg-accent-600 text-white shadow-2xs"
+                                : "bg-white border border-ink-200 text-ink-700 hover:bg-surface-100"
+                            )}
+                          >
+                            ${amt} USDG
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="text-[10px] font-mono text-ink-500 flex items-center justify-between pt-1 border-t border-accent-200/60">
+                        <span>Configured DCA Rule:</span>
+                        <span className="font-bold text-accent-700 font-mono">{editTarget}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      value={editTarget}
+                      onChange={(e) => setEditTarget(e.target.value)}
+                      placeholder="e.g. 60% NVDAx / 40% AAPLx"
+                      className="w-full rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2 font-mono text-ink-950 outline-none focus:border-accent-500"
+                    />
+                  )}
                 </div>
 
                 <div>

@@ -250,7 +250,7 @@ export function Web3SigningModal({
 
                 {/* Quick amount chips */}
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  {[50, 100, 250, 500, 1000].map((chip) => (
+                  {[50, 100, 250, 500, 1000, 5000, 10000, 20000].map((chip) => (
                     <button
                       key={chip}
                       type="button"
@@ -261,14 +261,14 @@ export function Web3SigningModal({
                           : "border-ink-200 bg-white text-ink-700 hover:bg-surface-100"
                       }`}
                     >
-                      ${chip}
+                      ${chip >= 1000 ? `${chip / 1000}k` : chip}
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* Transaction Breakdown Card */}
-              <div className="p-4 rounded-2xl bg-surface-50 border border-ink-200 space-y-2.5 text-xs">
+              <div className="p-3.5 rounded-2xl bg-surface-50 border border-ink-200 space-y-2 text-xs">
                 <div className="flex justify-between items-center text-ink-600">
                   <span>Swap Route:</span>
                   <span className="font-mono font-bold text-ink-950">
@@ -292,7 +292,7 @@ export function Web3SigningModal({
                     Sponsored (0.00 OKB / Free)
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-ink-600 pt-2 border-t border-ink-200/80">
+                <div className="flex justify-between items-center text-ink-600 pt-1.5 border-t border-ink-200/80">
                   <span>Execution Venue:</span>
                   <span className="font-mono text-[11px] text-ink-700 font-medium">
                     OKX DEX Aggregator (X Layer 196)
@@ -301,12 +301,12 @@ export function Web3SigningModal({
               </div>
 
               {/* Signature Authorization Method (Strict Web3 Wallet) */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-ink-600 block">
                   Signature Authorization
                 </label>
 
-                <div className="p-3.5 rounded-2xl bg-white border border-ink-200 text-xs flex items-center justify-between shadow-2xs">
+                <div className="p-3 rounded-2xl bg-white border border-ink-200 text-xs flex items-center justify-between shadow-2xs">
                   <div>
                     <div className="font-bold text-ink-950 flex items-center gap-1.5">
                       <span>OKX Wallet / Web3 EOA</span>
@@ -338,7 +338,7 @@ export function Web3SigningModal({
               </div>
 
               {/* Non-Custodial Security Guarantee */}
-              <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
+              <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
                 <span className="text-sm leading-none">🛡️</span>
                 <p>
                   <strong>Self-Custodial Guarantee:</strong> Private keys never touch Meirei servers or databases. Your signature is authorized locally through your connected Web3 hardware/extension.
@@ -359,16 +359,18 @@ export function Web3SigningModal({
                 </div>
               )}
 
-              {/* Submit Button */}
-              <button
-                type="button"
-                onClick={handleSignTransaction}
-                disabled={isSigning || inputAmount <= 0}
-                className="w-full py-4 rounded-2xl bg-ink-900 hover:bg-accent-600 text-white text-sm font-bold tracking-wide disabled:opacity-50 transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
-              >
-                <span>{isSigning ? "Awaiting Wallet Signature..." : `Confirm & Sign Quick Buy (${currentUnits.toFixed(4)} ${targetSymbol})`}</span>
-                {!isSigning && <span className="text-base leading-none">→</span>}
-              </button>
+              {/* Sticky Submit Button: Always 100% visible at all screen sizes */}
+              <div className="sticky -bottom-6 -mx-6 -mb-6 bg-white/95 backdrop-blur-md p-4 border-t border-ink-100 rounded-b-3xl shadow-lg">
+                <button
+                  type="button"
+                  onClick={handleSignTransaction}
+                  disabled={isSigning || inputAmount <= 0}
+                  className="w-full py-3.5 rounded-2xl bg-ink-950 hover:bg-accent-600 text-white text-sm font-bold tracking-wide disabled:opacity-50 transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>{isSigning ? "Awaiting Wallet Signature..." : `Confirm & Sign Quick Buy (${currentUnits.toFixed(4)} ${targetSymbol})`}</span>
+                  {!isSigning && <span className="text-base leading-none">→</span>}
+                </button>
+              </div>
             </div>
           )}
         </motion.div>
