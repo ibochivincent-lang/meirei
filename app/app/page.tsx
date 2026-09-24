@@ -34,7 +34,7 @@ import {
   OKX_TRADING_PLAN_DATA,
 } from "@/lib/okx/skills_data";
 
-type Platform = "telegram" | "web" | "okx_wallet";
+type Platform = "telegram" | "web" | "okx_wallet" | "whatsapp" | "instagram";
 type Mode = "basic" | "advanced";
 
 // Simple Vector SVG Logos for Supported Platforms
@@ -71,6 +71,40 @@ function SimpleWebLogo({ className = "w-5 h-5" }: { className?: string }) {
       <line x1="12" y1="17" x2="12" y2="21" />
       <path d="m7 8 2 2-2 2" />
       <line x1="11" y1="12" x2="15" y2="12" />
+    </svg>
+  );
+}
+
+function SimpleWhatsAppLogo({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  );
+}
+
+function SimpleInstagramLogo({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
     </svg>
   );
 }
@@ -1784,11 +1818,11 @@ export default function AppDashboardPage() {
                       </span>
                     </div>
                     <span className="text-xs text-ink-500">
-                      Tap card to view chart &amp; calculator · Tap Quick Buy for instant execution
+                      Tap card to select equity · Tap Quick Buy for instant execution
                     </span>
                   </div>
 
-                  <div className="mt-3.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 max-h-[380px] overflow-y-auto pr-1">
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
                     {STOCKS.map((stock) => {
                       const isSelected = stock.symbol === selectedStock.symbol;
                       const numericPrice = getNumericPrice(stock);
@@ -1798,19 +1832,18 @@ export default function AppDashboardPage() {
                           key={stock.symbol}
                           onClick={() => {
                             setSelectedStock(stock);
-                            setChartHoverIndex(null);
                           }}
                           className={cn(
-                            "group flex flex-col justify-between rounded-xl border p-3 text-left transition-all cursor-pointer relative",
+                            "group flex flex-col justify-between rounded-xl border p-2 sm:p-2.5 text-left transition-all cursor-pointer relative",
                             isSelected
                               ? "border-accent-500 bg-accent-50/50 shadow-xs ring-1 ring-accent-500"
                               : "border-ink-200/80 bg-surface-50 hover:border-ink-300 hover:bg-white"
                           )}
                         >
-                          <div className="flex items-start justify-between gap-1.5">
-                            <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <div
-                                className="flex h-7 w-7 items-center justify-center rounded-lg shadow-xs shrink-0 text-white font-bold text-xs"
+                                className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-md shadow-xs shrink-0 text-white font-bold text-[10px]"
                                 style={{ backgroundColor: stock.color }}
                               >
                                 {stock.logo}
@@ -1819,20 +1852,18 @@ export default function AppDashboardPage() {
                                 <p className="font-mono text-xs font-bold text-ink-900 truncate">
                                   {stock.symbol}
                                 </p>
-                                <p className="text-[10px] text-ink-500 truncate max-w-[90px]">{stock.name}</p>
                               </div>
                             </div>
-                            <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-700 shrink-0">
+                            <span className="rounded bg-emerald-500/10 px-1 py-0.2 font-mono text-[9px] font-bold text-emerald-700 shrink-0">
                               {stock.change24h}
                             </span>
                           </div>
 
-                          <div className="mt-3 flex items-center justify-between border-t border-ink-100/70 pt-2">
-                            <div>
-                              <span className="text-[9px] font-mono text-ink-400 block uppercase">Spot</span>
+                          <div className="mt-2 flex items-center justify-between border-t border-ink-100/70 pt-1.5">
+                            <div className="min-w-0">
                               <span
                                 className={cn(
-                                  "font-mono text-xs font-bold transition-colors duration-300",
+                                  "font-mono text-[11px] sm:text-xs font-bold block truncate transition-colors duration-300",
                                   priceFlashes[stock.symbol] === "up" && "text-emerald-600 font-bold",
                                   priceFlashes[stock.symbol] === "down" && "text-rose-600 font-bold",
                                   !priceFlashes[stock.symbol] && "text-ink-900"
@@ -1849,7 +1880,7 @@ export default function AppDashboardPage() {
                                 setSelectedStock(stock);
                                 openWeb3Signer(stock.symbol, 100, 100 / numericPrice, numericPrice);
                               }}
-                              className="rounded-lg bg-ink-900 hover:bg-accent-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs transition-colors cursor-pointer"
+                              className="rounded-md bg-ink-900 hover:bg-accent-500 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-xs transition-colors cursor-pointer shrink-0"
                               title={`Instant buy $100 in ${stock.symbol}`}
                             >
                               Quick Buy
@@ -1861,542 +1892,6 @@ export default function AppDashboardPage() {
                   </div>
                 </div>
 
-                {/* Clean Interactive Spot Price & Trend Chart Card */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 pb-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-10 w-10 items-center justify-center rounded-xl shadow-xs shrink-0"
-                        style={{ backgroundColor: selectedStock.color }}
-                      >
-                        {selectedStock.logo}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="font-display text-lg font-bold text-ink-900">
-                            {selectedStock.symbol}
-                          </h2>
-                          <span className="text-xs text-ink-500">
-                            {selectedStock.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={cn(
-                              "font-mono text-sm font-semibold transition-colors duration-300",
-                              priceFlashes[selectedStock.symbol] === "up" && "text-emerald-600 font-bold",
-                              priceFlashes[selectedStock.symbol] === "down" && "text-rose-600 font-bold",
-                              !priceFlashes[selectedStock.symbol] && "text-ink-900"
-                            )}
-                          >
-                            {currentDisplayPrice}
-                          </span>
-                          <span className="text-xs font-semibold text-emerald-700">
-                            {selectedStock.change24h} past 24h
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Controls: Chart Type Toggle (Line | Candles) & Timeframe Selector */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Chart Type Toggle */}
-                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setChartType("line");
-                            setCandleHoverIndex(null);
-                          }}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-                            chartType === "line"
-                              ? "bg-white text-ink-900 shadow-xs"
-                              : "text-ink-500 hover:text-ink-900"
-                          )}
-                        >
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M2 11l4-5 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <span>Line</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setChartType("candle");
-                            setChartHoverIndex(null);
-                          }}
-                          className={cn(
-                            "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
-                            chartType === "candle"
-                              ? "bg-white text-ink-900 shadow-xs"
-                              : "text-ink-500 hover:text-ink-900"
-                          )}
-                        >
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
-                            <rect x="3" y="4" width="3" height="7" rx="0.5" />
-                            <line x1="4.5" y1="2" x2="4.5" y2="4" stroke="currentColor" strokeWidth="1.5" />
-                            <line x1="4.5" y1="11" x2="4.5" y2="14" stroke="currentColor" strokeWidth="1.5" />
-                            <rect x="10" y="6" width="3" height="6" rx="0.5" />
-                            <line x1="11.5" y1="3" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1.5" />
-                            <line x1="11.5" y1="12" x2="11.5" y2="15" stroke="currentColor" strokeWidth="1.5" />
-                          </svg>
-                          <span>Candles</span>
-                        </button>
-                      </div>
-
-                      {/* Timeframe Selector (1m to 1M) */}
-                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
-                        {["1m", "5m", "15m", "1h", "4h", "1D", "1W", "1M"].map((tf) => (
-                          <button
-                            key={tf}
-                            type="button"
-                            onClick={() => setTimeframe(tf)}
-                            className={cn(
-                              "rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
-                              timeframe === tf
-                                ? "bg-white text-ink-900 shadow-xs"
-                                : "text-ink-500 hover:text-ink-900"
-                            )}
-                          >
-                            {tf}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Candlestick OHLC Telemetry Bar (active in Candle mode) */}
-                  {chartType === "candle" && (
-                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 rounded-xl bg-surface-50 border border-ink-100 p-2.5 text-xs font-mono">
-                      {(() => {
-                        const activeBar =
-                          candleHoverIndex !== null && candleBars[candleHoverIndex]
-                            ? candleBars[candleHoverIndex]
-                            : candleBars[candleBars.length - 1];
-                        const barChange = activeBar ? ((activeBar.close - activeBar.open) / (activeBar.open || 1)) * 100 : 0;
-                        if (!activeBar) return null;
-                        return (
-                          <>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
-                              <span>Time:</span>
-                              <div className="flex items-center gap-1">
-                                <span className="font-bold text-ink-900">
-                                  {activeBar.time}
-                                </span>
-                                {activeBar.isLive && (
-                                  <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1 py-0.2 text-[8px] font-bold text-emerald-600 animate-pulse">
-                                    LIVE
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
-                              <span>Open:</span>
-                              <span className="font-bold text-ink-900">${activeBar.open.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
-                              <span>High:</span>
-                              <span className="font-bold text-emerald-600">${activeBar.high.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
-                              <span>Low:</span>
-                              <span className="font-bold text-rose-600">${activeBar.low.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 col-span-2 sm:col-span-1 text-ink-500">
-                              <span>Close:</span>
-                              <span
-                                className={cn(
-                                  "font-bold",
-                                  activeBar.isBullish ? "text-emerald-600" : "text-rose-600"
-                                )}
-                              >
-                                ${activeBar.close.toFixed(2)} ({barChange >= 0 ? "+" : ""}{barChange.toFixed(2)}%)
-                              </span>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  )}
-
-                  {/* SVG Chart Canvas */}
-                  <div className="relative mt-4">
-                    <svg
-                      ref={chartSvgRef}
-                      viewBox={`0 0 ${width} ${height}`}
-                      className="w-full h-[180px] sm:h-[210px] overflow-visible select-none touch-none"
-                      onMouseLeave={() => {
-                        setChartHoverIndex(null);
-                        setCandleHoverIndex(null);
-                      }}
-                      onMouseMove={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const clientX = e.clientX;
-                        const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-                        const ratio = offsetX / rect.width;
-
-                        if (chartType === "candle") {
-                          const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
-                          setCandleHoverIndex(Math.max(0, idx));
-                        } else {
-                          const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
-                          setChartHoverIndex(idx);
-                        }
-                      }}
-                      onTouchMove={(e) => {
-                        if (e.touches && e.touches[0]) {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const clientX = e.touches[0].clientX;
-                          const offsetX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-                          const ratio = offsetX / rect.width;
-
-                          if (chartType === "candle") {
-                            const idx = Math.min(candleBars.length - 1, Math.floor(ratio * candleBars.length));
-                            setCandleHoverIndex(Math.max(0, idx));
-                          } else {
-                            const idx = Math.min(coords.length - 1, Math.round(ratio * (coords.length - 1)));
-                            setChartHoverIndex(idx);
-                          }
-                        }
-                      }}
-                      onTouchEnd={() => {
-                        setChartHoverIndex(null);
-                        setCandleHoverIndex(null);
-                      }}
-                    >
-                      <defs>
-                        <linearGradient id={chartGradId} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#FF5B3E" stopOpacity="0.28" />
-                          <stop offset="100%" stopColor="#FF5B3E" stopOpacity="0.0" />
-                        </linearGradient>
-                      </defs>
-
-                      {/* Subtle Gridlines */}
-                      <g className="stroke-ink-200/50 stroke-dashed" strokeDasharray="3 3">
-                        <line x1="0" y1={padY} x2={width} y2={padY} />
-                        <line x1="0" y1={height / 2} x2={width} y2={height / 2} />
-                        <line x1="0" y1={height - padY} x2={width} y2={height - padY} />
-                      </g>
-
-                      {/* LINE CHART MODE */}
-                      {chartType === "line" && (
-                        <>
-                          <path d={areaD} fill={`url(#${chartGradId})`} />
-                          <path
-                            d={pathD}
-                            fill="none"
-                            stroke="#FF5B3E"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          {chartHoverIndex !== null && coords[chartHoverIndex] && (
-                            <g>
-                              <line
-                                x1={coords[chartHoverIndex].x}
-                                y1={padY}
-                                x2={coords[chartHoverIndex].x}
-                                y2={height - padY}
-                                stroke="currentColor"
-                                strokeWidth="1"
-                                strokeDasharray="2 2"
-                                className="text-ink-400"
-                              />
-                              <circle
-                                cx={coords[chartHoverIndex].x}
-                                cy={coords[chartHoverIndex].y}
-                                r="5"
-                                fill="#FFFFFF"
-                                stroke="#FF5B3E"
-                                strokeWidth="2.5"
-                              />
-                            </g>
-                          )}
-                        </>
-                      )}
-
-                      {/* CANDLESTICK CHART MODE */}
-                      {chartType === "candle" && (
-                        <g>
-                          {candleBars.map((bar, idx) => {
-                            const numBars = candleBars.length;
-                            const barSpacing = width / numBars;
-                            const barW = Math.max(10, barSpacing * 0.62);
-                            const cx = (idx + 0.5) * barSpacing;
-                            const wickY1 = height - padY - ((bar.high - candleMin) / candleRange) * chartHeight;
-                            const wickY2 = height - padY - ((bar.low - candleMin) / candleRange) * chartHeight;
-                            const openY = height - padY - ((bar.open - candleMin) / candleRange) * chartHeight;
-                            const closeY = height - padY - ((bar.close - candleMin) / candleRange) * chartHeight;
-                            const bodyTop = Math.min(openY, closeY);
-                            const bodyH = Math.max(3, Math.abs(openY - closeY));
-                            const isHovered = candleHoverIndex === idx;
-                            const candleColor = bar.isBullish ? "#10B981" : "#F43F5E";
-
-                            return (
-                              <g key={`candle-${idx}`} className="transition-opacity">
-                                {isHovered && (
-                                  <rect
-                                    x={cx - barSpacing / 2}
-                                    y={0}
-                                    width={barSpacing}
-                                    height={height}
-                                    fill="currentColor"
-                                    className="text-accent-500/10"
-                                  />
-                                )}
-                                {/* Wick line */}
-                                <line
-                                  x1={cx}
-                                  y1={wickY1}
-                                  x2={cx}
-                                  y2={wickY2}
-                                  stroke={candleColor}
-                                  strokeWidth={isHovered ? "2.2" : "1.5"}
-                                />
-                                {/* Candle body */}
-                                <rect
-                                  x={cx - barW / 2}
-                                  y={bodyTop}
-                                  width={barW}
-                                  height={bodyH}
-                                  rx="1.5"
-                                  fill={candleColor}
-                                  stroke={candleColor}
-                                  strokeWidth="1"
-                                />
-                                {/* Live candle real-time pulse indicator on OKX X Layer */}
-                                {bar.isLive && (
-                                  <g>
-                                    <circle
-                                      cx={cx}
-                                      cy={closeY}
-                                      r="6"
-                                      fill={candleColor}
-                                      opacity="0.35"
-                                      className="animate-ping"
-                                    />
-                                    <circle
-                                      cx={cx}
-                                      cy={closeY}
-                                      r="3"
-                                      fill="#FFFFFF"
-                                      stroke={candleColor}
-                                      strokeWidth="1.5"
-                                    />
-                                  </g>
-                                )}
-                              </g>
-                            );
-                          })}
-                        </g>
-                      )}
-                    </svg>
-
-                    <div className="mt-2 flex justify-between font-mono text-[10px] text-ink-400">
-                      <span>
-                        {timeframe === "1m"
-                          ? "10m Ago"
-                          : timeframe === "5m"
-                          ? "50m Ago"
-                          : timeframe === "15m"
-                          ? "2.5h Ago"
-                          : timeframe === "1h"
-                          ? "10h Ago"
-                          : timeframe === "4h"
-                          ? "40h Ago"
-                          : timeframe === "1D"
-                          ? "09:30 AM EST"
-                          : timeframe === "1W"
-                          ? "7 Days Ago"
-                          : "30 Days Ago"}
-                      </span>
-                      <span>
-                        {timeframe === "1m"
-                          ? "5m Ago"
-                          : timeframe === "5m"
-                          ? "25m Ago"
-                          : timeframe === "15m"
-                          ? "1h Ago"
-                          : timeframe === "1h"
-                          ? "5h Ago"
-                          : timeframe === "4h"
-                          ? "20h Ago"
-                          : timeframe === "1D"
-                          ? "12:30 PM EST"
-                          : timeframe === "1W"
-                          ? "Midweek"
-                          : "15 Days Ago"}
-                      </span>
-                      <span className="flex items-center gap-1 font-semibold text-accent-600">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <span>
-                          {timeframe === "1D" || timeframe === "1m" || timeframe === "5m" || timeframe === "15m" || timeframe === "1h" || timeframe === "4h"
-                            ? "Live Tick (X Layer)"
-                            : "Today (Live X Layer)"}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section Separator */}
-                <SectionSeparator label="Price Comparison & Unit Calculator" />
-
-                {/* ========================================================================= */}
-                {/* PRICE COMPARISON & UNIT CALCULATOR                                        */}
-                {/* ========================================================================= */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
-                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-3.5 sm:flex-row sm:items-center">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
-                          Instant Unit Estimation
-                        </span>
-                        <span className="rounded bg-accent-100 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-800">
-                          OKX DEX Aggregator
-                        </span>
-                      </div>
-                      <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg">
-                        Price Comparison &amp; Unit Calculator
-                      </h3>
-                      <p className="text-xs text-ink-500">
-                        Select any allowlisted stock and input an investment amount to calculate exact tokenized units and live DEX conversion parameters.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-mono font-medium text-emerald-800">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>Gas 100% Sponsored</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-4">
-                    {/* Left Column: Stock Selection Dropdown & Investment Input */}
-                    <div className="space-y-3.5 md:col-span-6">
-                      <div>
-                        <label className="text-xs font-bold text-ink-700 uppercase tracking-wider mb-1.5 block">
-                          Select Tokenized Stock (20 Equities)
-                        </label>
-                        <select
-                          value={selectedStock.symbol}
-                          onChange={(e) => {
-                            const found = STOCKS.find((s) => s.symbol === e.target.value);
-                            if (found) {
-                              setSelectedStock(found);
-                              setChartHoverIndex(null);
-                            }
-                          }}
-                          className="w-full rounded-xl border border-ink-200 bg-surface-50 p-2.5 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors cursor-pointer"
-                        >
-                          {STOCKS.map((s) => (
-                            <option key={s.symbol} value={s.symbol}>
-                              {s.symbol} — {s.name} ({getFormattedPrice(s)})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold text-ink-700 uppercase tracking-wider">
-                            Investment Capital (USDG)
-                          </label>
-                          <span className="text-[11px] font-mono text-ink-500">
-                            Available: ${profile.usdgBalance.toFixed(2)} USDG
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-ink-400">
-                            $
-                          </span>
-                          <input
-                            type="number"
-                            min="10"
-                            step="10"
-                            value={calcInvestmentUsdg}
-                            onChange={(e) => setCalcInvestmentUsdg(Math.max(1, Number(e.target.value) || 0))}
-                            className="w-full rounded-xl border border-ink-200 bg-surface-50 py-2.5 pl-7 pr-16 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-ink-400">
-                            USDG
-                          </span>
-                        </div>
-
-                        {/* Quick Amount Chips */}
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          {[50, 100, 250, 500, 1000, 2500].map((amt) => (
-                            <button
-                              key={amt}
-                              type="button"
-                              onClick={() => setCalcInvestmentUsdg(amt)}
-                              className={cn(
-                                "rounded-lg px-2.5 py-1 text-[11px] font-mono font-bold transition-all cursor-pointer",
-                                calcInvestmentUsdg === amt
-                                  ? "bg-accent-500 text-white shadow-xs"
-                                  : "bg-surface-100 text-ink-600 hover:bg-surface-200 hover:text-ink-900"
-                              )}
-                            >
-                              ${amt}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Column: Calculated Units & Live DEX Execution Breakdown */}
-                    <div className="rounded-xl border border-ink-200/70 bg-surface-50 p-4 space-y-3 md:col-span-6 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-ink-500">Estimated Units Received:</span>
-                          <span className="font-mono text-base font-bold text-accent-600">
-                            {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}
-                          </span>
-                        </div>
-
-                        <div className="mt-2.5 space-y-1.5 border-t border-ink-100 pt-2 text-[11px] font-mono">
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Spot Benchmark:</span>
-                            <span className="font-semibold text-ink-900">{getFormattedPrice(selectedStock)}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Unit Ratio:</span>
-                            <span>1 {selectedStock.symbol} = {getFormattedPrice(selectedStock)}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Slippage Tolerance:</span>
-                            <span className="text-emerald-700 font-semibold">&lt; 0.05%</span>
-                          </div>
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Minimum Received:</span>
-                            <span className="font-semibold text-ink-900">
-                              {((calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)) * 0.995).toFixed(4)} {selectedStock.symbol}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between text-ink-600">
-                            <span>Network Gas Fee:</span>
-                            <span className="text-emerald-700 font-bold">$0.00 (100% Sponsored)</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const price = getNumericPrice(selectedStock);
-                          const units = calcInvestmentUsdg / (price || 1);
-                          openWeb3Signer(selectedStock.symbol, calcInvestmentUsdg, units, price);
-                        }}
-                        className="w-full rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <span>Quick Buy {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}</span>
-                        <span>(${calcInvestmentUsdg.toFixed(2)} USDG) ↗</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section Separator */}
                 <SectionSeparator label="Conversational Agent" />
 
                 {/* ========================================================================= */}
@@ -2727,6 +2222,163 @@ export default function AppDashboardPage() {
                       <SimpleTelegramLogo className="h-4 w-4" />
                     </button>
                   </form>
+                </div>
+
+                {/* Section Separator */}
+                
+                <SectionSeparator label="Price Comparison & Unit Calculator" />
+
+                {/* ========================================================================= */}
+                {/* PRICE COMPARISON & UNIT CALCULATOR                                        */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-3.5 sm:flex-row sm:items-center">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                          Instant Unit Estimation
+                        </span>
+                        <span className="rounded bg-accent-100 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-800">
+                          OKX DEX Aggregator
+                        </span>
+                      </div>
+                      <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg">
+                        Price Comparison &amp; Unit Calculator
+                      </h3>
+                      <p className="text-xs text-ink-500">
+                        Select any allowlisted stock and input an investment amount to calculate exact tokenized units and live DEX conversion parameters.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-mono font-medium text-emerald-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Gas 100% Sponsored</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-4">
+                    {/* Left Column: Stock Selection Dropdown & Investment Input */}
+                    <div className="space-y-3.5 md:col-span-6">
+                      <div>
+                        <label className="text-xs font-bold text-ink-700 uppercase tracking-wider mb-1.5 block">
+                          Select Tokenized Stock (20 Equities)
+                        </label>
+                        <select
+                          value={selectedStock.symbol}
+                          onChange={(e) => {
+                            const found = STOCKS.find((s) => s.symbol === e.target.value);
+                            if (found) {
+                              setSelectedStock(found);
+                              setChartHoverIndex(null);
+                            }
+                          }}
+                          className="w-full rounded-xl border border-ink-200 bg-surface-50 p-2.5 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors cursor-pointer"
+                        >
+                          {STOCKS.map((s) => (
+                            <option key={s.symbol} value={s.symbol}>
+                              {s.symbol} — {s.name} ({getFormattedPrice(s)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-bold text-ink-700 uppercase tracking-wider">
+                            Investment Capital (USDG)
+                          </label>
+                          <span className="text-[11px] font-mono text-ink-500">
+                            Available: ${profile.usdgBalance.toFixed(2)} USDG
+                          </span>
+                        </div>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-ink-400">
+                            $
+                          </span>
+                          <input
+                            type="number"
+                            min="10"
+                            step="10"
+                            value={calcInvestmentUsdg}
+                            onChange={(e) => setCalcInvestmentUsdg(Math.max(1, Number(e.target.value) || 0))}
+                            className="w-full rounded-xl border border-ink-200 bg-surface-50 py-2.5 pl-7 pr-16 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-ink-400">
+                            USDG
+                          </span>
+                        </div>
+
+                        {/* Quick Amount Chips */}
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          {[50, 100, 250, 500, 1000, 2500].map((amt) => (
+                            <button
+                              key={amt}
+                              type="button"
+                              onClick={() => setCalcInvestmentUsdg(amt)}
+                              className={cn(
+                                "rounded-lg px-2.5 py-1 text-[11px] font-mono font-bold transition-all cursor-pointer",
+                                calcInvestmentUsdg === amt
+                                  ? "bg-accent-500 text-white shadow-xs"
+                                  : "bg-surface-100 text-ink-600 hover:bg-surface-200 hover:text-ink-900"
+                              )}
+                            >
+                              ${amt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Calculated Units & Live DEX Execution Breakdown */}
+                    <div className="rounded-xl border border-ink-200/70 bg-surface-50 p-4 space-y-3 md:col-span-6 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-ink-500">Estimated Units Received:</span>
+                          <span className="font-mono text-base font-bold text-accent-600">
+                            {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}
+                          </span>
+                        </div>
+
+                        <div className="mt-2.5 space-y-1.5 border-t border-ink-100 pt-2 text-[11px] font-mono">
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Spot Benchmark:</span>
+                            <span className="font-semibold text-ink-900">{getFormattedPrice(selectedStock)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Unit Ratio:</span>
+                            <span>1 {selectedStock.symbol} = {getFormattedPrice(selectedStock)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Slippage Tolerance:</span>
+                            <span className="text-emerald-700 font-semibold">&lt; 0.05%</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Minimum Received:</span>
+                            <span className="font-semibold text-ink-900">
+                              {((calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)) * 0.995).toFixed(4)} {selectedStock.symbol}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Network Gas Fee:</span>
+                            <span className="text-emerald-700 font-bold">$0.00 (100% Sponsored)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const price = getNumericPrice(selectedStock);
+                          const units = calcInvestmentUsdg / (price || 1);
+                          openWeb3Signer(selectedStock.symbol, calcInvestmentUsdg, units, price);
+                        }}
+                        className="w-full rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>Quick Buy {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}</span>
+                        <span>(${calcInvestmentUsdg.toFixed(2)} USDG) ↗</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Section Separator */}
@@ -3765,87 +3417,131 @@ export default function AppDashboardPage() {
                 </button>
               </div>
 
-              <div className="mt-4 space-y-4 text-xs text-ink-700">
+              <div className="mt-4 space-y-5 text-xs text-ink-700">
                 <p className="text-ink-600 leading-relaxed text-[11px]">
-                  Select your preferred platform to interface with, then anchor your Web3
-                  wallet for autonomous execution on OKX X Layer.
+                  Select your preferred platform to interface your Web3 wallet for autonomous execution on OKX X Layer.
                 </p>
 
-                {/* 2 Supported Platforms: Telegram and Web */}
-                <div>
-                  <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider mb-2 block">
-                    Preferred Interface Platform
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      {
-                        id: "telegram" as Platform,
-                        name: "Telegram",
-                        icon: SimpleTelegramLogo,
-                        color: "text-sky-700",
-                        border: "border-sky-500",
-                        bg: "bg-sky-50",
-                        tagline: "Direct Bot (Live)",
-                      },
-                      {
-                        id: "web" as Platform,
-                        name: "Web Platform",
-                        icon: SimpleWebLogo,
-                        color: "text-accent-700",
-                        border: "border-accent-500",
-                        bg: "bg-accent-50",
-                        tagline: "Browser Console",
-                      },
-                    ].map((p) => {
-                      const isSelected = connectChannel === p.id;
-                      const Icon = p.icon;
-                      return (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            setConnectChannel(p.id);
-                            if (p.id === "telegram" && (!connectHandle || connectHandle.includes("investor@meirei.app"))) {
-                              setConnectHandle("@MeireiXLayerBot");
-                            } else if (p.id === "web" && (!connectHandle || connectHandle.startsWith("@"))) {
-                              setConnectHandle("investor@meirei.app");
-                            }
-                          }}
-                          className={cn(
-                            "rounded-xl border p-3 min-h-[44px] text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5",
-                            isSelected
-                              ? `${p.border} ${p.bg} ${p.color} shadow-xs ring-1 ring-ink-300`
-                              : "border-ink-200 bg-surface-50 text-ink-700 hover:bg-white hover:border-ink-300"
-                          )}
-                        >
-                          <Icon className="w-5 h-5" />
-                          <span className="text-xs">{p.name}</span>
-                          <span className="text-[10px] text-ink-500 font-normal">{p.tagline}</span>
-                        </button>
-                      );
-                    })}
+                {/* STEP 1: Connect Web3 Wallet First */}
+                <div className="rounded-2xl border border-ink-200 bg-surface-50/80 p-4 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-ink-200/70 pb-2">
+                    <div>
+                      <span className="font-bold text-ink-950 uppercase text-[10px] tracking-wider block">
+                        1. Connect Web3 Wallet First
+                      </span>
+                      <p className="text-[11px] text-ink-500">
+                        Non-custodial verification on OKX X Layer (Chain 196)
+                      </p>
+                    </div>
+                    {connectAddress ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Connected
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                        Required First
+                      </span>
+                    )}
                   </div>
+
+                  {connectAddress ? (
+                    <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                      <div>
+                        <div className="flex items-center gap-1.5 font-mono text-emerald-800 font-semibold text-xs">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                          <span>{formatShortAddress(connectAddress)}</span>
+                          <span className="text-ink-500 font-normal">({connectWalletName || "Web3 Wallet"})</span>
+                        </div>
+                        <p className="text-[10px] font-mono text-emerald-700 mt-0.5">
+                          OKX X Layer (Chain 196) · 100% Gas Sponsored
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleDisconnectChannelWallet}
+                        disabled={isWalletConnecting}
+                        className="py-1.5 px-3 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-700 text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleConnectWalletType("okx")}
+                          disabled={isWalletConnecting}
+                          className="p-2.5 min-h-[44px] rounded-xl border border-accent-200 bg-accent-50/70 hover:bg-accent-100 text-ink-950 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
+                        >
+                          <span>OKX Wallet</span>
+                          <span className="text-[9px] bg-accent-200 text-accent-800 font-bold px-1.5 py-0.5 rounded">TOP</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleConnectWalletType("metamask")}
+                          disabled={isWalletConnecting}
+                          className="p-2.5 min-h-[44px] rounded-xl border border-ink-200 bg-white hover:bg-surface-50 text-ink-900 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
+                        >
+                          MetaMask
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowWalletConnectModal(true)}
+                          className="p-2.5 min-h-[44px] rounded-xl border border-sky-200 bg-sky-50/70 hover:bg-sky-100 text-sky-800 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+                        >
+                          <WalletConnectIcon className="w-4 h-4 text-sky-600" />
+                          <span>WalletConnect</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleConnectWalletType("injected")}
+                          disabled={isWalletConnecting}
+                          className="p-2.5 min-h-[44px] rounded-xl border border-ink-200 bg-surface-50 hover:bg-white text-ink-800 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+                        >
+                          Browser Injected
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {connectChannel === "web" ? (
-                  <div className="rounded-2xl border border-accent-200 bg-accent-50/50 p-5 space-y-3.5 shadow-xs">
+                {/* STEP 2: Continue on Preferred Interface Platform */}
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider block">
+                      2. Continue on Preferred Interface Platform
+                    </label>
+                    <p className="text-[11px] text-ink-500">
+                      {!connectAddress
+                        ? "Connect your Web3 wallet above to anchor autonomous execution."
+                        : "Select where you want to execute your autonomous investment mandates:"}
+                    </p>
+                  </div>
+
+                  {/* 1. Continue on Web Platform (First) */}
+                  <div className="rounded-2xl border border-accent-200 bg-accent-50/50 p-4 space-y-2.5 shadow-xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
                         <div className="p-2 rounded-xl bg-accent-100 text-accent-700 border border-accent-200">
                           <SimpleWebLogo className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="text-sm font-bold text-ink-950">Meirei Conversational Chat</h4>
-                          <p className="text-[11px] text-accent-700 font-mono">Website Direct Access · Chain 196</p>
+                          <h4 className="text-xs font-bold text-ink-950">1. Web Platform (Browser Console)</h4>
+                          <p className="text-[10px] text-accent-700 font-mono">Direct Browser Access · OKX X Layer</p>
                         </div>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold">
-                        Live Web3 Console
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[9px] font-bold">
+                        Live Console
                       </span>
                     </div>
 
-                    <p className="text-xs text-ink-700 leading-relaxed">
-                      You are interacting directly on the website. Use the built-in Conversational Chat Console on this page to query real-time stock prices, inspect your smart wallet balance, or execute natural-language trades with 100% gas sponsorship.
+                    <p className="text-[11px] text-ink-600 leading-relaxed">
+                      Direct access to spot prices, conversational agent, unit calculator, and autonomous rebalancing on OKX X Layer.
                     </p>
 
                     <button
@@ -3861,146 +3557,111 @@ export default function AppDashboardPage() {
                           setTimeout(() => chatInput.focus(), 350);
                         }
                       }}
-                      className="w-full min-h-[44px] py-3 px-4 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer group"
+                      className="w-full min-h-[42px] py-2.5 px-4 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer group"
                     >
-                      <span>Open Meirei Conversational Chat</span>
+                      <span>Continue on Web Platform</span>
                       <span className="transition-transform group-hover:translate-x-1">→</span>
                     </button>
                   </div>
-                ) : (
-                  <>
-                    {/* Handle Input */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider">
-                          Telegram Handle or Chat ID
-                        </label>
-                        <span className="font-mono text-[10px] text-ink-500">
-                          @MeireiXLayerBot
-                        </span>
+
+                  {/* 2. Continue on Telegram (Second) */}
+                  <div
+                    className={cn(
+                      "rounded-2xl border p-4 space-y-3 shadow-xs transition-all",
+                      connectAddress ? "border-sky-200 bg-sky-50/50" : "border-ink-200 bg-surface-50 opacity-80"
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-sky-100 text-sky-700 border border-sky-200">
+                          <SimpleTelegramLogo className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-ink-950">2. Telegram (@MeireiXLayerBot)</h4>
+                          <p className="text-[10px] text-sky-700 font-mono">Autonomous Execution Bot · Chain 196</p>
+                        </div>
                       </div>
-                      <input
-                        type="text"
-                        value={connectHandle}
-                        onChange={(e) => setConnectHandle(e.target.value)}
-                        placeholder="@MeireiXLayerBot or username"
-                        className="w-full min-h-[44px] rounded-xl border border-ink-200 bg-surface-50 p-3 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-accent-500 focus:bg-white transition-colors"
-                      />
+                      <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-300 text-[9px] font-bold">
+                        Direct Bot (Live)
+                      </span>
                     </div>
 
-                    {/* Wallet Status Box */}
-                    <div className="rounded-xl border border-ink-200 bg-surface-50 p-3.5 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-ink-600 text-[11px]">OKX X Layer Wallet:</span>
-                        {connectAddress ? (
-                          <div className="flex items-center gap-1.5 font-mono text-emerald-700 font-semibold text-[11px]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            <span>{formatShortAddress(connectAddress)}</span>
-                            <span className="text-ink-500 font-normal">({connectWalletName || "Connected"})</span>
-                          </div>
-                        ) : (
-                          <span className="font-mono text-amber-700 text-[11px]">Not Connected</span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-ink-600">Network:</span>
-                        <span className="font-mono text-emerald-700 font-medium">OKX X Layer (196)</span>
-                      </div>
-                    </div>
-
-                    {/* Wallet Selection Buttons */}
-                    {!connectAddress ? (
+                    {connectAddress ? (
                       <div className="space-y-2">
-                        <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider block">
-                          Connect Web3 Wallet
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleConnectWalletType("okx")}
-                            disabled={isWalletConnecting}
-                            className="p-2.5 min-h-[44px] rounded-xl border border-accent-200 bg-accent-50/70 hover:bg-accent-100 text-ink-950 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
-                          >
-                            <span>OKX Wallet</span>
-                            <span className="text-[9px] bg-accent-200 text-accent-800 font-bold px-1.5 py-0.5 rounded">TOP</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleConnectWalletType("metamask")}
-                            disabled={isWalletConnecting}
-                            className="p-2.5 min-h-[44px] rounded-xl border border-ink-200 bg-white hover:bg-surface-50 text-ink-900 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
-                          >
-                            MetaMask
-                          </button>
+                        <div>
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-ink-700 block mb-1">
+                            Telegram Handle or Chat ID
+                          </label>
+                          <input
+                            type="text"
+                            value={connectHandle}
+                            onChange={(e) => setConnectHandle(e.target.value)}
+                            placeholder="@MeireiXLayerBot or username"
+                            className="w-full rounded-xl border border-sky-200 bg-white p-2.5 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-sky-500 transition-colors"
+                          />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setShowWalletConnectModal(true)}
-                            className="p-2.5 min-h-[44px] rounded-xl border border-sky-200 bg-sky-50/70 hover:bg-sky-100 text-sky-800 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
-                          >
-                            <WalletConnectIcon className="w-4 h-4 text-sky-600" />
-                            <span>WalletConnect</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleConnectWalletType("injected")}
-                            disabled={isWalletConnecting}
-                            className="p-2.5 min-h-[44px] rounded-xl border border-ink-200 bg-surface-50 hover:bg-white text-ink-800 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
-                          >
-                            Browser Injected
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={handleConfirmChannelLink}
+                          disabled={isChannelLinking}
+                          className="w-full min-h-[42px] py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <SimpleTelegramLogo className="w-4 h-4 text-white" />
+                          <span>{isChannelLinking ? "Anchoring Wallet..." : "Continue on Telegram →"}</span>
+                        </button>
                       </div>
                     ) : (
-                      <div className="space-y-2.5">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={handleConfirmChannelLink}
-                            disabled={isChannelLinking}
-                            className="flex-1 min-h-[44px] py-3 px-4 rounded-xl disabled:opacity-50 text-white font-bold text-xs shadow-xs cursor-pointer transition-all flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700"
-                          >
-                            <SimpleTelegramLogo className="w-4 h-4 text-white" />
-                            <span>{isChannelLinking ? "Anchoring..." : "Anchor Wallet to Telegram"}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleDisconnectChannelWallet}
-                            disabled={isWalletConnecting}
-                            className="py-3 px-3 min-h-[44px] rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold cursor-pointer transition-colors"
-                          >
-                            Disconnect
-                          </button>
-                        </div>
+                      <div className="rounded-xl border border-dashed border-ink-200 bg-white/70 p-3 text-center space-y-1.5">
+                        <p className="text-[11px] font-semibold text-ink-700">
+                          Wallet Connection Required First
+                        </p>
+                        <p className="text-[10px] text-ink-500 leading-relaxed">
+                          You cannot continue on Telegram without connecting your Web3 wallet first. Please connect your OKX Wallet or MetaMask above.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleConnectWalletType("okx")}
+                          className="mt-1 px-3 py-1.5 rounded-lg bg-ink-900 text-white text-[10px] font-bold hover:bg-accent-600 transition-colors cursor-pointer"
+                        >
+                          Connect Wallet Above First
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-                        {connectSuccess && (
-                          <a
-                            href="https://t.me/MeireiXLayerBot"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full min-h-[44px] py-2.5 px-4 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer bg-sky-600 hover:bg-sky-700"
-                          >
-                            <span>Open in Telegram</span>
-                            <span>&rarr;</span>
-                          </a>
-                        )}
-                      </div>
-                    )}
+                  {/* 3 & 4. WhatsApp & Instagram (Coming Soon) */}
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    {/* WhatsApp */}
+                    <div className="rounded-xl border border-dashed border-ink-200 bg-surface-50 p-3 flex flex-col items-center justify-center text-center opacity-70">
+                      <SimpleWhatsAppLogo className="w-5 h-5 text-emerald-700/60 mb-1" />
+                      <span className="text-xs font-bold text-ink-800">3. WhatsApp</span>
+                      <span className="mt-1 rounded bg-amber-100 border border-amber-200 px-2 py-0.5 text-[9px] font-bold text-amber-800">
+                        Coming Soon
+                      </span>
+                    </div>
 
-                    {/* Feedback messages */}
-                    {connectInfoMsg && (
-                      <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
-                        {connectInfoMsg}
-                      </div>
-                    )}
-                    {connectErrorMsg && (
-                      <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs">
-                        {connectErrorMsg}
-                      </div>
-                    )}
-                  </>
+                    {/* Instagram */}
+                    <div className="rounded-xl border border-dashed border-ink-200 bg-surface-50 p-3 flex flex-col items-center justify-center text-center opacity-70">
+                      <SimpleInstagramLogo className="w-5 h-5 text-pink-700/60 mb-1" />
+                      <span className="text-xs font-bold text-ink-800">4. Instagram</span>
+                      <span className="mt-1 rounded bg-amber-100 border border-amber-200 px-2 py-0.5 text-[9px] font-bold text-amber-800">
+                        Coming Soon
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feedback messages */}
+                {connectInfoMsg && (
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+                    {connectInfoMsg}
+                  </div>
+                )}
+                {connectErrorMsg && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs">
+                    {connectErrorMsg}
+                  </div>
                 )}
 
                 {/* External links */}
