@@ -692,6 +692,24 @@ export default function AppDashboardPage() {
   // Trading mode state: strictly TWO MODES: "basic" | "advanced"
   const [mode, setMode] = useState<Mode>("basic");
 
+  // Advanced Mode Terms & Conditions state
+  const [hasAcceptedAdvancedTerms, setHasAcceptedAdvancedTerms] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("meirei_advanced_terms_accepted") === "true";
+    }
+    return false;
+  });
+  const [showAdvancedTermsModal, setShowAdvancedTermsModal] = useState<boolean>(false);
+  const [termsAgreedCheckbox, setTermsAgreedCheckbox] = useState<boolean>(false);
+
+  const handleSwitchToAdvanced = () => {
+    if (hasAcceptedAdvancedTerms) {
+      setMode("advanced");
+    } else {
+      setShowAdvancedTermsModal(true);
+    }
+  };
+
   // Stock selection & chart state
   const [selectedStock, setSelectedStock] = useState<StockItem>(STOCKS[0]);
   const [timeframe, setTimeframe] = useState<string>("1D");
@@ -1670,7 +1688,7 @@ export default function AppDashboardPage() {
                   <span className="font-bold text-ink-900 sm:text-sm">
                     {isDemoSandbox
                       ? "Demo Sandbox Active (1,000 USDG Loaded)"
-                      : "Judging OKX Dev Day?"}
+                      : "Load Demo Simulation"}
                   </span>
                   <span
                     className={cn(
@@ -1680,13 +1698,13 @@ export default function AppDashboardPage() {
                         : "bg-accent-500/15 border-accent-500/30 text-accent-700"
                     )}
                   >
-                    {isDemoSandbox ? "Chain 196 Simulated Sandbox" : "Fast-Track 60s Testing"}
+                    {isDemoSandbox ? "Chain 196 Simulated Sandbox" : "Zero-Risk Simulation"}
                   </span>
                 </div>
                 <p className="mt-0.5 text-ink-600">
                   {isDemoSandbox
                     ? "Test liquidity (1,000 USDG) and sample positions (NVDAx, AAPLx, TSLAx) are active. You can execute rebalances, trade assets, or test conversational chat."
-                    : "Skip bridging real mainnet funds. Click below to load an interactive sandbox with 1,000 USDG test cash & sample equities to test mandates immediately."}
+                    : "Simulate non-custodial portfolio rebalancing and smart contract execution with 1,000 USDG test liquidity on OKX X Layer (Chain 196) without real capital risk."}
                 </p>
               </div>
             </div>
@@ -1698,7 +1716,7 @@ export default function AppDashboardPage() {
                   onClick={handleLoadDemoSandbox}
                   className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <span>Load Demo Sandbox (1,000 USDG)</span>
+                  <span>Load Demo Simulation (1,000 USDG)</span>
                   <span>&rarr;</span>
                 </button>
               ) : (
@@ -1757,7 +1775,7 @@ export default function AppDashboardPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setMode("advanced")}
+                onClick={handleSwitchToAdvanced}
                 className={cn(
                   "flex-1 sm:flex-initial text-center rounded-lg px-3 sm:px-4 py-2 text-xs font-bold transition-all cursor-pointer",
                   mode === "advanced"
@@ -2498,16 +2516,140 @@ export default function AppDashboardPage() {
             {/* ========================================================================= */}
             {mode === "advanced" && (
               <div className="space-y-6">
-                {/* 1. Institutional AI Mandate Advisory Studio */}
+                {/* 1. Institutional AI Mandate Advisory Studio & OKX AI Skills Hub */}
+                {/* Active OKX AI Skills Engine Telemetry Bar */}
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
+                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
+                          Active Protocol Capabilities
+                        </span>
+                        <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          4 OKX AI Skills Synchronized
+                        </span>
+                      </div>
+                      <h2 className="mt-1 font-display text-lg font-bold text-ink-950 sm:text-xl">
+                        Active OKX AI Skills Engine
+                      </h2>
+                      <p className="mt-0.5 text-xs text-ink-600 leading-relaxed">
+                        Autonomous machine learning telemetry and mathematical risk modeling running across all 20 allowlisted equities on OKX X Layer (Chain 196).
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLastTelemetryRefresh(new Date().toLocaleTimeString());
+                          addExecutionLog("Refreshed OKX AI telemetry: trading-plan-generator, sentiment, smartmoney, marketdepth active.", "info");
+                        }}
+                        className="rounded-xl border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-white hover:text-ink-950 transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+                      >
+                        <span className="text-accent-600 font-bold">↻</span>
+                        <span>Refresh Telemetry ({lastTelemetryRefresh})</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 4 Skills Cards Grid */}
+                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* 1. trading-plan-generator */}
+                    <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded bg-sky-100 border border-sky-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-sky-800">
+                          trading-plan-generator
+                        </span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      </div>
+                      <h4 className="font-display text-xs font-bold text-ink-950">
+                        Trading Plan Generator
+                      </h4>
+                      <p className="text-[10px] text-ink-500 leading-relaxed">
+                        Generates institutional-grade rebalancing rules, dynamic drift bounds (1.5%–3.5%), and capital preservation ceilings.
+                      </p>
+                      <div className="pt-2 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                        <span className="text-ink-500 font-mono">Telemetry:</span>
+                        <span className="font-bold text-ink-900 font-mono">15 Trajectories Active</span>
+                      </div>
+                    </div>
+
+                    {/* 2. okx-sentiment-tracker */}
+                    <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded bg-indigo-100 border border-indigo-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-indigo-800">
+                          okx-sentiment-tracker
+                        </span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      </div>
+                      <h4 className="font-display text-xs font-bold text-ink-950">
+                        OKX Sentiment Tracker
+                      </h4>
+                      <p className="text-[10px] text-ink-500 leading-relaxed">
+                        Aggregates 48.2K mentions, whale social sentiment, and retail vs institutional positioning divergence on X Layer.
+                      </p>
+                      <div className="pt-2 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                        <span className="text-ink-500 font-mono">Sentiment Score:</span>
+                        <span className="font-bold text-indigo-700 font-mono">82/100 (Bullish)</span>
+                      </div>
+                    </div>
+
+                    {/* 3. okx-cex-smartmoney */}
+                    <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded bg-emerald-100 border border-emerald-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-emerald-800">
+                          okx-cex-smartmoney
+                        </span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      </div>
+                      <h4 className="font-display text-xs font-bold text-ink-950">
+                        OKX CEX Smart Money
+                      </h4>
+                      <p className="text-[10px] text-ink-500 leading-relaxed">
+                        Monitors whale wallet accumulation, exchange net flows, and top-trader long ratios on OKX CEX &amp; DEX bridges.
+                      </p>
+                      <div className="pt-2 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                        <span className="text-ink-500 font-mono">Net Inflow 24h:</span>
+                        <span className="font-bold text-emerald-700 font-mono">+$5.84M USDG</span>
+                      </div>
+                    </div>
+
+                    {/* 4. okx-cex-market */}
+                    <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded bg-amber-100 border border-amber-200 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber-800">
+                          okx-cex-market
+                        </span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      </div>
+                      <h4 className="font-display text-xs font-bold text-ink-950">
+                        OKX CEX Market Depth
+                      </h4>
+                      <p className="text-[10px] text-ink-500 leading-relaxed">
+                        High-frequency orderbook spread metrics, liquidity depth, and 24h tokenized stock trading volume rankings.
+                      </p>
+                      <div className="pt-2 border-t border-ink-200/50 flex items-center justify-between text-[10px]">
+                        <span className="text-ink-500 font-mono">Liquidity Depth:</span>
+                        <span className="font-bold text-amber-700 font-mono">$24.6M (2.1 bps)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Trading Advisory Agent Studio */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
                   <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
                     <div>
                       <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
                         Institutional Advisory Studio
                       </span>
-                      <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
+                      <h2 className="font-display text-lg font-bold text-ink-950 sm:text-xl">
                         AI Trading Advisory Agent
                       </h2>
+                      <p className="mt-0.5 text-xs text-ink-600">
+                        Synthesizes your time horizon, preferred stock selections, and stablecoin liquidity to formulate custom non-custodial mandates.
+                      </p>
                     </div>
 
                     {/* Horizon Selector */}
@@ -2518,7 +2660,7 @@ export default function AppDashboardPage() {
                         className={cn(
                           "rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer",
                           advisoryHorizon === "short_term"
-                            ? "bg-white text-ink-900 shadow-xs"
+                            ? "bg-white text-ink-950 shadow-xs"
                             : "text-ink-500 hover:text-ink-900"
                         )}
                       >
@@ -2530,7 +2672,7 @@ export default function AppDashboardPage() {
                         className={cn(
                           "rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer",
                           advisoryHorizon === "long_term"
-                            ? "bg-white text-ink-900 shadow-xs"
+                            ? "bg-white text-ink-950 shadow-xs"
                             : "text-ink-500 hover:text-ink-900"
                         )}
                       >
@@ -2539,9 +2681,181 @@ export default function AppDashboardPage() {
                     </div>
                   </div>
 
+                  {/* Stablecoin Liquidity & Strategy Formulation Selectors */}
+                  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {/* Stablecoin Settlement Selection */}
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-ink-700">
+                        Base Stablecoin Liquidity Asset
+                      </label>
+                      <p className="text-[11px] text-ink-500 mt-0.5">
+                        Settlement and cash buffer asset for algorithmic rebalances.
+                      </p>
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        {(["USDG", "USDC", "USDT"] as const).map((coin) => (
+                          <button
+                            key={coin}
+                            type="button"
+                            onClick={() => setAdvisoryStablecoin(coin)}
+                            className={cn(
+                              "rounded-xl border p-2.5 text-center transition-all cursor-pointer",
+                              advisoryStablecoin === coin
+                                ? "border-accent-500 bg-accent-50/70 ring-1 ring-accent-500"
+                                : "border-ink-200 bg-surface-50 hover:bg-white"
+                            )}
+                          >
+                            <span className="font-mono text-xs font-bold text-ink-900 block">{coin}</span>
+                            <span className="text-[9px] text-ink-500 block mt-0.5">
+                              {coin === "USDG" ? "OKX X Layer (Gas Sponsored)" : coin === "USDC" ? "Circle Bridged" : "Tether USD"}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Basket Mode: Recommended vs Custom Stock Selection */}
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-ink-700">
+                        Stock Basket Formulation Mode
+                      </label>
+                      <p className="text-[11px] text-ink-500 mt-0.5">
+                        Choose curated institutional presets or select preferred equities.
+                      </p>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAdvisorySelectionMode("recommended")}
+                          className={cn(
+                            "rounded-xl border p-2.5 text-center transition-all cursor-pointer",
+                            advisorySelectionMode === "recommended"
+                              ? "border-accent-500 bg-accent-50/70 ring-1 ring-accent-500"
+                              : "border-ink-200 bg-surface-50 hover:bg-white"
+                          )}
+                        >
+                          <span className="font-display text-xs font-bold text-ink-900 block">Recommended Basket</span>
+                          <span className="text-[9px] text-ink-500 block mt-0.5">Curated by OKX AI Skills</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdvisorySelectionMode("custom")}
+                          className={cn(
+                            "rounded-xl border p-2.5 text-center transition-all cursor-pointer",
+                            advisorySelectionMode === "custom"
+                              ? "border-accent-500 bg-accent-50/70 ring-1 ring-accent-500"
+                              : "border-ink-200 bg-surface-50 hover:bg-white"
+                          )}
+                        >
+                          <span className="font-display text-xs font-bold text-ink-900 block">Custom Selection</span>
+                          <span className="text-[9px] text-ink-500 block mt-0.5">Pick Your Preferred Stocks</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* If Recommended Basket: Quick Presets */}
+                  {advisorySelectionMode === "recommended" ? (
+                    <div className="mt-4 p-3.5 rounded-xl border border-ink-200 bg-surface-50/70">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500 font-mono">
+                        Institutional Basket Presets (Auto-Selected by Horizon)
+                      </span>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {[
+                          { name: "Mag7 Core Growth", stocks: ["NVDAx", "MSFTx", "AAPLx", "GOOGLx", "AMZNx", "METAx", "TSLAx"] },
+                          { name: "AI Compute Alpha", stocks: ["NVDAx", "TSMx", "AVGOx", "AMDx"] },
+                          { name: "Enterprise Cloud & Security", stocks: ["MSFTx", "CRWDx", "DELLx", "MRVLx"] },
+                          { name: "Crypto & High Beta", stocks: ["COINx", "MSTRx", "TSLAx"] },
+                        ].map((preset) => (
+                          <button
+                            key={preset.name}
+                            type="button"
+                            onClick={() => {
+                              setAdvisoryCustomStocks(preset.stocks);
+                              setAdvisorySelectionMode("custom");
+                            }}
+                            className="rounded-lg border border-ink-200 bg-white hover:border-accent-500 hover:text-accent-600 px-3 py-1.5 text-xs font-medium text-ink-700 transition-all cursor-pointer"
+                          >
+                            <span>{preset.name}</span>
+                            <span className="ml-1 text-[10px] text-ink-400 font-mono">({preset.stocks.join(", ")})</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    /* If Custom Stock Selection: Interactive Selection Pills for all 20 Allowlisted Equities */
+                    <div className="mt-4 p-4 rounded-xl border border-accent-200 bg-accent-50/30">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-accent-200/60 pb-2.5">
+                        <div>
+                          <span className="text-xs font-bold text-ink-900">
+                            Select Your Preferred Equities ({advisoryCustomStocks.length} Selected)
+                          </span>
+                          <p className="text-[11px] text-ink-600">
+                            Click any of the 20 tokenized stocks to add or remove from your algorithmic mandate.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setAdvisoryCustomStocks(["NVDAx", "MSFTx", "AAPLx", "TSLAx"])}
+                            className="text-[10px] text-accent-700 hover:underline cursor-pointer font-semibold"
+                          >
+                            Reset to Leaders
+                          </button>
+                          <span className="text-ink-300">|</span>
+                          <button
+                            type="button"
+                            onClick={() => setAdvisoryCustomStocks(STOCKS.map(s => s.symbol))}
+                            className="text-[10px] text-accent-700 hover:underline cursor-pointer font-semibold"
+                          >
+                            Select All 20
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[180px] overflow-y-auto pr-1">
+                        {STOCKS.map((stk) => {
+                          const isSelected = advisoryCustomStocks.includes(stk.symbol);
+                          const livePrice = stockPrices[stk.symbol] || getNumericPrice(stk);
+
+                          return (
+                            <button
+                              key={stk.symbol}
+                              type="button"
+                              onClick={() => {
+                                if (isSelected) {
+                                  if (advisoryCustomStocks.length > 1) {
+                                    setAdvisoryCustomStocks(advisoryCustomStocks.filter(s => s !== stk.symbol));
+                                  }
+                                } else {
+                                  setAdvisoryCustomStocks([...advisoryCustomStocks, stk.symbol]);
+                                }
+                              }}
+                              className={cn(
+                                "flex items-center justify-between rounded-lg border p-2 text-left transition-all cursor-pointer text-xs",
+                                isSelected
+                                  ? "border-accent-500 bg-white ring-1 ring-accent-500 text-ink-950 font-bold shadow-xs"
+                                  : "border-ink-200/80 bg-white/70 text-ink-600 hover:bg-white"
+                              )}
+                            >
+                              <div className="truncate">
+                                <span className="block font-mono text-[11px] font-bold">{stk.symbol}</span>
+                                <span className="block font-mono text-[9px] text-ink-400">$${livePrice.toFixed(2)}</span>
+                              </div>
+                              <span className={cn(
+                                "h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                isSelected ? "bg-accent-600 text-white" : "bg-surface-200 text-ink-400"
+                              )}>
+                                {isSelected ? "✓" : "+"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Risk Profile Selection Bar */}
                   <div className="mt-5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-ink-600">
+                    <label className="text-xs font-bold uppercase tracking-wider text-ink-700">
                       Select Investment Risk Profile
                     </label>
                     <div className="mt-2 grid grid-cols-3 gap-2.5">
@@ -2618,355 +2932,253 @@ export default function AppDashboardPage() {
                               </span>
                             </div>
 
-                              <p className="mt-1 text-[11px] text-ink-500 leading-normal">
-                                {alloc.rationale}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Interactive SVG Valuation & Alpha Trajectory Graph (Explicit X & Y Axes) */}
-                      <div className="mt-5 rounded-2xl border border-ink-200 bg-white p-4 sm:p-5 shadow-xs">
-                        <div className="flex flex-col justify-between gap-2 border-b border-ink-100 pb-3 sm:flex-row sm:items-center">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
-                                Trajectory Model (trading-plan-generator)
-                              </span>
-                              <span className="rounded bg-sky-100 px-1.5 py-0.2 text-[9px] font-bold text-sky-800">
-                                OKX AI Skill
-                              </span>
-                            </div>
-                            <h4 className="font-display text-sm font-bold text-ink-900 sm:text-base">
-                              Projected Valuation &amp; Return Horizon Trajectory
-                            </h4>
+                            <p className="mt-1 text-[11px] text-ink-500 leading-normal">
+                              {alloc.rationale}
+                            </p>
                           </div>
-                          <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
-                            <span className="flex items-center gap-1.5 text-rose-600 font-semibold">
-                              <span className="h-2 w-2 rounded-full bg-rose-500" />
-                              Aggressive ({advisoryHorizon === "short_term" ? "Momentum" : "+44.5%"})
-                            </span>
-                            <span className="flex items-center gap-1.5 text-accent-600 font-semibold">
-                              <span className="h-2 w-2 rounded-full bg-accent-500" />
-                              Balanced (+26.5%)
-                            </span>
-                            <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                              Conservative (+12.8%)
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Explicit X and Y Axis SVG Chart */}
-                        <div className="mt-4 relative">
-                          <svg
-                            viewBox="0 0 620 220"
-                            className="w-full h-48 sm:h-56 select-none"
-                            preserveAspectRatio="none"
-                          >
-                            <defs>
-                              <linearGradient id="gradAggressive" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.25" />
-                                <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
-                              </linearGradient>
-                              <linearGradient id="gradBalanced" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.20" />
-                                <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
-                              </linearGradient>
-                              <linearGradient id="gradConservative" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.15" />
-                                <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
-                              </linearGradient>
-                            </defs>
-
-                            {/* Grid Lines & Y-Axis Labels (0% to 50%) */}
-                            <line x1="50" y1="180" x2="590" y2="180" stroke="#e2e8f0" strokeWidth="1" />
-                            <text x="42" y="184" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">0%</text>
-
-                            <line x1="50" y1="146" x2="590" y2="146" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                            <text x="42" y="150" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+10%</text>
-
-                            <line x1="50" y1="112" x2="590" y2="112" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                            <text x="42" y="116" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+20%</text>
-
-                            <line x1="50" y1="78" x2="590" y2="78" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                            <text x="42" y="82" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+30%</text>
-
-                            <line x1="50" y1="44" x2="590" y2="44" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                            <text x="42" y="48" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+40%</text>
-
-                            <line x1="50" y1="10" x2="590" y2="10" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
-                            <text x="42" y="14" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+50%</text>
-
-                            {/* Y-Axis Line */}
-                            <line x1="50" y1="10" x2="50" y2="180" stroke="#94a3b8" strokeWidth="1.5" />
-                            {/* X-Axis Line */}
-                            <line x1="50" y1="180" x2="590" y2="180" stroke="#94a3b8" strokeWidth="1.5" />
-
-                            {/* X-Axis Vertical Guide Ticks & Labels */}
-                            <line x1="80" y1="180" x2="80" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                            <text x="80" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">1D</text>
-
-                            <line x1="190" y1="180" x2="190" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                            <text x="190" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">7D</text>
-
-                            <line x1="310" y1="180" x2="310" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                            <text x="310" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">14D</text>
-
-                            <line x1="440" y1="180" x2="440" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                            <text x="440" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">30D</text>
-
-                            <line x1="570" y1="180" x2="570" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
-                            <text x="570" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">90D</text>
-
-                            {/* Axis Title Labels */}
-                            <text x="25" y="100" transform="rotate(-90 25 100)" textAnchor="middle" className="text-[9px] fill-zinc-400 font-mono font-semibold uppercase tracking-wider">
-                              Return (%)
-                            </text>
-                            <text x="325" y="215" textAnchor="middle" className="text-[9px] fill-zinc-400 font-mono font-semibold uppercase tracking-wider">
-                              Time Horizon
-                            </text>
-
-                            {/* Conservative Curve */}
-                            <path
-                              d="M 80 178 Q 190 173 310 167 T 570 136 L 570 180 L 80 180 Z"
-                              fill="url(#gradConservative)"
-                              opacity={advisoryRisk === "conservative" ? 1 : 0.4}
-                            />
-                            <path
-                              d="M 80 178 Q 190 173 310 167 T 570 136"
-                              fill="none"
-                              stroke="#10b981"
-                              strokeWidth={advisoryRisk === "conservative" ? 3 : 1.8}
-                              strokeDasharray={advisoryRisk === "conservative" ? "none" : "4 2"}
-                            />
-                            <circle cx="80" cy="178" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
-                            <circle cx="190" cy="173" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
-                            <circle cx="310" cy="167" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
-                            <circle cx="440" cy="158" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
-                            <circle cx="570" cy="136" r={advisoryRisk === "conservative" ? 5 : 3.5} fill="#10b981" />
-
-                            {/* Balanced Curve */}
-                            <path
-                              d="M 80 175 Q 190 164 310 151 T 570 90 L 570 180 L 80 180 Z"
-                              fill="url(#gradBalanced)"
-                              opacity={advisoryRisk === "balanced" ? 1 : 0.4}
-                            />
-                            <path
-                              d="M 80 175 Q 190 164 310 151 T 570 90"
-                              fill="none"
-                              stroke="#6366f1"
-                              strokeWidth={advisoryRisk === "balanced" ? 3 : 2}
-                            />
-                            <circle cx="80" cy="175" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
-                            <circle cx="190" cy="164" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
-                            <circle cx="310" cy="151" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
-                            <circle cx="440" cy="128" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
-                            <circle cx="570" cy="90" r={advisoryRisk === "balanced" ? 5 : 3.5} fill="#6366f1" />
-
-                            {/* Aggressive Curve */}
-                            <path
-                              d="M 80 170 Q 190 150 310 127 T 570 29 L 570 180 L 80 180 Z"
-                              fill="url(#gradAggressive)"
-                              opacity={advisoryRisk === "aggressive" ? 1 : 0.4}
-                            />
-                            <path
-                              d="M 80 170 Q 190 150 310 127 T 570 29"
-                              fill="none"
-                              stroke="#f43f5e"
-                              strokeWidth={advisoryRisk === "aggressive" ? 3.5 : 2}
-                            />
-                            <circle cx="80" cy="170" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
-                            <circle cx="190" cy="150" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
-                            <circle cx="310" cy="127" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
-                            <circle cx="440" cy="85" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
-                            <circle cx="570" cy="29" r={advisoryRisk === "aggressive" ? 6 : 4} fill="#f43f5e" />
-                          </svg>
-
-                          {/* Horizon Return Badges */}
-                          <div className="mt-2 grid grid-cols-5 gap-2 border-t border-ink-100 pt-3 text-center">
-                            {OKX_TRADING_PLAN_DATA.trajectories.map((traj) => {
-                              const val =
-                                advisoryRisk === "aggressive"
-                                  ? traj.aggressiveReturnPct
-                                  : advisoryRisk === "balanced"
-                                  ? traj.balancedReturnPct
-                                  : traj.conservativeReturnPct;
-
-                              return (
-                                <div key={traj.timeHorizon} className="rounded-lg bg-surface-50 p-2">
-                                  <span className="block text-[10px] font-bold text-ink-500 font-mono">
-                                    {traj.timeHorizon}
-                                  </span>
-                                  <span
-                                    className={cn(
-                                      "font-mono text-xs font-bold",
-                                      advisoryRisk === "aggressive" && "text-rose-600",
-                                      advisoryRisk === "balanced" && "text-accent-600",
-                                      advisoryRisk === "conservative" && "text-emerald-600"
-                                    )}
-                                  >
-                                    +{val.toFixed(1)}%
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        ))}
                       </div>
+                    </div>
 
-                      {/* Operational Guardrails */}
-                      <div className="mt-4 grid grid-cols-2 gap-3 border-t border-ink-200/80 pt-3.5 text-xs">
-                        <div>
-                          <span className="text-ink-500">Rebalance Interval:</span>
-                          <p className="font-semibold text-ink-900">
-                            {currentAdvisoryPlan.rebalanceInterval}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-ink-500">Downside Safeguard:</span>
-                          <p className="font-semibold text-ink-900">
-                            {currentAdvisoryPlan.downsideProtection}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Deploy Mandate CTA */}
-                      <div className="mt-5 flex flex-col items-center justify-between gap-3 rounded-xl bg-ink-900 border border-transparent p-4 text-white sm:flex-row shadow-sm">
+                    {/* Interactive SVG Valuation & Alpha Trajectory Graph (Explicit X & Y Axes) */}
+                    <div className="mt-5 rounded-2xl border border-ink-200 bg-white p-4 sm:p-5 shadow-xs">
+                      <div className="flex flex-col justify-between gap-2 border-b border-ink-100 pb-3 sm:flex-row sm:items-center">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-ink-300">Executable Mandate Rule</span>
-                            <span className="rounded bg-accent-500/20 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-400">
-                              Session Key Guarded
+                            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                              Trajectory Model (trading-plan-generator)
+                            </span>
+                            <span className="rounded bg-sky-100 px-1.5 py-0.2 text-[9px] font-bold text-sky-800">
+                              OKX AI Skill
                             </span>
                           </div>
-                          <p className="mt-0.5 font-mono text-xs font-bold text-white">
-                            {currentAdvisoryPlan.mandateRule}
-                          </p>
+                          <h4 className="font-display text-sm font-bold text-ink-900 sm:text-base">
+                            Projected Valuation &amp; Return Horizon Trajectory
+                          </h4>
                         </div>
+                        <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
+                          <span className="flex items-center gap-1.5 text-rose-600 font-semibold">
+                            <span className="h-2 w-2 rounded-full bg-rose-500" />
+                            Aggressive ({advisoryHorizon === "short_term" ? "Momentum" : "+44.5%"})
+                          </span>
+                          <span className="flex items-center gap-1.5 text-accent-600 font-semibold">
+                            <span className="h-2 w-2 rounded-full bg-accent-500" />
+                            Balanced ({advisoryHorizon === "short_term" ? "Swing" : "+26.5%"})
+                          </span>
+                          <span className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                            Conservative ({advisoryHorizon === "short_term" ? "Preserve" : "+12.8%"})
+                          </span>
+                        </div>
+                      </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPromptText(currentAdvisoryPlan.mandateRule);
-                              handleSendPrompt(currentAdvisoryPlan.mandateRule);
-                              const firstAlloc = currentAdvisoryPlan.allocations[0];
-                              const sym = firstAlloc?.symbol || "NVDAx";
-                              const amt = (advisoryCapital * (firstAlloc?.weightPercent || 35)) / 100;
-                              const price = stockPrices[sym] || 213.9;
-                              openWeb3Signer(sym, amt, amt / price, price);
-                            }}
-                            className="rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer flex items-center gap-2"
-                          >
-                            <span>Deploy Mandate on OKX X Layer</span>
-                            <span>↗</span>
-                          </button>
+                      <div className="mt-4">
+                        <svg
+                          viewBox="0 0 600 230"
+                          className="w-full h-auto overflow-visible select-none"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          <defs>
+                            <linearGradient id="gradConservative" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+                              <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                            </linearGradient>
+                            <linearGradient id="gradBalanced" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" />
+                              <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                            </linearGradient>
+                            <linearGradient id="gradAggressive" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.3" />
+                              <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Grid Lines */}
+                          <line x1="50" y1="180" x2="590" y2="180" stroke="#e2e8f0" strokeDasharray="3 3" />
+                          <text x="42" y="184" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">0%</text>
+
+                          <line x1="50" y1="138" x2="590" y2="138" stroke="#e2e8f0" strokeDasharray="3 3" />
+                          <text x="42" y="142" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+12.5%</text>
+
+                          <line x1="50" y1="96" x2="590" y2="96" stroke="#e2e8f0" strokeDasharray="3 3" />
+                          <text x="42" y="100" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+25%</text>
+
+                          <line x1="50" y1="54" x2="590" y2="54" stroke="#e2e8f0" strokeDasharray="3 3" />
+                          <text x="42" y="58" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+37.5%</text>
+
+                          <line x1="50" y1="10" x2="590" y2="10" stroke="#e2e8f0" strokeDasharray="3 3" />
+                          <text x="42" y="14" textAnchor="end" className="text-[10px] fill-zinc-400 font-mono">+50%</text>
+
+                          {/* Y-Axis Line */}
+                          <line x1="50" y1="10" x2="50" y2="180" stroke="#94a3b8" strokeWidth="1.5" />
+                          {/* X-Axis Line */}
+                          <line x1="50" y1="180" x2="590" y2="180" stroke="#94a3b8" strokeWidth="1.5" />
+
+                          {/* X-Axis Vertical Guide Ticks & Labels */}
+                          <line x1="80" y1="180" x2="80" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                          <text x="80" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">1D</text>
+
+                          <line x1="190" y1="180" x2="190" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                          <text x="190" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">7D</text>
+
+                          <line x1="310" y1="180" x2="310" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                          <text x="310" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">14D</text>
+
+                          <line x1="440" y1="180" x2="440" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                          <text x="440" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">30D</text>
+
+                          <line x1="570" y1="180" x2="570" y2="185" stroke="#94a3b8" strokeWidth="1.5" />
+                          <text x="570" y="200" textAnchor="middle" className="text-[10px] fill-zinc-600 font-mono font-bold">90D</text>
+
+                          {/* Axis Title Labels */}
+                          <text x="25" y="100" transform="rotate(-90 25 100)" textAnchor="middle" className="text-[9px] fill-zinc-400 font-mono font-semibold uppercase tracking-wider">
+                            Return (%)
+                          </text>
+                          <text x="325" y="215" textAnchor="middle" className="text-[9px] fill-zinc-400 font-mono font-semibold uppercase tracking-wider">
+                            Time Horizon
+                          </text>
+
+                          {/* Conservative Curve */}
+                          <path
+                            d="M 80 178 Q 190 173 310 167 T 570 136 L 570 180 L 80 180 Z"
+                            fill="url(#gradConservative)"
+                            opacity={advisoryRisk === "conservative" ? 1 : 0.4}
+                          />
+                          <path
+                            d="M 80 178 Q 190 173 310 167 T 570 136"
+                            fill="none"
+                            stroke="#10b981"
+                            strokeWidth={advisoryRisk === "conservative" ? 3 : 1.8}
+                            strokeDasharray={advisoryRisk === "conservative" ? "none" : "4 2"}
+                          />
+                          <circle cx="80" cy="178" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
+                          <circle cx="190" cy="173" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
+                          <circle cx="310" cy="167" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
+                          <circle cx="440" cy="158" r={advisoryRisk === "conservative" ? 4 : 3} fill="#10b981" />
+                          <circle cx="570" cy="136" r={advisoryRisk === "conservative" ? 5 : 3.5} fill="#10b981" />
+
+                          {/* Balanced Curve */}
+                          <path
+                            d="M 80 175 Q 190 164 310 151 T 570 90 L 570 180 L 80 180 Z"
+                            fill="url(#gradBalanced)"
+                            opacity={advisoryRisk === "balanced" ? 1 : 0.4}
+                          />
+                          <path
+                            d="M 80 175 Q 190 164 310 151 T 570 90"
+                            fill="none"
+                            stroke="#6366f1"
+                            strokeWidth={advisoryRisk === "balanced" ? 3 : 2}
+                          />
+                          <circle cx="80" cy="175" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
+                          <circle cx="190" cy="164" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
+                          <circle cx="310" cy="151" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
+                          <circle cx="440" cy="128" r={advisoryRisk === "balanced" ? 4 : 3} fill="#6366f1" />
+                          <circle cx="570" cy="90" r={advisoryRisk === "balanced" ? 5 : 3.5} fill="#6366f1" />
+
+                          {/* Aggressive Curve */}
+                          <path
+                            d="M 80 170 Q 190 150 310 127 T 570 29 L 570 180 L 80 180 Z"
+                            fill="url(#gradAggressive)"
+                            opacity={advisoryRisk === "aggressive" ? 1 : 0.4}
+                          />
+                          <path
+                            d="M 80 170 Q 190 150 310 127 T 570 29"
+                            fill="none"
+                            stroke="#f43f5e"
+                            strokeWidth={advisoryRisk === "aggressive" ? 3.5 : 2}
+                          />
+                          <circle cx="80" cy="170" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
+                          <circle cx="190" cy="150" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
+                          <circle cx="310" cy="127" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
+                          <circle cx="440" cy="85" r={advisoryRisk === "aggressive" ? 4.5 : 3} fill="#f43f5e" />
+                          <circle cx="570" cy="29" r={advisoryRisk === "aggressive" ? 6 : 4} fill="#f43f5e" />
+                        </svg>
+
+                        {/* Horizon Return Badges */}
+                        <div className="mt-2 grid grid-cols-5 gap-2 border-t border-ink-100 pt-3 text-center">
+                          {OKX_TRADING_PLAN_DATA.trajectories.map((traj) => {
+                            const val =
+                              advisoryRisk === "aggressive"
+                                ? traj.aggressiveReturnPct
+                                : advisoryRisk === "balanced"
+                                ? traj.balancedReturnPct
+                                : traj.conservativeReturnPct;
+
+                            return (
+                              <div key={traj.timeHorizon} className="rounded-lg bg-surface-50 p-2">
+                                <span className="block text-[10px] font-bold text-ink-500 font-mono">
+                                  {traj.timeHorizon}
+                                </span>
+                                <span
+                                  className={cn(
+                                    "font-mono text-xs font-bold",
+                                    advisoryRisk === "aggressive" && "text-rose-600",
+                                    advisoryRisk === "balanced" && "text-accent-600",
+                                    advisoryRisk === "conservative" && "text-emerald-600"
+                                  )}
+                                >
+                                  +{val.toFixed(1)}%
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                {/* 2. Market Catalysts, News & Investor Sentiment Feed (Rendered Directly Beneath Advisory) */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
-                  <div className="flex items-center justify-between border-b border-ink-100 pb-4">
-                    <div>
-                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
-                        Live Market Intelligence &amp; Investor Sentiment
-                      </span>
-                      <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
-                        Market Catalysts &amp; Investor Consensus
-                      </h2>
+                    {/* Operational Guardrails */}
+                    <div className="mt-4 grid grid-cols-2 gap-3 border-t border-ink-200/80 pt-3.5 text-xs">
+                      <div>
+                        <span className="text-ink-500">Rebalance Interval:</span>
+                        <p className="font-semibold text-ink-900">
+                          {currentAdvisoryPlan.rebalanceInterval}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-ink-500">Downside Safeguard:</span>
+                        <p className="font-semibold text-ink-900">
+                          {currentAdvisoryPlan.downsideProtection}
+                        </p>
+                      </div>
                     </div>
-                    <span className="rounded-full bg-surface-100 border border-transparent px-3 py-1 text-xs font-medium text-ink-600">
-                      Live On-Chain Feed
-                    </span>
-                  </div>
 
-                  {isLoadingNews ? (
-                    <div className="py-12 text-center text-xs text-ink-500">
-                      Loading real-time market catalysts from X Layer onchain feed...
-                    </div>
-                  ) : (
-                    <div className="mt-5 space-y-4">
-                      {newsList.map((item) => (
-                        <div
-                          key={item.id}
-                          className="rounded-2xl border border-ink-200/80 bg-surface-50/50 p-4 transition-all hover:bg-white hover:shadow-xs"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2">
-                              <span className="rounded bg-ink-900 border border-transparent px-2 py-0.5 font-mono text-xs font-bold text-white">
-                                {item.ticker}
-                              </span>
-                              <span className="text-xs font-semibold text-ink-600">
-                                {item.category}
-                              </span>
-                              <span className="text-ink-400">·</span>
-                              <span className="text-[11px] text-ink-400">{item.timestamp}</span>
-                            </div>
-
-                            <span
-                              className={cn(
-                                "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase",
-                                item.impact === "Bullish"
-                                  ? "bg-emerald-100 text-emerald-800 border border-transparent"
-                                  : item.impact === "Bearish"
-                                  ? "bg-red-100 text-red-800 border border-transparent"
-                                  : "bg-amber-100 text-amber-800 border border-transparent"
-                              )}
-                            >
-                              {item.impact}
-                            </span>
-                          </div>
-
-                          <h3 className="mt-2 font-display text-sm font-bold leading-snug text-ink-900">
-                            {item.headline}
-                          </h3>
-                          <p className="mt-1 text-xs text-ink-600 leading-relaxed">
-                            {item.summary}
-                          </p>
-
-                          {/* What Investors Think So Far & Market Effect */}
-                          <div className="mt-3 space-y-2 rounded-xl border border-ink-200/70 bg-white p-3 text-xs">
-                            <p className="text-ink-800 leading-relaxed">
-                              <strong className="text-ink-900">What Investors Think So Far: </strong>
-                              {item.impact === "Bullish"
-                                ? "Institutional accumulation detected; retail sentiment strongly positive with surging call options activity."
-                                : item.impact === "Bearish"
-                                ? "Defensive rebalancing observed; traders hedging downside risk with automated stop loss triggers."
-                                : "Balanced consolidation; market awaiting further macro economic and earnings guidance."}
-                            </p>
-                            <p className="text-ink-800 leading-relaxed border-t border-ink-100 pt-2">
-                              <strong className="text-accent-600">Market Effect on X Layer: </strong>
-                              {item.marketEffectAnalysis}
-                            </p>
-                          </div>
-
-                          {/* Quick Trade Action */}
-                          <div className="mt-3.5 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const stockMatch = STOCKS.find((s) => s.symbol === item.ticker);
-                                if (stockMatch) setSelectedStock(stockMatch);
-                                setPromptText(item.suggestedAction.tradePrompt);
-                                setMode("basic");
-                                handleSendPrompt(item.suggestedAction.tradePrompt);
-                              }}
-                              className="rounded-lg bg-ink-900 border border-transparent px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-600 cursor-pointer"
-                            >
-                              Trade on Catalyst: {item.suggestedAction.label}
-                            </button>
-                          </div>
+                    {/* Deploy Mandate CTA */}
+                    <div className="mt-5 flex flex-col items-center justify-between gap-3 rounded-xl bg-ink-900 border border-transparent p-4 text-white sm:flex-row shadow-sm">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-ink-300">Executable Mandate Rule</span>
+                          <span className="rounded bg-accent-500/20 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-400">
+                            Session Key Guarded
+                          </span>
                         </div>
-                      ))}
+                        <p className="mt-0.5 font-mono text-xs font-bold text-white">
+                          {currentAdvisoryPlan.mandateRule}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPromptText(currentAdvisoryPlan.mandateRule);
+                            handleSendPrompt(currentAdvisoryPlan.mandateRule);
+                            const firstAlloc = currentAdvisoryPlan.allocations.find(a => a.symbol !== advisoryStablecoin) || currentAdvisoryPlan.allocations[0];
+                            const sym = firstAlloc?.symbol || "NVDAx";
+                            const amt = (advisoryCapital * (firstAlloc?.weightPercent || 35)) / 100;
+                            const price = stockPrices[sym] || 213.9;
+                            openWeb3Signer(sym, amt, amt / price, price);
+                          }}
+                          className="rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer flex items-center gap-2"
+                        >
+                          <span>Deploy Mandate on OKX X Layer</span>
+                          <span>↗</span>
+                        </button>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                {/* 3. Institutional Market & Mandates Directory (Powered by OKX AI Skills) */}
+{/* 2. Institutional Market & Mandates Directory (Powered by OKX AI Skills) */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
                   <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
                     <div>
@@ -3252,70 +3464,311 @@ export default function AppDashboardPage() {
               )}
             </div>
 
-            {/* ========================================================================= */}
-            {/* AUTONOMOUS AGENT EXECUTION AUDIT TRAIL                                    */}
-            {/* ========================================================================= */}
-            <div className="rounded-2xl border border-ink-200/80 bg-[#0C0F17] p-4 text-zinc-200 shadow-xs font-mono">
-              <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-display text-xs font-bold uppercase tracking-wider text-zinc-100">
-                    Execution Audit Trail
-                  </span>
+            
+
+{/* 3. Market Catalysts, News & Investor Sentiment Feed (Rendered Directly Following Directory) */}
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
+                  <div className="flex items-center justify-between border-b border-ink-100 pb-4">
+                    <div>
+                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
+                        Live Market Intelligence &amp; Investor Sentiment
+                      </span>
+                      <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
+                        Market Catalysts &amp; Investor Consensus
+                      </h2>
+                    </div>
+                    <span className="rounded-full bg-surface-100 border border-transparent px-3 py-1 text-xs font-medium text-ink-600">
+                      Live On-Chain Feed
+                    </span>
+                  </div>
+
+                  {isLoadingNews ? (
+                    <div className="py-12 text-center text-xs text-ink-500">
+                      Loading real-time market catalysts from X Layer onchain feed...
+                    </div>
+                  ) : (
+                    <div className="mt-5 space-y-4">
+                      {newsList.map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded-2xl border border-ink-200/80 bg-surface-50/50 p-4 transition-all hover:bg-white hover:shadow-xs"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className="rounded bg-ink-900 border border-transparent px-2 py-0.5 font-mono text-xs font-bold text-white">
+                                {item.ticker}
+                              </span>
+                              <span className="text-xs font-semibold text-ink-600">
+                                {item.category}
+                              </span>
+                              <span className="text-ink-400">·</span>
+                              <span className="text-[11px] text-ink-400">{item.timestamp}</span>
+                            </div>
+
+                            <span
+                              className={cn(
+                                "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase",
+                                item.impact === "Bullish"
+                                  ? "bg-emerald-100 text-emerald-800 border border-transparent"
+                                  : item.impact === "Bearish"
+                                  ? "bg-red-100 text-red-800 border border-transparent"
+                                  : "bg-amber-100 text-amber-800 border border-transparent"
+                              )}
+                            >
+                              {item.impact}
+                            </span>
+                          </div>
+
+                          <h3 className="mt-2 font-display text-sm font-bold leading-snug text-ink-900">
+                            {item.headline}
+                          </h3>
+                          <p className="mt-1 text-xs text-ink-600 leading-relaxed">
+                            {item.summary}
+                          </p>
+
+                          {/* What Investors Think So Far & Market Effect */}
+                          <div className="mt-3 space-y-2 rounded-xl border border-ink-200/70 bg-white p-3 text-xs">
+                            <p className="text-ink-800 leading-relaxed">
+                              <strong className="text-ink-900">What Investors Think So Far: </strong>
+                              {item.impact === "Bullish"
+                                ? "Institutional accumulation detected; retail sentiment strongly positive with surging call options activity."
+                                : item.impact === "Bearish"
+                                ? "Defensive rebalancing observed; traders hedging downside risk with automated stop loss triggers."
+                                : "Balanced consolidation; market awaiting further macro economic and earnings guidance."}
+                            </p>
+                            <p className="text-ink-800 leading-relaxed border-t border-ink-100 pt-2">
+                              <strong className="text-accent-600">Market Effect on X Layer: </strong>
+                              {item.marketEffectAnalysis}
+                            </p>
+                          </div>
+
+                          {/* Quick Trade Action */}
+                          <div className="mt-3.5 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const stockMatch = STOCKS.find((s) => s.symbol === item.ticker);
+                                if (stockMatch) setSelectedStock(stockMatch);
+                                setPromptText(item.suggestedAction.tradePrompt);
+                                setMode("basic");
+                                handleSendPrompt(item.suggestedAction.tradePrompt);
+                              }}
+                              className="rounded-lg bg-ink-900 border border-transparent px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-600 cursor-pointer"
+                            >
+                              Trade on Catalyst: {item.suggestedAction.label}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
+                {/* ========================================================================= */}
+            {/* THE MANDATE EXECUTION SUMMARY                                             */}
+            {/* ========================================================================= */}
+            <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6 text-ink-900">
+              <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
+                      OKX X Layer (Chain 196) Autonomous Agent
+                    </span>
+                    <span className="rounded bg-emerald-100 border border-emerald-200 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-800">
+                      Live Execution Active
+                    </span>
+                  </div>
+                  <h2 className="mt-1 font-display text-lg font-bold text-ink-950 sm:text-xl">
+                    The Mandate Execution Summary
+                  </h2>
+                  <p className="mt-0.5 text-xs text-ink-600 leading-relaxed">
+                    Comprehensive background, trading comparison, active duration, and stipulated growth targets for the initiated mandate.
+                  </p>
+                </div>
+
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={handleEvaluateDriftNow}
-                    className="text-[10px] text-accent-400 hover:text-accent-300 transition-colors cursor-pointer"
-                    title="Run manual telemetry audit"
+                    className="rounded-lg border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-white hover:text-ink-950 transition-colors cursor-pointer"
                   >
-                    Check Now
-                  </button>
-                  <span className="text-zinc-700">|</span>
-                  <button
-                    type="button"
-                    onClick={() => setExecutionLogs([])}
-                    className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
-                  >
-                    Clear
+                    Check Drift Telemetry
                   </button>
                 </div>
               </div>
 
-              <div className="mt-2.5 max-h-[260px] overflow-y-auto space-y-2 text-[10px] leading-relaxed pr-1 select-text scrollbar-thin">
-                {executionLogs.length === 0 ? (
-                  <p className="text-zinc-600 text-center py-4">No audit events recorded.</p>
-                ) : (
-                  executionLogs.map((log) => (
-                    <div key={log.id} className="border-b border-zinc-800/50 pb-1.5 last:border-b-0">
-                      <div className="flex items-center gap-1.5 text-zinc-400">
-                        <span className="text-zinc-500">[{log.timestamp}]</span>
-                        <span
-                          className={cn(
-                            "font-bold",
-                            log.type === "success" && "text-emerald-400",
-                            log.type === "warn" && "text-amber-400",
-                            log.type === "info" && "text-cyan-400"
-                          )}
-                        >
-                          {log.source}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-zinc-300 pl-2 border-l border-zinc-800">
-                        {log.message}
-                      </p>
-                    </div>
-                  ))
-                )}
+              {/* Explanatory Mandate Statement */}
+              <div className="mt-4 rounded-xl border border-accent-200 bg-accent-50/50 p-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-accent-700">
+                  Initiated Policy
+                </span>
+                <p className="mt-1 font-display text-base font-bold text-ink-950 leading-snug">
+                  The mandate was: <span className="text-accent-600">{currentAdvisoryPlan.strategyName}</span> utilizing{" "}
+                  <span className="font-mono text-ink-800">{advisoryStablecoin}</span> liquidity across{" "}
+                  <span className="font-mono text-ink-800">
+                    {currentAdvisoryPlan.allocations.filter(a => a.symbol !== advisoryStablecoin).map(a => a.symbol).join(", ")}
+                  </span>.
+                </p>
+                <p className="mt-1.5 text-xs text-ink-600 leading-relaxed font-mono">
+                  Active Rule: "{currentAdvisoryPlan.mandateRule}"
+                </p>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] text-zinc-500">
-                <span>OKX X Layer (Chain 196)</span>
-                <span className="text-emerald-400 flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Auto-Monitoring Active</span>
-                </span>
+              {/* Execution Background 4-Metric Grid */}
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Capital Initiated</span>
+                  <p className="mt-1 font-mono text-sm font-bold text-ink-950">
+                    $1,000 {advisoryStablecoin}
+                  </p>
+                  <span className="text-[10px] text-ink-500 font-mono">Initiated Sep 24, 2026</span>
+                </div>
+
+                <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Timeline &amp; Horizon</span>
+                  <p className="mt-1 font-mono text-sm font-bold text-accent-700">
+                    {advisoryHorizon === "short_term" ? "Short-Term Momentum" : "Long-Term DCA"}
+                  </p>
+                  <span className="text-[10px] text-ink-500 font-mono">
+                    {advisoryHorizon === "short_term" ? "30 Days Window" : "12-24 Months"}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Stipulated Growth</span>
+                  <p className="mt-1 font-mono text-sm font-bold text-emerald-700">
+                    +{advisoryHorizon === "short_term"
+                      ? (advisoryRisk === "aggressive" ? "27.8%" : advisoryRisk === "balanced" ? "15.2%" : "6.5%")
+                      : (advisoryRisk === "aggressive" ? "44.5%" : advisoryRisk === "balanced" ? "26.5%" : "12.8%")}
+                  </p>
+                  <span className="text-[10px] text-emerald-600 font-mono">
+                    Projected +${advisoryHorizon === "short_term"
+                      ? (advisoryRisk === "aggressive" ? "278.00" : advisoryRisk === "balanced" ? "152.00" : "65.00")
+                      : (advisoryRisk === "aggressive" ? "445.00" : advisoryRisk === "balanced" ? "265.00" : "128.00")} {advisoryStablecoin}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">Active Trading Duration</span>
+                  <p className="mt-1 font-mono text-sm font-bold text-ink-950">
+                    3 Days Active
+                  </p>
+                  <span className="text-[10px] text-ink-500 font-mono">4 OKX DEX Rebalances</span>
+                </div>
+              </div>
+
+              {/* Trading Comparison Table */}
+              <div className="mt-5">
+                <div className="flex items-center justify-between pb-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-ink-800">
+                    Trading Comparison &amp; Stipulated Asset Growth
+                  </h4>
+                  <span className="text-[11px] font-mono text-ink-500">OKX DEX Aggregator Telemetry</span>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-ink-200">
+                  <table className="w-full min-w-[640px] text-left text-xs">
+                    <thead className="border-b border-ink-200 bg-surface-100 font-semibold text-ink-900">
+                      <tr>
+                        <th className="p-3">Asset</th>
+                        <th className="p-3">Allocation</th>
+                        <th className="p-3">Capital</th>
+                        <th className="p-3">Initial / Live Spot</th>
+                        <th className="p-3">Stipulated Target</th>
+                        <th className="p-3">Drift Status</th>
+                        <th className="p-3 text-right">Execution Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-200/70 bg-white">
+                      {currentAdvisoryPlan.allocations.map((alloc) => {
+                        const price = stockPrices[alloc.symbol] || (alloc.symbol === advisoryStablecoin ? 1.0 : 213.9);
+                        const allocCapital = (1000 * alloc.weightPercent) / 100;
+                        const stipulatedPct =
+                          alloc.symbol === advisoryStablecoin
+                            ? "+0.0% (Floor)"
+                            : advisoryRisk === "aggressive"
+                            ? "+32.4%"
+                            : advisoryRisk === "balanced"
+                            ? "+18.5%"
+                            : "+9.2%";
+
+                        return (
+                          <tr key={alloc.symbol} className="hover:bg-surface-50/80 transition-colors">
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-ink-950">{alloc.symbol}</span>
+                                <span className="text-[10px] text-ink-500 font-medium">({alloc.role})</span>
+                              </div>
+                            </td>
+                            <td className="p-3 font-mono font-semibold text-accent-700">
+                              {alloc.weightPercent}%
+                            </td>
+                            <td className="p-3 font-mono text-ink-800">
+                              ${allocCapital.toFixed(2)}
+                            </td>
+                            <td className="p-3 font-mono text-ink-800">
+                              {alloc.symbol === advisoryStablecoin ? `$1.00 ${advisoryStablecoin}` : `$${price.toFixed(2)}`}
+                            </td>
+                            <td className="p-3 font-mono font-bold text-emerald-700">
+                              {stipulatedPct}
+                            </td>
+                            <td className="p-3">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-mono font-semibold text-emerald-800">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                In Equilibrium
+                              </span>
+                            </td>
+                            <td className="p-3 text-right">
+                              <span className="font-mono text-[11px] font-bold text-ink-700">
+                                Auto-Guarded
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Collapsible Low-Level On-Chain Telemetry Log */}
+              <div className="mt-4 pt-3 border-t border-ink-100">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setShowAuditLogs(!showAuditLogs)}
+                    className="text-xs font-semibold text-ink-600 hover:text-ink-950 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>{showAuditLogs ? "Hide" : "Show"} Low-Level On-Chain Telemetry Log</span>
+                    <span>{showAuditLogs ? "▲" : "▼"}</span>
+                  </button>
+
+                  {showAuditLogs && (
+                    <button
+                      type="button"
+                      onClick={() => setExecutionLogs([])}
+                      className="text-[10px] text-ink-400 hover:text-red-600 cursor-pointer"
+                    >
+                      Clear Log
+                    </button>
+                  )}
+                </div>
+
+                {showAuditLogs && (
+                  <div className="mt-3 rounded-xl border border-zinc-800 bg-[#0C0F17] p-3 text-zinc-300 font-mono text-[10px] max-h-[180px] overflow-y-auto space-y-1.5">
+                    {executionLogs.length === 0 ? (
+                      <p className="text-zinc-500 text-center py-2">No raw events recorded.</p>
+                    ) : (
+                      executionLogs.map((log) => (
+                        <div key={log.id} className="border-b border-zinc-800/60 pb-1 last:border-b-0">
+                          <span className="text-zinc-500">[{log.timestamp}]</span>{" "}
+                          <span className="font-bold text-accent-400">[{log.source}]</span> {log.message}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -3967,6 +4420,119 @@ export default function AppDashboardPage() {
           }
         }}
       />
+
+      {/* Advanced Mode Terms & Conditions Risk Disclosure Modal */}
+      <AnimatePresence>
+        {showAdvancedTermsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200 bg-white p-6 shadow-2xl text-ink-900"
+            >
+              <div className="flex items-center justify-between border-b border-ink-200 pb-3.5">
+                <div>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-700">
+                    OKX X Layer (Chain 196) · Institutional Protocols
+                  </span>
+                  <h3 className="font-display text-lg font-bold text-ink-950">
+                    Terms &amp; Risk Disclosure: Advanced Mode
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedTermsModal(false)}
+                  className="rounded-full p-2 text-ink-400 hover:bg-surface-100 hover:text-ink-950 cursor-pointer"
+                >
+                  <svg viewBox="0 0 16 16" className="h-4 w-4 stroke-current stroke-2 fill-none">
+                    <path d="M4 4l8 8M12 4l-8 8" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4 text-xs text-ink-700">
+                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 text-amber-900 flex items-start gap-2.5">
+                  <span className="text-base leading-none">⚠️</span>
+                  <p className="text-[11px] leading-relaxed">
+                    <strong>Notice:</strong> Advanced Mode provides access to autonomous investment mandate creation, algorithmic drift rebalancing, and direct telemetry from OKX AI skills. You must acknowledge the following disclosures before proceeding.
+                  </p>
+                </div>
+
+                <div className="space-y-3 rounded-2xl border border-ink-200 bg-surface-50/60 p-4">
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-ink-900 text-xs">1. Non-Custodial Smart Contract Routing</h4>
+                    <p className="text-[11px] text-ink-600 leading-relaxed">
+                      Meirei does not hold custody of your funds. All trades, swaps, and rebalances are simulated or routed directly through OKX DEX Aggregator on X Layer (Chain 196) with non-custodial session keys.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 border-t border-ink-200/60 pt-2.5">
+                    <h4 className="font-bold text-ink-900 text-xs">2. Algorithmic Drift &amp; Rebalance Execution</h4>
+                    <p className="text-[11px] text-ink-600 leading-relaxed">
+                      Mandates evaluate price drift (e.g. 1.5% to 3.5%) across tokenized equities. Sudden market movements or low DEX liquidity may cause slippage or frequent rebalance triggers.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 border-t border-ink-200/60 pt-2.5">
+                    <h4 className="font-bold text-ink-900 text-xs">3. Simulation vs. Mainnet Trading</h4>
+                    <p className="text-[11px] text-ink-600 leading-relaxed">
+                      You may utilize the Simulation Sandbox with 1,000 USDG test cash to model mandates risk-free before deploying live on-chain with sponsored gas.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 border-t border-ink-200/60 pt-2.5">
+                    <h4 className="font-bold text-ink-900 text-xs">4. No Financial Advice Disclaimer</h4>
+                    <p className="text-[11px] text-ink-600 leading-relaxed">
+                      All forecasts, sentiment scores, and portfolio trajectories generated by the 4 OKX AI skills are automated mathematical heuristics and do not constitute registered investment advice.
+                    </p>
+                  </div>
+                </div>
+
+                <label className="flex items-start gap-2.5 p-2 rounded-xl hover:bg-surface-100 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={termsAgreedCheckbox}
+                    onChange={(e) => setTermsAgreedCheckbox(e.target.checked)}
+                    className="mt-0.5 rounded border-ink-300 text-accent-600 focus:ring-accent-500"
+                  />
+                  <span className="text-[11px] font-semibold text-ink-900 leading-snug">
+                    I have read, understood, and accept the Advanced Mode Terms &amp; Risk Disclosure for autonomous agent trading on OKX X Layer.
+                  </span>
+                </label>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-ink-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAdvancedTermsModal(false);
+                      setMode("basic");
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-ink-200 bg-white text-ink-700 text-xs font-semibold hover:bg-surface-100 transition-colors cursor-pointer"
+                  >
+                    Decline &amp; Stay in Basic Mode
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!termsAgreedCheckbox}
+                    onClick={() => {
+                      setHasAcceptedAdvancedTerms(true);
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("meirei_advanced_terms_accepted", "true");
+                      }
+                      setShowAdvancedTermsModal(false);
+                      setMode("advanced");
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-ink-900 hover:bg-accent-600 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                  >
+                    Accept &amp; Enter Advanced Mode →
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Universal WalletConnect Bridge Modal */}
       <WalletConnectModal

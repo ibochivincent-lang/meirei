@@ -33,8 +33,100 @@ export function generateAdvisoryPlan(params: {
   horizon: AdvisoryHorizon;
   riskProfile: RiskProfile;
   capitalUsd?: number;
+  customStocks?: string[];
+  stablecoin?: "USDG" | "USDC" | "USDT";
 }): AdvisoryPlan {
-  const { horizon, riskProfile, capitalUsd = 2500 } = params;
+  const { horizon, riskProfile, capitalUsd = 2500, customStocks = [], stablecoin = "USDG" } = params;
+
+  // Custom stock selection branch: dynamically calculate allocation, weights, and thesis
+  if (customStocks && customStocks.length > 0) {
+    const validStocks = customStocks.filter(
+      (s) => ALLOWLIST.has(s as any) && s !== "USDG" && s !== "USDC" && s !== "USDT"
+    );
+    if (validStocks.length > 0) {
+      let stableWeight = 25;
+      let band = 2.5;
+      let maxCap = 35;
+      if (riskProfile === "conservative") {
+        stableWeight = horizon === "short_term" ? 45 : 35;
+        band = 2.0;
+        maxCap = 25;
+      } else if (riskProfile === "aggressive") {
+        stableWeight = horizon === "short_term" ? 10 : 15;
+        band = 1.5;
+        maxCap = 45;
+      } else {
+        stableWeight = horizon === "short_term" ? 25 : 30;
+        band = 2.5;
+        maxCap = 30;
+      }
+
+      const equityTotalWeight = 100 - stableWeight;
+      const baseWeightPerStock = Math.floor(equityTotalWeight / validStocks.length);
+      const remainder = equityTotalWeight - baseWeightPerStock * validStocks.length;
+
+      const allocations: AllocationItem[] = [
+        {
+          symbol: stablecoin,
+          weightPercent: stableWeight,
+          role: "Stable Liquidity Buffer",
+          rationale: `Protects portfolio liquidity on OKX X Layer and funds rebalance swings in ${stablecoin}.`,
+        },
+      ];
+
+      validStocks.forEach((stk, idx) => {
+        const weight = idx === 0 ? baseWeightPerStock + remainder : baseWeightPerStock;
+        allocations.push({
+          symbol: stk,
+          weightPercent: weight,
+          role: idx === 0 ? "Primary Alpha Driver" : "Portfolio Holding",
+          rationale: `Direct tokenized equity exposure via OKX DEX Aggregator with automated ${band}% drift band monitoring.`,
+        });
+      });
+
+      const stockRules = validStocks
+        .map((stk) => {
+          const alloc = allocations.find((a) => a.symbol === stk);
+          return `${alloc?.weightPercent}% ${stk}`;
+        })
+        .join(", ");
+      const mandateRule = `${stockRules}, ${stableWeight}% ${stablecoin}, max ${maxCap}%, band ${band}%`;
+
+      return {
+        id: `custom_${horizon}_${riskProfile}`,
+        strategyName: `Custom Selection (${validStocks.join(", ")})`,
+        horizon,
+        horizonLabel:
+          horizon === "short_term"
+            ? "Short-Term Tactical (7 to 14 Days)"
+            : "Long-Term Wealth Accumulation (1 to 2 Years)",
+        riskProfile,
+        riskLabel:
+          riskProfile === "conservative"
+            ? "Capital Preservation"
+            : riskProfile === "aggressive"
+            ? "High Alpha Acceleration"
+            : "Strategic Balanced",
+        mandateRule,
+        allocations,
+        thesis: `Custom multi-asset allocation synthesizing ${validStocks.length} allowlisted tokenized stocks on OKX X Layer paired with a ${stableWeight}% ${stablecoin} liquidity buffer. Algorithmic execution continuously balances positions when drift exceeds ${band}%.`,
+        rebalanceInterval:
+          horizon === "short_term"
+            ? "Daily drift monitor / 7-day trigger"
+            : "Monthly scheduled rebalance or 3% drift",
+        downsideProtection: `${stableWeight}% ${stablecoin} liquidity floor with strict ${maxCap}% single-stock ceiling`,
+        expectedVolatility:
+          riskProfile === "aggressive"
+            ? "High (Annualized ~30-40%)"
+            : riskProfile === "conservative"
+            ? "Low (Annualized ~10-15%)"
+            : "Moderate (Annualized ~18-24%)",
+        recommendedDcaUsd: Math.round(
+          capitalUsd * (riskProfile === "aggressive" ? 0.25 : riskProfile === "conservative" ? 0.1 : 0.15)
+        ),
+      };
+    }
+  }
 
   if (horizon === "short_term") {
     if (riskProfile === "conservative") {
