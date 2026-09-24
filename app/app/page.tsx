@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils/cn";
 import { generateAdvisoryPlan, AdvisoryHorizon, RiskProfile, AdvisoryPlan } from "@/src/agent/advisor";
 import { NewsCatalyst } from "@/app/api/news/route";
 import { Web3SigningModal } from "@/components/wallet/web3_signing_modal";
+import { MandateSigningModal } from "@/components/wallet/mandate_signing_modal";
 import {
   XLAYER_CHAIN_ID_DECIMAL,
   XLAYER_CHAIN_ID_HEX,
@@ -34,7 +35,7 @@ import {
   OKX_TRADING_PLAN_DATA,
 } from "@/lib/okx/skills_data";
 
-type Platform = "telegram" | "web" | "okx_wallet" | "whatsapp" | "instagram";
+type Platform = "telegram" | "web" | "okx_wallet";
 type Mode = "basic" | "advanced";
 
 // Simple Vector SVG Logos for Supported Platforms
@@ -71,22 +72,6 @@ function SimpleWebLogo({ className = "w-5 h-5" }: { className?: string }) {
       <line x1="12" y1="17" x2="12" y2="21" />
       <path d="m7 8 2 2-2 2" />
       <line x1="11" y1="12" x2="15" y2="12" />
-    </svg>
-  );
-}
-
-function SimpleWhatsAppLogo({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm0 18.15c-1.49 0-2.95-.4-4.22-1.16l-.3-.18-3.13.82.83-3.05-.2-.31a8.188 8.188 0 0 1-1.25-4.36c0-4.54 3.7-8.24 8.27-8.24 2.21 0 4.28.86 5.84 2.42 1.56 1.56 2.42 3.63 2.42 5.84 0 4.54-3.7 8.22-8.26 8.22z" />
-    </svg>
-  );
-}
-
-function SimpleInstagramLogo({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
     </svg>
   );
 }
@@ -200,6 +185,7 @@ export default function AppDashboardPage() {
   const [isLoadingBalance, setIsLoadingBalance] = useState<boolean>(false);
   const isLoggedIn = Boolean(profile.address && profile.address !== "0x0000000000000000000000000000000000000000");
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [mandatePlanToSign, setMandatePlanToSign] = useState<AdvisoryPlan | null>(null);
 
   // 1-Click Demo Sandbox for Judges
   const [isDemoSandbox, setIsDemoSandbox] = useState<boolean>(false);
@@ -1311,10 +1297,19 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
   };
 
   // Deploy Advisory Mandate from Advanced Mode (Instant & Session-Key Guarded)
-  const handleDeployAdvisoryMandate = (plan: AdvisoryPlan) => {
-    const mandateId = `MAN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    const txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
-    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const handleDeployAdvisoryMandate = (
+    plan: AdvisoryPlan,
+    receiptOverride?: {
+      mandateId: string;
+      timestamp: string;
+      txHash: string;
+      signature: string;
+      status: string;
+    }
+  ) => {
+    const mandateId = receiptOverride?.mandateId || `MAN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const txHash = receiptOverride?.txHash || `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+    const now = receiptOverride?.timestamp || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     const newPolicy: MandatePolicy = {
       id: `mandate_${Date.now()}`,
@@ -1366,7 +1361,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
       stablecoin: advisoryStablecoin,
       rule: plan.mandateRule,
       txHash,
-      status: "Active & Session-Guarded on Chain 196",
+      status: receiptOverride?.status || "Active & Session-Guarded on Chain 196",
       allocations: plan.allocations,
       rebalanceInterval: plan.rebalanceInterval,
       downsideProtection: plan.downsideProtection,
@@ -1383,10 +1378,22 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
     setChatMessages((prev) => [...prev, confirmMsg]);
 
     setMandateResult({
-      reply: `Mandate "${plan.strategyName}" (${mandateId}) successfully deployed to OKX X Layer. Active session key guard is monitoring execution.`,
+      reply: `Mandate "${plan.strategyName}" (${mandateId}) successfully deployed to OKX X Layer with confirmed wallet signature. Active session key guard is monitoring execution.`,
       type: "mandate",
       statusTone: "confirmed",
     });
+
+    // Record into execution audit log
+    setExecutionLogs((prev) => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: now,
+        source: "Mandate Engine",
+        message: `Mandate Deployed (${mandateId}): ${plan.strategyName} with $${advisoryCapital.toLocaleString()} ${advisoryStablecoin} on OKX X Layer. Tx: ${txHash.slice(0, 10)}...`,
+        type: "success",
+      },
+      ...prev,
+    ]);
 
     // Smoothly scroll to the immediate execution summary receipt
     setTimeout(() => {
@@ -2129,31 +2136,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
       {/* Main Terminal Container */}
       <main className="mx-auto max-w-[1440px] px-3.5 py-4 sm:px-8 sm:py-6">
-        {/* Institutional Web3 Wallet Connect Banner (Advanced Mode) */}
-        {mode === "advanced" && !isLoggedIn && (
-          <div className="mb-5 rounded-2xl border border-accent-500/30 bg-accent-50/60 p-4 text-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl font-mono font-bold shrink-0 text-white shadow-xs text-xs bg-accent-500">
-                OKX
-              </div>
-              <div>
-                <span className="font-bold text-ink-900 sm:text-sm">
-                  Connect Web3 Wallet for Advanced Institutional Execution
-                </span>
-                <p className="mt-0.5 text-ink-600">
-                  Connect OKX Wallet, MetaMask, or WalletConnect to deploy custom stock mandates and receive real-time OKX AI Skills telemetry on OKX X Layer (Chain 196).
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowLoginModal(true)}
-              className="px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0"
-            >
-              Connect Wallet →
-            </button>
-          </div>
-        )}
 
         {/* Terminal Subheader & DUAL-ENVIRONMENT MODE SWITCHER */}
         <div className="mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center">
@@ -3948,133 +3930,36 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       </div>
                     </div>
 
-                    {/* Analysis of Selected Strategy & Tokenized Stocks (Summary of Every Skill) */}
-                    <div className="mt-5 rounded-2xl border border-ink-200/90 bg-white p-4 sm:p-5 shadow-2xs">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-ink-100 pb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
-                              AI Telemetry Synthesis
-                            </span>
-                            <span className="rounded bg-accent-100 px-2 py-0.2 font-mono text-[9px] font-bold text-accent-800">
-                              4 Skills Synthesized
-                            </span>
-                          </div>
-                          <h4 className="mt-0.5 font-display text-sm font-bold text-ink-950 sm:text-base">
-                            Analysis of Selected Strategy &amp; Tokenized Stocks
-                          </h4>
-                          <p className="text-[11px] text-ink-500">
-                            How each synchronized AI skill influences your mandate decision and execution parameters:
-                          </p>
+                    {/* Direct Execute >> Confirm Wallet Signature >> Confirmed */}
+                    <div className="mt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-ink-950 p-4 text-white shadow-md">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded bg-accent-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-accent-400">
+                            Deploying ${advisoryCapital.toLocaleString()} {advisoryStablecoin}
+                          </span>
+                          <span className="rounded bg-emerald-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-400">
+                            Gas Sponsored (0 OKB)
+                          </span>
+                          <span className="rounded bg-sky-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-sky-300">
+                            Non-Custodial EIP-712 / EIP-2612
+                          </span>
                         </div>
-                        <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-emerald-700">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                          Non-Custodial Session Guard
-                        </span>
+                        <p className="mt-1 font-mono text-xs font-bold text-white truncate">
+                          {currentAdvisoryPlan.mandateRule}
+                        </p>
                       </div>
 
-                      {/* 4 Skill Impact Summaries */}
-                      <div className="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        {/* 1. Trading Plan Generator */}
-                        <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-3 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-[9px] font-bold uppercase text-sky-800 bg-sky-100 px-1.5 py-0.2 rounded">
-                              trading-plan-generator
-                            </span>
-                            <span className="font-mono text-[10px] font-bold text-sky-900">
-                              {currentAdvisoryPlan.rebalanceInterval}
-                            </span>
-                          </div>
-                          <p className="font-display text-xs font-bold text-ink-950">
-                            Drift Tolerance &amp; Risk Floor
-                          </p>
-                          <p className="text-[10px] text-ink-600 leading-relaxed">
-                            Formulates a dynamic <strong>{advisoryHorizon === "short_term" ? "1.8%" : "3.0%"} drift corridor</strong>, with downside safeguard set to <strong>{currentAdvisoryPlan.downsideProtection}</strong> to prevent adverse liquidation.
-                          </p>
-                        </div>
-
-                        {/* 2. OKX Sentiment Tracker */}
-                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-[9px] font-bold uppercase text-indigo-800 bg-indigo-100 px-1.5 py-0.2 rounded">
-                              okx-sentiment-tracker
-                            </span>
-                            <span className="font-mono text-[10px] font-bold text-indigo-900">
-                              {OKX_SENTIMENT_DATA.overallScore}/100 Bullish
-                            </span>
-                          </div>
-                          <p className="font-display text-xs font-bold text-ink-950">
-                            Social Momentum &amp; Consensus
-                          </p>
-                          <p className="text-[10px] text-ink-600 leading-relaxed">
-                            Aggregates 48.2K mentions and whale consensus across tokenized stocks on X Layer, validating positive institutional accumulation velocity.
-                          </p>
-                        </div>
-
-                        {/* 3. OKX Smart Money */}
-                        <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-[9px] font-bold uppercase text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded">
-                              okx-cex-smartmoney
-                            </span>
-                            <span className="font-mono text-[10px] font-bold text-emerald-900">
-                              {OKX_SMART_MONEY_DATA.netInflow24h}
-                            </span>
-                          </div>
-                          <p className="font-display text-xs font-bold text-ink-950">
-                            Whale Accumulation Inflow
-                          </p>
-                          <p className="text-[10px] text-ink-600 leading-relaxed">
-                            Confirms positive institutional absorption on OKX CEX/DEX bridges, shielding the mandate from sudden smart-money exit cascades.
-                          </p>
-                        </div>
-
-                        {/* 4. OKX CEX Market Depth */}
-                        <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-[9px] font-bold uppercase text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded">
-                              okx-cex-market
-                            </span>
-                            <span className="font-mono text-[10px] font-bold text-amber-900">
-                              0.02% Tight Spread
-                            </span>
-                          </div>
-                          <p className="font-display text-xs font-bold text-ink-950">
-                            Liquidity Depth &amp; Low Slippage
-                          </p>
-                          <p className="text-[10px] text-ink-600 leading-relaxed">
-                            Monitors {OKX_CEX_MARKET_DATA.liquidityDepthUsd} orderbook depth to guarantee minimal execution slippage (&lt;0.05%) via OKX DEX Aggregator.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Execute & Deploy Mandate Bar */}
-                      <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl bg-ink-950 p-4 text-white shadow-md">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="rounded bg-accent-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-accent-400">
-                              Deploying ${advisoryCapital.toLocaleString()} {advisoryStablecoin}
-                            </span>
-                            <span className="rounded bg-emerald-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-400">
-                              Gas Sponsored (0 ETH)
-                            </span>
-                          </div>
-                          <p className="mt-1 font-mono text-xs font-bold text-white truncate">
-                            {currentAdvisoryPlan.mandateRule}
-                          </p>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleDeployAdvisoryMandate(currentAdvisoryPlan);
-                          }}
-                          className="shrink-0 rounded-xl bg-accent-500 hover:bg-accent-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
-                        >
-                          <span>Execute &amp; Deploy Mandate</span>
-                          <span>↗</span>
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMandatePlanToSign(currentAdvisoryPlan);
+                        }}
+                        className="shrink-0 rounded-xl bg-accent-500 hover:bg-accent-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>Execute &amp; Sign Mandate</span>
+                        <span>↗</span>
+                      </button>
+                    </div>
 
                       {/* Mandate Execution Summary Receipt (Appears Immediately Following Execution) */}
                       {deployedMandateReceipt && (
@@ -4167,7 +4052,6 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       )}
                     </div>
                   </div>
-                </div>
 
                 {/* 2. Institutional Market & Mandates Directory (Powered by OKX AI Skills) */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
@@ -5947,6 +5831,26 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
           setShowWalletConnectModal(false);
         }}
       />
+
+      {/* Non-Custodial Mandate Web3 Signing Modal (Execute >> Confirm Wallet Signature >> Confirmed) */}
+      {mandatePlanToSign && (
+        <MandateSigningModal
+          isOpen={Boolean(mandatePlanToSign)}
+          onClose={() => setMandatePlanToSign(null)}
+          strategyName={mandatePlanToSign.strategyName}
+          capitalUsdg={advisoryCapital}
+          stablecoin={advisoryStablecoin}
+          allocations={mandatePlanToSign.allocations}
+          mandateRule={mandatePlanToSign.mandateRule}
+          rebalanceInterval={mandatePlanToSign.rebalanceInterval}
+          downsideProtection={mandatePlanToSign.downsideProtection}
+          userAddress={connectAddress || profile.address || "0x98fE3a1c2B90c4273E1f3D79cFa83D39B4cE7B21"}
+          onSuccess={(receipt) => {
+            handleDeployAdvisoryMandate(mandatePlanToSign, receipt);
+            setMandatePlanToSign(null);
+          }}
+        />
+      )}
     </div>
   );
 }

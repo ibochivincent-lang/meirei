@@ -22,7 +22,8 @@
     "bot:chat": "tsx src/cli/bot_chat.ts",
     "bot:poll": "tsx src/cli/telegram_poller.ts",
     "bot:webhook": "tsx src/cli/set_webhook.ts",
-    "test:webhooks": "node scripts/test_webhooks.js"
+    "test:webhooks": "node scripts/test_webhooks.js",
+    "verify:stocks": "node scripts/verify-xlayer-stocks.mjs"
   },
   "dependencies": {
     "@simplewebauthn/browser": "^13.3.0",

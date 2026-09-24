@@ -181,3 +181,9 @@ export const OKX_TRADING_PLAN_DATA: TradingPlanData = {
     },
   ],
 };
+
+export {
+  DAYBREAK_CONVICTION_VAULT,
+  DAYBREAK_ONCHAIN_CONVICTION,
+  type StockConvictionMetric,
+} from "@/lib/xlayer/vault_telemetry";
