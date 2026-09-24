@@ -678,19 +678,18 @@ Use the categorized keywords below or type any question to receive an immediate 
 
   // Trading mode state: strictly TWO MODES: "basic" | "advanced"
   const [mode, setMode] = useState<Mode>("basic");
-  const [showInitialModeModal, setShowInitialModeModal] = useState<boolean>(true);
+  const [showInitialModeModal, setShowInitialModeModal] = useState<boolean>(false);
 
-  // Check URL query parameters (?mode=basic or ?mode=advanced)
+  // Check URL query parameters or localStorage (?mode=basic or ?mode=advanced)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const urlMode = params.get("mode");
-      if (urlMode === "advanced") {
+      const savedMode = localStorage.getItem("meirei_mode");
+      if (urlMode === "advanced" || (!urlMode && savedMode === "advanced")) {
         setMode("advanced");
-        setShowInitialModeModal(false);
-      } else if (urlMode === "basic") {
+      } else {
         setMode("basic");
-        setShowInitialModeModal(false);
       }
     }
   }, []);
@@ -898,9 +897,15 @@ Use the categorized keywords below or type any question to receive an immediate 
   const handleSwitchToAdvanced = () => {
     if (hasAcceptedAdvancedTerms) {
       setMode("advanced");
+      if (typeof window !== "undefined") localStorage.setItem("meirei_mode", "advanced");
     } else {
       setShowAdvancedTermsModal(true);
     }
+  };
+
+  const handleSwitchToBasic = () => {
+    setMode("basic");
+    if (typeof window !== "undefined") localStorage.setItem("meirei_mode", "basic");
   };
 
   // Stock selection & chart state
@@ -2525,7 +2530,10 @@ Use the categorized keywords below or type any question to receive an immediate 
       <main className="mx-auto max-w-[1440px] px-3 sm:px-8 py-3.5 sm:py-6 w-full max-w-full overflow-x-hidden">
 
         {/* Terminal Subheader & DUAL-ENVIRONMENT MODE SWITCHER */}
-        <div className="mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center">
+        <div className={cn(
+          "mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center",
+          mode === "basic" && "max-w-4xl mx-auto"
+        )}>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-base font-bold tracking-tight text-ink-900 sm:text-2xl">
@@ -2535,7 +2543,7 @@ Use the categorized keywords below or type any question to receive an immediate 
                 "rounded-full px-2.5 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold border shrink-0",
                 mode === "basic" ? "bg-accent-50 border-accent-200 text-accent-700" : "bg-ink-900 border-ink-800 text-white"
               )}>
-                Advanced Mode
+                {mode === "basic" ? "Basic Mode" : "Advanced Mode"}
               </span>
               <button
                 type="button"
@@ -2547,7 +2555,7 @@ Use the categorized keywords below or type any question to receive an immediate 
             </div>
             <p className="mt-1 text-xs text-ink-600 sm:text-sm leading-relaxed">
               {mode === "basic"
-                ? "Direct non-custodial spot execution across 20 allowlisted equities with interactive charts and USDG unit calculator."
+                ? "Direct non-custodial spot execution across 20 allowlisted equities, portfolio balances, and centralized USDG unit calculator."
                 : "Autonomous algorithmic mandate studio with 4 OKX AI skills, drift rebalancing, and downside risk guards."}
             </p>
           </div>
@@ -2565,7 +2573,7 @@ Use the categorized keywords below or type any question to receive an immediate 
             ) : (
               <button
                 type="button"
-                onClick={() => setMode("basic")}
+                onClick={handleSwitchToBasic}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white hover:bg-surface-100 text-ink-900 px-4 py-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer group"
               >
                 <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
@@ -6112,7 +6120,7 @@ Use the categorized keywords below or type any question to receive an immediate 
                         Basic Mode
                       </h3>
                       <p className="text-xs text-ink-600 mt-1 leading-relaxed">
-                        Instant spot equity trading across 20 allowlisted equities, interactive TradingView charts, and a real-time USDG unit calculator with sponsored zero-gas execution.
+                        Instant spot equity trading across 20 allowlisted equities, real-time USDG unit calculator, centralized portfolio holdings, and sponsored zero-gas execution.
                       </p>
                     </div>
                     <ul className="text-[11px] text-ink-700 space-y-1 font-medium pt-2 border-t border-accent-200/50">
