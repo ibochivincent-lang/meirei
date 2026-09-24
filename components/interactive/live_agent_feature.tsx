@@ -308,7 +308,7 @@ export function LiveAgentFeature() {
                               style={{ animationDelay: "150ms" }}
                             />
                             <span
-                              className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400 dark:bg-ink-300"
+                              className="h-1.5 w-1.5 animate-bounce rounded-full bg-ink-400"
                               style={{ animationDelay: "300ms" }}
                             />
                           </div>

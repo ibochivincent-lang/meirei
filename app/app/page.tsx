@@ -194,10 +194,10 @@ function SectionSeparator({ label }: { label: string }) {
   return (
     <div className="relative my-6 select-none" aria-hidden="true">
       <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-ink-200/80 dark:border-zinc-800" />
+        <div className="w-full border-t border-ink-200/80" />
       </div>
       <div className="relative flex justify-center">
-        <span className="bg-surface-50 dark:bg-[#0B0D13] px-3 font-mono text-[10px] uppercase font-bold tracking-wider text-ink-400 dark:text-zinc-500 border border-ink-200/60 dark:border-zinc-800 rounded-full shadow-2xs">
+        <span className="bg-surface-50 px-3 font-mono text-[10px] uppercase font-bold tracking-wider text-ink-400 border border-ink-200/60 rounded-full shadow-2xs">
           {label}
         </span>
       </div>
@@ -1579,24 +1579,24 @@ export default function AppDashboardPage() {
       : getFormattedPrice(selectedStock);
 
   return (
-    <div className="min-h-screen bg-surface-50 dark:bg-[#0B0E14] text-ink-900 dark:text-zinc-100 transition-colors">
+    <div className="min-h-screen bg-surface-50 text-ink-900 transition-colors">
       {/* Top Application Header */}
-      <header className="sticky inset-x-0 top-0 z-40 border-b border-surface-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#0B0E14] transition-colors">
+      <header className="sticky inset-x-0 top-0 z-40 border-b border-surface-200 bg-surface-50 transition-colors">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-3 sm:px-8">
           <div className="flex items-center gap-4">
             <Link href="/" aria-label="meirei - home">
               <BrandMark />
             </Link>
-            <div className="hidden h-5 w-px bg-surface-200 dark:bg-zinc-800 sm:block" />
+            <div className="hidden h-5 w-px bg-surface-200 sm:block" />
             <div className="hidden items-center gap-2 sm:flex">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-mono text-xs font-semibold text-ink-700 dark:text-zinc-300">
+              <span className="font-mono text-xs font-semibold text-ink-700">
                 OKX Chain (X Layer 196)
               </span>
             </div>
-            <div className="hidden md:flex items-center gap-1.5 rounded-full border border-surface-200 dark:border-zinc-800 bg-surface-100 dark:bg-[#161B26] px-2.5 py-1">
-              <span className="font-mono text-[11px] text-ink-600 dark:text-zinc-400">
-                Routing: <span className="font-semibold text-ink-900 dark:text-zinc-200">OKX Exchange OS</span>
+            <div className="hidden md:flex items-center gap-1.5 rounded-full border border-surface-200 bg-surface-100 px-2.5 py-1">
+              <span className="font-mono text-[11px] text-ink-600">
+                Routing: <span className="font-semibold text-ink-900">OKX Exchange OS</span>
               </span>
             </div>
           </div>
@@ -1612,21 +1612,21 @@ export default function AppDashboardPage() {
               }}
               aria-label="Manage Cookies"
               title="Manage Cookies"
-              className="hidden sm:flex items-center gap-1.5 rounded-full border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3 py-1.5 text-xs font-semibold text-ink-700 dark:text-zinc-200 hover:border-accent-500 hover:text-accent-600 dark:hover:text-accent-400 transition-colors cursor-pointer"
+              className="hidden sm:flex items-center gap-1.5 rounded-full border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:border-accent-500 hover:text-accent-600 transition-colors cursor-pointer"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               <span>Cookies</span>
             </button>
 
             {/* OTP 2FA Protection Status Pill */}
-            <div className="hidden items-center gap-1.5 rounded-full border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/40 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 md:flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+            <div className="hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/70 px-2.5 py-1 text-[11px] font-bold text-emerald-800 md:flex">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
               <span>{otpToken ? "2FA OTP Verified" : "2FA Protected"}</span>
             </div>
 
             {/* Account Status & Identity Badge (Optimized for mobile) */}
             {isLoggedIn ? (
-              <div className="flex items-center gap-1.5 sm:gap-2.5 rounded-full border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-1 sm:p-1.5 sm:pr-3.5 shadow-xs">
+              <div className="flex items-center gap-1.5 sm:gap-2.5 rounded-full border border-ink-200 bg-white p-1 sm:p-1.5 sm:pr-3.5 shadow-xs">
                 <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-accent-500 text-[10px] sm:text-xs font-bold text-white shadow-xs uppercase shrink-0">
                   {profile.platform === "whatsapp" && "WA"}
                   {profile.platform === "telegram" && "TG"}
@@ -1636,19 +1636,19 @@ export default function AppDashboardPage() {
                 </div>
                 <div className="text-left max-w-[70px] sm:max-w-none">
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-semibold text-ink-900 dark:text-white truncate">{profile.handle}</span>
-                    <span className="hidden sm:inline-block rounded bg-emerald-100 dark:bg-emerald-950/80 dark:border dark:border-emerald-800 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800 dark:text-emerald-300">
+                    <span className="text-xs font-semibold text-ink-900 truncate">{profile.handle}</span>
+                    <span className="hidden sm:inline-block rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800">
                       Non-Custodial
                     </span>
                   </div>
-                  <p className="font-mono text-[10px] text-ink-500 dark:text-zinc-400 hidden sm:block">
+                  <p className="font-mono text-[10px] text-ink-500 hidden sm:block">
                     {profile.email} · {profile.address.slice(0, 6)}...{profile.address.slice(-4)}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(true)}
-                  className="rounded p-1 text-xs text-ink-400 hover:text-accent-600 dark:hover:text-accent-400 cursor-pointer"
+                  className="rounded p-1 text-xs text-ink-400 hover:text-accent-600 cursor-pointer"
                   title="Switch identity or channel"
                 >
                   <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-current">
@@ -1668,7 +1668,7 @@ export default function AppDashboardPage() {
                       portfolioValue: 0,
                     });
                   }}
-                  className="rounded p-1 text-xs text-ink-400 hover:text-red-500 dark:hover:text-red-400 cursor-pointer"
+                  className="rounded p-1 text-xs text-ink-400 hover:text-red-500 cursor-pointer"
                   title="Disconnect wallet"
                 >
                   <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 stroke-current stroke-2 fill-none">
@@ -1688,7 +1688,7 @@ export default function AppDashboardPage() {
 
             <Link
               href="/"
-              className="rounded-full border border-ink-200 dark:border-zinc-700 px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs font-medium text-ink-700 dark:text-zinc-300 transition-colors hover:bg-surface-100 dark:hover:bg-[#161B26] dark:hover:text-white"
+              className="rounded-full border border-ink-200 px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs font-medium text-ink-700 transition-colors hover:bg-surface-100"
             >
               Overview
             </Link>
@@ -1703,8 +1703,8 @@ export default function AppDashboardPage() {
           className={cn(
             "mb-5 rounded-2xl border p-4 text-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors",
             isDemoSandbox
-              ? "border-emerald-500/30 bg-emerald-500/10 dark:bg-emerald-950/20"
-              : "border-accent-500/30 bg-accent-500/10 dark:bg-accent-950/30"
+              ? "border-emerald-500/30 bg-emerald-500/10"
+              : "border-accent-500/30 bg-accent-500/10"
           )}
         >
           <div className="flex items-center gap-3">
@@ -1718,7 +1718,7 @@ export default function AppDashboardPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-ink-900 dark:text-white sm:text-sm">
+                <span className="font-bold text-ink-900 sm:text-sm">
                   {isDemoSandbox
                     ? "Demo Sandbox Active (1,000 USDG Loaded)"
                     : "Judging OKX Dev Day?"}
@@ -1727,14 +1727,14 @@ export default function AppDashboardPage() {
                   className={cn(
                     "rounded-full font-mono text-[10px] font-bold px-2 py-0.5 border",
                     isDemoSandbox
-                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
-                      : "bg-accent-500/15 border-accent-500/30 text-accent-700 dark:text-accent-300"
+                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
+                      : "bg-accent-500/15 border-accent-500/30 text-accent-700"
                   )}
                 >
                   {isDemoSandbox ? "Chain 196 Simulated Sandbox" : "Fast-Track 60s Testing"}
                 </span>
               </div>
-              <p className="mt-0.5 text-ink-600 dark:text-zinc-300">
+              <p className="mt-0.5 text-ink-600">
                 {isDemoSandbox
                   ? "Test liquidity (1,000 USDG) and sample positions (NVDAx, AAPLx, TSLAx) are active. You can execute rebalances, trade assets, or test conversational chat."
                   : "Skip bridging real mainnet funds. Click below to load an interactive sandbox with 1,000 USDG test cash & sample equities to test mandates immediately."}
@@ -1757,7 +1757,7 @@ export default function AppDashboardPage() {
                 <button
                   type="button"
                   onClick={handleTopUpDemoUsdg}
-                  className="px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold text-xs cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 font-semibold text-xs cursor-pointer"
                   title="Credit another 500 USDG to test sandbox"
                 >
                   +500 USDG
@@ -1765,7 +1765,7 @@ export default function AppDashboardPage() {
                 <button
                   type="button"
                   onClick={handleResetDemoSandbox}
-                  className="px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-semibold text-xs cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-600 font-semibold text-xs cursor-pointer"
                 >
                   Reset to Live Wallet
                 </button>
@@ -1775,24 +1775,24 @@ export default function AppDashboardPage() {
         </div>
 
         {/* Terminal Subheader & CONSOLIDATED TWO-MODE SWITCHER */}
-        <div className="mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center">
+        <div className="mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-display text-lg font-bold tracking-tight text-ink-900 dark:text-white sm:text-2xl">
+              <h1 className="font-display text-lg font-bold tracking-tight text-ink-900 sm:text-2xl">
                 Trading &amp; Mandate Terminal
               </h1>
-              <span className="rounded-full bg-surface-100 dark:bg-[#161B26] border border-ink-200 dark:border-zinc-700 px-2.5 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold text-ink-600 dark:text-zinc-300">
+              <span className="rounded-full bg-surface-100 border border-ink-200 px-2.5 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold text-ink-600">
                 OKX Chain (X Layer)
               </span>
             </div>
-            <p className="mt-1 text-xs text-ink-600 dark:text-zinc-400 sm:text-sm">
+            <p className="mt-1 text-xs text-ink-600 sm:text-sm">
               Strictly non-custodial: No private keys stored. Authenticated via verified Email &amp; 2FA on X Layer.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             {/* EXACTLY TWO MODES SWITCHER: Simple Mode vs Advanced Mode */}
-            <div className="flex items-center gap-1.5 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-100 dark:bg-[#161B26] p-1 w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 rounded-xl border border-ink-200 bg-surface-100 p-1 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setMode("simple")}
@@ -1800,7 +1800,7 @@ export default function AppDashboardPage() {
                   "flex-1 sm:flex-initial text-center rounded-lg px-3 sm:px-4 py-2 text-xs font-bold transition-all cursor-pointer",
                   mode === "simple"
                     ? "bg-accent-500 text-white shadow-sm"
-                    : "text-ink-600 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                    : "text-ink-600 hover:text-ink-900"
                 )}
               >
                 Simple Mode
@@ -1811,8 +1811,8 @@ export default function AppDashboardPage() {
                 className={cn(
                   "flex-1 sm:flex-initial text-center rounded-lg px-3 sm:px-4 py-2 text-xs font-bold transition-all cursor-pointer",
                   mode === "advanced"
-                    ? "bg-ink-900 dark:bg-white text-white dark:text-ink-950 shadow-sm"
-                    : "text-ink-600 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                    ? "bg-ink-900 text-white shadow-sm"
+                    : "text-ink-600 hover:text-ink-900"
                 )}
               >
                 Advanced Mode
@@ -1831,9 +1831,9 @@ export default function AppDashboardPage() {
             {mode === "simple" && (
               <>
                 {/* Channel & Bot Connectivity Status */}
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-4 text-xs shadow-xs">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink-200/80 bg-white p-4 text-xs shadow-xs">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-50 dark:bg-accent-950/40 text-accent-700 dark:text-accent-300 font-bold">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-50 text-accent-700 font-bold">
                       {profile.platform === "whatsapp" && "WA"}
                       {profile.platform === "telegram" && "TG"}
                       {profile.platform === "instagram" && "IG"}
@@ -1841,34 +1841,34 @@ export default function AppDashboardPage() {
                       {profile.platform === "okx_wallet" && "OKX"}
                     </div>
                     <div>
-                      <p className="font-semibold text-ink-900 dark:text-white">
-                        {profile.handle} · <span className="text-ink-500 dark:text-zinc-400">{profile.email}</span>
+                      <p className="font-semibold text-ink-900">
+                        {profile.handle} · <span className="text-ink-500">{profile.email}</span>
                       </p>
-                      <p className="text-[11px] text-ink-500 dark:text-zinc-400">
+                      <p className="text-[11px] text-ink-500">
                         Bot Active across WhatsApp, Telegram &amp; Web. Access your account from any device.
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-800 border border-emerald-200">
                       Gas 100% Sponsored by OKX Paymaster
                     </span>
                   </div>
                 </div>
 
                 {/* 8 Stocks Horizontal Selector Tabs */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-4 shadow-xs">
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-4 shadow-xs">
                   <div className="flex items-center justify-between pb-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-display text-sm font-bold text-ink-900 dark:text-white">
+                      <span className="font-display text-sm font-bold text-ink-900">
                         Allowlisted xStocks (8 Assets on X Layer)
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-600 border border-emerald-500/20">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         <span>Live 15s Feed</span>
                       </span>
                     </div>
-                    <span className="text-xs text-ink-500 dark:text-zinc-400">
+                    <span className="text-xs text-ink-500">
                       Select asset to inspect spot chart or calculate units
                     </span>
                   </div>
@@ -1887,8 +1887,8 @@ export default function AppDashboardPage() {
                           className={cn(
                             "group flex items-center justify-between rounded-xl border p-2.5 text-left transition-all cursor-pointer",
                             isSelected
-                              ? "border-accent-500 bg-accent-50/50 dark:bg-accent-950/40 shadow-xs ring-1 ring-accent-500"
-                              : "border-ink-200/80 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] hover:border-ink-300 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-[#202736]"
+                              ? "border-accent-500 bg-accent-50/50 shadow-xs ring-1 ring-accent-500"
+                              : "border-ink-200/80 bg-surface-50 hover:border-ink-300 hover:bg-white"
                           )}
                         >
                           <div className="flex items-center gap-2">
@@ -1899,10 +1899,10 @@ export default function AppDashboardPage() {
                               {stock.logo}
                             </div>
                             <div>
-                              <p className="font-mono text-xs font-bold text-ink-900 dark:text-white">
+                              <p className="font-mono text-xs font-bold text-ink-900">
                                 {stock.symbol}
                               </p>
-                              <p className="text-[10px] text-ink-500 dark:text-zinc-400">{stock.name}</p>
+                              <p className="text-[10px] text-ink-500">{stock.name}</p>
                             </div>
                           </div>
 
@@ -1910,14 +1910,14 @@ export default function AppDashboardPage() {
                             <p
                               className={cn(
                                 "font-mono text-xs font-semibold transition-colors duration-300",
-                                priceFlashes[stock.symbol] === "up" && "text-emerald-600 dark:text-emerald-400 font-bold",
-                                priceFlashes[stock.symbol] === "down" && "text-rose-600 dark:text-rose-400 font-bold",
-                                !priceFlashes[stock.symbol] && "text-ink-900 dark:text-white"
+                                priceFlashes[stock.symbol] === "up" && "text-emerald-600 font-bold",
+                                priceFlashes[stock.symbol] === "down" && "text-rose-600 font-bold",
+                                !priceFlashes[stock.symbol] && "text-ink-900"
                               )}
                             >
                               {getFormattedPrice(stock)}
                             </p>
-                            <p className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                            <p className="text-[10px] font-medium text-emerald-700">
                               {stock.change24h}
                             </p>
                           </div>
@@ -1928,8 +1928,8 @@ export default function AppDashboardPage() {
                 </div>
 
                 {/* Clean Interactive Spot Price & Trend Chart Card */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 dark:border-zinc-800 pb-4">
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 pb-4">
                     <div className="flex items-center gap-3">
                       <div
                         className="flex h-10 w-10 items-center justify-center rounded-xl shadow-xs shrink-0"
@@ -1939,10 +1939,10 @@ export default function AppDashboardPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white">
+                          <h2 className="font-display text-lg font-bold text-ink-900">
                             {selectedStock.symbol}
                           </h2>
-                          <span className="text-xs text-ink-500 dark:text-zinc-400">
+                          <span className="text-xs text-ink-500">
                             {selectedStock.name}
                           </span>
                         </div>
@@ -1950,14 +1950,14 @@ export default function AppDashboardPage() {
                           <span
                             className={cn(
                               "font-mono text-sm font-semibold transition-colors duration-300",
-                              priceFlashes[selectedStock.symbol] === "up" && "text-emerald-600 dark:text-emerald-400 font-bold",
-                              priceFlashes[selectedStock.symbol] === "down" && "text-rose-600 dark:text-rose-400 font-bold",
-                              !priceFlashes[selectedStock.symbol] && "text-ink-900 dark:text-white"
+                              priceFlashes[selectedStock.symbol] === "up" && "text-emerald-600 font-bold",
+                              priceFlashes[selectedStock.symbol] === "down" && "text-rose-600 font-bold",
+                              !priceFlashes[selectedStock.symbol] && "text-ink-900"
                             )}
                           >
                             {currentDisplayPrice}
                           </span>
-                          <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                          <span className="text-xs font-semibold text-emerald-700">
                             {selectedStock.change24h} past 24h
                           </span>
                         </div>
@@ -1967,7 +1967,7 @@ export default function AppDashboardPage() {
                     {/* Controls: Chart Type Toggle (Line | Candles) & Timeframe Selector */}
                     <div className="flex flex-wrap items-center gap-2">
                       {/* Chart Type Toggle */}
-                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-1">
+                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
                         <button
                           type="button"
                           onClick={() => {
@@ -1977,8 +1977,8 @@ export default function AppDashboardPage() {
                           className={cn(
                             "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
                             chartType === "line"
-                              ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
-                              : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                              ? "bg-white text-ink-900 shadow-xs"
+                              : "text-ink-500 hover:text-ink-900"
                           )}
                         >
                           <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1995,8 +1995,8 @@ export default function AppDashboardPage() {
                           className={cn(
                             "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
                             chartType === "candle"
-                              ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
-                              : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                              ? "bg-white text-ink-900 shadow-xs"
+                              : "text-ink-500 hover:text-ink-900"
                           )}
                         >
                           <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
@@ -2012,7 +2012,7 @@ export default function AppDashboardPage() {
                       </div>
 
                       {/* Timeframe Selector (1m to 1M) */}
-                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-1">
+                      <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
                         {["1m", "5m", "15m", "1h", "4h", "1D", "1W", "1M"].map((tf) => (
                           <button
                             key={tf}
@@ -2021,8 +2021,8 @@ export default function AppDashboardPage() {
                             className={cn(
                               "rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer",
                               timeframe === tf
-                                ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
-                                : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                                ? "bg-white text-ink-900 shadow-xs"
+                                : "text-ink-500 hover:text-ink-900"
                             )}
                           >
                             {tf}
@@ -2034,7 +2034,7 @@ export default function AppDashboardPage() {
 
                   {/* Candlestick OHLC Telemetry Bar (active in Candle mode) */}
                   {chartType === "candle" && (
-                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 rounded-xl bg-surface-50 dark:bg-[#161B26] border border-ink-100 dark:border-zinc-800 p-2.5 text-xs font-mono">
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 rounded-xl bg-surface-50 border border-ink-100 p-2.5 text-xs font-mono">
                       {(() => {
                         const activeBar =
                           candleHoverIndex !== null && candleBars[candleHoverIndex]
@@ -2044,37 +2044,37 @@ export default function AppDashboardPage() {
                         if (!activeBar) return null;
                         return (
                           <>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
                               <span>Time:</span>
                               <div className="flex items-center gap-1">
-                                <span className="font-bold text-ink-900 dark:text-white">
+                                <span className="font-bold text-ink-900">
                                   {activeBar.time}
                                 </span>
                                 {activeBar.isLive && (
-                                  <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1 py-0.2 text-[8px] font-bold text-emerald-600 dark:text-emerald-400 animate-pulse">
+                                  <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1 py-0.2 text-[8px] font-bold text-emerald-600 animate-pulse">
                                     LIVE
                                   </span>
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
                               <span>Open:</span>
-                              <span className="font-bold text-ink-900 dark:text-white">${activeBar.open.toFixed(2)}</span>
+                              <span className="font-bold text-ink-900">${activeBar.open.toFixed(2)}</span>
                             </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
                               <span>High:</span>
-                              <span className="font-bold text-emerald-600 dark:text-emerald-400">${activeBar.high.toFixed(2)}</span>
+                              <span className="font-bold text-emerald-600">${activeBar.high.toFixed(2)}</span>
                             </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500 dark:text-zinc-400">
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 text-ink-500">
                               <span>Low:</span>
-                              <span className="font-bold text-rose-600 dark:text-rose-400">${activeBar.low.toFixed(2)}</span>
+                              <span className="font-bold text-rose-600">${activeBar.low.toFixed(2)}</span>
                             </div>
-                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 col-span-2 sm:col-span-1 text-ink-500 dark:text-zinc-400">
+                            <div className="flex items-center justify-between sm:justify-start sm:gap-1.5 col-span-2 sm:col-span-1 text-ink-500">
                               <span>Close:</span>
                               <span
                                 className={cn(
                                   "font-bold",
-                                  activeBar.isBullish ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                                  activeBar.isBullish ? "text-emerald-600" : "text-rose-600"
                                 )}
                               >
                                 ${activeBar.close.toFixed(2)} ({barChange >= 0 ? "+" : ""}{barChange.toFixed(2)}%)
@@ -2139,7 +2139,7 @@ export default function AppDashboardPage() {
                       </defs>
 
                       {/* Subtle Gridlines */}
-                      <g className="stroke-ink-200/50 dark:stroke-zinc-800/80 stroke-dashed" strokeDasharray="3 3">
+                      <g className="stroke-ink-200/50 stroke-dashed" strokeDasharray="3 3">
                         <line x1="0" y1={padY} x2={width} y2={padY} />
                         <line x1="0" y1={height / 2} x2={width} y2={height / 2} />
                         <line x1="0" y1={height - padY} x2={width} y2={height - padY} />
@@ -2167,7 +2167,7 @@ export default function AppDashboardPage() {
                                 stroke="currentColor"
                                 strokeWidth="1"
                                 strokeDasharray="2 2"
-                                className="text-ink-400 dark:text-zinc-600"
+                                className="text-ink-400"
                               />
                               <circle
                                 cx={coords[chartHoverIndex].x}
@@ -2208,7 +2208,7 @@ export default function AppDashboardPage() {
                                     width={barSpacing}
                                     height={height}
                                     fill="currentColor"
-                                    className="text-accent-500/10 dark:text-white/[0.05]"
+                                    className="text-accent-500/10"
                                   />
                                 )}
                                 {/* Wick line */}
@@ -2259,7 +2259,7 @@ export default function AppDashboardPage() {
                       )}
                     </svg>
 
-                    <div className="mt-2 flex justify-between font-mono text-[10px] text-ink-400 dark:text-zinc-500">
+                    <div className="mt-2 flex justify-between font-mono text-[10px] text-ink-400">
                       <span>
                         {timeframe === "1m"
                           ? "10m Ago"
@@ -2294,7 +2294,7 @@ export default function AppDashboardPage() {
                           ? "Midweek"
                           : "15 Days Ago"}
                       </span>
-                      <span className="flex items-center gap-1 font-semibold text-accent-600 dark:text-accent-400">
+                      <span className="flex items-center gap-1 font-semibold text-accent-600">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         <span>
                           {timeframe === "1D" || timeframe === "1m" || timeframe === "5m" || timeframe === "15m" || timeframe === "1h" || timeframe === "4h"
@@ -2312,19 +2312,19 @@ export default function AppDashboardPage() {
                 {/* ========================================================================= */}
                 {/* ACTIVE INVESTMENT MANDATES (Autonomous Agent Policies on OKX X Layer)     */}
                 {/* ========================================================================= */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-4 sm:p-5 shadow-xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink-100 dark:border-zinc-800 pb-3">
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-4 sm:p-5 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink-100 pb-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-display text-sm font-bold text-ink-900 dark:text-white sm:text-base">
+                        <h3 className="font-display text-sm font-bold text-ink-900 sm:text-base">
                           Active Investment Mandates
                         </h3>
-                        <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                        <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 flex items-center gap-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           <span>{mandatePolicies.filter((m) => m.status === "active").length} Autonomous Policies Active</span>
                         </span>
                       </div>
-                      <p className="mt-0.5 text-xs text-ink-500 dark:text-zinc-400">
+                      <p className="mt-0.5 text-xs text-ink-500">
                         Autonomous policies executed continuously on OKX X Layer without human intervention.
                       </p>
                     </div>
@@ -2333,7 +2333,7 @@ export default function AppDashboardPage() {
                       <button
                         type="button"
                         onClick={handleEvaluateDriftNow}
-                        className="rounded-lg border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3 py-1.5 text-xs font-semibold text-ink-700 dark:text-zinc-300 hover:bg-surface-100 dark:hover:bg-[#202736] cursor-pointer transition-colors"
+                        className="rounded-lg border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-surface-100 cursor-pointer transition-colors"
                         title="Evaluate drift against active policies"
                       >
                         Check Drift Now
@@ -2341,7 +2341,7 @@ export default function AppDashboardPage() {
                       <button
                         type="button"
                         onClick={handleTriggerSimulatedRebalance}
-                        className="rounded-lg border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3 py-1.5 text-xs font-semibold text-ink-700 dark:text-zinc-300 hover:bg-surface-100 dark:hover:bg-[#202736] cursor-pointer transition-colors"
+                        className="rounded-lg border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-surface-100 cursor-pointer transition-colors"
                         title="Simulate drift shock to test automated solver"
                       >
                         Simulate Shock
@@ -2366,13 +2366,13 @@ export default function AppDashboardPage() {
                         className={cn(
                           "rounded-xl border p-3.5 flex flex-col justify-between transition-colors",
                           mandate.status === "active"
-                            ? "border-ink-200 dark:border-zinc-800 bg-surface-50/60 dark:bg-[#161B26]/60"
-                            : "border-ink-200/50 dark:border-zinc-800/50 opacity-60 bg-surface-100/40 dark:bg-[#11141D]"
+                            ? "border-ink-200 bg-surface-50/60"
+                            : "border-ink-200/50 opacity-60 bg-surface-100/40"
                         )}
                       >
                         <div>
                           <div className="flex items-center justify-between">
-                            <span className="font-mono text-[10px] uppercase font-bold text-accent-600 dark:text-accent-400">
+                            <span className="font-mono text-[10px] uppercase font-bold text-accent-600">
                               {mandate.policyType === "drift_rebalance" && "Portfolio Rebalance"}
                               {mandate.policyType === "dca_recurring" && "DCA Policy"}
                               {mandate.policyType === "circuit_breaker" && "Circuit Breaker"}
@@ -2383,7 +2383,7 @@ export default function AppDashboardPage() {
                               className={cn(
                                 "rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer border",
                                 mandate.status === "active"
-                                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+                                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
                                   : "bg-zinc-500/15 border-zinc-500/30 text-zinc-500"
                               )}
                             >
@@ -2391,22 +2391,22 @@ export default function AppDashboardPage() {
                             </button>
                           </div>
 
-                          <h4 className="mt-2 font-display text-sm font-bold text-ink-900 dark:text-white">
+                          <h4 className="mt-2 font-display text-sm font-bold text-ink-900">
                             {mandate.title}
                           </h4>
-                          <p className="mt-1 font-mono text-xs font-semibold text-accent-700 dark:text-accent-300">
+                          <p className="mt-1 font-mono text-xs font-semibold text-accent-700">
                             {mandate.target}
                           </p>
-                          <p className="mt-1.5 text-[11px] text-ink-600 dark:text-zinc-400 leading-relaxed">
+                          <p className="mt-1.5 text-[11px] text-ink-600 leading-relaxed">
                             {mandate.rule}
                           </p>
                         </div>
 
-                        <div className="mt-3 pt-2.5 border-t border-ink-200/50 dark:border-zinc-800/80 flex items-center justify-between text-[11px]">
-                          <span className="text-ink-500 dark:text-zinc-400">{mandate.metricLabel}:</span>
-                          <span className="font-mono font-bold text-ink-900 dark:text-white">
+                        <div className="mt-3 pt-2.5 border-t border-ink-200/50 flex items-center justify-between text-[11px]">
+                          <span className="text-ink-500">{mandate.metricLabel}:</span>
+                          <span className="font-mono font-bold text-ink-900">
                             {mandate.metricValue}{" "}
-                            <span className="text-ink-400 dark:text-zinc-500 font-normal text-[10px]">
+                            <span className="text-ink-400 font-normal text-[10px]">
                               (Limit: {mandate.threshold})
                             </span>
                           </span>
@@ -2422,32 +2422,32 @@ export default function AppDashboardPage() {
                 {/* ========================================================================= */}
                 {/* LIVE CONVERSATIONAL CHAT CONSOLE (WhatsApp & Telegram Experience)        */}
                 {/* ========================================================================= */}
-                <div id="conversational-chat" className="scroll-mt-24 rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-3.5 sm:p-5 shadow-xs">
+                <div id="conversational-chat" className="scroll-mt-24 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs">
                   {/* Chat Header */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 dark:border-zinc-800 pb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 pb-3">
                     <div className="flex items-center gap-2.5">
                       <div className="relative">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-500 text-white shadow-xs">
                           <SimpleTelegramLogo className="h-4 w-4" />
                         </div>
-                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#11141D]" />
+                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-display text-sm font-bold text-ink-900 dark:text-white">
+                          <h3 className="font-display text-sm font-bold text-ink-900">
                             Meirei Conversational Chat
                           </h3>
-                          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.2 text-[9px] font-bold text-emerald-700 dark:text-emerald-400">
+                          <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.2 text-[9px] font-bold text-emerald-700">
                             Online · OKX X Layer
                           </span>
                         </div>
-                        <p className="text-[11px] text-ink-500 dark:text-zinc-400">
+                        <p className="text-[11px] text-ink-500">
                           Chat naturally just like on WhatsApp or Telegram (
                           <a
                             href="https://t.me/MeireiXLayerBot"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-accent-600 dark:text-accent-400 hover:underline font-semibold"
+                            className="text-accent-600 hover:underline font-semibold"
                           >
                             @MeireiXLayerBot
                           </a>
@@ -2460,7 +2460,7 @@ export default function AppDashboardPage() {
                       <button
                         type="button"
                         onClick={() => setChatMessages([INITIAL_CHAT_MESSAGE])}
-                        className="rounded-lg border border-ink-200 dark:border-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-ink-600 dark:text-zinc-400 hover:bg-surface-50 dark:hover:bg-[#161B26] hover:text-ink-900 dark:hover:text-white cursor-pointer transition-colors"
+                        className="rounded-lg border border-ink-200 px-2.5 py-1 text-[11px] font-semibold text-ink-600 hover:bg-surface-50 hover:text-ink-900 cursor-pointer transition-colors"
                       >
                         Clear Chat
                       </button>
@@ -2469,7 +2469,7 @@ export default function AppDashboardPage() {
 
                   {/* Security Freeze Alert Banner */}
                   {isAccountFrozen && (
-                    <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-center justify-between gap-2">
+                    <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs flex items-center justify-between gap-2">
                       <div>
                         <span className="font-bold uppercase tracking-wider block text-[10px]">
                           Account Security Hold Active
@@ -2500,7 +2500,7 @@ export default function AppDashboardPage() {
                       >
                         <div className="flex items-end gap-2 max-w-[88%]">
                           {msg.sender === "bot" && (
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-500/15 text-accent-600 dark:text-accent-400 shrink-0 text-[10px] font-bold">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-500/15 text-accent-600 shrink-0 text-[10px] font-bold">
                               M
                             </div>
                           )}
@@ -2509,17 +2509,17 @@ export default function AppDashboardPage() {
                               "rounded-2xl px-4 py-2.5 leading-relaxed shadow-xs whitespace-pre-wrap",
                               msg.sender === "user"
                                 ? "bg-accent-500 text-white rounded-br-none"
-                                : "bg-surface-100 dark:bg-[#161B26] text-ink-800 dark:text-zinc-200 border border-ink-200/60 dark:border-zinc-800 rounded-bl-none"
+                                : "bg-surface-100 text-ink-800 border border-ink-200/60 rounded-bl-none"
                             )}
                           >
                             {msg.text}
 
                             {/* Rich Visual Mandate Target Allocation Grid & Execution Legs */}
                             {msg.delivery?.mandate?.targets && (
-                              <div className="mt-3 rounded-xl border border-ink-200/80 dark:border-zinc-800 bg-white/70 dark:bg-black/40 p-3 select-none">
-                                <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-accent-600 dark:text-accent-400 mb-2 flex items-center justify-between">
+                              <div className="mt-3 rounded-xl border border-ink-200/80 bg-white/70 p-3 select-none">
+                                <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-accent-600 mb-2 flex items-center justify-between">
                                   <span>Target Portfolio Allocations</span>
-                                  <span className="text-[9px] text-ink-400 dark:text-zinc-500 font-normal">
+                                  <span className="text-[9px] text-ink-400 font-normal">
                                     Band: {((msg.delivery.mandate.rebalanceBand ?? 0.05) * 100).toFixed(0)}%
                                   </span>
                                 </div>
@@ -2527,10 +2527,10 @@ export default function AppDashboardPage() {
                                   {msg.delivery.mandate.targets.map((t, idx) => (
                                     <div
                                       key={idx}
-                                      className="flex items-center justify-between rounded-lg bg-surface-100/80 dark:bg-[#11141D] px-2 py-1 text-[11px] font-mono border border-ink-100 dark:border-zinc-800"
+                                      className="flex items-center justify-between rounded-lg bg-surface-100/80 px-2 py-1 text-[11px] font-mono border border-ink-100"
                                     >
-                                      <span className="font-bold text-ink-900 dark:text-white">{t.symbol}</span>
-                                      <span className="text-accent-600 dark:text-accent-400 font-semibold">
+                                      <span className="font-bold text-ink-900">{t.symbol}</span>
+                                      <span className="text-accent-600 font-semibold">
                                         {(t.weight * 100).toFixed(0)}%
                                       </span>
                                     </div>
@@ -2538,32 +2538,32 @@ export default function AppDashboardPage() {
                                 </div>
 
                                 {msg.delivery.plan?.legs && msg.delivery.plan.legs.length > 0 && (
-                                  <div className="mt-2.5 pt-2 border-t border-ink-100 dark:border-zinc-800">
-                                    <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-ink-500 dark:text-zinc-400 mb-1.5">
+                                  <div className="mt-2.5 pt-2 border-t border-ink-100">
+                                    <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-ink-500 mb-1.5">
                                       Planned Rebalance Legs (OKX DEX)
                                     </div>
                                     <div className="space-y-1">
                                       {msg.delivery.plan.legs.map((leg, lIdx) => (
                                         <div
                                           key={lIdx}
-                                          className="flex items-center justify-between text-[11px] font-mono rounded bg-surface-50 dark:bg-zinc-900/60 px-2 py-0.5"
+                                          className="flex items-center justify-between text-[11px] font-mono rounded bg-surface-50 px-2 py-0.5"
                                         >
                                           <div className="flex items-center gap-1.5">
                                             <span
                                               className={cn(
                                                 "px-1 py-0.2 rounded text-[9px] font-bold uppercase",
                                                 leg.side === "buy"
-                                                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                                                  : "bg-rose-500/20 text-rose-600 dark:text-rose-400"
+                                                  ? "bg-emerald-500/20 text-emerald-600"
+                                                  : "bg-rose-500/20 text-rose-600"
                                               )}
                                             >
                                               {leg.side}
                                             </span>
-                                            <span className="font-bold text-ink-900 dark:text-zinc-200">
+                                            <span className="font-bold text-ink-900">
                                               {leg.symbol}
                                             </span>
                                           </div>
-                                          <span className="text-ink-600 dark:text-zinc-300">
+                                          <span className="text-ink-600">
                                             ${leg.notionalUsd.toFixed(2)} USDG
                                           </span>
                                         </div>
@@ -2573,8 +2573,8 @@ export default function AppDashboardPage() {
                                 )}
 
                                 {msg.delivery.txs && msg.delivery.txs.length > 0 && (
-                                  <div className="mt-2.5 pt-2 border-t border-ink-100 dark:border-zinc-800">
-                                    <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 mb-1.5 flex items-center gap-1">
+                                  <div className="mt-2.5 pt-2 border-t border-ink-100">
+                                    <div className="text-[10px] font-mono uppercase tracking-wider font-bold text-emerald-600 mb-1.5 flex items-center gap-1">
                                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                                       Broadcast Transactions on OKX X Layer
                                     </div>
@@ -2582,15 +2582,15 @@ export default function AppDashboardPage() {
                                       {msg.delivery.txs.map((tx, tIdx) => (
                                         <div
                                           key={tIdx}
-                                          className="flex items-center justify-between text-[10px] font-mono rounded bg-surface-50 dark:bg-zinc-900/60 px-2 py-0.5"
+                                          className="flex items-center justify-between text-[10px] font-mono rounded bg-surface-50 px-2 py-0.5"
                                         >
-                                          <span className="font-bold text-ink-900 dark:text-white">{tx.symbol}</span>
+                                          <span className="font-bold text-ink-900">{tx.symbol}</span>
                                           {tx.explorerUrl ? (
                                             <a
                                               href={tx.explorerUrl}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              className="text-accent-600 dark:text-accent-400 hover:underline flex items-center gap-1"
+                                              className="text-accent-600 hover:underline flex items-center gap-1"
                                             >
                                               <span>{tx.hash ? `${tx.hash.slice(0, 8)}...${tx.hash.slice(-6)}` : "View OKLink"}</span>
                                               <span className="text-[8px] bg-accent-500/20 px-1 rounded">OKLink</span>
@@ -2607,14 +2607,14 @@ export default function AppDashboardPage() {
                             )}
 
                             {msg.reference && (
-                              <div className="mt-2 pt-1.5 border-t border-white/10 dark:border-zinc-700/60 font-mono text-[10px] opacity-80">
+                              <div className="mt-2 pt-1.5 border-t border-white/10 font-mono text-[10px] opacity-80">
                                 Reference: {msg.reference}
                               </div>
                             )}
 
                             {/* Bot Interactive Action Buttons */}
                             {msg.sender === "bot" && (
-                              <div className="mt-2.5 pt-2 border-t border-ink-200/50 dark:border-zinc-800 flex flex-wrap items-center gap-1.5">
+                              <div className="mt-2.5 pt-2 border-t border-ink-200/50 flex flex-wrap items-center gap-1.5">
                                 {(msg.type === "execution_prompt" ||
                                   msg.type === "rebalance" ||
                                   msg.text.includes("Confirm Order")) && (
@@ -2631,7 +2631,7 @@ export default function AppDashboardPage() {
                                       type="button"
                                       onClick={() => handleSendChatMessage("CANCEL")}
                                       disabled={isChatSending}
-                                      className="rounded-md border border-ink-200 dark:border-zinc-700 px-2.5 py-1 text-[10px] font-semibold text-ink-600 dark:text-zinc-400 hover:bg-surface-50 dark:hover:bg-[#161B26] transition-colors cursor-pointer"
+                                      className="rounded-md border border-ink-200 px-2.5 py-1 text-[10px] font-semibold text-ink-600 hover:bg-surface-50 transition-colors cursor-pointer"
                                     >
                                       Cancel
                                     </button>
@@ -2643,7 +2643,7 @@ export default function AppDashboardPage() {
                                     href={msg.explorerUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="rounded-md border border-accent-500/30 bg-accent-500/10 px-2.5 py-1 text-[10px] font-semibold text-accent-600 dark:text-accent-400 hover:underline transition-colors"
+                                    className="rounded-md border border-accent-500/30 bg-accent-500/10 px-2.5 py-1 text-[10px] font-semibold text-accent-600 hover:underline transition-colors"
                                   >
                                     View on OKLink
                                   </a>
@@ -2652,7 +2652,7 @@ export default function AppDashboardPage() {
                                     href={`https://www.oklink.com/xlayer/tx/${msg.reference}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="rounded-md border border-accent-500/30 bg-accent-500/10 px-2.5 py-1 text-[10px] font-semibold text-accent-600 dark:text-accent-400 hover:underline transition-colors"
+                                    className="rounded-md border border-accent-500/30 bg-accent-500/10 px-2.5 py-1 text-[10px] font-semibold text-accent-600 hover:underline transition-colors"
                                   >
                                     View on OKLink
                                   </a>
@@ -2663,7 +2663,7 @@ export default function AppDashboardPage() {
                                     type="button"
                                     onClick={() => handleSendChatMessage("/unfreeze")}
                                     disabled={isChatSending}
-                                    className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                                    className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold text-amber-600 hover:bg-amber-500/20 transition-colors cursor-pointer"
                                   >
                                     Request OTP to Unfreeze
                                   </button>
@@ -2672,18 +2672,18 @@ export default function AppDashboardPage() {
                             )}
                           </div>
                         </div>
-                        <span className="mt-1 font-mono text-[9px] text-ink-400 dark:text-zinc-500 px-1">
+                        <span className="mt-1 font-mono text-[9px] text-ink-400 px-1">
                           {msg.timestamp}
                         </span>
                       </div>
                     ))}
 
                     {isChatSending && (
-                      <div className="flex items-center gap-2 text-xs text-ink-500 dark:text-zinc-400">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-500/15 text-accent-600 dark:text-accent-400 shrink-0 text-[10px] font-bold">
+                      <div className="flex items-center gap-2 text-xs text-ink-500">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-500/15 text-accent-600 shrink-0 text-[10px] font-bold">
                           M
                         </div>
-                        <div className="rounded-2xl rounded-bl-none border border-ink-200/60 dark:border-zinc-800 bg-surface-100 dark:bg-[#161B26] px-3.5 py-2">
+                        <div className="rounded-2xl rounded-bl-none border border-ink-200/60 bg-surface-100 px-3.5 py-2">
                           <div className="flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-accent-500 animate-bounce" />
                             <span className="h-1.5 w-1.5 rounded-full bg-accent-500 animate-bounce [animation-delay:0.15s]" />
@@ -2697,7 +2697,7 @@ export default function AppDashboardPage() {
 
                   {/* Quick Suggestion Chips matching Telegram and WhatsApp commands */}
                   <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
-                    <span className="text-[10px] uppercase font-bold text-ink-400 dark:text-zinc-500 tracking-wider shrink-0 mr-1">
+                    <span className="text-[10px] uppercase font-bold text-ink-400 tracking-wider shrink-0 mr-1">
                       Quick:
                     </span>
                     {[
@@ -2715,7 +2715,7 @@ export default function AppDashboardPage() {
                         type="button"
                         onClick={() => handleSendChatMessage(chip)}
                         disabled={isChatSending}
-                        className="rounded-full border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3 py-1 font-medium text-ink-700 dark:text-zinc-300 hover:border-accent-500 hover:text-accent-600 dark:hover:text-accent-400 whitespace-nowrap cursor-pointer transition-colors shrink-0"
+                        className="rounded-full border border-ink-200 bg-surface-50 px-3 py-1 font-medium text-ink-700 hover:border-accent-500 hover:text-accent-600 whitespace-nowrap cursor-pointer transition-colors shrink-0"
                       >
                         {chip}
                       </button>
@@ -2737,7 +2737,7 @@ export default function AppDashboardPage() {
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder="Message Meirei... (e.g. '/stocks', '/balance', 'Buy 250 USDG NVDAx', '/help')"
                       disabled={isChatSending}
-                      className="flex-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-4 py-2.5 text-xs text-ink-900 dark:text-white outline-none focus:border-accent-500 focus:bg-white dark:focus:bg-[#11141D] transition-colors"
+                      className="flex-1 rounded-xl border border-ink-200 bg-surface-50 px-4 py-2.5 text-xs text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors"
                     />
 
                     {/* Voice Dictation Microphone Button */}
@@ -2748,7 +2748,7 @@ export default function AppDashboardPage() {
                         "flex h-9 w-9 items-center justify-center rounded-xl border transition-all cursor-pointer shrink-0",
                         isListeningVoice
                           ? "bg-red-500 text-white border-red-600 animate-pulse"
-                          : "border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] text-ink-600 dark:text-zinc-300 hover:text-accent-500 hover:border-accent-500"
+                          : "border-ink-200 bg-surface-50 text-ink-600 hover:text-accent-500 hover:border-accent-500"
                       )}
                       title={isListeningVoice ? "Listening... Click to stop" : "Voice input (dictate message)"}
                     >
@@ -2774,21 +2774,21 @@ export default function AppDashboardPage() {
                 <SectionSeparator label="Real-Time Allocation Estimator" />
 
                 {/* Integrated Price Comparison & Units Calculator */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
-                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 dark:border-zinc-800 pb-4 md:flex-row md:items-center">
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 md:flex-row md:items-center">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600 dark:text-accent-400">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
                           Integrated Calculator
                         </span>
-                        <span className="rounded bg-emerald-100 dark:bg-emerald-950/80 dark:border dark:border-emerald-800 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800 dark:text-emerald-300">
+                        <span className="rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800">
                           Real-Time USDG Estimator
                         </span>
                       </div>
-                      <h3 className="font-display text-base font-bold text-ink-900 dark:text-white sm:text-lg">
+                      <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg">
                         Price Comparison &amp; Units Calculator
                       </h3>
-                      <p className="text-xs text-ink-500 dark:text-zinc-400">
+                      <p className="text-xs text-ink-500">
                         Input any USDG amount to calculate precise unit allocations across all 8 allowlisted stocks on OKX X Layer.
                       </p>
                     </div>
@@ -2796,7 +2796,7 @@ export default function AppDashboardPage() {
                     {/* Capital Preset Selectors & Custom Input */}
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="relative flex items-center">
-                        <span className="absolute left-3 font-mono text-xs font-bold text-ink-400 dark:text-zinc-500">$</span>
+                        <span className="absolute left-3 font-mono text-xs font-bold text-ink-400">$</span>
                         <input
                           id="calculator-investment-input"
                           type="number"
@@ -2808,9 +2808,9 @@ export default function AppDashboardPage() {
                             setCalcInvestmentUsdg(isNaN(val) ? 0 : val);
                           }}
                           placeholder="250"
-                          className="w-28 sm:w-32 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] py-1.5 pl-7 pr-3 font-mono text-xs font-bold text-ink-900 dark:text-white outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
+                          className="w-28 sm:w-32 rounded-xl border border-ink-200 bg-surface-50 py-1.5 pl-7 pr-3 font-mono text-xs font-bold text-ink-900 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500"
                         />
-                        <span className="ml-1.5 font-mono text-[11px] font-bold text-ink-500 dark:text-zinc-400">USDG</span>
+                        <span className="ml-1.5 font-mono text-[11px] font-bold text-ink-500">USDG</span>
                       </div>
 
                       <div className="flex items-center gap-1">
@@ -2823,7 +2823,7 @@ export default function AppDashboardPage() {
                               "rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
                               calcInvestmentUsdg === amt
                                 ? "bg-accent-500 text-white shadow-xs"
-                                : "border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] text-ink-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-[#202736]"
+                                : "border border-ink-200 bg-surface-50 text-ink-700 hover:bg-white"
                             )}
                           >
                             ${amt}
@@ -2834,7 +2834,7 @@ export default function AppDashboardPage() {
                   </div>
 
                   {/* Selected Stock Live Breakdown Card */}
-                  <div className="mt-4 rounded-xl border border-accent-500/20 bg-accent-50/40 dark:bg-accent-950/20 p-4">
+                  <div className="mt-4 rounded-xl border border-accent-500/20 bg-accent-50/40 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
                         <div
@@ -2845,33 +2845,33 @@ export default function AppDashboardPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-sm font-bold text-ink-900 dark:text-white">
+                            <span className="font-mono text-sm font-bold text-ink-900">
                               {selectedStock.symbol}
                             </span>
-                            <span className="text-xs text-ink-500 dark:text-zinc-400">
+                            <span className="text-xs text-ink-500">
                               {selectedStock.name}
                             </span>
-                            <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                            <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600">
                               Live on X Layer
                             </span>
                           </div>
-                          <div className="mt-0.5 text-xs text-ink-600 dark:text-zinc-300">
+                          <div className="mt-0.5 text-xs text-ink-600">
                             Spot Price:{" "}
-                            <span className="font-mono font-bold text-ink-900 dark:text-white">
+                            <span className="font-mono font-bold text-ink-900">
                               {getFormattedPrice(selectedStock)}
                             </span>
                             {" · "}
-                            Gas: <span className="font-semibold text-emerald-600 dark:text-emerald-400">100% Sponsored (OKX Paymaster)</span>
+                            Gas: <span className="font-semibold text-emerald-600">100% Sponsored (OKX Paymaster)</span>
                           </div>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <span className="block text-[10px] font-bold uppercase tracking-wider text-ink-400 dark:text-zinc-500">
+                          <span className="block text-[10px] font-bold uppercase tracking-wider text-ink-400">
                             Estimated Units
                           </span>
-                          <span className="font-mono text-base font-bold text-accent-600 dark:text-accent-400 sm:text-lg">
+                          <span className="font-mono text-base font-bold text-accent-600 sm:text-lg">
                             {(calcInvestmentUsdg / getNumericPrice(selectedStock)).toFixed(4)} {selectedStock.symbol}
                           </span>
                         </div>
@@ -2896,9 +2896,9 @@ export default function AppDashboardPage() {
                   </div>
 
                   {/* Calculator Comparison Table */}
-                  <div className="mt-4 overflow-x-auto rounded-xl border border-ink-200 dark:border-zinc-800">
+                  <div className="mt-4 overflow-x-auto rounded-xl border border-ink-200">
                     <table className="w-full min-w-[580px] text-left text-xs">
-                      <thead className="border-b border-ink-200 dark:border-zinc-800 bg-surface-100 dark:bg-[#161B26] font-semibold text-ink-900 dark:text-white">
+                      <thead className="border-b border-ink-200 bg-surface-100 font-semibold text-ink-900">
                         <tr>
                           <th className="p-3">Asset</th>
                           <th className="p-3">Spot Price</th>
@@ -2906,7 +2906,7 @@ export default function AppDashboardPage() {
                           <th className="p-3 text-right">Instant Action</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-ink-200/60 dark:divide-zinc-800 bg-white dark:bg-[#11141D] text-ink-700 dark:text-zinc-300">
+                      <tbody className="divide-y divide-ink-200/60 bg-white text-ink-700">
                         {STOCKS.map((stk) => {
                           const priceNum = getNumericPrice(stk);
                           const units = (calcInvestmentUsdg / priceNum).toFixed(3);
@@ -2915,11 +2915,11 @@ export default function AppDashboardPage() {
                             <tr
                               key={stk.symbol}
                               className={cn(
-                                "transition-colors hover:bg-surface-50 dark:hover:bg-[#161B26]",
-                                stk.symbol === selectedStock.symbol ? "bg-accent-50/30 dark:bg-accent-950/20" : ""
+                                "transition-colors hover:bg-surface-50",
+                                stk.symbol === selectedStock.symbol ? "bg-accent-50/30" : ""
                               )}
                             >
-                              <td className="p-3 font-semibold text-ink-900 dark:text-white">
+                              <td className="p-3 font-semibold text-ink-900">
                                 <div className="flex items-center gap-2">
                                   <div
                                     className="flex h-6 w-6 items-center justify-center rounded shadow-xs shrink-0"
@@ -2929,21 +2929,21 @@ export default function AppDashboardPage() {
                                   </div>
                                   <div>
                                     <span className="font-mono font-bold">{stk.symbol}</span>
-                                    <span className="ml-1.5 text-[11px] text-ink-500 dark:text-zinc-400">({stk.name})</span>
+                                    <span className="ml-1.5 text-[11px] text-ink-500">({stk.name})</span>
                                   </div>
                                 </div>
                               </td>
                               <td
                                 className={cn(
                                   "p-3 font-mono font-semibold transition-colors duration-300",
-                                  priceFlashes[stk.symbol] === "up" && "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-bold",
-                                  priceFlashes[stk.symbol] === "down" && "text-rose-600 dark:text-rose-400 bg-rose-500/10 font-bold",
-                                  !priceFlashes[stk.symbol] && "text-ink-900 dark:text-white"
+                                  priceFlashes[stk.symbol] === "up" && "text-emerald-600 bg-emerald-500/10 font-bold",
+                                  priceFlashes[stk.symbol] === "down" && "text-rose-600 bg-rose-500/10 font-bold",
+                                  !priceFlashes[stk.symbol] && "text-ink-900"
                                 )}
                               >
                                 {getFormattedPrice(stk)}
                               </td>
-                              <td className="p-3 font-mono font-bold text-accent-700 dark:text-accent-400 text-sm">
+                              <td className="p-3 font-mono font-bold text-accent-700 text-sm">
                                 {units} units
                               </td>
                               <td className="p-3 text-right">
@@ -2955,7 +2955,7 @@ export default function AppDashboardPage() {
                                       const u = calcInvestmentUsdg / priceNum;
                                       openWeb3Signer(stk.symbol, calcInvestmentUsdg, u, priceNum);
                                     }}
-                                    className="rounded-lg bg-ink-900 dark:bg-white dark:text-ink-950 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-colors hover:bg-accent-500 hover:text-white cursor-pointer"
+                                    className="rounded-lg bg-ink-900 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-colors hover:bg-accent-500 hover:text-white cursor-pointer"
                                   >
                                     Quick Buy
                                   </button>
@@ -2966,7 +2966,7 @@ export default function AppDashboardPage() {
                                       const el = document.getElementById("conversational-chat");
                                       if (el) el.scrollIntoView({ behavior: "smooth" });
                                     }}
-                                    className="rounded-lg border border-ink-200 dark:border-zinc-700 px-2 py-1 text-[11px] font-semibold text-ink-600 dark:text-zinc-400 hover:bg-surface-50 dark:hover:bg-[#161B26] cursor-pointer"
+                                    className="rounded-lg border border-ink-200 px-2 py-1 text-[11px] font-semibold text-ink-600 hover:bg-surface-50 cursor-pointer"
                                     title="Send trade instruction to Meirei Conversational Chat"
                                   >
                                     Chat
@@ -2989,27 +2989,27 @@ export default function AppDashboardPage() {
             {mode === "advanced" && (
               <div className="space-y-6">
                 {/* 1. Institutional AI Mandate Advisory Studio */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs sm:p-6">
-                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 dark:border-zinc-800 pb-4 sm:flex-row sm:items-center">
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
+                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
                     <div>
-                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600 dark:text-accent-400">
+                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
                         Institutional Advisory Studio
                       </span>
-                      <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white sm:text-xl">
+                      <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
                         AI Trading Advisory Agent
                       </h2>
                     </div>
 
                     {/* Horizon Selector */}
-                    <div className="flex items-center gap-1 rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] p-1">
+                    <div className="flex items-center gap-1 rounded-xl border border-ink-200 bg-surface-50 p-1">
                       <button
                         type="button"
                         onClick={() => setAdvisoryHorizon("short_term")}
                         className={cn(
                           "rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer",
                           advisoryHorizon === "short_term"
-                            ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
-                            : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                            ? "bg-white text-ink-900 shadow-xs"
+                            : "text-ink-500 hover:text-ink-900"
                         )}
                       >
                         Short-Term Momentum
@@ -3020,8 +3020,8 @@ export default function AppDashboardPage() {
                         className={cn(
                           "rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer",
                           advisoryHorizon === "long_term"
-                            ? "bg-white dark:bg-[#11141D] text-ink-900 dark:text-white shadow-xs"
-                            : "text-ink-500 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white"
+                            ? "bg-white text-ink-900 shadow-xs"
+                            : "text-ink-500 hover:text-ink-900"
                         )}
                       >
                         Long-Term Blue Chip DCA
@@ -3031,7 +3031,7 @@ export default function AppDashboardPage() {
 
                   {/* Risk Profile Selection Bar */}
                   <div className="mt-5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-ink-600 dark:text-zinc-400">
+                    <label className="text-xs font-bold uppercase tracking-wider text-ink-600">
                       Select Investment Risk Profile
                     </label>
                     <div className="mt-2 grid grid-cols-3 gap-2.5">
@@ -3043,12 +3043,12 @@ export default function AppDashboardPage() {
                           className={cn(
                             "rounded-xl border p-3 text-left transition-all cursor-pointer",
                             advisoryRisk === r
-                              ? "border-accent-500 bg-accent-50/60 dark:bg-accent-950/40 ring-1 ring-accent-500"
-                              : "border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] hover:bg-white dark:hover:bg-[#202736]"
+                              ? "border-accent-500 bg-accent-50/60 ring-1 ring-accent-500"
+                              : "border-ink-200 bg-surface-50 hover:bg-white"
                           )}
                         >
-                          <p className="font-display text-xs font-bold capitalize text-ink-900 dark:text-white">{r}</p>
-                          <p className="mt-0.5 text-[10px] text-ink-500 dark:text-zinc-400">
+                          <p className="font-display text-xs font-bold capitalize text-ink-900">{r}</p>
+                          <p className="mt-0.5 text-[10px] text-ink-500">
                             {r === "conservative" && "Capital Preservation"}
                             {r === "balanced" && "Strategic Growth"}
                             {r === "aggressive" && "Alpha Acceleration"}
@@ -3059,32 +3059,32 @@ export default function AppDashboardPage() {
                   </div>
 
                   {/* Dynamic Plan Breakdown Card */}
-                  <div className="mt-5 rounded-2xl border border-ink-200 dark:border-zinc-800 bg-surface-50/60 dark:bg-[#161B26] p-4 sm:p-5">
-                    <div className="flex flex-col justify-between gap-2 border-b border-ink-200/80 dark:border-zinc-800 pb-3.5 sm:flex-row sm:items-center">
+                  <div className="mt-5 rounded-2xl border border-ink-200 bg-surface-50/60 p-4 sm:p-5">
+                    <div className="flex flex-col justify-between gap-2 border-b border-ink-200/80 pb-3.5 sm:flex-row sm:items-center">
                       <div>
-                        <span className="rounded bg-accent-100 dark:bg-accent-950/70 border border-transparent dark:border-accent-800/40 px-2 py-0.5 text-[10px] font-bold text-accent-800 dark:text-accent-300 uppercase">
+                        <span className="rounded bg-accent-100 border border-transparent px-2 py-0.5 text-[10px] font-bold text-accent-800 uppercase">
                           {currentAdvisoryPlan.horizonLabel}
                         </span>
-                        <h3 className="mt-1 font-display text-base font-bold text-ink-900 dark:text-white">
+                        <h3 className="mt-1 font-display text-base font-bold text-ink-900">
                           {currentAdvisoryPlan.strategyName}
                         </h3>
                       </div>
-                      <span className="rounded-full bg-surface-200 dark:bg-[#11141D] border border-transparent dark:border-zinc-800 px-3 py-1 font-mono text-xs font-semibold text-ink-800 dark:text-zinc-200">
+                      <span className="rounded-full bg-surface-200 border border-transparent px-3 py-1 font-mono text-xs font-semibold text-ink-800">
                         {currentAdvisoryPlan.expectedVolatility}
                       </span>
                     </div>
 
                     {/* Rationale & Thesis */}
                     <div className="mt-3.5">
-                      <p className="text-xs leading-relaxed text-ink-700 dark:text-zinc-300">
-                        <strong className="text-ink-900 dark:text-white">AI Strategic Thesis: </strong>
+                      <p className="text-xs leading-relaxed text-ink-700">
+                        <strong className="text-ink-900">AI Strategic Thesis: </strong>
                         {currentAdvisoryPlan.thesis}
                       </p>
                     </div>
 
                     {/* Target Allocation Weights List */}
                     <div className="mt-4 space-y-2.5">
-                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-ink-500 dark:text-zinc-400">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
                         Target Asset Weights &amp; Allocation Rationale
                       </h4>
 
@@ -3092,30 +3092,30 @@ export default function AppDashboardPage() {
                         {currentAdvisoryPlan.allocations.map((alloc) => (
                           <div
                             key={alloc.symbol}
-                            className="rounded-xl border border-ink-200/70 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-3 text-xs"
+                            className="rounded-xl border border-ink-200/70 bg-white p-3 text-xs"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-ink-900 dark:text-white">
+                                <span className="font-mono font-bold text-ink-900">
                                   {alloc.symbol}
                                 </span>
-                                <span className="rounded bg-surface-100 dark:bg-[#161B26] border border-transparent dark:border-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-ink-600 dark:text-zinc-300">
+                                <span className="rounded bg-surface-100 border border-transparent px-1.5 py-0.5 text-[10px] font-medium text-ink-600">
                                   {alloc.role}
                                 </span>
                               </div>
-                              <span className="font-mono font-bold text-accent-700 dark:text-accent-400">
+                              <span className="font-mono font-bold text-accent-700">
                                 {alloc.weightPercent}%
                               </span>
                             </div>
 
-                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-[#161B26]">
+                            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-100">
                               <div
                                 className="h-full bg-accent-500"
                                 style={{ width: `${alloc.weightPercent}%` }}
                               />
                             </div>
 
-                            <p className="mt-1.5 text-[11px] text-ink-500 dark:text-zinc-400 leading-normal">
+                            <p className="mt-1.5 text-[11px] text-ink-500 leading-normal">
                               {alloc.rationale}
                             </p>
                           </div>
@@ -3124,25 +3124,25 @@ export default function AppDashboardPage() {
                     </div>
 
                     {/* Operational Guardrails */}
-                    <div className="mt-4 grid grid-cols-2 gap-3 border-t border-ink-200/80 dark:border-zinc-800 pt-3.5 text-xs">
+                    <div className="mt-4 grid grid-cols-2 gap-3 border-t border-ink-200/80 pt-3.5 text-xs">
                       <div>
-                        <span className="text-ink-500 dark:text-zinc-400">Rebalance Interval:</span>
-                        <p className="font-semibold text-ink-900 dark:text-white">
+                        <span className="text-ink-500">Rebalance Interval:</span>
+                        <p className="font-semibold text-ink-900">
                           {currentAdvisoryPlan.rebalanceInterval}
                         </p>
                       </div>
                       <div>
-                        <span className="text-ink-500 dark:text-zinc-400">Downside Safeguard:</span>
-                        <p className="font-semibold text-ink-900 dark:text-white">
+                        <span className="text-ink-500">Downside Safeguard:</span>
+                        <p className="font-semibold text-ink-900">
                           {currentAdvisoryPlan.downsideProtection}
                         </p>
                       </div>
                     </div>
 
                     {/* Deploy Mandate CTA */}
-                    <div className="mt-5 flex flex-col items-center justify-between gap-3 rounded-xl bg-ink-900 dark:bg-[#0B0E14] border border-transparent dark:border-zinc-800 p-4 text-white sm:flex-row">
+                    <div className="mt-5 flex flex-col items-center justify-between gap-3 rounded-xl bg-ink-900 border border-transparent p-4 text-white sm:flex-row">
                       <div>
-                        <p className="text-xs font-medium text-ink-300 dark:text-zinc-400">Executable Mandate Rule</p>
+                        <p className="text-xs font-medium text-ink-300">Executable Mandate Rule</p>
                         <p className="font-mono text-xs font-bold text-white">
                           {currentAdvisoryPlan.mandateRule}
                         </p>
@@ -3156,7 +3156,7 @@ export default function AppDashboardPage() {
                             setMode("simple");
                             handleSendPrompt(currentAdvisoryPlan.mandateRule);
                           }}
-                          className="rounded-xl bg-ink-800 dark:bg-[#161B26] border border-transparent dark:border-zinc-700 px-3.5 py-2.5 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                          className="rounded-xl bg-ink-800 border border-transparent px-3.5 py-2.5 text-xs font-bold text-white shadow-sm transition-transform hover:scale-105 active:scale-95 cursor-pointer"
                         >
                           Review in Console
                         </button>
@@ -3178,23 +3178,23 @@ export default function AppDashboardPage() {
                 </div>
 
                 {/* 2. Market Catalysts, News & Investor Sentiment Feed (Rendered Directly Beneath Advisory) */}
-                <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs sm:p-6">
-                  <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-4">
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
+                  <div className="flex items-center justify-between border-b border-ink-100 pb-4">
                     <div>
-                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600 dark:text-accent-400">
+                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
                         Live Market Intelligence &amp; Investor Sentiment
                       </span>
-                      <h2 className="font-display text-lg font-bold text-ink-900 dark:text-white sm:text-xl">
+                      <h2 className="font-display text-lg font-bold text-ink-900 sm:text-xl">
                         Market Catalysts &amp; Investor Consensus
                       </h2>
                     </div>
-                    <span className="rounded-full bg-surface-100 dark:bg-[#161B26] border border-transparent dark:border-zinc-800 px-3 py-1 text-xs font-medium text-ink-600 dark:text-zinc-300">
+                    <span className="rounded-full bg-surface-100 border border-transparent px-3 py-1 text-xs font-medium text-ink-600">
                       Live On-Chain Feed
                     </span>
                   </div>
 
                   {isLoadingNews ? (
-                    <div className="py-12 text-center text-xs text-ink-500 dark:text-zinc-400">
+                    <div className="py-12 text-center text-xs text-ink-500">
                       Loading real-time market catalysts from X Layer onchain feed...
                     </div>
                   ) : (
@@ -3202,53 +3202,53 @@ export default function AppDashboardPage() {
                       {newsList.map((item) => (
                         <div
                           key={item.id}
-                          className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-surface-50/50 dark:bg-[#161B26] p-4 transition-all hover:bg-white dark:hover:bg-[#1c2230] hover:shadow-xs"
+                          className="rounded-2xl border border-ink-200/80 bg-surface-50/50 p-4 transition-all hover:bg-white hover:shadow-xs"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-2">
-                              <span className="rounded bg-ink-900 dark:bg-[#0B0E14] border border-transparent dark:border-zinc-700 px-2 py-0.5 font-mono text-xs font-bold text-white">
+                              <span className="rounded bg-ink-900 border border-transparent px-2 py-0.5 font-mono text-xs font-bold text-white">
                                 {item.ticker}
                               </span>
-                              <span className="text-xs font-semibold text-ink-600 dark:text-zinc-300">
+                              <span className="text-xs font-semibold text-ink-600">
                                 {item.category}
                               </span>
-                              <span className="text-ink-400 dark:text-zinc-600">·</span>
-                              <span className="text-[11px] text-ink-400 dark:text-zinc-400">{item.timestamp}</span>
+                              <span className="text-ink-400">·</span>
+                              <span className="text-[11px] text-ink-400">{item.timestamp}</span>
                             </div>
 
                             <span
                               className={cn(
                                 "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase",
                                 item.impact === "Bullish"
-                                  ? "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-transparent dark:border-emerald-800/40"
+                                  ? "bg-emerald-100 text-emerald-800 border border-transparent"
                                   : item.impact === "Bearish"
-                                  ? "bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border border-transparent dark:border-red-800/40"
-                                  : "bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-transparent dark:border-amber-800/40"
+                                  ? "bg-red-100 text-red-800 border border-transparent"
+                                  : "bg-amber-100 text-amber-800 border border-transparent"
                               )}
                             >
                               {item.impact}
                             </span>
                           </div>
 
-                          <h3 className="mt-2 font-display text-sm font-bold leading-snug text-ink-900 dark:text-white">
+                          <h3 className="mt-2 font-display text-sm font-bold leading-snug text-ink-900">
                             {item.headline}
                           </h3>
-                          <p className="mt-1 text-xs text-ink-600 dark:text-zinc-300 leading-relaxed">
+                          <p className="mt-1 text-xs text-ink-600 leading-relaxed">
                             {item.summary}
                           </p>
 
                           {/* What Investors Think So Far & Market Effect */}
-                          <div className="mt-3 space-y-2 rounded-xl border border-ink-200/70 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-3 text-xs">
-                            <p className="text-ink-800 dark:text-zinc-200 leading-relaxed">
-                              <strong className="text-ink-900 dark:text-white">What Investors Think So Far: </strong>
+                          <div className="mt-3 space-y-2 rounded-xl border border-ink-200/70 bg-white p-3 text-xs">
+                            <p className="text-ink-800 leading-relaxed">
+                              <strong className="text-ink-900">What Investors Think So Far: </strong>
                               {item.impact === "Bullish"
                                 ? "Institutional accumulation detected; retail sentiment strongly positive with surging call options activity."
                                 : item.impact === "Bearish"
                                 ? "Defensive rebalancing observed; traders hedging downside risk with automated stop loss triggers."
                                 : "Balanced consolidation; market awaiting further macro economic and earnings guidance."}
                             </p>
-                            <p className="text-ink-800 dark:text-zinc-200 leading-relaxed border-t border-ink-100 dark:border-zinc-800 pt-2">
-                              <strong className="text-accent-600 dark:text-accent-400">Market Effect on X Layer: </strong>
+                            <p className="text-ink-800 leading-relaxed border-t border-ink-100 pt-2">
+                              <strong className="text-accent-600">Market Effect on X Layer: </strong>
                               {item.marketEffectAnalysis}
                             </p>
                           </div>
@@ -3264,7 +3264,7 @@ export default function AppDashboardPage() {
                                 setMode("simple");
                                 handleSendPrompt(item.suggestedAction.tradePrompt);
                               }}
-                              className="rounded-lg bg-ink-900 dark:bg-[#0B0E14] border border-transparent dark:border-zinc-700 px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-600 cursor-pointer"
+                              className="rounded-lg bg-ink-900 border border-transparent px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-600 cursor-pointer"
                             >
                               Trade on Catalyst: {item.suggestedAction.label}
                             </button>
@@ -3282,34 +3282,34 @@ export default function AppDashboardPage() {
           <div className="space-y-6 lg:col-span-4">
 
             {/* Live Portfolio Breakdown Card */}
-            <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-3">
-                <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500 dark:text-zinc-400">
+            <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+              <div className="flex items-center justify-between border-b border-ink-100 pb-3">
+                <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
                   Portfolio Value
                 </span>
-                <span className="font-mono text-xs text-ink-400 dark:text-zinc-500">Live USDG</span>
+                <span className="font-mono text-xs text-ink-400">Live USDG</span>
               </div>
 
               <div className="mt-3">
-                <p className="font-mono text-3xl font-bold tracking-tight text-ink-900 dark:text-white">
+                <p className="font-mono text-3xl font-bold tracking-tight text-ink-900">
                   ${profile.portfolioValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </p>
-                <div className="mt-1 flex items-center justify-between text-xs text-ink-600 dark:text-zinc-400">
-                  <span>Cash: <strong className="font-mono text-ink-900 dark:text-white">${profile.usdgBalance.toFixed(2)} USDG</strong></span>
-                  <span>Equities: <strong className="font-mono text-ink-900 dark:text-white">${Math.max(0, profile.portfolioValue - profile.usdgBalance).toFixed(2)} USDG</strong></span>
+                <div className="mt-1 flex items-center justify-between text-xs text-ink-600">
+                  <span>Cash: <strong className="font-mono text-ink-900">${profile.usdgBalance.toFixed(2)} USDG</strong></span>
+                  <span>Equities: <strong className="font-mono text-ink-900">${Math.max(0, profile.portfolioValue - profile.usdgBalance).toFixed(2)} USDG</strong></span>
                 </div>
 
                 {/* Spending Cap Telemetry */}
-                <div className="mt-3 flex items-center justify-between border-t border-ink-100 dark:border-zinc-800 pt-2 text-[11px] text-ink-500 dark:text-zinc-400">
+                <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-2 text-[11px] text-ink-500">
                   <span>OKX X Layer (Chain 196):</span>
-                  <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">On-Chain Verified</span>
+                  <span className="font-mono font-semibold text-emerald-600">On-Chain Verified</span>
                 </div>
               </div>
 
               {profile.holdings.length === 0 ? (
-                <div className="mt-4 rounded-xl border border-dashed border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-4 text-center">
-                  <p className="text-xs font-semibold text-ink-800 dark:text-zinc-200">No active stock holdings</p>
-                  <p className="mt-1 text-[11px] text-ink-500 dark:text-zinc-400 leading-relaxed">
+                <div className="mt-4 rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
+                  <p className="text-xs font-semibold text-ink-800">No active stock holdings</p>
+                  <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
                     This wallet currently holds no tokenized equities on X Layer (chain 196). Submit an investment mandate or a direct trade to begin.
                   </p>
                   <button
@@ -3318,7 +3318,7 @@ export default function AppDashboardPage() {
                       setPromptText("Buy 100 USDG of NVDAx");
                       setMode("simple");
                     }}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-ink-900 dark:bg-white px-3.5 py-1.5 text-[11px] font-bold text-white dark:text-ink-900 shadow-xs hover:bg-ink-800 dark:hover:bg-zinc-200 cursor-pointer"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-ink-900 px-3.5 py-1.5 text-[11px] font-bold text-white shadow-xs hover:bg-ink-800 cursor-pointer"
                   >
                     <span>Try Sample Trade</span>
                     <span>↗</span>
@@ -3327,7 +3327,7 @@ export default function AppDashboardPage() {
               ) : (
                 <>
                   {/* Progress Bar Breakdown */}
-                  <div className="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-surface-100 dark:bg-[#161B26]">
+                  <div className="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-surface-100">
                     {profile.holdings.map((h) => {
                       const pct = (h.valueUsd / (profile.portfolioValue || 1)) * 100;
                       return (
@@ -3345,19 +3345,19 @@ export default function AppDashboardPage() {
                     {profile.holdings.map((h) => (
                       <div
                         key={h.symbol}
-                        className="flex items-center justify-between rounded-lg border border-ink-100 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] px-3 py-2"
+                        className="flex items-center justify-between rounded-lg border border-ink-100 bg-surface-50 px-3 py-2"
                       >
                         <div className="flex items-center gap-2">
                           <span
                             className="h-2 w-2 rounded-full shrink-0"
                             style={{ backgroundColor: h.color }}
                           />
-                          <span className="font-bold text-ink-900 dark:text-white">{h.symbol}</span>
-                          <span className="text-[10px] text-ink-500 dark:text-zinc-400">
+                          <span className="font-bold text-ink-900">{h.symbol}</span>
+                          <span className="text-[10px] text-ink-500">
                             {h.amount.toFixed(2)} units
                           </span>
                         </div>
-                        <span className="font-mono font-semibold text-ink-900 dark:text-white">
+                        <span className="font-mono font-semibold text-ink-900">
                           ${h.valueUsd.toFixed(2)}
                         </span>
                       </div>
@@ -3368,21 +3368,21 @@ export default function AppDashboardPage() {
             </div>
 
             {/* Active stocks on this account */}
-            <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-3">
-                <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500 dark:text-zinc-400">
+            <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+              <div className="flex items-center justify-between border-b border-ink-100 pb-3">
+                <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
                   Active stocks on this account
                 </span>
-                <span className="rounded bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
                   {profile.holdings.filter((h) => h.symbol !== "USDG").length} Active Stocks
                 </span>
               </div>
 
               <div className="mt-3.5 space-y-2.5">
                 {profile.holdings.filter((h) => h.symbol !== "USDG").length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-4 text-center">
-                    <p className="text-xs font-semibold text-ink-800 dark:text-zinc-200">No active stock positions</p>
-                    <p className="mt-1 text-[11px] text-ink-500 dark:text-zinc-400 leading-relaxed">
+                  <div className="rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
+                    <p className="text-xs font-semibold text-ink-800">No active stock positions</p>
+                    <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
                       You currently hold 0 stock tokens on OKX X Layer. Use the trade console or Meirei AI chat to execute an order.
                     </p>
                   </div>
@@ -3397,7 +3397,7 @@ export default function AppDashboardPage() {
                       return (
                         <div
                           key={h.symbol}
-                          className="rounded-xl border border-ink-100 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] p-3 text-xs"
+                          className="rounded-xl border border-ink-100 bg-surface-50 p-3 text-xs"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -3405,16 +3405,16 @@ export default function AppDashboardPage() {
                                 className="h-2.5 w-2.5 rounded-full shrink-0"
                                 style={{ backgroundColor: h.color }}
                               />
-                              <span className="font-bold text-ink-900 dark:text-white">{h.symbol}</span>
-                              <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                              <span className="font-bold text-ink-900">{h.symbol}</span>
+                              <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600">
                                 Active
                               </span>
                             </div>
-                            <span className="font-mono font-bold text-ink-900 dark:text-white">
+                            <span className="font-mono font-bold text-ink-900">
                               ${currentVal.toFixed(2)}
                             </span>
                           </div>
-                          <div className="mt-1.5 flex items-center justify-between text-[11px] text-ink-500 dark:text-zinc-400 font-mono">
+                          <div className="mt-1.5 flex items-center justify-between text-[11px] text-ink-500 font-mono">
                             <span>Holding: {h.amount.toFixed(2)} units</span>
                             <span>
                               Spot: {livePrice ? `$${livePrice.toFixed(2)}` : stockItem?.price || "--"}
@@ -3430,7 +3430,7 @@ export default function AppDashboardPage() {
             {/* ========================================================================= */}
             {/* AUTONOMOUS AGENT EXECUTION AUDIT TRAIL                                    */}
             {/* ========================================================================= */}
-            <div className="rounded-2xl border border-ink-200/80 dark:border-zinc-800 bg-[#0C0F17] p-4 text-zinc-200 shadow-xs font-mono">
+            <div className="rounded-2xl border border-ink-200/80 bg-[#0C0F17] p-4 text-zinc-200 shadow-xs font-mono">
               <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -3498,24 +3498,24 @@ export default function AppDashboardPage() {
       </main>
 
       {/* Terminal Footer with Cookie Controls, Privacy, and System Status */}
-      <footer className="mt-12 border-t border-surface-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#0B0E14] py-8 text-xs text-ink-600 dark:text-zinc-400">
+      <footer className="mt-12 border-t border-surface-200 bg-surface-50 py-8 text-xs text-ink-600">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
-              <span className="font-display font-bold text-ink-900 dark:text-white">Meirei Terminal</span>
+              <span className="font-display font-bold text-ink-900">Meirei Terminal</span>
               <span>·</span>
               <span className="inline-flex items-center gap-1.5 font-mono text-[11px]">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 OKX X Layer (Chain 196) Mainnet
               </span>
               <span>·</span>
-              <span className="text-[11px] text-ink-500 dark:text-zinc-400">Author: IboTV</span>
+              <span className="text-[11px] text-ink-500">Author: IboTV</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
               <Link
                 href="/cookies"
-                className="text-ink-600 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white transition-colors"
+                className="text-ink-600 hover:text-ink-900 transition-colors"
               >
                 Cookie Policy
               </Link>
@@ -3527,37 +3527,37 @@ export default function AppDashboardPage() {
                     window.dispatchEvent(new Event("open-cookie-banner"));
                   }
                 }}
-                className="text-accent-600 dark:text-accent-400 hover:underline cursor-pointer font-semibold"
+                className="text-accent-600 hover:underline cursor-pointer font-semibold"
               >
                 Cookie Preferences
               </button>
               <Link
                 href="/privacy"
-                className="text-ink-600 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white transition-colors"
+                className="text-ink-600 hover:text-ink-900 transition-colors"
               >
                 Privacy
               </Link>
               <Link
                 href="/terms"
-                className="text-ink-600 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white transition-colors"
+                className="text-ink-600 hover:text-ink-900 transition-colors"
               >
                 Terms
               </Link>
               <Link
                 href="/whitepaper"
-                className="text-ink-600 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white transition-colors"
+                className="text-ink-600 hover:text-ink-900 transition-colors"
               >
                 Whitepaper
               </Link>
               <Link
                 href="/docs"
-                className="text-ink-600 dark:text-zinc-400 hover:text-ink-900 dark:hover:text-white transition-colors"
+                className="text-ink-600 hover:text-ink-900 transition-colors"
               >
                 Docs
               </Link>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-surface-200/60 dark:border-zinc-800/60 text-[11px] text-ink-400 dark:text-zinc-400 flex flex-col sm:flex-row justify-between items-center gap-2">
+          <div className="mt-4 pt-4 border-t border-surface-200/60 text-[11px] text-ink-400 flex flex-col sm:flex-row justify-between items-center gap-2">
             <p>Non-custodial algorithmic order routing via OKX Exchange OS on X Layer (Chain 196). Smart contract execution via OKX Onchain OS.</p>
             <p className="font-mono text-[10px]">Zero Third-Party Advertising Trackers</p>
           </div>
@@ -3914,21 +3914,21 @@ export default function AppDashboardPage() {
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-6 shadow-2xl md:p-8"
+              className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200 bg-white p-6 shadow-2xl md:p-8"
             >
-              <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-3.5">
+              <div className="flex items-center justify-between border-b border-ink-100 pb-3.5">
                 <div>
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600 dark:text-accent-400">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
                     Two-Factor Authorization
                   </span>
-                  <h3 className="font-display text-lg font-bold text-ink-900 dark:text-white">
+                  <h3 className="font-display text-lg font-bold text-ink-900">
                     Security Verification Required
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowOtpModal(false)}
-                  className="rounded-full p-1.5 text-ink-400 dark:text-zinc-400 hover:bg-surface-100 dark:hover:bg-[#161B26] hover:text-ink-700 dark:hover:text-white cursor-pointer"
+                  className="rounded-full p-1.5 text-ink-400 hover:bg-surface-100 hover:text-ink-700 cursor-pointer"
                 >
                   <svg viewBox="0 0 16 16" className="h-4 w-4 stroke-current stroke-2 fill-none">
                     <path d="M4 4l8 8M12 4l-8 8" />
@@ -3936,12 +3936,12 @@ export default function AppDashboardPage() {
                 </button>
               </div>
 
-              <div className="mt-4 space-y-3 text-xs text-ink-600 dark:text-zinc-300">
+              <div className="mt-4 space-y-3 text-xs text-ink-600">
                 <p>
                   Authorizing transaction on X Layer for identity:{" "}
-                  <strong className="text-ink-900 dark:text-white">{profile.email}</strong>
+                  <strong className="text-ink-900">{profile.email}</strong>
                 </p>
-                <p className="font-mono text-[11px] text-ink-500 dark:text-zinc-400">
+                <p className="font-mono text-[11px] text-ink-500">
                   Smart Wallet: {profile.address.slice(0, 6)}...{profile.address.slice(-4)}
                 </p>
                 <p>
@@ -3950,7 +3950,7 @@ export default function AppDashboardPage() {
 
                 {/* Development helper banner */}
                 {otpDevCode && (
-                  <div className="rounded-xl border border-accent-200 dark:border-accent-800 bg-accent-50/60 dark:bg-accent-950/50 p-2.5 font-mono text-[11px] text-accent-900 dark:text-accent-300">
+                  <div className="rounded-xl border border-accent-200 bg-accent-50/60 p-2.5 font-mono text-[11px] text-accent-900">
                     Development Sandbox OTP: <strong>{otpDevCode}</strong>
                   </div>
                 )}
@@ -3964,19 +3964,19 @@ export default function AppDashboardPage() {
                     value={otpInput}
                     onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ""))}
                     placeholder="000000"
-                    className="w-full rounded-2xl border border-ink-300 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] py-3 text-center font-mono text-2xl font-bold tracking-widest text-ink-900 dark:text-white outline-none focus:border-accent-500 focus:bg-white dark:focus:bg-[#11141D] focus:ring-2 focus:ring-accent-500"
+                    className="w-full rounded-2xl border border-ink-300 bg-surface-50 py-3 text-center font-mono text-2xl font-bold tracking-widest text-ink-900 outline-none focus:border-accent-500 focus:bg-white focus:ring-2 focus:ring-accent-500"
                   />
                 </div>
 
                 {otpError && (
-                  <p className="text-center font-semibold text-red-600 dark:text-red-400">{otpError}</p>
+                  <p className="text-center font-semibold text-red-600">{otpError}</p>
                 )}
 
                 <div className="mt-5 flex gap-2.5">
                   <button
                     type="button"
                     onClick={() => setShowOtpModal(false)}
-                    className="flex-1 rounded-xl border border-ink-200 dark:border-zinc-700 py-2.5 text-center text-xs font-semibold text-ink-700 dark:text-zinc-300 hover:bg-surface-100 dark:hover:bg-[#161B26] cursor-pointer"
+                    className="flex-1 rounded-xl border border-ink-200 py-2.5 text-center text-xs font-semibold text-ink-700 hover:bg-surface-100 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -4003,18 +4003,18 @@ export default function AppDashboardPage() {
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="w-full max-w-lg rounded-3xl border border-ink-200 dark:border-zinc-800 bg-white dark:bg-[#11141D] p-6 shadow-2xl"
+              className="w-full max-w-lg rounded-3xl border border-ink-200 bg-white p-6 shadow-2xl"
             >
-              <div className="flex items-center justify-between border-b border-ink-100 dark:border-zinc-800 pb-3">
+              <div className="flex items-center justify-between border-b border-ink-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent-500/15 text-accent-600 dark:text-accent-400 font-bold text-sm">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-accent-500/15 text-accent-600 font-bold text-sm">
                     M
                   </div>
                   <div>
-                    <h3 className="font-display text-base font-bold text-ink-900 dark:text-white">
+                    <h3 className="font-display text-base font-bold text-ink-900">
                       Create Autonomous Mandate
                     </h3>
-                    <p className="text-[11px] text-ink-500 dark:text-zinc-400">
+                    <p className="text-[11px] text-ink-500">
                       Configure autonomous execution policies on OKX X Layer
                     </p>
                   </div>
@@ -4022,7 +4022,7 @@ export default function AppDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateMandateModal(false)}
-                  className="rounded-full p-1.5 text-ink-400 hover:bg-surface-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  className="rounded-full p-1.5 text-ink-400 hover:bg-surface-100 transition-colors cursor-pointer"
                 >
                   <svg viewBox="0 0 16 16" className="h-4 w-4 stroke-current stroke-2 fill-none">
                     <path d="M4 4l8 8M12 4l-8 8" />
@@ -4033,7 +4033,7 @@ export default function AppDashboardPage() {
               <div className="mt-4 space-y-4">
                 {/* Policy Type Selection */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 dark:text-zinc-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 mb-1.5">
                     Policy Type
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -4064,8 +4064,8 @@ export default function AppDashboardPage() {
                         className={cn(
                           "rounded-xl border py-2 px-2 text-center text-xs font-bold transition-all cursor-pointer",
                           newMandateType === opt.type
-                            ? "border-accent-500 bg-accent-500/10 text-accent-600 dark:text-accent-400"
-                            : "border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] text-ink-600 dark:text-zinc-400"
+                            ? "border-accent-500 bg-accent-500/10 text-accent-600"
+                            : "border-ink-200 bg-surface-50 text-ink-600"
                         )}
                       >
                         {opt.label}
@@ -4076,7 +4076,7 @@ export default function AppDashboardPage() {
 
                 {/* Mandate Policy Name */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 dark:text-zinc-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 mb-1.5">
                     Policy Title
                   </label>
                   <input
@@ -4084,30 +4084,30 @@ export default function AppDashboardPage() {
                     value={newMandateTitle}
                     onChange={(e) => setNewMandateTitle(e.target.value)}
                     placeholder="e.g. Mag7 Drift Guard"
-                    className="w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3.5 py-2 text-xs font-medium text-ink-900 dark:text-white outline-none focus:border-accent-500"
+                    className="w-full rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2 text-xs font-medium text-ink-900 outline-none focus:border-accent-500"
                   />
                 </div>
 
                 {/* Natural-Language Target & Rules */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-ink-600 dark:text-zinc-400">
+                    <label className="text-xs font-bold uppercase tracking-wider text-ink-600">
                       Executable Target / Rule
                     </label>
-                    <span className="text-[10px] text-ink-400 dark:text-zinc-500">Natural-Language</span>
+                    <span className="text-[10px] text-ink-400">Natural-Language</span>
                   </div>
                   <textarea
                     rows={2}
                     value={newMandateTarget}
                     onChange={(e) => setNewMandateTarget(e.target.value)}
                     placeholder="e.g. 60% Mag7, 20% USDG, max 8%"
-                    className="w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3.5 py-2 text-xs font-mono text-ink-900 dark:text-white outline-none focus:border-accent-500"
+                    className="w-full rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2 text-xs font-mono text-ink-900 outline-none focus:border-accent-500"
                   />
                 </div>
 
                 {/* Presets Chips */}
                 <div>
-                  <span className="text-[10px] font-mono text-ink-400 dark:text-zinc-500">Quick Presets:</span>
+                  <span className="text-[10px] font-mono text-ink-400">Quick Presets:</span>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {[
                       "60% Mag7, 20% USDG, max 8%",
@@ -4119,7 +4119,7 @@ export default function AppDashboardPage() {
                         key={preset}
                         type="button"
                         onClick={() => setNewMandateTarget(preset)}
-                        className="rounded-lg border border-ink-200 dark:border-zinc-800 bg-surface-50 dark:bg-[#161B26] px-2 py-0.5 text-[10px] font-mono text-ink-600 dark:text-zinc-400 hover:text-accent-500 transition-colors cursor-pointer"
+                        className="rounded-lg border border-ink-200 bg-surface-50 px-2 py-0.5 text-[10px] font-mono text-ink-600 hover:text-accent-500 transition-colors cursor-pointer"
                       >
                         {preset}
                       </button>
@@ -4129,7 +4129,7 @@ export default function AppDashboardPage() {
 
                 {/* Threshold Input */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 dark:text-zinc-400 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 mb-1.5">
                     Trigger Threshold / Limit
                   </label>
                   <input
@@ -4137,17 +4137,17 @@ export default function AppDashboardPage() {
                     value={newMandateThreshold}
                     onChange={(e) => setNewMandateThreshold(e.target.value)}
                     placeholder="e.g. 5.0%"
-                    className="w-full rounded-xl border border-ink-200 dark:border-zinc-700 bg-surface-50 dark:bg-[#161B26] px-3.5 py-2 text-xs font-mono text-ink-900 dark:text-white outline-none focus:border-accent-500"
+                    className="w-full rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2 text-xs font-mono text-ink-900 outline-none focus:border-accent-500"
                   />
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-ink-100 dark:border-zinc-800 pt-3">
+              <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-ink-100 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowCreateMandateModal(false)}
-                  className="rounded-xl border border-ink-200 dark:border-zinc-700 px-4 py-2 text-xs font-semibold text-ink-600 dark:text-zinc-400 hover:bg-surface-50 dark:hover:bg-[#161B26] cursor-pointer"
+                  className="rounded-xl border border-ink-200 px-4 py-2 text-xs font-semibold text-ink-600 hover:bg-surface-50 cursor-pointer"
                 >
                   Cancel
                 </button>

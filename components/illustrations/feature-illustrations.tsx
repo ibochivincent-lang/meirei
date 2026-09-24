@@ -76,7 +76,7 @@ export function BalanceIllustration() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-ink-600 dark:text-ink-300">
+            <div className="flex items-center gap-2 text-ink-600">
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.33 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
@@ -254,7 +254,7 @@ export function ContextIllustration() {
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-[10px] font-bold text-white">
                 2
               </span>
-              <p className="font-display text-xs font-bold text-ink-900 dark:text-white">Key Words & Prompts to Ask</p>
+              <p className="font-display text-xs font-bold text-ink-900">Key Words & Prompts to Ask</p>
             </div>
 
             <div className="mt-2 space-y-1.5">

@@ -399,10 +399,10 @@ function ChatMessage({ message }: { message: Message }) {
               Confirmed
             </span>
           </div>
-          <p className="mt-1 font-sans text-xl font-semibold leading-none tabular-nums text-black dark:text-white">
+          <p className="mt-1 font-sans text-xl font-semibold leading-none tabular-nums text-black">
             {message.receipt.amount}
           </p>
-          <p className="mt-1 text-[10px] text-ink-500 dark:text-ink-300">
+          <p className="mt-1 text-[10px] text-ink-500">
             {message.receipt.detail}
           </p>
         </div>
