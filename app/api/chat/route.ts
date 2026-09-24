@@ -204,12 +204,12 @@ export async function POST(req: NextRequest) {
       welcome += `• Buy Stocks: "Buy $250 in NVDAx" or "Buy 1 TSLAx"\n`;
       welcome += `• Sell Stocks: "Sell 1 AAPLx" or "Exit TSLAx into USDG"\n`;
       welcome += `• Check Prices: "Price of NVDAx", "Quote TSLAx"\n`;
-      welcome += `• Live Stock List: /stocks or "stocks" (all 8 allowlisted equities)\n`;
+      welcome += `• Live Stock List: /stocks or "stocks" (all 20 allowlisted equities on OKX X Layer)\n`;
       welcome += `• Compare Stocks: "Compare NVDAx vs MSFTx"\n`;
       welcome += `• Unit Calculator: "Calculate $250 in NVDAx"\n`;
       welcome += `• Portfolio Balance: /balance or "portfolio"\n`;
       welcome += `• Deposit Funds: /deposit or "how to fund"\n`;
-      welcome += `• Investment Mandates: "60% mag7, 20% USDG, max 8%"\n`;
+      welcome += `• Auto Mandates: "Drift rebalance 5%", "Weekly accumulation 50 USDG", "Dip buyer -5% / TP +15%", "Circuit breaker 8%"\n`;
       welcome += `• Emergency Freeze: /freeze or "panic"\n`;
       welcome += `• Emergency Unfreeze: /unfreeze (with verification code)\n`;
       welcome += `• About Meirei: /about or "what is meirei"\n\n`;
@@ -236,10 +236,10 @@ export async function POST(req: NextRequest) {
       let about = `PROJECT MEIREI (命令) | OVERVIEW\n\n`;
       about += `Meirei is an AI-Native Investment Mandate Execution Agent built natively for OKX X Layer (Chain ID 196).\n\n`;
       about += `Key Capabilities:\n`;
-      about += `• Conversational Execution: Converts plain-language investment directives into atomic multi-leg swaps settling in USDG and USDC via OKX DEX Aggregator.\n`;
-      about += `• Allowlisted Equities: TSLAx, AMZNx, GOOGLx, COINx, NVDAx, AAPLx, MSFTx, METAx.\n`;
+      about += `• Conversational Mandates & Simulation: Converts natural language into automated mandate policies (Drift Rebalance, Weekly Accumulation, Dip Buyer, Circuit Breakers, or Direct Spot Swaps).\n`;
+      about += `• Allowlisted Equities (20 Assets): TSLAx, NVDAx, AAPLx, MSFTx, AMZNx, GOOGLx, METAx, COINx, SPYx, QQQx, AMDx, CRWDx, MSTRx, TSMx, AVGOx, INTCx, MUx, MRVLx, IWMx, DELLx.\n`;
       about += `• Non-Custodial Architecture: Private keys never touch our servers. Transactions are authorized solely client-side via Web3 wallet (OKX Wallet, MetaMask, WalletConnect) or 2FA circuit breakers.\n`;
-      about += `• Unified Multi-Channel Experience: Identical features across Web Platform, WhatsApp, and Telegram (@MeireiXLayerBot).`;
+      about += `• Multi-Channel Access: Identical features across Web Platform (/app), Telegram (@MeireiXLayerBot), and WhatsApp.`;
 
       return NextResponse.json({
         reply: about,

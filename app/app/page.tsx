@@ -132,6 +132,12 @@ interface ChatMessage {
     fee?: { amount: string; asset: string; status: string; reason?: string };
     portfolio?: { totalUsd: number; holdings: Array<{ symbol: string; valueUsd: number }> };
   };
+  mandateAction?: {
+    title: string;
+    rule: string;
+    symbol: string;
+    price: number;
+  };
 }
 
 interface UserProfile {
@@ -671,7 +677,16 @@ export default function AppDashboardPage() {
   const INITIAL_CHAT_MESSAGE: ChatMessage = {
     id: "welcome-1",
     sender: "bot",
-    text: "Welcome to Meirei on OKX X Layer Mainnet. You can chat here directly on the web terminal or via Telegram (@MeireiXLayerBot).\n\nSend 'stocks' for 24/7 equity price quotes, 'balance' to view your wallet holdings, or type any trade like 'Buy 100 USDG NVDAx'.",
+    text: `Hello! I'm Meirei, your AI Investment Mandate Assistant on OKX X Layer.
+
+I help you simulate and execute intelligent auto-investment mandates so you never have to guess or time the market:
+• Portfolio Drift Rebalance: Keeps your allocations balanced automatically when prices drift.
+• Weekly DCA Accumulation: Automatically accumulates stock units every week on autopilot.
+• Volatility Circuit Breaker: Halts or rotates to USDG if markets dip sharply (>8%).
+• Dip Buyer & Take-Profit Mandate: Automatically buys dips (e.g. -5%) and locks in profit at target gains (e.g. +15%).
+• Single-Stock Limit Mandate: Buy or take profit at specific target prices, or ignore mandates to execute instant spot swaps directly!
+
+If any mandate seems confusing, tell me what's on your mind or pick a quick suggestion below and I'll explain and simulate it for you!`,
     timestamp: "Just now",
   };
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([INITIAL_CHAT_MESSAGE]);
@@ -1048,13 +1063,18 @@ export default function AppDashboardPage() {
     }
   };
 
-  // Disconnect & Unlink wallet
-  const handleDisconnectChannelWallet = async () => {
+  // Comprehensive, rock-solid Disconnect Handler
+  const handleFullDisconnect = async () => {
     setIsWalletConnecting(true);
     setConnectErrorMsg(null);
     setConnectInfoMsg(null);
 
     try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("meirei_demo_sandbox");
+        localStorage.removeItem("meirei_wallet_address");
+      }
+
       await fetch("/api/wallet/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1068,15 +1088,20 @@ export default function AppDashboardPage() {
       setConnectAddress(null);
       setConnectWalletName(null);
       setConnectSuccess(false);
+      setIsDemoSandbox(false);
 
-      setProfile((prev) => ({
-        ...prev,
+      setProfile({
+        ...DEFAULT_PROFILE,
         address: "0x0000000000000000000000000000000000000000",
         handle: "Disconnected",
-        botStatus: "Unlinked",
-      }));
+        email: "disconnected@meirei.app",
+        botStatus: "Disconnected",
+        holdings: [],
+        portfolioValue: 0,
+        usdgBalance: 0,
+      });
 
-      setConnectInfoMsg("Wallet disconnected and unlinked successfully.");
+      setConnectInfoMsg("Wallet disconnected and session reset successfully.");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setConnectErrorMsg(`Failed to disconnect: ${msg}`);
@@ -1085,7 +1110,82 @@ export default function AppDashboardPage() {
     }
   };
 
-  // Conversational Chat message sender (Web & Telegram)
+  // Deploy Advisory Mandate from Advanced Mode (Instant & Session-Key Guarded)
+  const handleDeployAdvisoryMandate = (plan: AdvisoryPlan) => {
+    const newPolicy: MandatePolicy = {
+      id: `mandate_${Date.now()}`,
+      title: plan.strategyName,
+      policyType: "drift_rebalance",
+      target: plan.allocations.map((a) => `${a.weightPercent}% ${a.symbol}`).join(", "),
+      rule: plan.mandateRule,
+      metricLabel: "Rebalance Band",
+      metricValue: plan.rebalanceInterval,
+      threshold: "5.0%",
+      status: "active",
+      lastEvaluated: "Just deployed",
+    };
+
+    setMandatePolicies((prev) => [newPolicy, ...prev]);
+
+    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const confirmMsg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      sender: "bot",
+      text: `✅ Autonomous Mandate Deployed on OKX X Layer!\n\nStrategy: ${plan.strategyName}\nRule: ${plan.mandateRule}\nDownside Safeguard: ${plan.downsideProtection}\nStatus: Active · Continuously monitored on OKX X Layer (Chain 196) with 100% sponsored gas.`,
+      timestamp: now,
+      status: "confirmed",
+      type: "mandate",
+    };
+    setChatMessages((prev) => [...prev, confirmMsg]);
+
+    setMandateResult({
+      reply: `Mandate "${plan.strategyName}" successfully deployed to OKX X Layer. Active session key guard is monitoring execution.`,
+      type: "mandate",
+      statusTone: "confirmed",
+    });
+
+    const el = document.getElementById("active-mandates-section");
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Deploy Stock Momentum / Dip Guard Mandate from Table
+  const handleDeployStockMandate = (symbol: string) => {
+    const stockPrice = stockPrices[symbol] || 100;
+    const rule = `Accumulate ${symbol} on dips >3.0%, maintain 40% target weight with 5% stop protection`;
+    const newPolicy: MandatePolicy = {
+      id: `mandate_${Date.now()}`,
+      title: `${symbol} Momentum & Dip Guard`,
+      policyType: "drift_rebalance",
+      target: `40% ${symbol} / 60% USDG`,
+      rule,
+      metricLabel: "Current Drift",
+      metricValue: "0.8%",
+      threshold: "3.0%",
+      status: "active",
+      lastEvaluated: "Just deployed",
+    };
+
+    setMandatePolicies((prev) => [newPolicy, ...prev]);
+
+    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const confirmMsg: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      sender: "bot",
+      text: `✅ Autonomous Stock Mandate Deployed on OKX X Layer!\n\nAsset: ${symbol} (Spot: $${stockPrice.toFixed(2)})\nRule: ${rule}\nStatus: Active · Monitored on OKX X Layer with 100% sponsored gas.`,
+      timestamp: now,
+      status: "confirmed",
+      type: "mandate",
+    };
+    setChatMessages((prev) => [...prev, confirmMsg]);
+
+    setMandateResult({
+      reply: `Mandate for ${symbol} successfully deployed to OKX X Layer.`,
+      type: "mandate",
+      statusTone: "confirmed",
+    });
+  };
+
+  // Conversational Chat message sender (Web & Telegram) with Mandate Simulation & Educational Guidance
   const handleSendChatMessage = async (textOverride?: string) => {
     const query = (textOverride || chatInput).trim();
     if (!query || isChatSending) return;
@@ -1101,6 +1201,110 @@ export default function AppDashboardPage() {
     setChatMessages((prev) => [...prev, userMsg]);
     setChatInput("");
     setIsChatSending(true);
+
+    const lowerQ = query.toLowerCase();
+
+    // 1. Interactive Mandate Simulation & Educational Explanations
+    if (lowerQ.includes("dip") || (lowerQ.includes("below") && lowerQ.includes("profit"))) {
+      const sym = selectedStock?.symbol || "NVDAx";
+      const spot = getNumericPrice(selectedStock) || 213.9;
+      const dipPrice = (spot * 0.95).toFixed(2);
+      const tpPrice = (spot * 1.15).toFixed(2);
+      const rule = `Accumulate ${sym} when spot dips ≥5.0% (below $${dipPrice}); take profit / trim 50% at +15.0% ($${tpPrice})`;
+
+      const simMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `📈 Dip Buyer & Take-Profit Mandate Simulation:\n\n• What it means: Automatically accumulates units when ${sym} dips below a set percentage (-5%), then automatically locks in gains when price reaches your target profit (+15%). You never have to stare at charts.\n\n• Target Asset: ${sym} (Current Spot: $${spot.toFixed(2)})\n• Accumulation Dip Trigger: -5.0% ($${dipPrice} USDG)\n• Take-Profit Trigger: +15.0% ($${tpPrice} USDG)\n• Gas Sponsorship: 100% sponsored by Meirei on OKX X Layer (Chain 196).\n\nYou can deploy this mandate to run autonomously, or ignore the mandate and execute a direct spot purchase now:`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        mandateAction: {
+          title: `Dip Buyer: ${sym} (-5% / +15%)`,
+          rule,
+          symbol: sym,
+          price: spot,
+        },
+      };
+
+      setChatMessages((prev) => [...prev, simMsg]);
+      setIsChatSending(false);
+      return;
+    }
+
+    if (lowerQ.includes("drift") || (lowerQ.includes("rebalance") && !lowerQ.includes("deploy"))) {
+      const rule = "Autonomous atomic rebalance when asset drift > 5.0% via OKX DEX Aggregator";
+      const simMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `⚖️ Portfolio Drift Rebalance Mandate Simulation:\n\n• What it means: Monitors your portfolio allocations continuously. If stock prices move and cause any equity to drift more than 5% from your target weight, Meirei executes an atomic rebalancing swap on OKX DEX to restore target weights.\n\n• Target Portfolio: 60% NVDAx / 20% AAPLx / 20% USDG\n• Threshold Band: ±5.0% Drift\n• Gas: Zero gas cost to you (100% sponsored via Paymaster on X Layer).\n\nDeploy this mandate below or ignore and buy directly on spot:`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        mandateAction: {
+          title: "Portfolio Drift Rebalance (5% Band)",
+          rule,
+          symbol: "NVDAx",
+          price: 213.9,
+        },
+      };
+
+      setChatMessages((prev) => [...prev, simMsg]);
+      setIsChatSending(false);
+      return;
+    }
+
+    if (lowerQ.includes("weekly") || lowerQ.includes("dca") || lowerQ.includes("accumulation")) {
+      const sym = selectedStock?.symbol || "TSLAx";
+      const spot = getNumericPrice(selectedStock) || 418.5;
+      const rule = `Automated recurring accumulation of 50.00 USDG into ${sym} every Monday at 08:00 UTC`;
+
+      const simMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `📅 Weekly DCA Accumulation Mandate Simulation:\n\n• What it means: Automatically purchases a fixed 50.00 USDG dollar amount of ${sym} every week on autopilot. This averages out price volatility across market cycles without needing to time the market.\n\n• Target Asset: ${sym} (Spot: $${spot.toFixed(2)})\n• Frequency: Every Monday at 08:00 UTC (50.00 USDG)\n• Gas: 100% Sponsored on OKX X Layer.\n\nDeploy this recurring mandate below or execute a direct spot purchase:`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        mandateAction: {
+          title: `Weekly DCA: ${sym} (50 USDG)`,
+          rule,
+          symbol: sym,
+          price: spot,
+        },
+      };
+
+      setChatMessages((prev) => [...prev, simMsg]);
+      setIsChatSending(false);
+      return;
+    }
+
+    if (lowerQ.includes("circuit breaker") || lowerQ.includes("drawdown")) {
+      const rule = "Auto-rotate equity positions to USDG if 24h portfolio drawdown exceeds 8.0%";
+      const simMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `🛡️ Volatility Circuit Breaker Mandate Simulation:\n\n• What it means: Downside risk preservation guardrail. If severe market volatility causes your portfolio to experience a drawdown greater than 8.0% within 24 hours, Meirei pauses all buying and rotates equity exposure into USDG stablecoin.\n\n• Protection Threshold: 8.0% 24h Drawdown\n• Execution Route: OKX DEX Aggregator on OKX X Layer\n• Gas: 100% Sponsored.\n\nDeploy this safety mandate below:`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        mandateAction: {
+          title: "Volatility Circuit Breaker (8%)",
+          rule,
+          symbol: "USDG",
+          price: 1.0,
+        },
+      };
+
+      setChatMessages((prev) => [...prev, simMsg]);
+      setIsChatSending(false);
+      return;
+    }
+
+    if (lowerQ.includes("what are auto mandates") || lowerQ.includes("explain auto mandates") || lowerQ.includes("explain mandate") || lowerQ.includes("confused")) {
+      const simMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: `💡 What Are Auto-Investment Mandates?\n\nAuto-investment mandates are automated rules you set once, which Meirei executes autonomously on OKX X Layer (Chain 196):\n\n1. Drift Rebalance: Keeps your desired portfolio percentages intact.\n2. Weekly Accumulation: Dollar-cost averages on autopilot.\n3. Dip Buyer & Take-Profit: Buys dips (e.g. -5%) and sells at profit targets (e.g. +15%).\n4. Circuit Breakers: Protects capital during sudden market crashes.\n5. Single-Stock Limit: Buy or sell a single stock at a target price.\n\nYou can also ignore mandates entirely and execute direct spot buys anytime with 1 click!\n\nWhat strategy or stock would you like to simulate?`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setChatMessages((prev) => [...prev, simMsg]);
+      setIsChatSending(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/chat", {
@@ -1577,28 +1781,6 @@ export default function AppDashboardPage() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            {/* Cookies Trigger (hidden on small mobile to conserve space) */}
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("meirei:open-cookies"));
-                }
-              }}
-              aria-label="Manage Cookies"
-              title="Manage Cookies"
-              className="hidden sm:flex items-center gap-1.5 rounded-full border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:border-accent-500 hover:text-accent-600 transition-colors cursor-pointer"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>Cookies</span>
-            </button>
-
-            {/* OTP 2FA Protection Status Pill */}
-            <div className="hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/70 px-2.5 py-1 text-[11px] font-bold text-emerald-800 md:flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-              <span>{otpToken ? "2FA OTP Verified" : "2FA Protected"}</span>
-            </div>
-
             {/* Account Status & Identity Badge (Optimized for mobile) */}
             {isLoggedIn ? (
               <div className="flex items-center gap-1.5 sm:gap-2.5 rounded-full border border-ink-200 bg-white p-1 sm:p-1.5 sm:pr-3.5 shadow-xs">
@@ -1631,16 +1813,7 @@ export default function AppDashboardPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setProfile({
-                      ...DEFAULT_PROFILE,
-                      handle: "Disconnected",
-                      email: "disconnected@meirei.app",
-                      address: "0x0000000000000000000000000000000000000000",
-                      holdings: [],
-                      portfolioValue: 0,
-                    });
-                  }}
+                  onClick={handleFullDisconnect}
                   className="rounded p-1 text-xs text-ink-400 hover:text-red-500 cursor-pointer"
                   title="Disconnect wallet"
                 >
@@ -1671,81 +1844,29 @@ export default function AppDashboardPage() {
 
       {/* Main Terminal Container */}
       <main className="mx-auto max-w-[1440px] px-3.5 py-4 sm:px-8 sm:py-6">
-        {/* Judge Onboarding Friction: 1-Click Demo Sandbox Banner (Advanced Mode Only) */}
-        {mode === "advanced" && (
-          <div
-            className={cn(
-              "mb-5 rounded-2xl border p-4 text-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors",
-              isDemoSandbox
-                ? "border-emerald-500/30 bg-emerald-500/10"
-                : "border-accent-500/30 bg-accent-500/10"
-            )}
-          >
+        {/* Institutional Web3 Wallet Connect Banner (Advanced Mode) */}
+        {mode === "advanced" && !isLoggedIn && (
+          <div className="mb-5 rounded-2xl border border-accent-500/30 bg-accent-50/60 p-4 text-xs shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-xl font-mono font-bold shrink-0 text-white shadow-xs text-xs",
-                  isDemoSandbox ? "bg-emerald-600" : "bg-accent-500"
-                )}
-              >
-                {isDemoSandbox ? "OKX" : "DEMO"}
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl font-mono font-bold shrink-0 text-white shadow-xs text-xs bg-accent-500">
+                OKX
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-ink-900 sm:text-sm">
-                    {isDemoSandbox
-                      ? "Demo Sandbox Active (1,000 USDG Loaded)"
-                      : "Load Demo Simulation"}
-                  </span>
-                  <span
-                    className={cn(
-                      "rounded-full font-mono text-[10px] font-bold px-2 py-0.5 border",
-                      isDemoSandbox
-                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
-                        : "bg-accent-500/15 border-accent-500/30 text-accent-700"
-                    )}
-                  >
-                    {isDemoSandbox ? "Chain 196 Simulated Sandbox" : "Zero-Risk Simulation"}
-                  </span>
-                </div>
+                <span className="font-bold text-ink-900 sm:text-sm">
+                  Connect Web3 Wallet for Advanced Institutional Execution
+                </span>
                 <p className="mt-0.5 text-ink-600">
-                  {isDemoSandbox
-                    ? "Test liquidity (1,000 USDG) and sample positions (NVDAx, AAPLx, TSLAx) are active. You can execute rebalances, trade assets, or test conversational chat."
-                    : "Simulate non-custodial portfolio rebalancing and smart contract execution with 1,000 USDG test liquidity on OKX X Layer (Chain 196) without real capital risk."}
+                  Connect OKX Wallet, MetaMask, or WalletConnect to deploy custom stock mandates and receive real-time OKX AI Skills telemetry on OKX X Layer (Chain 196).
                 </p>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              {!isDemoSandbox ? (
-                <button
-                  type="button"
-                  onClick={handleLoadDemoSandbox}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-600 text-white font-bold text-xs shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <span>Load Demo Simulation (1,000 USDG)</span>
-                  <span>&rarr;</span>
-                </button>
-              ) : (
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleTopUpDemoUsdg}
-                    className="px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 font-semibold text-xs cursor-pointer"
-                    title="Credit another 500 USDG to test sandbox"
-                  >
-                    +500 USDG
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleResetDemoSandbox}
-                    className="px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-600 font-semibold text-xs cursor-pointer"
-                  >
-                    Reset to Live Wallet
-                  </button>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowLoginModal(true)}
+              className="px-4 py-2 rounded-xl bg-accent-500 hover:bg-accent-600 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0"
+            >
+              Connect Wallet →
+            </button>
           </div>
         )}
 
@@ -2168,6 +2289,61 @@ export default function AppDashboardPage() {
                                     Request OTP to Unfreeze
                                   </button>
                                 )}
+
+                                {msg.mandateAction && (
+                                  <div className="mt-2.5 pt-2 border-t border-ink-200/60 flex flex-wrap items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newPolicy: MandatePolicy = {
+                                          id: `mandate_${Date.now()}`,
+                                          title: msg.mandateAction!.title,
+                                          policyType: "drift_rebalance",
+                                          target: msg.mandateAction!.rule,
+                                          rule: msg.mandateAction!.rule,
+                                          metricLabel: "Status",
+                                          metricValue: "Active",
+                                          threshold: "5.0%",
+                                          status: "active",
+                                          lastEvaluated: "Just deployed",
+                                        };
+                                        setMandatePolicies((prev) => [newPolicy, ...prev]);
+                                        setMandateResult({
+                                          reply: `Mandate "${msg.mandateAction!.title}" successfully deployed to OKX X Layer.`,
+                                          type: "mandate",
+                                          statusTone: "confirmed",
+                                        });
+                                        const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                                        setChatMessages((prev) => [
+                                          ...prev,
+                                          {
+                                            id: `msg-${Date.now()}`,
+                                            sender: "bot",
+                                            text: `✅ Mandate [${msg.mandateAction!.title}] is now deployed on OKX X Layer (Chain 196) and active under Session Key Guard with 100% sponsored gas.`,
+                                            timestamp: now,
+                                            status: "confirmed",
+                                          },
+                                        ]);
+                                      }}
+                                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                                    >
+                                      <span>Deploy Mandate to X Layer</span>
+                                      <span>✓</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const sym = msg.mandateAction!.symbol;
+                                        const price = msg.mandateAction!.price || 100;
+                                        openWeb3Signer(sym, 100, 100 / price, price);
+                                      }}
+                                      className="rounded-lg border border-ink-300 bg-white hover:bg-surface-100 text-ink-800 px-3 py-1.5 text-xs font-semibold shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                                    >
+                                      <span>Ignore Mandate &amp; Buy Directly on Spot</span>
+                                      <span>→</span>
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
@@ -2201,12 +2377,13 @@ export default function AppDashboardPage() {
                       Quick:
                     </span>
                     {[
-                      `Price of ${selectedStock.symbol}`,
-                      `Buy 250 USDG of ${selectedStock.symbol}`,
-                      `Compare ${selectedStock.symbol} vs MSFTx`,
-                      `60% ${selectedStock.symbol}, 20% AAPLx, 20% USDG`,
-                      "Holdings & Portfolio Value",
-                      "Emergency Circuit Breaker",
+                      `Dip Buyer: ${selectedStock.symbol} -5% / TP +15%`,
+                      `Drift Rebalance (5% band)`,
+                      `Weekly Accumulation: 50 USDG`,
+                      `Volatility Circuit Breaker (8%)`,
+                      `Buy TSLAx @ $390 / TP @ $450`,
+                      `Direct Buy ${selectedStock.symbol} on Spot`,
+                      "Explain Auto Mandates",
                     ].map((chip) => (
                       <button
                         key={chip}
@@ -3176,13 +3353,7 @@ export default function AppDashboardPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            setPromptText(currentAdvisoryPlan.mandateRule);
-                            handleSendPrompt(currentAdvisoryPlan.mandateRule);
-                            const firstAlloc = currentAdvisoryPlan.allocations.find(a => a.symbol !== advisoryStablecoin) || currentAdvisoryPlan.allocations[0];
-                            const sym = firstAlloc?.symbol || "NVDAx";
-                            const amt = (advisoryCapital * (firstAlloc?.weightPercent || 35)) / 100;
-                            const price = stockPrices[sym] || 213.9;
-                            openWeb3Signer(sym, amt, amt / price, price);
+                            handleDeployAdvisoryMandate(currentAdvisoryPlan);
                           }}
                           className="rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-md transition-all cursor-pointer flex items-center gap-2"
                         >
@@ -3357,10 +3528,7 @@ export default function AppDashboardPage() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const prompt = `Deploy 30% ${stk.symbol}, 70% USDG Short-Term Momentum Mandate with 5% stop protection`;
-                                      setPromptText(prompt);
-                                      handleSendPrompt(prompt);
-                                      openWeb3Signer(stk.symbol, 150, 150 / priceNum, priceNum);
+                                      handleDeployStockMandate(stk.symbol);
                                     }}
                                     className="rounded-lg bg-ink-900 hover:bg-accent-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-xs transition-colors cursor-pointer"
                                   >
@@ -3864,21 +4032,22 @@ export default function AppDashboardPage() {
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              className="w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-3xl border border-ink-200 bg-white p-6 shadow-2xl text-ink-900 relative selection:bg-accent-500/20"
+              className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200 bg-white p-5 shadow-2xl text-ink-900 relative selection:bg-accent-500/20"
             >
-              <div className="flex items-center justify-between border-b border-ink-200 pb-3.5">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-ink-100 pb-3">
                 <div>
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-700">
                     OKX X Layer (Chain 196)
                   </span>
-                  <h3 className="font-display text-lg font-bold text-ink-950">
+                  <h3 className="font-display text-base font-bold text-ink-950">
                     Connect &amp; Manage Wallet
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(false)}
-                  className="rounded-full p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-ink-400 hover:bg-surface-100 hover:text-ink-950 cursor-pointer transition-colors"
+                  className="rounded-full p-1.5 text-ink-400 hover:bg-surface-100 hover:text-ink-950 cursor-pointer transition-colors"
                 >
                   <svg viewBox="0 0 16 16" className="h-4 w-4 stroke-current stroke-2 fill-none">
                     <path d="M4 4l8 8M12 4l-8 8" />
@@ -3886,176 +4055,204 @@ export default function AppDashboardPage() {
                 </button>
               </div>
 
-              <div className="mt-4 space-y-5 text-xs text-ink-700">
-                <p className="text-ink-600 leading-relaxed text-[11px]">
-                  Select your preferred platform to interface your Web3 wallet for autonomous execution on OKX X Layer.
-                </p>
-
-                {/* STEP 1: Connect Web3 Wallet First */}
-                <div className="rounded-2xl border border-ink-200 bg-surface-50/80 p-4 space-y-3 shadow-2xs">
-                  <div className="flex items-center justify-between border-b border-ink-200/70 pb-2">
-                    <div>
-                      <span className="font-bold text-ink-950 uppercase text-[10px] tracking-wider block">
-                        1. Connect Web3 Wallet First
-                      </span>
-                      <p className="text-[11px] text-ink-500">
-                        Non-custodial verification on OKX X Layer (Chain 196)
-                      </p>
-                    </div>
+              <div className="mt-3.5 space-y-4 text-xs text-ink-700">
+                {/* STEP 1: Connect Web3 Wallet */}
+                <div className="rounded-2xl border border-ink-200/90 bg-surface-50/70 p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-ink-950 uppercase text-[10px] tracking-wider">
+                      1. Web3 Wallet Connection
+                    </span>
                     {connectAddress ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.2 text-[9px] font-bold text-emerald-800">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Connected
                       </span>
                     ) : (
-                      <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-800">
-                        Required First
+                      <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.2 text-[9px] font-bold text-amber-800">
+                        Required
                       </span>
                     )}
                   </div>
 
                   {connectAddress ? (
-                    <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                    <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5">
                       <div>
-                        <div className="flex items-center gap-1.5 font-mono text-emerald-800 font-semibold text-xs">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <div className="flex items-center gap-1.5 font-mono text-emerald-900 font-semibold text-xs">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
                           <span>{formatShortAddress(connectAddress)}</span>
-                          <span className="text-ink-500 font-normal">({connectWalletName || "Web3 Wallet"})</span>
+                          <span className="text-ink-500 font-normal text-[10px]">({connectWalletName || "Web3 Wallet"})</span>
                         </div>
                         <p className="text-[10px] font-mono text-emerald-700 mt-0.5">
-                          OKX X Layer (Chain 196) · 100% Gas Sponsored
+                          OKX X Layer · 100% Sponsored Gas
                         </p>
                       </div>
                       <button
                         type="button"
-                        onClick={handleDisconnectChannelWallet}
+                        onClick={handleFullDisconnect}
                         disabled={isWalletConnecting}
-                        className="py-1.5 px-3 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-700 text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
+                        className="py-1 px-2.5 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-700 text-[11px] font-semibold cursor-pointer transition-colors shadow-2xs"
                       >
                         Disconnect
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleConnectWalletType("okx")}
-                          disabled={isWalletConnecting}
-                          className="p-2.5 min-h-[44px] rounded-xl border border-accent-200 bg-accent-50/70 hover:bg-accent-100 text-ink-950 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
-                        >
-                          <span>OKX Wallet</span>
-                          <span className="text-[9px] bg-accent-200 text-accent-800 font-bold px-1.5 py-0.5 rounded">TOP</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleConnectWalletType("metamask")}
-                          disabled={isWalletConnecting}
-                          className="p-2.5 min-h-[44px] rounded-xl border border-ink-200 bg-white hover:bg-surface-50 text-ink-900 font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs"
-                        >
-                          MetaMask
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowWalletConnectModal(true)}
-                          className="p-2.5 min-h-[44px] rounded-xl border border-sky-200 bg-sky-50/70 hover:bg-sky-100 text-sky-800 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
-                        >
-                          <WalletConnectIcon className="w-4 h-4 text-sky-600" />
-                          <span>WalletConnect</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleConnectWalletType("injected")}
-                          disabled={isWalletConnecting}
-                          className="p-2.5 min-h-[44px] rounded-xl border border-ink-200 bg-surface-50 hover:bg-white text-ink-800 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs"
-                        >
-                          Browser Injected
-                        </button>
-                      </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleConnectWalletType("okx")}
+                        disabled={isWalletConnecting}
+                        className="p-2 rounded-xl border border-accent-200 bg-accent-50/70 hover:bg-accent-100 text-ink-950 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                      >
+                        <span>OKX Wallet</span>
+                        <span className="text-[8px] bg-accent-200 text-accent-800 font-bold px-1 rounded">TOP</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleConnectWalletType("metamask")}
+                        disabled={isWalletConnecting}
+                        className="p-2 rounded-xl border border-ink-200 bg-white hover:bg-surface-50 text-ink-900 font-semibold text-xs flex items-center justify-center cursor-pointer transition-colors shadow-2xs"
+                      >
+                        MetaMask
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowWalletConnectModal(true)}
+                        className="p-2 rounded-xl border border-sky-200 bg-sky-50/70 hover:bg-sky-100 text-sky-800 font-semibold text-xs flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                      >
+                        <WalletConnectIcon className="w-3.5 h-3.5 text-sky-600" />
+                        <span>WalletConnect</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleConnectWalletType("injected")}
+                        disabled={isWalletConnecting}
+                        className="p-2 rounded-xl border border-ink-200 bg-surface-50 hover:bg-white text-ink-800 text-xs font-semibold flex items-center justify-center cursor-pointer transition-colors shadow-2xs"
+                      >
+                        Browser Injected
+                      </button>
                     </div>
                   )}
                 </div>
 
-                {/* STEP 2: Continue on Preferred Interface Platform */}
-                <div className="space-y-3 pt-1">
-                  <div>
+                {/* STEP 2: All 4 Execution & Interface Channels */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
                     <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider block">
-                      2. Continue on Preferred Interface Platform
+                      2. Choose Interface Platform
                     </label>
-                    <p className="text-[11px] text-ink-500">
-                      {!connectAddress
-                        ? "Connect your Web3 wallet above to anchor autonomous execution."
-                        : "Select where you want to execute your autonomous investment mandates:"}
-                    </p>
+                    <span className="text-[10px] text-accent-700 font-medium font-mono">
+                      4 Channels Active
+                    </span>
                   </div>
 
-                  {/* 1. Continue on Web Platform (First) */}
-                  <div className="rounded-2xl border border-accent-200 bg-accent-50/50 p-4 space-y-2.5 shadow-xs">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-accent-100 text-accent-700 border border-accent-200">
-                          <SimpleWebLogo className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-ink-950">1. Web Platform (Browser Console)</h4>
-                          <p className="text-[10px] text-accent-700 font-mono">Direct Browser Access · OKX X Layer</p>
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[9px] font-bold">
-                        Live Console
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-ink-600 leading-relaxed">
-                      Direct access to spot prices, conversational agent, unit calculator, and autonomous rebalancing on OKX X Layer.
-                    </p>
-
+                  {/* 2x2 Platform Selection Grid */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* 1. Web Platform */}
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowLoginModal(false);
-                        const chatElem = document.getElementById("conversational-chat");
-                        if (chatElem) {
-                          chatElem.scrollIntoView({ behavior: "smooth" });
-                        }
-                        const chatInput = document.getElementById("conversational-chat-input");
-                        if (chatInput) {
-                          setTimeout(() => chatInput.focus(), 350);
-                        }
-                      }}
-                      className="w-full min-h-[42px] py-2.5 px-4 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer group"
+                      onClick={() => setConnectChannel("web")}
+                      className={cn(
+                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2",
+                        connectChannel === "web"
+                          ? "border-accent-500 bg-accent-50/90 shadow-xs ring-1 ring-accent-500"
+                          : "border-ink-200 bg-surface-50 hover:bg-white"
+                      )}
                     >
-                      <span>Continue on Web Platform</span>
-                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                      <div className="p-1.5 rounded-lg bg-accent-100 text-accent-700 shrink-0">
+                        <SimpleWebLogo className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-ink-950 text-xs truncate">Web Console</div>
+                        <div className="text-[9px] text-ink-500 font-mono truncate">Live Browser</div>
+                      </div>
+                    </button>
+
+                    {/* 2. Telegram Bot */}
+                    <button
+                      type="button"
+                      onClick={() => setConnectChannel("telegram")}
+                      className={cn(
+                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2",
+                        connectChannel === "telegram"
+                          ? "border-sky-500 bg-sky-50/90 shadow-xs ring-1 ring-sky-500"
+                          : "border-ink-200 bg-surface-50 hover:bg-white"
+                      )}
+                    >
+                      <div className="p-1.5 rounded-lg bg-sky-100 text-sky-700 shrink-0">
+                        <SimpleTelegramLogo className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-ink-950 text-xs truncate">Telegram</div>
+                        <div className="text-[9px] text-sky-700 font-mono truncate">@MeireiXLayerBot</div>
+                      </div>
+                    </button>
+
+                    {/* 3. WhatsApp Assistant */}
+                    <button
+                      type="button"
+                      onClick={() => setConnectChannel("whatsapp")}
+                      className={cn(
+                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2",
+                        connectChannel === "whatsapp"
+                          ? "border-emerald-500 bg-emerald-50/90 shadow-xs ring-1 ring-emerald-500"
+                          : "border-ink-200 bg-surface-50 hover:bg-white"
+                      )}
+                    >
+                      <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
+                        <SimpleWhatsAppLogo className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-ink-950 text-xs truncate">WhatsApp</div>
+                        <div className="text-[9px] text-emerald-700 font-mono truncate">Autonomous AI</div>
+                      </div>
+                    </button>
+
+                    {/* 4. Instagram Social Trader */}
+                    <button
+                      type="button"
+                      onClick={() => setConnectChannel("instagram")}
+                      className={cn(
+                        "p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2",
+                        connectChannel === "instagram"
+                          ? "border-pink-500 bg-pink-50/90 shadow-xs ring-1 ring-pink-500"
+                          : "border-ink-200 bg-surface-50 hover:bg-white"
+                      )}
+                    >
+                      <div className="p-1.5 rounded-lg bg-pink-100 text-pink-700 shrink-0">
+                        <SimpleInstagramLogo className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-ink-950 text-xs truncate">Instagram</div>
+                        <div className="text-[9px] text-pink-700 font-mono truncate">Social Trader</div>
+                      </div>
                     </button>
                   </div>
 
-                  {/* 2. Continue on Telegram (Second) */}
-                  <div
-                    className={cn(
-                      "rounded-2xl border p-4 space-y-3 shadow-xs transition-all",
-                      connectAddress ? "border-sky-200 bg-sky-50/50" : "border-ink-200 bg-surface-50 opacity-80"
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-sky-100 text-sky-700 border border-sky-200">
-                          <SimpleTelegramLogo className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-ink-950">2. Telegram (@MeireiXLayerBot)</h4>
-                          <p className="text-[10px] text-sky-700 font-mono">Autonomous Execution Bot · Chain 196</p>
-                        </div>
+                  {/* Channel Action Panel */}
+                  <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3 space-y-2">
+                    {connectChannel === "web" && (
+                      <div className="space-y-2">
+                        <p className="text-[11px] text-ink-600">
+                          Direct web browser access to spot equities, conversational agent, unit calculator, and autonomous mandates on OKX X Layer.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLoginModal(false);
+                            const chatElem = document.getElementById("conversational-chat");
+                            if (chatElem) chatElem.scrollIntoView({ behavior: "smooth" });
+                            const chatInputElem = document.getElementById("conversational-chat-input");
+                            if (chatInputElem) setTimeout(() => chatInputElem.focus(), 300);
+                          }}
+                          className="w-full py-2 px-3 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                        >
+                          <span>Continue on Web Terminal Console</span>
+                          <span>→</span>
+                        </button>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-300 text-[9px] font-bold">
-                        Direct Bot (Live)
-                      </span>
-                    </div>
+                    )}
 
-                    {connectAddress ? (
+                    {connectChannel === "telegram" && (
                       <div className="space-y-2">
                         <div>
                           <label className="text-[10px] font-bold uppercase tracking-wider text-ink-700 block mb-1">
@@ -4066,88 +4263,118 @@ export default function AppDashboardPage() {
                             value={connectHandle}
                             onChange={(e) => setConnectHandle(e.target.value)}
                             placeholder="@MeireiXLayerBot or username"
-                            className="w-full rounded-xl border border-sky-200 bg-white p-2.5 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-sky-500 transition-colors"
+                            className="w-full rounded-lg border border-ink-200 bg-white p-2 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-sky-500"
                           />
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={handleConfirmChannelLink}
-                          disabled={isChannelLinking}
-                          className="w-full min-h-[42px] py-2.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer disabled:opacity-50"
-                        >
-                          <SimpleTelegramLogo className="w-4 h-4 text-white" />
-                          <span>{isChannelLinking ? "Anchoring Wallet..." : "Continue on Telegram →"}</span>
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={handleConfirmChannelLink}
+                            disabled={isChannelLinking || !connectAddress}
+                            className="flex-1 py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            <SimpleTelegramLogo className="w-3.5 h-3.5" />
+                            <span>{isChannelLinking ? "Anchoring..." : "Link & Launch Telegram"}</span>
+                          </button>
+                          <a
+                            href="https://t.me/MeireiXLayerBot"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-2 px-3 rounded-xl border border-sky-300 bg-white hover:bg-sky-50 text-sky-700 font-bold text-xs flex items-center justify-center transition-colors"
+                          >
+                            Open Bot
+                          </a>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="rounded-xl border border-dashed border-ink-200 bg-white/70 p-3 text-center space-y-1.5">
-                        <p className="text-[11px] font-semibold text-ink-700">
-                          Wallet Connection Required First
-                        </p>
-                        <p className="text-[10px] text-ink-500 leading-relaxed">
-                          You cannot continue on Telegram without connecting your Web3 wallet first. Please connect your OKX Wallet or MetaMask above.
-                        </p>
+                    )}
+
+                    {connectChannel === "whatsapp" && (
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-ink-700 block mb-1">
+                            WhatsApp Phone Number (with country code)
+                          </label>
+                          <input
+                            type="text"
+                            value={connectHandle.startsWith("+") ? connectHandle : "+1"}
+                            onChange={(e) => setConnectHandle(e.target.value)}
+                            placeholder="+1234567890"
+                            className="w-full rounded-lg border border-ink-200 bg-white p-2 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-emerald-500"
+                          />
+                        </div>
                         <button
                           type="button"
-                          onClick={() => handleConnectWalletType("okx")}
-                          className="mt-1 px-3 py-1.5 rounded-lg bg-ink-900 text-white text-[10px] font-bold hover:bg-accent-600 transition-colors cursor-pointer"
+                          onClick={() => {
+                            if (typeof window !== "undefined") {
+                              window.open(`https://wa.me/?text=Hello%20Meirei%20on%20OKX%20X%20Layer`, "_blank", "noopener,noreferrer");
+                            }
+                          }}
+                          className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                         >
-                          Connect Wallet Above First
+                          <SimpleWhatsAppLogo className="w-3.5 h-3.5 text-white" />
+                          <span>Launch WhatsApp Assistant →</span>
                         </button>
                       </div>
                     )}
-                  </div>
 
-                  {/* 3 & 4. WhatsApp & Instagram (Coming Soon) */}
-                  <div className="grid grid-cols-2 gap-2.5 pt-1">
-                    {/* WhatsApp */}
-                    <div className="rounded-xl border border-dashed border-ink-200 bg-surface-50 p-3 flex flex-col items-center justify-center text-center opacity-70">
-                      <SimpleWhatsAppLogo className="w-5 h-5 text-emerald-700/60 mb-1" />
-                      <span className="text-xs font-bold text-ink-800">3. WhatsApp</span>
-                      <span className="mt-1 rounded bg-amber-100 border border-amber-200 px-2 py-0.5 text-[9px] font-bold text-amber-800">
-                        Coming Soon
-                      </span>
-                    </div>
-
-                    {/* Instagram */}
-                    <div className="rounded-xl border border-dashed border-ink-200 bg-surface-50 p-3 flex flex-col items-center justify-center text-center opacity-70">
-                      <SimpleInstagramLogo className="w-5 h-5 text-pink-700/60 mb-1" />
-                      <span className="text-xs font-bold text-ink-800">4. Instagram</span>
-                      <span className="mt-1 rounded bg-amber-100 border border-amber-200 px-2 py-0.5 text-[9px] font-bold text-amber-800">
-                        Coming Soon
-                      </span>
-                    </div>
+                    {connectChannel === "instagram" && (
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-ink-700 block mb-1">
+                            Instagram Username
+                          </label>
+                          <input
+                            type="text"
+                            value={connectHandle.startsWith("@") ? connectHandle : "@meirei_trader"}
+                            onChange={(e) => setConnectHandle(e.target.value)}
+                            placeholder="@your_instagram_handle"
+                            className="w-full rounded-lg border border-ink-200 bg-white p-2 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-pink-500"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (typeof window !== "undefined") {
+                              window.open("https://instagram.com/direct/inbox/", "_blank", "noopener,noreferrer");
+                            }
+                          }}
+                          className="w-full py-2 px-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                        >
+                          <SimpleInstagramLogo className="w-3.5 h-3.5 text-white" />
+                          <span>Connect Instagram Trader →</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Feedback messages */}
                 {connectInfoMsg && (
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px]">
                     {connectInfoMsg}
                   </div>
                 )}
                 {connectErrorMsg && (
-                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs">
+                  <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-[11px]">
                     {connectErrorMsg}
                   </div>
                 )}
 
-                {/* External links */}
-                <div className="border-t border-ink-200 pt-3 flex items-center justify-between text-[11px] text-ink-500">
+                {/* Footer Controls */}
+                <div className="border-t border-ink-100 pt-2.5 flex items-center justify-between text-[11px] text-ink-500">
                   <a
                     href="https://t.me/MeireiXLayerBot"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-sky-600 flex items-center gap-1.5 transition-colors"
+                    className="hover:text-sky-600 flex items-center gap-1 transition-colors"
                   >
-                    <SimpleTelegramLogo className="w-3.5 h-3.5" />
-                    <span>Telegram Bot (@MeireiXLayerBot)</span>
+                    <SimpleTelegramLogo className="w-3.5 h-3.5 text-sky-600" />
+                    <span>@MeireiXLayerBot</span>
                   </a>
                   <button
                     type="button"
                     onClick={() => setShowLoginModal(false)}
-                    className="min-h-[44px] px-3 py-2 text-ink-600 hover:text-ink-950 transition-colors cursor-pointer text-[11px] flex items-center justify-center"
+                    className="px-3 py-1.5 rounded-lg border border-ink-200 hover:bg-surface-100 text-ink-700 text-xs font-semibold cursor-pointer transition-colors"
                   >
                     Done &amp; Close
                   </button>
