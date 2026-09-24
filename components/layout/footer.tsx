@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { SITE } from "@/lib/data/site";
-import whatsappIcon from "@/public/icons/whatsapp.svg";
 import telegramIcon from "@/public/icons/telegram.svg";
 
 export function Footer() {
@@ -27,15 +26,6 @@ export function Footer() {
           </p>
 
           <div className="flex flex-col gap-3 pt-2 text-base text-surface-50/70">
-            <Link
-              href="/coming-soon"
-              className="flex items-center gap-2.5 transition-colors hover:text-surface-50"
-            >
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent-500/30 text-accent-400">
-                <Image src={whatsappIcon} alt="" width={13} height={13} className="opacity-70" />
-              </span>
-              <span>WhatsApp <span className="text-xs font-mono text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">Coming Soon</span></span>
-            </Link>
             {SITE.telegramLink && (
               <a
                 href={SITE.telegramLink}
@@ -46,21 +36,23 @@ export function Footer() {
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface-50/10">
                   <Image src={telegramIcon} alt="" width={13} height={13} />
                 </span>
-                Telegram
+                <span>Telegram Bot (@MeireiXLayerBot)</span>
               </a>
             )}
             <Link
-              href="/coming-soon"
+              href="/app"
               className="flex items-center gap-2.5 transition-colors hover:text-surface-50"
             >
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface-50/10">
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-white stroke-2 opacity-70">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                  <circle cx="12" cy="12" r="4" />
-                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" />
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                  <line x1="8" y1="21" x2="16" y2="21" />
+                  <line x1="12" y1="17" x2="12" y2="21" />
+                  <path d="m7 8 2 2-2 2" />
+                  <line x1="11" y1="12" x2="15" y2="12" />
                 </svg>
               </span>
-              <span>Instagram <span className="text-xs font-mono text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">Coming Soon</span></span>
+              <span>Web Browser Console (/app)</span>
             </Link>
           </div>
         </div>
@@ -133,7 +125,7 @@ export function Footer() {
             <ul className="flex flex-col space-y-3 text-base text-surface-50/70">
               <li>
                 <Link href="/app" className="font-medium text-surface-50 transition-colors hover:text-white">
-                  Simple Mode Terminal
+                  Basic Mode Terminal
                 </Link>
               </li>
               <li>

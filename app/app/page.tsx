@@ -34,31 +34,10 @@ import {
   OKX_TRADING_PLAN_DATA,
 } from "@/lib/okx/skills_data";
 
-type Platform = "whatsapp" | "telegram" | "instagram" | "web" | "okx_wallet";
-type Mode = "simple" | "advanced";
+type Platform = "telegram" | "web" | "okx_wallet";
+type Mode = "basic" | "advanced";
 
-// Simple Vector SVG Logos for Social Platforms
-function SimpleWhatsAppLogo({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-      <path
-        d="M9.5 9a.5.5 0 0 0-.5.5v.1c.1 1.2.7 2.6 1.8 3.7s2.5 1.7 3.7 1.8h.1a.5.5 0 0 0 .5-.5v-1.2a.5.5 0 0 0-.3-.5l-1.5-.6a.5.5 0 0 0-.6.2l-.5.7a6.2 6.2 0 0 1-2.2-2.2l.7-.5a.5.5 0 0 0 .2-.6l-.6-1.5a.5.5 0 0 0-.5-.3H9.5z"
-        fill="currentColor"
-        stroke="none"
-      />
-    </svg>
-  );
-}
-
+// Simple Vector SVG Logos for Supported Platforms
 function SimpleTelegramLogo({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg
@@ -72,24 +51,6 @@ function SimpleTelegramLogo({ className = "w-5 h-5" }: { className?: string }) {
     >
       <path d="m22 2-11 13" />
       <path d="m22 2-7 20-4-9-9-4 20-7z" />
-    </svg>
-  );
-}
-
-function SimpleInstagramLogo({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -318,7 +279,6 @@ export default function AppDashboardPage() {
   const [connectErrorMsg, setConnectErrorMsg] = useState<string | null>(null);
   const [showWalletConnectModal, setShowWalletConnectModal] = useState<boolean>(false);
   const [availableConnectWallets, setAvailableConnectWallets] = useState<WalletOption[]>([]);
-  const [isListeningVoice, setIsListeningVoice] = useState<boolean>(false);
   const [isAccountFrozen, setIsAccountFrozen] = useState<boolean>(false);
 
   // Fetch authentic real-time on-chain balances from OKX X Layer (Chain ID 196)
@@ -673,66 +633,17 @@ export default function AppDashboardPage() {
     setShowCreateMandateModal(false);
   };
 
-  // Conversational Chat Console State (Just like Telegram and WhatsApp)
+  // Conversational Chat Console State (Web & Telegram)
   const INITIAL_CHAT_MESSAGE: ChatMessage = {
     id: "welcome-1",
     sender: "bot",
-    text: "Welcome to Meirei on OKX X Layer Mainnet. You can chat here just like on WhatsApp or Telegram (@MeireiXLayerBot).\n\nSend 'stocks' for 24/7 equity price quotes, 'balance' to view your wallet holdings, or type any trade like 'Buy 100 USDG NVDAx'.",
+    text: "Welcome to Meirei on OKX X Layer Mainnet. You can chat here directly on the web terminal or via Telegram (@MeireiXLayerBot).\n\nSend 'stocks' for 24/7 equity price quotes, 'balance' to view your wallet holdings, or type any trade like 'Buy 100 USDG NVDAx'.",
     timestamp: "Just now",
   };
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([INITIAL_CHAT_MESSAGE]);
   const [chatInput, setChatInput] = useState<string>("");
   const [isChatSending, setIsChatSending] = useState<boolean>(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
-
-  // Voice dictation microphone handler for Web Platform
-  const handleVoiceDictation = () => {
-    if (typeof window === "undefined") return;
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert("Voice speech recognition is not supported in this browser. Please type your message.");
-      return;
-    }
-
-    if (isListeningVoice) {
-      setIsListeningVoice(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = "en-US";
-
-      recognition.onstart = () => {
-        setIsListeningVoice(true);
-      };
-
-      recognition.onresult = (event: any) => {
-        const speechText = event.results?.[0]?.[0]?.transcript;
-        if (speechText) {
-          setChatInput(speechText);
-          handleSendChatMessage(speechText);
-        }
-      };
-
-      recognition.onerror = () => {
-        setIsListeningVoice(false);
-      };
-
-      recognition.onend = () => {
-        setIsListeningVoice(false);
-      };
-
-      recognition.start();
-    } catch (e) {
-      console.warn("[Voice Dictation] Speech recognition error:", e);
-      setIsListeningVoice(false);
-    }
-  };
 
   // Theme state: locked to crisp institutional light mode
   const isDarkMode = false;
@@ -744,8 +655,8 @@ export default function AppDashboardPage() {
     }
   }, []);
 
-  // Trading mode state: strictly TWO MODES: "simple" | "advanced"
-  const [mode, setMode] = useState<Mode>("simple");
+  // Trading mode state: strictly TWO MODES: "basic" | "advanced"
+  const [mode, setMode] = useState<Mode>("basic");
 
   // Stock selection & chart state
   const [selectedStock, setSelectedStock] = useState<StockItem>(STOCKS[0]);
@@ -764,7 +675,7 @@ export default function AppDashboardPage() {
     statusTone?: string;
   } | null>(null);
 
-  // Simple Mode: Price Comparison & Units Calculator State
+  // Basic Mode: Price Comparison & Units Calculator State
   const [calcInvestmentUsdg, setCalcInvestmentUsdg] = useState<number>(250);
   const [promptAssistantCategory, setPromptAssistantCategory] = useState<"trades" | "questions" | "rules">("trades");
   const [web3ModalState, setWeb3ModalState] = useState<{
@@ -903,7 +814,7 @@ export default function AppDashboardPage() {
     loadNews();
   }, []);
 
-  // Pre-populate mandate prompt or stock selection from bot deep links (Telegram / WhatsApp)
+  // Pre-populate mandate prompt or stock selection from bot deep links (Telegram)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -1026,7 +937,8 @@ export default function AppDashboardPage() {
       setConnectErrorMsg("Please connect your Web3 wallet or use WalletConnect first.");
       return;
     }
-    const effectiveHandle = connectHandle.trim() || "+234 902 827 9382";
+    const effectiveHandle =
+      connectHandle.trim() || (connectChannel === "telegram" ? "@MeireiXLayerBot" : "web_terminal_trader");
 
     setIsChannelLinking(true);
     setConnectErrorMsg(null);
@@ -1051,8 +963,6 @@ export default function AppDashboardPage() {
       let redirectUrl = "";
       if (connectChannel === "telegram") {
         redirectUrl = "https://t.me/MeireiXLayerBot";
-      } else if (connectChannel === "whatsapp" || connectChannel === "instagram") {
-        redirectUrl = "/coming-soon";
       }
 
       setProfile((prev) => ({
@@ -1116,7 +1026,7 @@ export default function AppDashboardPage() {
     }
   };
 
-  // Conversational Chat message sender (just like Telegram and WhatsApp)
+  // Conversational Chat message sender (Web & Telegram)
   const handleSendChatMessage = async (textOverride?: string) => {
     const query = (textOverride || chatInput).trim();
     if (!query || isChatSending) return;
@@ -1634,9 +1544,7 @@ export default function AppDashboardPage() {
             {isLoggedIn ? (
               <div className="flex items-center gap-1.5 sm:gap-2.5 rounded-full border border-ink-200 bg-white p-1 sm:p-1.5 sm:pr-3.5 shadow-xs">
                 <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-accent-500 text-[10px] sm:text-xs font-bold text-white shadow-xs uppercase shrink-0">
-                  {profile.platform === "whatsapp" && "WA"}
                   {profile.platform === "telegram" && "TG"}
-                  {profile.platform === "instagram" && "IG"}
                   {profile.platform === "web" && "WEB"}
                   {profile.platform === "okx_wallet" && "OKX"}
                 </div>
@@ -1799,19 +1707,19 @@ export default function AppDashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            {/* EXACTLY TWO MODES SWITCHER: Simple Mode vs Advanced Mode */}
+            {/* EXACTLY TWO MODES SWITCHER: Basic Mode vs Advanced Mode */}
             <div className="flex items-center gap-1.5 rounded-xl border border-ink-200 bg-surface-100 p-1 w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => setMode("simple")}
+                onClick={() => setMode("basic")}
                 className={cn(
                   "flex-1 sm:flex-initial text-center rounded-lg px-3 sm:px-4 py-2 text-xs font-bold transition-all cursor-pointer",
-                  mode === "simple"
+                  mode === "basic"
                     ? "bg-accent-500 text-white shadow-sm"
                     : "text-ink-600 hover:text-ink-900"
                 )}
               >
-                Simple Mode
+                Basic Mode
               </button>
               <button
                 type="button"
@@ -1834,26 +1742,25 @@ export default function AppDashboardPage() {
           {/* Main Interactive Stage (Cols 1 to 8) */}
           <div className="space-y-6 lg:col-span-8">
             {/* ========================================================================= */}
-            {/* MODE 1: SIMPLE MODE (Clean, Fast Trades, Questions & Unit Comparisons)    */}
+            {/* MODE 1: BASIC MODE (Clean, Fast Trades, Questions & Unit Comparisons)     */}
             {/* ========================================================================= */}
-            {mode === "simple" && (
+            {mode === "basic" && (
               <>
                 {/* Channel & Bot Connectivity Status */}
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink-200/80 bg-white p-4 text-xs shadow-xs">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-50 text-accent-700 font-bold">
-                      {profile.platform === "whatsapp" && "WA"}
                       {profile.platform === "telegram" && "TG"}
-                      {profile.platform === "instagram" && "IG"}
                       {profile.platform === "web" && "WEB"}
                       {profile.platform === "okx_wallet" && "OKX"}
+                      {profile.platform !== "telegram" && profile.platform !== "web" && profile.platform !== "okx_wallet" && "AI"}
                     </div>
                     <div>
                       <p className="font-semibold text-ink-900">
                         {profile.handle} · <span className="text-ink-500">{profile.email}</span>
                       </p>
                       <p className="text-[11px] text-ink-500">
-                        Bot Active across WhatsApp, Telegram &amp; Web. Access your account from any device.
+                        Bot Active across Telegram (@MeireiXLayerBot) &amp; Web Browser Console.
                       </p>
                     </div>
                   </div>
@@ -1864,12 +1771,12 @@ export default function AppDashboardPage() {
                   </div>
                 </div>
 
-                {/* 8 Stocks Horizontal Selector Tabs */}
+                {/* 20 Stocks Selector Grid with Quick Buy Buttons */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-4 shadow-xs">
-                  <div className="flex items-center justify-between pb-3">
+                  <div className="flex flex-col justify-between gap-2 border-b border-ink-100 pb-3 sm:flex-row sm:items-center">
                     <div className="flex items-center gap-2">
                       <span className="font-display text-sm font-bold text-ink-900">
-                        Allowlisted xStocks (8 Assets on X Layer)
+                        Allowlisted xStocks (20 Assets on OKX X Layer)
                       </span>
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-600 border border-emerald-500/20">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -1877,59 +1784,78 @@ export default function AppDashboardPage() {
                       </span>
                     </div>
                     <span className="text-xs text-ink-500">
-                      Select asset to inspect spot chart or calculate units
+                      Tap card to view chart &amp; calculator · Tap Quick Buy for instant execution
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="mt-3.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 max-h-[380px] overflow-y-auto pr-1">
                     {STOCKS.map((stock) => {
                       const isSelected = stock.symbol === selectedStock.symbol;
+                      const numericPrice = getNumericPrice(stock);
+
                       return (
-                        <button
+                        <div
                           key={stock.symbol}
-                          type="button"
                           onClick={() => {
                             setSelectedStock(stock);
                             setChartHoverIndex(null);
                           }}
                           className={cn(
-                            "group flex items-center justify-between rounded-xl border p-2.5 text-left transition-all cursor-pointer",
+                            "group flex flex-col justify-between rounded-xl border p-3 text-left transition-all cursor-pointer relative",
                             isSelected
                               ? "border-accent-500 bg-accent-50/50 shadow-xs ring-1 ring-accent-500"
                               : "border-ink-200/80 bg-surface-50 hover:border-ink-300 hover:bg-white"
                           )}
                         >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="flex h-7 w-7 items-center justify-center rounded-lg shadow-xs shrink-0"
-                              style={{ backgroundColor: stock.color }}
-                            >
-                              {stock.logo}
+                          <div className="flex items-start justify-between gap-1.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div
+                                className="flex h-7 w-7 items-center justify-center rounded-lg shadow-xs shrink-0 text-white font-bold text-xs"
+                                style={{ backgroundColor: stock.color }}
+                              >
+                                {stock.logo}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-mono text-xs font-bold text-ink-900 truncate">
+                                  {stock.symbol}
+                                </p>
+                                <p className="text-[10px] text-ink-500 truncate max-w-[90px]">{stock.name}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-mono text-xs font-bold text-ink-900">
-                                {stock.symbol}
-                              </p>
-                              <p className="text-[10px] text-ink-500">{stock.name}</p>
-                            </div>
+                            <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-700 shrink-0">
+                              {stock.change24h}
+                            </span>
                           </div>
 
-                          <div className="text-right">
-                            <p
-                              className={cn(
-                                "font-mono text-xs font-semibold transition-colors duration-300",
-                                priceFlashes[stock.symbol] === "up" && "text-emerald-600 font-bold",
-                                priceFlashes[stock.symbol] === "down" && "text-rose-600 font-bold",
-                                !priceFlashes[stock.symbol] && "text-ink-900"
-                              )}
+                          <div className="mt-3 flex items-center justify-between border-t border-ink-100/70 pt-2">
+                            <div>
+                              <span className="text-[9px] font-mono text-ink-400 block uppercase">Spot</span>
+                              <span
+                                className={cn(
+                                  "font-mono text-xs font-bold transition-colors duration-300",
+                                  priceFlashes[stock.symbol] === "up" && "text-emerald-600 font-bold",
+                                  priceFlashes[stock.symbol] === "down" && "text-rose-600 font-bold",
+                                  !priceFlashes[stock.symbol] && "text-ink-900"
+                                )}
+                              >
+                                {getFormattedPrice(stock)}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStock(stock);
+                                openWeb3Signer(stock.symbol, 100, 100 / numericPrice, numericPrice);
+                              }}
+                              className="rounded-lg bg-ink-900 hover:bg-accent-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs transition-colors cursor-pointer"
+                              title={`Instant buy $100 in ${stock.symbol}`}
                             >
-                              {getFormattedPrice(stock)}
-                            </p>
-                            <p className="text-[10px] font-medium text-emerald-700">
-                              {stock.change24h}
-                            </p>
+                              Quick Buy
+                            </button>
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -2315,120 +2241,166 @@ export default function AppDashboardPage() {
                 </div>
 
                 {/* Section Separator */}
-                <SectionSeparator label="Autonomous Mandate Layer" />
+                <SectionSeparator label="Price Comparison & Unit Calculator" />
 
                 {/* ========================================================================= */}
-                {/* ACTIVE INVESTMENT MANDATES (Autonomous Agent Policies on OKX X Layer)     */}
+                {/* PRICE COMPARISON & UNIT CALCULATOR                                        */}
                 {/* ========================================================================= */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-4 sm:p-5 shadow-xs">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink-100 pb-3">
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-3.5 sm:flex-row sm:items-center">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-display text-sm font-bold text-ink-900 sm:text-base">
-                          Active Investment Mandates
-                        </h3>
-                        <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>{mandatePolicies.filter((m) => m.status === "active").length} Autonomous Policies Active</span>
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
+                          Instant Unit Estimation
+                        </span>
+                        <span className="rounded bg-accent-100 px-1.5 py-0.2 font-mono text-[9px] font-bold text-accent-800">
+                          OKX DEX Aggregator
                         </span>
                       </div>
-                      <p className="mt-0.5 text-xs text-ink-500">
-                        Autonomous policies executed continuously on OKX X Layer without human intervention.
+                      <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg">
+                        Price Comparison &amp; Unit Calculator
+                      </h3>
+                      <p className="text-xs text-ink-500">
+                        Select any allowlisted stock and input an investment amount to calculate exact tokenized units and live DEX conversion parameters.
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleEvaluateDriftNow}
-                        className="rounded-lg border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-surface-100 cursor-pointer transition-colors"
-                        title="Evaluate drift against active policies"
-                      >
-                        Check Drift Now
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleTriggerSimulatedRebalance}
-                        className="rounded-lg border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-surface-100 cursor-pointer transition-colors"
-                        title="Simulate drift shock to test automated solver"
-                      >
-                        Simulate Shock
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowCreateMandateModal(true)}
-                        className="rounded-lg bg-accent-500 hover:bg-accent-600 text-white px-3 py-1.5 text-xs font-bold shadow-xs cursor-pointer transition-colors flex items-center gap-1"
-                        title="Create and deploy a new autonomous mandate"
-                      >
-                        <span className="text-sm leading-none">+</span>
-                        <span>New Mandate</span>
-                      </button>
+                    <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-mono font-medium text-emerald-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Gas 100% Sponsored</span>
                     </div>
                   </div>
 
-                  {/* Mandates Grid */}
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    {mandatePolicies.map((mandate) => (
-                      <div
-                        key={mandate.id}
-                        className={cn(
-                          "rounded-xl border p-3.5 flex flex-col justify-between transition-colors",
-                          mandate.status === "active"
-                            ? "border-ink-200 bg-surface-50/60"
-                            : "border-ink-200/50 opacity-60 bg-surface-100/40"
-                        )}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-[10px] uppercase font-bold text-accent-600">
-                              {mandate.policyType === "drift_rebalance" && "Portfolio Rebalance"}
-                              {mandate.policyType === "dca_recurring" && "DCA Policy"}
-                              {mandate.policyType === "circuit_breaker" && "Circuit Breaker"}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => toggleMandatePolicy(mandate.id)}
-                              className={cn(
-                                "rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer border",
-                                mandate.status === "active"
-                                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
-                                  : "bg-zinc-500/15 border-zinc-500/30 text-zinc-500"
-                              )}
-                            >
-                              {mandate.status === "active" ? "Active" : "Paused"}
-                            </button>
-                          </div>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-4">
+                    {/* Left Column: Stock Selection Dropdown & Investment Input */}
+                    <div className="space-y-3.5 md:col-span-6">
+                      <div>
+                        <label className="text-xs font-bold text-ink-700 uppercase tracking-wider mb-1.5 block">
+                          Select Tokenized Stock (20 Equities)
+                        </label>
+                        <select
+                          value={selectedStock.symbol}
+                          onChange={(e) => {
+                            const found = STOCKS.find((s) => s.symbol === e.target.value);
+                            if (found) {
+                              setSelectedStock(found);
+                              setChartHoverIndex(null);
+                            }
+                          }}
+                          className="w-full rounded-xl border border-ink-200 bg-surface-50 p-2.5 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors cursor-pointer"
+                        >
+                          {STOCKS.map((s) => (
+                            <option key={s.symbol} value={s.symbol}>
+                              {s.symbol} — {s.name} ({getFormattedPrice(s)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                          <h4 className="mt-2 font-display text-sm font-bold text-ink-900">
-                            {mandate.title}
-                          </h4>
-                          <p className="mt-1 font-mono text-xs font-semibold text-accent-700">
-                            {mandate.target}
-                          </p>
-                          <p className="mt-1.5 text-[11px] text-ink-600 leading-relaxed">
-                            {mandate.rule}
-                          </p>
-                        </div>
-
-                        <div className="mt-3 pt-2.5 border-t border-ink-200/50 flex items-center justify-between text-[11px]">
-                          <span className="text-ink-500">{mandate.metricLabel}:</span>
-                          <span className="font-mono font-bold text-ink-900">
-                            {mandate.metricValue}{" "}
-                            <span className="text-ink-400 font-normal text-[10px]">
-                              (Limit: {mandate.threshold})
-                            </span>
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-bold text-ink-700 uppercase tracking-wider">
+                            Investment Capital (USDG)
+                          </label>
+                          <span className="text-[11px] font-mono text-ink-500">
+                            Available: ${profile.usdgBalance.toFixed(2)} USDG
                           </span>
                         </div>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-ink-400">
+                            $
+                          </span>
+                          <input
+                            type="number"
+                            min="10"
+                            step="10"
+                            value={calcInvestmentUsdg}
+                            onChange={(e) => setCalcInvestmentUsdg(Math.max(1, Number(e.target.value) || 0))}
+                            className="w-full rounded-xl border border-ink-200 bg-surface-50 py-2.5 pl-7 pr-16 text-xs font-mono font-bold text-ink-900 outline-none focus:border-accent-500 focus:bg-white transition-colors"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[10px] font-bold text-ink-400">
+                            USDG
+                          </span>
+                        </div>
+
+                        {/* Quick Amount Chips */}
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          {[50, 100, 250, 500, 1000, 2500].map((amt) => (
+                            <button
+                              key={amt}
+                              type="button"
+                              onClick={() => setCalcInvestmentUsdg(amt)}
+                              className={cn(
+                                "rounded-lg px-2.5 py-1 text-[11px] font-mono font-bold transition-all cursor-pointer",
+                                calcInvestmentUsdg === amt
+                                  ? "bg-accent-500 text-white shadow-xs"
+                                  : "bg-surface-100 text-ink-600 hover:bg-surface-200 hover:text-ink-900"
+                              )}
+                            >
+                              ${amt}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Right Column: Calculated Units & Live DEX Execution Breakdown */}
+                    <div className="rounded-xl border border-ink-200/70 bg-surface-50 p-4 space-y-3 md:col-span-6 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-ink-500">Estimated Units Received:</span>
+                          <span className="font-mono text-base font-bold text-accent-600">
+                            {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}
+                          </span>
+                        </div>
+
+                        <div className="mt-2.5 space-y-1.5 border-t border-ink-100 pt-2 text-[11px] font-mono">
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Spot Benchmark:</span>
+                            <span className="font-semibold text-ink-900">{getFormattedPrice(selectedStock)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Unit Ratio:</span>
+                            <span>1 {selectedStock.symbol} = {getFormattedPrice(selectedStock)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Slippage Tolerance:</span>
+                            <span className="text-emerald-700 font-semibold">&lt; 0.05%</span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Minimum Received:</span>
+                            <span className="font-semibold text-ink-900">
+                              {((calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)) * 0.995).toFixed(4)} {selectedStock.symbol}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-ink-600">
+                            <span>Network Gas Fee:</span>
+                            <span className="text-emerald-700 font-bold">$0.00 (100% Sponsored)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const price = getNumericPrice(selectedStock);
+                          const units = calcInvestmentUsdg / (price || 1);
+                          openWeb3Signer(selectedStock.symbol, calcInvestmentUsdg, units, price);
+                        }}
+                        className="w-full rounded-xl bg-accent-500 hover:bg-accent-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <span>Quick Buy {(calcInvestmentUsdg / (getNumericPrice(selectedStock) || 1)).toFixed(4)} {selectedStock.symbol}</span>
+                        <span>(${calcInvestmentUsdg.toFixed(2)} USDG) ↗</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Section Separator */}
-                <SectionSeparator label="Conversational Agent Console" />
+                <SectionSeparator label="Conversational Agent" />
 
                 {/* ========================================================================= */}
-                {/* LIVE CONVERSATIONAL CHAT CONSOLE (WhatsApp & Telegram Experience)        */}
+                {/* LIVE CONVERSATIONAL CHAT CONSOLE (Conversational Agent before Mandates)   */}
                 {/* ========================================================================= */}
                 <div id="conversational-chat" className="scroll-mt-24 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs">
                   {/* Chat Header */}
@@ -2450,7 +2422,7 @@ export default function AppDashboardPage() {
                           </span>
                         </div>
                         <p className="text-[11px] text-ink-500">
-                          Chat naturally just like on WhatsApp or Telegram (
+                          Chat naturally with Meirei on web or Telegram (
                           <a
                             href="https://t.me/MeireiXLayerBot"
                             target="_blank"
@@ -2758,108 +2730,112 @@ export default function AppDashboardPage() {
                 </div>
 
                 {/* Section Separator */}
-                <SectionSeparator label="Live Tokenized Equities Spot Prices" />
+                <SectionSeparator label="Autonomous Mandate Layer" />
 
-                {/* Direct Tokenized Equities Spot Pricing & Quick Trade Terminal */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
-                  <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 md:flex-row md:items-center">
+                {/* ========================================================================= */}
+                {/* ACTIVE INVESTMENT MANDATES (Autonomous Agent Policies on OKX X Layer)     */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-4 sm:p-5 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink-100 pb-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
-                          OKX X Layer (Chain 196)
-                        </span>
-                        <span className="rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800">
-                          100% Gas Sponsored
+                        <h3 className="font-display text-sm font-bold text-ink-900 sm:text-base">
+                          Active Investment Mandates
+                        </h3>
+                        <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>{mandatePolicies.filter((m) => m.status === "active").length} Autonomous Policies Active</span>
                         </span>
                       </div>
-                      <h3 className="font-display text-base font-bold text-ink-900 sm:text-lg">
-                        Tokenized Equities Live Spot Prices
-                      </h3>
-                      <p className="text-xs text-ink-500">
-                        Real-time on-chain pricing for all 20 allowlisted equities. Click Quick Trade to execute non-custodially via OKX DEX Aggregator.
+                      <p className="mt-0.5 text-xs text-ink-500">
+                        Autonomous policies executed continuously on OKX X Layer without human intervention.
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-100 border border-ink-200 px-2.5 py-1 text-[11px] font-mono font-medium text-ink-600">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        20 Assets Allowlisted
-                      </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleEvaluateDriftNow}
+                        className="rounded-lg border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-surface-100 cursor-pointer transition-colors"
+                        title="Evaluate drift against active policies"
+                      >
+                        Check Drift Now
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleTriggerSimulatedRebalance}
+                        className="rounded-lg border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-surface-100 cursor-pointer transition-colors"
+                        title="Simulate drift shock to test automated solver"
+                      >
+                        Simulate Shock
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateMandateModal(true)}
+                        className="rounded-lg bg-accent-500 hover:bg-accent-600 text-white px-3 py-1.5 text-xs font-bold shadow-xs cursor-pointer transition-colors flex items-center gap-1"
+                        title="Create and deploy a new autonomous mandate"
+                      >
+                        <span className="text-sm leading-none">+</span>
+                        <span>New Mandate</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Clean Equity Pricing Grid & Quick Trade */}
-                  <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                    {STOCKS.map((stk) => {
-                      const priceNum = getNumericPrice(stk);
-                      const isSelected = stk.symbol === selectedStock.symbol;
-
-                      return (
-                        <div
-                          key={stk.symbol}
-                          className={cn(
-                            "flex items-center justify-between rounded-xl border p-3 text-xs transition-all",
-                            isSelected
-                              ? "border-accent-400 bg-accent-50/30 shadow-xs"
-                              : "border-ink-200/80 bg-surface-50/50 hover:bg-white hover:border-ink-300"
-                          )}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div
-                              className="flex h-8 w-8 items-center justify-center rounded-lg shadow-xs shrink-0 text-white font-bold text-xs"
-                              style={{ backgroundColor: stk.color }}
-                            >
-                              {stk.logo}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-mono font-bold text-ink-900">{stk.symbol}</span>
-                                <span className="text-[10px] text-ink-400 truncate max-w-[80px]">
-                                  {stk.name}
-                                </span>
-                              </div>
-                              <div
-                                className={cn(
-                                  "font-mono font-semibold transition-colors duration-300 text-xs",
-                                  priceFlashes[stk.symbol] === "up" && "text-emerald-600 font-bold",
-                                  priceFlashes[stk.symbol] === "down" && "text-rose-600 font-bold",
-                                  !priceFlashes[stk.symbol] && "text-ink-900"
-                                )}
-                              >
-                                {getFormattedPrice(stk)}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 shrink-0">
+                  {/* Mandates Grid */}
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    {mandatePolicies.map((mandate) => (
+                      <div
+                        key={mandate.id}
+                        className={cn(
+                          "rounded-xl border p-3.5 flex flex-col justify-between transition-colors",
+                          mandate.status === "active"
+                            ? "border-ink-200 bg-surface-50/60"
+                            : "border-ink-200/50 opacity-60 bg-surface-100/40"
+                        )}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-[10px] uppercase font-bold text-accent-600">
+                              {mandate.policyType === "drift_rebalance" && "Portfolio Rebalance"}
+                              {mandate.policyType === "dca_recurring" && "DCA Policy"}
+                              {mandate.policyType === "circuit_breaker" && "Circuit Breaker"}
+                            </span>
                             <button
                               type="button"
-                              onClick={() => {
-                                setSelectedStock(stk);
-                                openWeb3Signer(stk.symbol, 100, 100 / priceNum, priceNum);
-                              }}
-                              className="rounded-lg bg-ink-900 hover:bg-accent-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-xs transition-colors cursor-pointer"
-                              title={`Trade ${stk.symbol} on OKX X Layer`}
+                              onClick={() => toggleMandatePolicy(mandate.id)}
+                              className={cn(
+                                "rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer border",
+                                mandate.status === "active"
+                                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
+                                  : "bg-zinc-500/15 border-zinc-500/30 text-zinc-500"
+                              )}
                             >
-                              Quick Trade
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedStock(stk);
-                                handleSendChatMessage(`Buy 250 USDG of ${stk.symbol}`);
-                                const el = document.getElementById("conversational-chat");
-                                if (el) el.scrollIntoView({ behavior: "smooth" });
-                              }}
-                              className="rounded-lg border border-ink-200 bg-white hover:bg-surface-100 px-2 py-1.5 text-[11px] font-semibold text-ink-600 cursor-pointer transition-colors"
-                              title={`Chat with AI about ${stk.symbol}`}
-                            >
-                              Chat
+                              {mandate.status === "active" ? "Active" : "Paused"}
                             </button>
                           </div>
+
+                          <h4 className="mt-2 font-display text-sm font-bold text-ink-900">
+                            {mandate.title}
+                          </h4>
+                          <p className="mt-1 font-mono text-xs font-semibold text-accent-700">
+                            {mandate.target}
+                          </p>
+                          <p className="mt-1.5 text-[11px] text-ink-600 leading-relaxed">
+                            {mandate.rule}
+                          </p>
                         </div>
-                      );
-                    })}
+
+                        <div className="mt-3 pt-2.5 border-t border-ink-200/50 flex items-center justify-between text-[11px]">
+                          <span className="text-ink-500">{mandate.metricLabel}:</span>
+                          <span className="font-mono font-bold text-ink-900">
+                            {mandate.metricValue}{" "}
+                            <span className="text-ink-400 font-normal text-[10px]">
+                              (Limit: {mandate.threshold})
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </>
@@ -3324,7 +3300,7 @@ export default function AppDashboardPage() {
                                 const stockMatch = STOCKS.find((s) => s.symbol === item.ticker);
                                 if (stockMatch) setSelectedStock(stockMatch);
                                 setPromptText(item.suggestedAction.tradePrompt);
-                                setMode("simple");
+                                setMode("basic");
                                 handleSendPrompt(item.suggestedAction.tradePrompt);
                               }}
                               className="rounded-lg bg-ink-900 border border-transparent px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-accent-600 cursor-pointer"
@@ -3537,13 +3513,15 @@ export default function AppDashboardPage() {
           {/* Right Sidebar: Portfolio Summary (Cols 9 to 12) */}
           <div className="space-y-6 lg:col-span-4">
 
-            {/* Live Portfolio Breakdown Card */}
+            {/* Live Portfolio Breakdown Card - Unified Active Holdings */}
             <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
               <div className="flex items-center justify-between border-b border-ink-100 pb-3">
                 <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
-                  Portfolio Value
+                  Active Portfolio Holdings
                 </span>
-                <span className="font-mono text-xs text-ink-400">Live USDG</span>
+                <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                  {profile.holdings.length} {profile.holdings.length === 1 ? "Position" : "Positions"}
+                </span>
               </div>
 
               <div className="mt-3">
@@ -3563,14 +3541,12 @@ export default function AppDashboardPage() {
               </div>
 
               {profile.holdings.length === 0 ? (
-                mode === "advanced" ? (
-                  <div className="mt-4 rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
-                    <p className="text-xs font-semibold text-ink-800">No active stock holdings</p>
-                    <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
-                      This wallet currently holds no tokenized equities on X Layer (chain 196). Submit an investment mandate to begin.
-                    </p>
-                  </div>
-                ) : null
+                <div className="mt-4 rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
+                  <p className="text-xs font-semibold text-ink-800">No active stock holdings</p>
+                  <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
+                    This wallet currently holds no tokenized equities on OKX X Layer (Chain 196). Use Quick Buy or submit an investment mandate to begin.
+                  </p>
+                </div>
               ) : (
                 <>
                   {/* Progress Bar Breakdown */}
@@ -3587,94 +3563,42 @@ export default function AppDashboardPage() {
                     })}
                   </div>
 
-                  {/* Holdings List */}
+                  {/* Holdings List with live spot & units */}
                   <div className="mt-4 space-y-2 text-xs">
-                    {profile.holdings.map((h) => (
-                      <div
-                        key={h.symbol}
-                        className="flex items-center justify-between rounded-lg border border-ink-100 bg-surface-50 px-3 py-2"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="h-2 w-2 rounded-full shrink-0"
-                            style={{ backgroundColor: h.color }}
-                          />
-                          <span className="font-bold text-ink-900">{h.symbol}</span>
-                          <span className="text-[10px] text-ink-500">
-                            {h.amount.toFixed(2)} units
+                    {profile.holdings.map((h) => {
+                      const livePrice = stockPrices[h.symbol];
+                      const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
+
+                      return (
+                        <div
+                          key={h.symbol}
+                          className="flex items-center justify-between rounded-lg border border-ink-100 bg-surface-50 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="h-2.5 w-2.5 rounded-full shrink-0"
+                              style={{ backgroundColor: h.color }}
+                            />
+                            <span className="font-bold text-ink-900">{h.symbol}</span>
+                            <span className="text-[10px] text-ink-500">
+                              {h.amount.toFixed(2)} units
+                            </span>
+                            {livePrice && (
+                              <span className="text-[9px] font-mono text-ink-400">
+                                @ ${livePrice.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                          <span className="font-mono font-semibold text-ink-900">
+                            ${currentVal.toFixed(2)}
                           </span>
                         </div>
-                        <span className="font-mono font-semibold text-ink-900">
-                          ${h.valueUsd.toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               )}
             </div>
-
-            {/* Active stocks on this account (Advanced Mode Only) */}
-            {mode === "advanced" && (
-              <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
-                <div className="flex items-center justify-between border-b border-ink-100 pb-3">
-                  <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
-                    Active stocks on this account
-                  </span>
-                  <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                    {profile.holdings.filter((h) => h.symbol !== "USDG").length} Active Stocks
-                  </span>
-                </div>
-
-                <div className="mt-3.5 space-y-2.5">
-                  {profile.holdings.filter((h) => h.symbol !== "USDG").length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-ink-200 bg-surface-50 p-4 text-center">
-                      <p className="text-xs font-semibold text-ink-800">No active stock positions</p>
-                      <p className="mt-1 text-[11px] text-ink-500 leading-relaxed">
-                        You currently hold 0 stock tokens on OKX X Layer. Use the trade console or Meirei AI chat to execute an order.
-                      </p>
-                    </div>
-                  ) : (
-                    profile.holdings
-                      .filter((h) => h.symbol !== "USDG")
-                      .map((h) => {
-                        const livePrice = stockPrices[h.symbol];
-                        const currentVal = livePrice ? h.amount * livePrice : h.valueUsd;
-                        const stockItem = STOCKS.find((s) => s.symbol === h.symbol);
-
-                        return (
-                          <div
-                            key={h.symbol}
-                            className="rounded-xl border border-ink-100 bg-surface-50 p-3 text-xs"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className="h-2.5 w-2.5 rounded-full shrink-0"
-                                  style={{ backgroundColor: h.color }}
-                                />
-                                <span className="font-bold text-ink-900">{h.symbol}</span>
-                                <span className="rounded bg-emerald-500/10 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-600">
-                                  Active
-                                </span>
-                              </div>
-                              <span className="font-mono font-bold text-ink-900">
-                                ${currentVal.toFixed(2)}
-                              </span>
-                            </div>
-                            <div className="mt-1.5 flex items-center justify-between text-[11px] text-ink-500 font-mono">
-                              <span>Holding: {h.amount.toFixed(2)} units</span>
-                              <span>
-                                Spot: {livePrice ? `$${livePrice.toFixed(2)}` : stockItem?.price || "--"}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* ========================================================================= */}
             {/* AUTONOMOUS AGENT EXECUTION AUDIT TRAIL                                    */}
@@ -3843,26 +3767,17 @@ export default function AppDashboardPage() {
 
               <div className="mt-4 space-y-4 text-xs text-ink-700">
                 <p className="text-ink-600 leading-relaxed text-[11px]">
-                  Select your preferred social platform to interface with, then anchor your Web3
+                  Select your preferred platform to interface with, then anchor your Web3
                   wallet for autonomous execution on OKX X Layer.
                 </p>
 
-                {/* 4 Social Platforms */}
+                {/* 2 Supported Platforms: Telegram and Web */}
                 <div>
                   <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider mb-2 block">
                     Preferred Interface Platform
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {[
-                      {
-                        id: "whatsapp" as Platform,
-                        name: "WhatsApp",
-                        icon: SimpleWhatsAppLogo,
-                        color: "text-emerald-700",
-                        border: "border-emerald-500",
-                        bg: "bg-emerald-50",
-                        tagline: "Coming Soon",
-                      },
                       {
                         id: "telegram" as Platform,
                         name: "Telegram",
@@ -3871,15 +3786,6 @@ export default function AppDashboardPage() {
                         border: "border-sky-500",
                         bg: "bg-sky-50",
                         tagline: "Direct Bot (Live)",
-                      },
-                      {
-                        id: "instagram" as Platform,
-                        name: "Instagram",
-                        icon: SimpleInstagramLogo,
-                        color: "text-pink-700",
-                        border: "border-pink-500",
-                        bg: "bg-pink-50",
-                        tagline: "Coming Soon",
                       },
                       {
                         id: "web" as Platform,
@@ -3899,26 +3805,22 @@ export default function AppDashboardPage() {
                           type="button"
                           onClick={() => {
                             setConnectChannel(p.id);
-                            if (p.id === "whatsapp" && (!connectHandle || connectHandle.includes("@"))) {
-                              setConnectHandle("+234 902 827 9382");
-                            } else if (p.id === "telegram" && (!connectHandle || connectHandle.includes("+"))) {
+                            if (p.id === "telegram" && (!connectHandle || connectHandle.includes("investor@meirei.app"))) {
                               setConnectHandle("@MeireiXLayerBot");
-                            } else if (p.id === "instagram" && (!connectHandle || connectHandle.includes("+"))) {
-                              setConnectHandle("@meirei_investor");
-                            } else if (p.id === "web" && (!connectHandle || connectHandle.includes("+"))) {
+                            } else if (p.id === "web" && (!connectHandle || connectHandle.startsWith("@"))) {
                               setConnectHandle("investor@meirei.app");
                             }
                           }}
                           className={cn(
-                            "rounded-xl border p-2.5 min-h-[44px] text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5",
+                            "rounded-xl border p-3 min-h-[44px] text-center font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5",
                             isSelected
                               ? `${p.border} ${p.bg} ${p.color} shadow-xs ring-1 ring-ink-300`
                               : "border-ink-200 bg-surface-50 text-ink-700 hover:bg-white hover:border-ink-300"
                           )}
                         >
-                          <Icon className="w-4 h-4" />
-                          <span className="text-[11px]">{p.name}</span>
-                          <span className="text-[9px] text-ink-500 font-normal">{p.tagline}</span>
+                          <Icon className="w-5 h-5" />
+                          <span className="text-xs">{p.name}</span>
+                          <span className="text-[10px] text-ink-500 font-normal">{p.tagline}</span>
                         </button>
                       );
                     })}
@@ -3971,25 +3873,17 @@ export default function AppDashboardPage() {
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="font-bold text-ink-950 uppercase text-[10px] tracking-wider">
-                          {connectChannel === "whatsapp" && "WhatsApp Phone Number"}
-                          {connectChannel === "telegram" && "Telegram Handle or ID"}
-                          {connectChannel === "instagram" && "Instagram Username"}
+                          Telegram Handle or Chat ID
                         </label>
                         <span className="font-mono text-[10px] text-ink-500">
-                          {connectChannel === "telegram" ? "@MeireiXLayerBot" : "Channel Identity"}
+                          @MeireiXLayerBot
                         </span>
                       </div>
                       <input
                         type="text"
                         value={connectHandle}
                         onChange={(e) => setConnectHandle(e.target.value)}
-                        placeholder={
-                          connectChannel === "whatsapp"
-                            ? "+234 902 827 9382"
-                            : connectChannel === "telegram"
-                            ? "@MeireiXLayerBot or username"
-                            : "@your_instagram"
-                        }
+                        placeholder="@MeireiXLayerBot or username"
                         className="w-full min-h-[44px] rounded-xl border border-ink-200 bg-surface-50 p-3 text-xs font-mono text-ink-900 placeholder-ink-400 outline-none focus:border-accent-500 focus:bg-white transition-colors"
                       />
                     </div>
@@ -4066,17 +3960,10 @@ export default function AppDashboardPage() {
                             type="button"
                             onClick={handleConfirmChannelLink}
                             disabled={isChannelLinking}
-                            className={cn(
-                              "flex-1 min-h-[44px] py-3 px-4 rounded-xl disabled:opacity-50 text-white font-bold text-xs shadow-xs cursor-pointer transition-all flex items-center justify-center gap-2",
-                              connectChannel === "whatsapp" && "bg-emerald-600 hover:bg-emerald-700",
-                              connectChannel === "telegram" && "bg-sky-600 hover:bg-sky-700",
-                              connectChannel === "instagram" && "bg-pink-600 hover:bg-pink-700"
-                            )}
+                            className="flex-1 min-h-[44px] py-3 px-4 rounded-xl disabled:opacity-50 text-white font-bold text-xs shadow-xs cursor-pointer transition-all flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-700"
                           >
-                            {connectChannel === "whatsapp" && <SimpleWhatsAppLogo className="w-4 h-4 text-white" />}
-                            {connectChannel === "telegram" && <SimpleTelegramLogo className="w-4 h-4 text-white" />}
-                            {connectChannel === "instagram" && <SimpleInstagramLogo className="w-4 h-4 text-white" />}
-                            <span>{isChannelLinking ? "Anchoring..." : `Anchor Wallet to ${connectChannel.toUpperCase()}`}</span>
+                            <SimpleTelegramLogo className="w-4 h-4 text-white" />
+                            <span>{isChannelLinking ? "Anchoring..." : "Anchor Wallet to Telegram"}</span>
                           </button>
                           <button
                             type="button"
@@ -4090,24 +3977,12 @@ export default function AppDashboardPage() {
 
                         {connectSuccess && (
                           <a
-                            href={
-                              connectChannel === "telegram"
-                                ? "https://t.me/MeireiXLayerBot"
-                                : "/coming-soon"
-                            }
-                            {...(connectChannel === "telegram" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                            className={cn(
-                              "w-full min-h-[44px] py-2.5 px-4 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer",
-                              connectChannel === "whatsapp" && "bg-amber-600 hover:bg-amber-700",
-                              connectChannel === "telegram" && "bg-sky-600 hover:bg-sky-700",
-                              connectChannel === "instagram" && "bg-amber-600 hover:bg-amber-700"
-                            )}
+                            href="https://t.me/MeireiXLayerBot"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full min-h-[44px] py-2.5 px-4 rounded-xl text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer bg-sky-600 hover:bg-sky-700"
                           >
-                            <span>
-                              {connectChannel === "telegram"
-                                ? "Open in Telegram"
-                                : `${connectChannel === "whatsapp" ? "WhatsApp" : "Instagram"} (Coming Soon - View Roadmap)`}
-                            </span>
+                            <span>Open in Telegram</span>
                             <span>&rarr;</span>
                           </a>
                         )}
