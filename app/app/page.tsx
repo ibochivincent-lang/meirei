@@ -2550,7 +2550,16 @@ export default function AppDashboardPage() {
                         type="button"
                         onClick={() => {
                           setLastTelemetryRefresh(new Date().toLocaleTimeString());
-                          addExecutionLog("Refreshed OKX AI telemetry: trading-plan-generator, sentiment, smartmoney, marketdepth active.", "info");
+                          setExecutionLogs((prev) => [
+                            {
+                              id: `log-${Date.now()}`,
+                              timestamp: new Date().toLocaleTimeString(),
+                              source: "OKX Skills Engine",
+                              message: "Refreshed OKX AI telemetry across trading-plan-generator, sentiment, smart money, and market depth.",
+                              type: "info",
+                            },
+                            ...prev.slice(0, 24),
+                          ]);
                         }}
                         className="rounded-xl border border-ink-200 bg-surface-50 px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-white hover:text-ink-950 transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
                       >
