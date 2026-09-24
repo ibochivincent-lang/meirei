@@ -19,6 +19,7 @@ import {
 
 import { ResearchSpotlight } from "@/components/sections/research_spotlight";
 import { LiquidityRoutingSection } from "@/components/sections/liquidity-routing-section";
+import { RoadmapSection } from "@/components/sections/roadmap-section";
 
 export default function HomePage() {
   return (
@@ -78,6 +79,7 @@ export default function HomePage() {
         <SecuritySection />
         <LiquidityRoutingSection />
         <UseCasesSection />
+        <RoadmapSection />
         <FaqSection />
         <ClosingCta />
       </main>
