@@ -13,13 +13,13 @@ Repository: https://github.com/ibochivincent-lang/meirei
 | Deliverable | Status | Location / Command |
 | :--- | :--- | :--- |
 | GitHub Repository | Active & Public | https://github.com/ibochivincent-lang/meirei |
-| Production Web App | Deployed (Vercel) | Refer to Vercel production domain |
+| Production Web App | Deployed & Live | https://meirei.tella.cash/app |
 | Health Endpoint | Verified Live | `GET /api/health` |
 | OKX AI ASP Listing | Validated & Staged | `npm run asp:validate` |
 | Demo Video Runbook | Complete | `demos/demo-script.md` |
-| Unit Test Suite | 54/54 Passing | `npm run test:unit` |
-| Multi-Channel Webhooks | Verified | `node scratch/test_webhooks.js` |
-| 2FA OTP Security | Verified | `node scratch/test_otp_flow.js` |
+| Unit Test Suite | 85/85 Passing | `npm run test:unit` |
+| Multi-Channel Webhooks | Verified | `npm run test:webhooks` |
+| 2FA OTP Security | Verified | `npm run test:otp` |
 | Production Build | Zero Errors | `npm run build` |
 
 ---
@@ -29,7 +29,7 @@ Repository: https://github.com/ibochivincent-lang/meirei
 Run the following commands in the repository root to verify all layers:
 
 ```bash
-# 1. Verify all 54 unit tests
+# 1. Verify all 85 unit tests
 npm run test:unit
 
 # 2. Verify live read-only X Layer DEX quotes (no keys required)
@@ -61,7 +61,7 @@ Autonomous, non-custodial investment mandate agent executing tokenized equity re
 ### Detailed Description
 Meirei (命令 - "Command / Order") bridges conversational AI interfaces with institutional-grade portfolio rebalancing on OKX X Layer. Rather than forcing users to manually calculate swap legs, approve multiple transactions, and monitor DEX slippage across fragmented pools, Meirei allows users to state high-level portfolio mandates in natural language (e.g., "60% Mag7, 20% USDG, max 8% per stock").
 
-The engine parses the mandate into concrete mathematical allocations across seven allowlisted tokenized equities (NVDAx, AAPLx, MSFTx, GOOGLx, AMZNx, METAx, TSLAx) and USDG. It queries live on-chain balances from X Layer Mainnet, computes the rebalancing delta, requests real-time quotes via the OKX DEX aggregator, enforces user-defined guardrails (drawdown caps, 2FA OTP verification, timing-safe cryptographic checks), and routes execution through client-side signatures or OKX Onchain OS.
+The engine parses the mandate into concrete mathematical allocations across 20 allowlisted tokenized equities (including Mag7, semiconductors, crypto-adjacent equities, and index ETFs) and USDG/USDC settlement stablecoins. It queries live on-chain balances from X Layer Mainnet, computes the rebalancing delta, requests real-time quotes via the OKX DEX aggregator, enforces user-defined guardrails (drawdown caps, 2FA OTP verification, timing-safe cryptographic checks), and routes execution through client-side signatures or OKX Onchain OS.
 
 Meirei is fully packaged as an OKX AI Agent Service Provider (ASP), allowing autonomous agents on the OKX.AI marketplace to discover, request, and settle investment mandate executions programmatically.
 

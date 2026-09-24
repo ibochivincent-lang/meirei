@@ -16,7 +16,7 @@ export async function GET() {
     },
     api: {
       type: "openapi",
-      url: "https://meirei-rho.vercel.app/api/mcp",
+      url: "https://meirei.tella.cash/api/mcp",
     },
     chain: {
       name: "OKX X Layer",

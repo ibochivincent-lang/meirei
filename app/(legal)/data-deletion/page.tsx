@@ -77,7 +77,7 @@ export default function DataDeletionPage() {
         <ul>
           <li>your profile, display name, and any labels or memos you saved;</li>
           <li>
-            your saved payment details (bank-account details for NGN cash-out);
+            your saved wallet connection addresses and mandate preferences;
           </li>
           <li>
             your saved recipients and any contextual memory the assistant has

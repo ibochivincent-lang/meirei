@@ -59,7 +59,7 @@ export default function CompliancePage() {
               <h3 className="font-semibold text-ink-900 text-base">Architectural LLM Boundary Enforcement</h3>
               <p>
                 Natural language commands are strictly parsed into typed Zod intent schemas with bounded
-                slippage, hard spend caps, and an immutable 10-token asset allowlist. The language model
+                slippage, hard spend caps, and an immutable 20-token equity allowlist (plus USDG and USDC settlement stablecoins). The language model
                 has zero discretionary authority to route to unlisted contracts or execute transfers.
               </p>
             </div>

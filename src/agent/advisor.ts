@@ -268,7 +268,7 @@ export function generateAdvisoryPlan(params: {
       { symbol: "TSLAx", weightPercent: 10, role: "Autonomous Mobility & Energy", rationale: "Clean energy and robotic automation exposure." },
       { symbol: "USDG", weightPercent: 30, role: "Rebalance Anchor", rationale: "Buffer to fund periodic rebalances without selling at a loss." },
     ],
-    thesis: "The flagship balanced Meirei mandate. Equal-weight exposure across all 7 allowlisted tech equities (10% each) combined with 30% USDG cash sleeve. Automatically buys underperforming names and trims winners when drift exceeds 3%.",
+    thesis: "The flagship balanced Meirei mandate. Equal-weight exposure across all 7 Mag7 tech equities (10% each) combined with 30% USDG cash sleeve. Automatically buys underperforming names and trims winners when drift exceeds 3%.",
     rebalanceInterval: "Quarterly rebalance or on 3% drift",
     downsideProtection: "30% USDG buffer with strictly equal-weighted 10% positions",
     expectedVolatility: "Balanced (Annualized ~18-22%)",

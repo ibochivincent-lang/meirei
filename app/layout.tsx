@@ -39,9 +39,11 @@ const description =
   "Turn one sentence investment mandates into live tokenized stock (xStocks) & USDG portfolios on X Layer via OKX DEX Aggregator.";
 
 export const metadata: Metadata = {
-  metadataBase: process.env.APP_BASE_URL
-    ? new URL(process.env.APP_BASE_URL)
-    : undefined,
+  metadataBase: new URL(
+    process.env.APP_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://meirei.tella.cash"
+  ),
   title,
   description,
   openGraph: {

@@ -147,7 +147,7 @@ export function MandateSigningModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="w-full max-w-lg rounded-3xl border border-ink-200/90 bg-white p-6 shadow-2xl text-ink-900 relative selection:bg-accent-500/20"
+          className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200/90 bg-white p-4 sm:p-6 shadow-2xl text-ink-900 relative selection:bg-accent-500/20"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-ink-100 pb-4">
@@ -198,7 +198,7 @@ export function MandateSigningModal({
                 <span className="text-[10px] font-mono uppercase text-ink-500 font-bold block mb-1.5">
                   Target Equity Basket Allocation:
                 </span>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {allocations.map((a) => {
                     const allocUsd = (capitalUsdg * a.weightPercent) / 100;
                     return (

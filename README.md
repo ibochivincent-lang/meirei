@@ -3,6 +3,8 @@
 > **AI-Native Investment Mandate Architecture for Tokenized Equities on OKX X Layer (Chain ID 196)**  
 > *Democratizing Wall Street for everyone — bridging billions of social media users to non-custodial wealth creation.*
 
+[![Live App](https://img.shields.io/badge/Live%20App-meirei.tella.cash%2Fapp-0052FF?style=flat-square)](https://meirei.tella.cash/app)
+[![Website](https://img.shields.io/badge/Website-meirei.tella.cash-10B981?style=flat-square)](https://meirei.tella.cash)
 [![Network](https://img.shields.io/badge/Network-OKX%20X%20Layer%20(Chain%20196)-0052FF?style=flat-square)](https://www.okx.com/web3/explorer/xlayer)
 [![Assets](https://img.shields.io/badge/Equities-20%20Allowlisted%20xStocks-10B981?style=flat-square)](https://www.okx.com/web3/explorer/xlayer)
 [![Settlement](https://img.shields.io/badge/Settlement-USDG%20%7C%20USDC-F59E0B?style=flat-square)](https://www.okx.com/web3/explorer/xlayer)
@@ -227,7 +229,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Visit `http://localhost:3000` to access the Meirei Web Portal.
+Visit `https://meirei.tella.cash` (live) or `http://localhost:3000` (locally) to access the Meirei Web Portal, and `https://meirei.tella.cash/app` for the Web Terminal.
 
 ---
 

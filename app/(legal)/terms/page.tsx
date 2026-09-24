@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { SITE } from "@/lib/data/site";
 
 export const metadata: Metadata = {
-  title: "Terms of Service · meirei",
+  title: "Terms of Service · Meirei",
   description:
-    "The terms that govern your use of meirei — a messaging-based interface for sending and managing USDC.",
+    "The terms that govern your use of Meirei — an AI-native investment mandate interface for tokenized equities and digital dollars on OKX X Layer.",
 };
 
-const LAST_UPDATED = "May 14, 2026";
+const LAST_UPDATED = "September 24, 2026";
 
 export default function TermsPage() {
   return (
@@ -28,9 +28,9 @@ export default function TermsPage() {
         <p>
           Meirei (&ldquo;Meirei,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;) is an AI-native investment mandate interface that lets you trade tokenized
           stocks (xStocks) and manage digital dollar portfolios (USDG/USDC) on X Layer (chain 196) — through
-          our web terminal, WhatsApp, Telegram, and Instagram chats.
+          our web terminal at <a href="https://meirei.tella.cash/app" className="legal-link">https://meirei.tella.cash/app</a>, our website at <a href="https://meirei.tella.cash" className="legal-link">https://meirei.tella.cash</a>, and supported messaging channels.
           These Terms of Service
-          (&ldquo;Terms&rdquo;) form a binding agreement between you and <strong>{SITE.legalName}</strong> (Meirei Core Protocol Ltd., RC-7849102).
+          (&ldquo;Terms&rdquo;) form a binding agreement between you and <strong>{SITE.legalName}</strong>.
         </p>
         <p>
           By accessing the web terminal, interacting with our messaging bots, or creating a wallet profile,
@@ -75,22 +75,22 @@ export default function TermsPage() {
       </Section>
 
       <Section title="3. The Service">
-        <p>Through WhatsApp messages, meirei lets you:</p>
+        <p>Through our web terminal and supported messaging channels, Meirei lets you:</p>
         <ul>
           <li>
-            create a non-custodial or custodial wallet (as described in-product)
-            backed by our wallet infrastructure provider;
+            connect your self-custodial wallet (OKX Wallet, MetaMask, or compatible EIP-1193 providers) on OKX X Layer (Chain 196);
           </li>
-          <li>send USDC to other wallets you specify;</li>
           <li>
-            receive USDC and have the equivalent value reflected in your
-            balance;
+            deposit or transfer digital dollar settlement reserves (USDG / USDC);
+          </li>
+          <li>
+            parse conversational portfolio instructions into deterministic target allocations;
           </li>
           <li>
             execute tokenized stock swaps and rebalance mandates via OKX DEX Aggregator on X Layer; and
           </li>
           <li>
-            view balances, portfolio asset allocations, and execution transaction hashes.
+            view real-time holdings, portfolio drift telemetry, and verified on-chain execution transaction hashes.
           </li>
         </ul>
         <p>
@@ -105,13 +105,13 @@ export default function TermsPage() {
 
       <Section title="4. Verification (KYC)">
         <p>
-          To comply with Nigerian and international anti-money-laundering
-          requirements, we may require you to provide and verify identity
+          To comply with applicable laws and international anti-money-laundering
+          (AML) requirements, we may require you to provide and verify identity
           information before, during, or after onboarding — including your
-          legal name, date of birth, phone number, BVN/NIN where applicable,
-          and a government-issued ID. You authorize us and our verification
-          providers to verify the information you submit. We may pause or
-          decline transactions while verification is in progress.
+          legal name, date of birth, phone number, and government-issued ID where
+          applicable. You authorize us and our verification providers to verify
+          the information you submit. We may pause or decline transactions while
+          verification is in progress.
         </p>
       </Section>
 
@@ -181,25 +181,24 @@ export default function TermsPage() {
 
       <Section title="8. Risks you accept">
         <p>
-          Digital assets and cross-border payments carry real risk. By using
+          Digital assets and tokenized stocks carry real risk. By using
           meirei you acknowledge that:
         </p>
         <ul>
           <li>
-            the value of USDC and NGN can change, and payout rates fluctuate;
+            the value of tokenized stocks (xStocks) and stablecoins (USDC/USDG) fluctuates, and market prices change continuously;
           </li>
           <li>
             blockchain transactions are typically irreversible — a typo,
             phishing message, or mistaken address can result in permanent loss;
           </li>
           <li>
-            WhatsApp, blockchain networks, and partner services may experience
+            messaging networks, blockchain networks, and partner RPCs may experience
             outages, delays, or congestion outside our control;
           </li>
           <li>
-            regulatory changes in Nigeria or elsewhere may force us to
-            suspend, limit, or stop offering the Service to you with little
-            notice; and
+            regulatory changes or market volatility may force us to
+            suspend, limit, or stop offering the Service with reasonable notice where feasible; and
           </li>
           <li>
             messaging-based interfaces depend on natural-language

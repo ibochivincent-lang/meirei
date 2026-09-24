@@ -503,8 +503,8 @@ async function runTests() {
     });
     const data = await res.json();
     const reply = data.reply || "";
-    if (res.ok && reply.includes("https://meirei-rho.vercel.app") && !reply.includes("https://meirei.vercel.app") && !reply.includes("http://localhost:3000")) {
-      console.log("PASS: WhatsApp link points strictly to https://meirei-rho.vercel.app");
+    if (res.ok && reply.includes("https://meirei.tella.cash") && !reply.includes("https://meirei.vercel.app") && !reply.includes("http://localhost:3000")) {
+      console.log("PASS: WhatsApp link points strictly to https://meirei.tella.cash");
       passed++;
     } else {
       console.error("FAIL: WhatsApp canonical URL verification failed:", reply);
@@ -555,7 +555,7 @@ async function runTests() {
       res.ok &&
       reply.includes("ORDER PREPARATION") &&
       reply.includes("NVDAx") &&
-      reply.includes("https://meirei-rho.vercel.app/app?action=buy&symbol=NVDAx&amount=250")
+      reply.includes("https://meirei.tella.cash/app?action=buy&symbol=NVDAx&amount=250")
     ) {
       console.log("PASS: Conversational Buy Stock with amount ('buy $250 in NVDAx')");
       passed++;
@@ -584,7 +584,7 @@ async function runTests() {
       res.ok &&
       reply.includes("ORDER PREPARATION") &&
       reply.includes("TSLAx") &&
-      reply.includes("https://meirei-rho.vercel.app/app?action=buy&symbol=TSLAx")
+      reply.includes("https://meirei.tella.cash/app?action=buy&symbol=TSLAx")
     ) {
       console.log("PASS: Conversational Buy Stock without amount ('buy TSLAx')");
       passed++;

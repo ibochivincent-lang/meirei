@@ -69,7 +69,9 @@ async function startPolling() {
   const restoreProductionWebhook = async () => {
     try {
       console.log("\nRestoring Telegram production webhook...");
-      const prodUrl = "https://meirei-rho.vercel.app/api/webhooks/telegram";
+      const prodUrl = process.env.NEXT_PUBLIC_APP_URL
+        ? `${process.env.NEXT_PUBLIC_APP_URL.replace(/\/+$/, "")}/api/webhooks/telegram`
+        : "https://meirei.tella.cash/api/webhooks/telegram";
       const res = await fetch(`https://api.telegram.org/bot${TOKEN}/setWebhook`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -713,7 +713,7 @@ function ConnectWalletContent() {
                       href={`okx://wallet/dapp/url?dappUrl=${encodeURIComponent(
                         typeof window !== "undefined"
                           ? window.location.href
-                          : "https://meirei-rho.vercel.app/connect"
+                          : "https://meirei.tella.cash/connect"
                       )}`}
                       className="min-h-[44px] py-2.5 px-3 rounded-xl bg-surface-50 hover:bg-surface-100 text-ink-700 text-xs font-medium text-center transition border border-ink-200 flex items-center justify-center gap-1.5"
                     >
@@ -861,7 +861,7 @@ function ConnectWalletContent() {
                   href={`okx://wallet/dapp/url?dappUrl=${encodeURIComponent(
                     typeof window !== "undefined"
                       ? window.location.href
-                      : "https://meirei-rho.vercel.app/connect"
+                      : "https://meirei.tella.cash/connect"
                   )}`}
                   className="w-full min-h-[44px] flex items-center justify-center py-2.5 px-3 rounded-xl bg-surface-50 hover:bg-surface-100 text-center text-xs font-medium text-ink-700 transition border border-ink-200"
                 >

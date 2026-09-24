@@ -31,7 +31,7 @@ export default function CookiePolicyPage() {
       <section className="space-y-4 mb-8">
         <h2 className="font-display text-2xl font-bold text-ink-950">1. Overview</h2>
         <p className="text-ink-700">
-          This Cookie Policy explains how {SITE.legalName} (&quot;Meirei&quot;, &quot;we&quot;, &quot;us&quot;) uses cookies and local browser storage on our website (<Link href="/" className="underline text-accent-700">meirei.app</Link>) and our trading terminal application (<Link href="/app" className="underline text-accent-700">meirei.app/app</Link>).
+          This Cookie Policy explains how {SITE.legalName} (&quot;Meirei&quot;, &quot;we&quot;, &quot;us&quot;) uses cookies and local browser storage on our website (<Link href="/" className="underline text-accent-700">meirei.tella.cash</Link>) and our trading terminal application (<Link href="/app" className="underline text-accent-700">meirei.tella.cash/app</Link>).
         </p>
         <p className="text-ink-700">
           We believe in radical user privacy. We do not sell user data, nor do we employ third-party advertising tracking cookies or surveillance beacons.

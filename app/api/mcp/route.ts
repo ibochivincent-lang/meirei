@@ -412,7 +412,7 @@ export async function POST(req: NextRequest) {
         case "meirei_execute_rebalance": {
           const wallet = args.wallet_address;
           const trades = args.trades || [];
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://meirei-rho.vercel.app";
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://meirei.tella.cash";
 
           return NextResponse.json({
             jsonrpc: jsonrpc || "2.0",

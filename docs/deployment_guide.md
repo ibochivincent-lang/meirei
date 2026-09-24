@@ -23,7 +23,7 @@ In the Vercel project configuration, expand **"Environment Variables"** and add 
 
 | Variable Name | Production Value | Note |
 | :--- | :--- | :--- |
-| `NEXT_PUBLIC_APP_URL` | `https://your-domain.vercel.app` | Replace with your live Vercel URL or custom domain |
+| `NEXT_PUBLIC_APP_URL` | `https://meirei.tella.cash` | Production domain (`https://meirei.tella.cash` / web app at `/app`) |
 | `NEXT_PUBLIC_CHAIN_ID` | `196` | OKX X Layer Mainnet |
 | `NEXT_PUBLIC_XLAYER_RPC` | `https://rpc.xlayer.tech` | Official X Layer Mainnet RPC |
 | `NEXT_PUBLIC_EXPLORER_URL` | `https://www.oklink.com/xlayer` | Official X Layer Block Explorer |
@@ -88,15 +88,14 @@ curl "https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo"
 
 ---
 
-## 4. Custom Domain Configuration (Optional)
+## 4. Custom Domain Configuration (Production)
 
-To bind a custom domain (e.g. `meirei.app`):
+To bind the live domain (`meirei.tella.cash`):
 1. In your Vercel Project Settings, navigate to **Domains**.
-2. Add `meirei.app` and `www.meirei.app`.
-3. In your DNS provider (Cloudflare, Namecheap, Route53), configure:
-   - `A` record for `@` pointing to `76.76.21.21`
-   - `CNAME` record for `www` pointing to `cname.vercel-dns.com`
-4. Update `NEXT_PUBLIC_APP_URL` and `APP_BASE_URL` in Vercel to `https://meirei.app`.
+2. Add `meirei.tella.cash`.
+3. In your DNS provider (Cloudflare, Route53, etc.), configure:
+   - `CNAME` record for `meirei` pointing to `cname.vercel-dns.com`
+4. Set `NEXT_PUBLIC_APP_URL` and `APP_BASE_URL` in Vercel to `https://meirei.tella.cash`.
 
 ---
 

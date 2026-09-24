@@ -87,10 +87,10 @@ When deploying your Meirei instance to production:
 2. Deploy the application to Vercel (or your custom domain).
 3. Bind the live webhook with our built-in CLI:
    ```bash
-   npm run bot:webhook https://your-domain.vercel.app
+   npm run bot:webhook https://meirei.tella.cash
    ```
-   *(Or pass the token directly as an argument: `npm run bot:webhook https://your-domain.vercel.app 7890123456:AAFlk...`)*.
-4. The CLI will register `https://your-domain.vercel.app/api/webhooks/telegram` directly with the Telegram Bot API and return confirmation:
+   *(Or pass the token directly as an argument: `npm run bot:webhook https://meirei.tella.cash 7890123456:AAFlk...`)*.
+4. The CLI will register `https://meirei.tella.cash/api/webhooks/telegram` directly with the Telegram Bot API and return confirmation:
    ```json
    { "ok": true, "result": true, "description": "Webhook was set" }
    ```
@@ -130,7 +130,7 @@ WHATSAPP_VERIFY_TOKEN="meirei_secure_webhook_verify_token_2026"
 ### Step 3.4: Register Webhook in Meta Developer Dashboard
 1. In the Meta Developer Console, navigate to **WhatsApp** > **Configuration**.
 2. Under the **Webhook** section, click **Edit**:
-   - **Callback URL**: `https://your-domain.vercel.app/api/webhooks/whatsapp`
+   - **Callback URL**: `https://meirei.tella.cash/api/webhooks/whatsapp`
    - **Verify Token**: The exact phrase from `WHATSAPP_VERIFY_TOKEN` (`meirei_secure_webhook_verify_token_2026`).
 3. Click **Verify and Save**. Meta will send an automated GET handshake request to your endpoint.
 4. Under **Webhook fields**, click **Manage** and click **Subscribe** next to **`messages`**.

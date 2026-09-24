@@ -19,7 +19,7 @@ export function LiquidityRoutingSection() {
           />
           <Reveal delay={0.15}>
             <p className="mx-auto mt-6 max-w-3xl text-base md:text-xl leading-relaxed text-ink-700">
-              While currently operating with synthetic mock assets for the hackathon, Meirei&apos;s routing engine is architecturally designed to plug directly into OKX Exchange OS on X Layer. By aggregating decentralized liquidity via Exchange OS, Meirei ensures that bot-driven mandates receive optimal spot execution with minimal slippage.
+              Plugged directly into OKX Exchange OS on X Layer (Chain 196), Meirei&apos;s routing engine aggregates decentralized liquidity across all 20 allowlisted tokenized equities and USDG/USDC. By routing multi-leg orders through Exchange OS, Meirei ensures that conversational mandates receive optimal spot execution with deterministic slippage protection.
             </p>
           </Reveal>
         </div>

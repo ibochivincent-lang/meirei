@@ -82,7 +82,7 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
 
   if (!isOpen) return null;
 
-  const currentDappUrl = typeof window !== "undefined" ? window.location.href : "https://meirei-rho.vercel.app/app";
+  const currentDappUrl = typeof window !== "undefined" ? window.location.href : "https://meirei.tella.cash/app";
 
   return (
     <AnimatePresence>
@@ -91,7 +91,7 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="w-full max-w-md rounded-2xl bg-white border border-ink-200 shadow-2xl overflow-hidden flex flex-col text-ink-900"
+          className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white border border-ink-200 shadow-2xl flex flex-col text-ink-900"
         >
           {/* Header */}
           <div className="p-4 sm:p-5 border-b border-ink-100 flex items-center justify-between">
@@ -239,7 +239,7 @@ export function WalletConnectModal({ isOpen, onClose, onConnect }: WalletConnect
 
                 {/* App 2: MetaMask Mobile */}
                 <a
-                  href={`https://metamask.app.link/dapp/${typeof window !== "undefined" ? window.location.host + window.location.pathname : "meirei-rho.vercel.app/app"}`}
+                  href={`https://metamask.app.link/dapp/${typeof window !== "undefined" ? window.location.host + window.location.pathname : "meirei.tella.cash/app"}`}
                   className="w-full min-h-[44px] p-3.5 rounded-xl bg-surface-50 hover:bg-surface-100 border border-ink-200 transition flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">

@@ -40,6 +40,8 @@ export function Web3SigningModal({
   });
 
   const [inputAmount, setInputAmount] = useState<number>(fromAmountUsdg || 100);
+  const [selectedMandate, setSelectedMandate] = useState<number>(1);
+  const [mandateText, setMandateText] = useState<string>(`Deploy ${targetSymbol} with dynamic momentum trailing stop.`);
   const [isSigning, setIsSigning] = useState<boolean>(false);
   const [signingStatusText, setSigningStatusText] = useState<string>("");
   const [signingError, setSigningError] = useState<string | null>(null);
@@ -48,6 +50,19 @@ export function Web3SigningModal({
   // Recalculate units based on input amount and spot price
   const activePrice = spotPrice > 0 ? spotPrice : 1;
   const currentUnits = inputAmount > 0 ? inputAmount / activePrice : 0;
+
+  // Sync mandate text with selection and target symbol
+  useEffect(() => {
+    if (selectedMandate === 1) {
+      setMandateText(`Deploy ${targetSymbol} with dynamic momentum trailing stop.`);
+    } else if (selectedMandate === 2) {
+      setMandateText(`Accumulate ${targetSymbol} on >3% dips with USDG reserve.`);
+    } else if (selectedMandate === 3) {
+      setMandateText(`Execute portfolio rebalance swap into ${targetSymbol}.`);
+    } else {
+      setMandateText(`Non-custodial algorithmic trade for ${targetSymbol}.`);
+    }
+  }, [selectedMandate, targetSymbol]);
 
   useEffect(() => {
     if (isOpen) {
@@ -137,21 +152,21 @@ export function Web3SigningModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.18 }}
-          className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200 bg-white text-ink-900 shadow-2xl p-6"
+          className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-ink-200 bg-white text-ink-900 shadow-2xl p-4 sm:p-5"
         >
           {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-ink-100">
+          <div className="flex items-center justify-between pb-3 border-b border-ink-100">
             <div>
               <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-700">
                 OKX X Layer (Chain ID 196) · Non-Custodial
               </span>
-              <h3 className="text-base font-bold text-ink-950 font-display">
-                Transaction Approval &amp; Wallet Confirmation
+              <h3 className="text-sm font-bold text-ink-950 font-display">
+                Mandate Swap &amp; Non-Custodial Execution
               </h3>
             </div>
             <button
               onClick={onClose}
-              className="h-8 w-8 flex items-center justify-center rounded-full text-ink-400 hover:text-ink-950 hover:bg-surface-100 transition-colors cursor-pointer text-sm font-bold"
+              className="h-7 w-7 flex items-center justify-center rounded-full text-ink-400 hover:text-ink-950 hover:bg-surface-100 transition-colors cursor-pointer text-xs font-bold"
               aria-label="Close modal"
             >
               ✕
@@ -160,18 +175,26 @@ export function Web3SigningModal({
 
           {signingResult ? (
             /* Success State */
-            <div className="py-6 space-y-4 text-center">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 font-bold text-2xl shadow-xs">
+            <div className="py-5 space-y-3.5 text-center">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 font-bold text-xl shadow-xs">
                 ✓
               </div>
               <div>
-                <h4 className="text-base font-bold text-ink-950 font-display">Transaction Successfully Confirmed</h4>
-                <p className="text-xs text-ink-600 mt-1">
-                  Non-custodial swap signed and broadcasted on OKX X Layer Mainnet.
+                <h4 className="text-sm font-bold text-ink-950 font-display">Mandate Swap Confirmed</h4>
+                <p className="text-[11px] text-ink-600 mt-0.5">
+                  Executed non-custodially on OKX X Layer Mainnet.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-surface-50 border border-ink-200 text-left font-mono text-xs space-y-2">
+              <div className="p-3 rounded-xl bg-surface-50 border border-ink-200 text-left font-mono text-xs space-y-1.5">
+                <div className="flex justify-between text-ink-500">
+                  <span>Mandate Type:</span>
+                  <span className="font-bold text-ink-900">Mandate #{selectedMandate}</span>
+                </div>
+                <div className="flex justify-between text-ink-500">
+                  <span>Rule:</span>
+                  <span className="font-semibold text-ink-800 text-[10px] text-right truncate max-w-[200px]">{mandateText}</span>
+                </div>
                 <div className="flex justify-between text-ink-500">
                   <span>Target Equity:</span>
                   <span className="font-bold text-ink-900">{targetSymbol}</span>
@@ -185,12 +208,12 @@ export function Web3SigningModal({
                   <span className="font-bold text-ink-900">${inputAmount.toFixed(2)} USDG</span>
                 </div>
                 <div className="flex justify-between text-ink-500">
-                  <span>Spot Execution Price:</span>
+                  <span>Execution Price:</span>
                   <span className="font-medium text-ink-700">${activePrice.toFixed(2)} USDG</span>
                 </div>
-                <div className="flex justify-between text-ink-500 pt-2 border-t border-ink-200/80">
+                <div className="flex justify-between text-ink-500 pt-1.5 border-t border-ink-200/80">
                   <span>Transaction Hash:</span>
-                  <span className="font-semibold truncate max-w-[200px] text-accent-700">
+                  <span className="font-semibold truncate max-w-[180px] text-accent-700">
                     {signingResult.txHash}
                   </span>
                 </div>
@@ -211,27 +234,76 @@ export function Web3SigningModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full mt-2 py-3 rounded-xl bg-ink-950 hover:bg-accent-600 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                className="w-full py-2.5 rounded-xl bg-ink-950 hover:bg-accent-600 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
               >
                 Close &amp; Return to Terminal
               </button>
             </div>
           ) : (
             /* Execution Review & Quick Buy Form */
-            <div className="mt-4 space-y-4">
-              {/* Amount Selection & Input */}
-              <div className="rounded-2xl border border-ink-200 bg-surface-50/70 p-4 space-y-3">
+            <div className="mt-3.5 space-y-3">
+              {/* Select Mandate Type (1, 2, 3, 4) */}
+              <div className="rounded-xl border border-ink-200 bg-surface-50/70 p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-ink-900 uppercase tracking-wider">
-                    Quick Buy Capital (USDG)
+                  <label className="text-[11px] font-bold text-ink-900 uppercase tracking-wider">
+                    Select Mandate
                   </label>
-                  <span className="text-[11px] font-mono text-ink-500">
+                  <span className="text-[10px] font-mono text-accent-700 font-bold">
+                    Mandate #{selectedMandate}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    { id: 1, label: "Momentum" },
+                    { id: 2, label: "Dip DCA" },
+                    { id: 3, label: "Rebalance" },
+                    { id: 4, label: "Custom" },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedMandate(m.id)}
+                      className={`py-1.5 px-1 rounded-lg border text-center transition-all cursor-pointer ${
+                        selectedMandate === m.id
+                          ? "bg-ink-950 text-white border-ink-950 font-bold shadow-2xs"
+                          : "bg-white text-ink-700 border-ink-200 hover:bg-surface-100"
+                      }`}
+                    >
+                      <span className="block font-mono text-xs">#{m.id}</span>
+                      <span className="block text-[9px] truncate">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-ink-500">
+                    <span>Mandate Directive:</span>
+                    <span className="text-[9px] text-accent-700 font-semibold">Editable Rule</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={mandateText}
+                    onChange={(e) => setMandateText(e.target.value)}
+                    placeholder={`Write mandate rule for ${targetSymbol}...`}
+                    className="w-full text-[10px] font-mono text-ink-900 bg-white p-2 rounded-lg border border-ink-200 outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* Amount Selection & Input */}
+              <div className="rounded-xl border border-ink-200 bg-surface-50/70 p-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-ink-900 uppercase tracking-wider">
+                    Swap Capital (USDG)
+                  </label>
+                  <span className="text-[10px] font-mono text-ink-500">
                     Spot: ${activePrice.toFixed(2)}
                   </span>
                 </div>
 
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-ink-400 font-mono">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-400 font-mono">
                     $
                   </span>
                   <input
@@ -241,23 +313,23 @@ export function Web3SigningModal({
                     value={inputAmount || ""}
                     onChange={(e) => setInputAmount(parseFloat(e.target.value) || 0)}
                     placeholder="Enter USDG amount..."
-                    className="w-full pl-8 pr-16 py-2.5 rounded-xl border border-ink-200 bg-white text-ink-950 font-mono text-sm font-bold focus:border-accent-500 focus:ring-1 focus:ring-accent-500 outline-none transition-all shadow-2xs"
+                    className="w-full pl-7 pr-14 py-2 rounded-xl border border-ink-200 bg-white text-ink-950 font-mono text-xs font-bold focus:border-accent-500 focus:ring-1 focus:ring-accent-500 outline-none transition-all shadow-2xs"
                   />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-600 font-mono">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-600 font-mono">
                     USDG
                   </span>
                 </div>
 
                 {/* Quick amount chips */}
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  {[50, 100, 250, 500, 1000, 5000, 10000, 20000].map((chip) => (
+                <div className="flex flex-wrap gap-1.5">
+                  {[50, 100, 250, 500, 1000].map((chip) => (
                     <button
                       key={chip}
                       type="button"
                       onClick={() => setInputAmount(chip)}
-                      className={`px-2.5 py-1 rounded-lg border text-xs font-mono font-bold transition-all cursor-pointer ${
+                      className={`px-2 py-0.5 rounded-lg border text-[11px] font-mono font-bold transition-all cursor-pointer ${
                         inputAmount === chip
-                          ? "border-accent-600 bg-accent-50 text-accent-700"
+                          ? "border-ink-950 bg-ink-950 text-white"
                           : "border-ink-200 bg-white text-ink-700 hover:bg-surface-100"
                       }`}
                     >
@@ -268,7 +340,7 @@ export function Web3SigningModal({
               </div>
 
               {/* Transaction Breakdown Card */}
-              <div className="p-3.5 rounded-2xl bg-surface-50 border border-ink-200 space-y-2 text-xs">
+              <div className="p-3 rounded-xl bg-surface-50 border border-ink-200 space-y-1.5 text-[11px]">
                 <div className="flex justify-between items-center text-ink-600">
                   <span>Swap Route:</span>
                   <span className="font-mono font-bold text-ink-950">
@@ -276,78 +348,45 @@ export function Web3SigningModal({
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-ink-600">
-                  <span>Spot Execution Price:</span>
-                  <span className="font-mono font-semibold text-ink-900">
-                    ${activePrice.toFixed(2)} USDG per {targetSymbol}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-ink-600">
-                  <span>Max Slippage Corridor:</span>
-                  <span className="font-mono font-semibold text-ink-900">&lt; 0.05%</span>
-                </div>
-                <div className="flex justify-between items-center text-ink-600">
-                  <span>Est. Network Gas:</span>
+                  <span>Slippage / Gas:</span>
                   <span className="font-mono text-emerald-700 font-bold flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Sponsored (0.00 OKB / Free)
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-ink-600 pt-1.5 border-t border-ink-200/80">
-                  <span>Execution Venue:</span>
-                  <span className="font-mono text-[11px] text-ink-700 font-medium">
-                    OKX DEX Aggregator (X Layer 196)
+                    &lt;0.05% · Sponsored (Free)
                   </span>
                 </div>
               </div>
 
               {/* Signature Authorization Method (Strict Web3 Wallet) */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-ink-600 block">
-                  Signature Authorization
-                </label>
-
-                <div className="p-3 rounded-2xl bg-white border border-ink-200 text-xs flex items-center justify-between shadow-2xs">
-                  <div>
-                    <div className="font-bold text-ink-950 flex items-center gap-1.5">
-                      <span>OKX Wallet / Web3 EOA</span>
-                      <span className="rounded bg-accent-100 text-accent-800 text-[9px] font-bold px-1.5 py-0.2">
-                        Active
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-ink-500 font-mono mt-0.5">
-                      Connected:{" "}
-                      <span className="font-bold text-ink-800">
-                        {providerState.connectedAddress
-                          ? formatShortAddress(providerState.connectedAddress)
-                          : formatShortAddress(userAddress)}
-                      </span>
-                    </div>
+              <div className="p-2.5 rounded-xl bg-white border border-ink-200 text-xs flex items-center justify-between shadow-2xs">
+                <div>
+                  <div className="font-bold text-ink-950 flex items-center gap-1 text-[11px]">
+                    <span>OKX Wallet / Web3 EOA</span>
+                    <span className="rounded bg-accent-100 text-accent-800 text-[9px] font-bold px-1.5 py-0.2">
+                      Active
+                    </span>
                   </div>
-
-                  {!providerState.connectedAddress && (
-                    <button
-                      type="button"
-                      onClick={handleConnectWallet}
-                      disabled={isSigning}
-                      className="px-3 py-1.5 rounded-xl bg-accent-600 text-white text-[11px] font-bold hover:bg-accent-700 transition-colors cursor-pointer"
-                    >
-                      Connect Wallet
-                    </button>
-                  )}
+                  <div className="text-[10px] text-ink-500 font-mono">
+                    {providerState.connectedAddress
+                      ? formatShortAddress(providerState.connectedAddress)
+                      : formatShortAddress(userAddress)}
+                  </div>
                 </div>
-              </div>
 
-              {/* Non-Custodial Security Guarantee */}
-              <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
-                <span className="text-sm leading-none">🛡️</span>
-                <p>
-                  <strong>Self-Custodial Guarantee:</strong> Private keys never touch Meirei servers or databases. Your signature is authorized locally through your connected Web3 hardware/extension.
-                </p>
+                {!providerState.connectedAddress && (
+                  <button
+                    type="button"
+                    onClick={handleConnectWallet}
+                    disabled={isSigning}
+                    className="px-2.5 py-1 rounded-lg bg-accent-600 text-white text-[11px] font-bold hover:bg-accent-700 transition-colors cursor-pointer"
+                  >
+                    Connect
+                  </button>
+                )}
               </div>
 
               {/* Error Message */}
               {signingError && (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+                <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
                   {signingError}
                 </div>
               )}
@@ -359,16 +398,16 @@ export function Web3SigningModal({
                 </div>
               )}
 
-              {/* Sticky Submit Button: Always 100% visible at all screen sizes */}
-              <div className="sticky -bottom-6 -mx-6 -mb-6 bg-white/95 backdrop-blur-md p-4 border-t border-ink-100 rounded-b-3xl shadow-lg">
+              {/* Submit Button */}
+              <div className="pt-2">
                 <button
                   type="button"
                   onClick={handleSignTransaction}
                   disabled={isSigning || inputAmount <= 0}
-                  className="w-full py-3.5 rounded-2xl bg-ink-950 hover:bg-accent-600 text-white text-sm font-bold tracking-wide disabled:opacity-50 transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-xl bg-ink-950 hover:bg-accent-600 text-white text-xs font-bold tracking-wide disabled:opacity-50 transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <span>{isSigning ? "Awaiting Wallet Signature..." : `Confirm & Sign Quick Buy (${currentUnits.toFixed(4)} ${targetSymbol})`}</span>
-                  {!isSigning && <span className="text-base leading-none">→</span>}
+                  <span>{isSigning ? "Awaiting Signature..." : `Sign Mandate Swap (${currentUnits.toFixed(4)} ${targetSymbol})`}</span>
+                  {!isSigning && <span className="text-sm leading-none">→</span>}
                 </button>
               </div>
             </div>

@@ -16,11 +16,11 @@ import { recordWebhookEvent } from "@/lib/observability/metrics";
 export const dynamic = "force-dynamic";
 
 const RAW_APP_URL = process.env.NEXT_PUBLIC_APP_URL || "";
-// Strictly enforce https://meirei-rho.vercel.app as canonical domain
+// Strictly enforce https://meirei.tella.cash as canonical domain
 const APP_URL =
   RAW_APP_URL.startsWith("https://") && !RAW_APP_URL.includes("meirei.vercel.app")
     ? RAW_APP_URL.replace(/\/+$/, "")
-    : "https://meirei-rho.vercel.app";
+    : "https://meirei.tella.cash";
 
 // Active in-memory tracking for channel unfreeze challenges
 const unfreezeChallenges = new Map<string, string>();

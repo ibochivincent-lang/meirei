@@ -4,7 +4,7 @@
  *
  * Usage:
  *   npm run bot:webhook <URL> [BOT_TOKEN]
- *   npm run bot:webhook https://meirei.vercel.app 123456789:ABCdefGhIJK...
+ *   npm run bot:webhook https://meirei.tella.cash 123456789:ABCdefGhIJK...
  */
 
 if (typeof process.loadEnvFile === "function") {
@@ -41,17 +41,17 @@ async function main() {
   }
 
   if (!targetBaseUrl) {
-    targetBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://meirei-rho.vercel.app";
+    targetBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://meirei.tella.cash";
   }
 
   // Canonical domain enforcement
-  if (targetBaseUrl.includes("meirei.vercel.app")) {
-    targetBaseUrl = "https://meirei-rho.vercel.app";
+  if (targetBaseUrl.includes("meirei.vercel.app") || targetBaseUrl.includes("meirei-rho.vercel.app")) {
+    targetBaseUrl = "https://meirei.tella.cash";
   }
 
   // Detect literal placeholder in URL
   if (targetBaseUrl.includes("<") || targetBaseUrl.includes("your-vercel-domain")) {
-    targetBaseUrl = "https://meirei-rho.vercel.app";
+    targetBaseUrl = "https://meirei.tella.cash";
   }
 
   if (!token) {

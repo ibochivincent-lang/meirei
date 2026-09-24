@@ -21,11 +21,11 @@ const WHATSAPP_VERIFY_TOKEN =
   "meirei_wa_verify_token";
 
 const RAW_APP_URL = process.env.NEXT_PUBLIC_APP_URL || "";
-// Strictly enforce https://meirei-rho.vercel.app as the canonical project domain
+// Strictly enforce https://meirei.tella.cash as the canonical project domain
 const APP_URL =
   RAW_APP_URL.startsWith("https://") && !RAW_APP_URL.includes("meirei.vercel.app")
     ? RAW_APP_URL.replace(/\/+$/, "")
-    : "https://meirei-rho.vercel.app";
+    : "https://meirei.tella.cash";
 
 // Active in-memory tracking for channel unfreeze challenges
 const waUnfreezeChallenges = new Map<string, string>();

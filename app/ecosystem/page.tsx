@@ -2,6 +2,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import Link from "next/link";
 import { Metadata } from "next";
+import { ALLOWLIST } from "@/src/allowlist";
 
 export const metadata: Metadata = {
   title: "Ecosystem | Meirei on X Layer",
@@ -90,45 +91,27 @@ export default function EcosystemPage() {
 
           {/* Allowlisted Asset Bridge Section */}
           <div className="mt-12 rounded-2xl border border-ink-200 bg-white p-6 sm:p-8 shadow-xs">
-            <h2 className="font-display text-2xl font-bold text-ink-950 mb-3">
-              Allowlisted Tokenized Stocks (xStocks)
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display text-2xl font-bold text-ink-950">
+                Allowlisted Tokenized Stocks (xStocks) &amp; Stablecoins
+              </h2>
+              <span className="font-mono text-xs font-semibold px-2.5 py-1 rounded-full bg-surface-100 text-ink-700">
+                22 Verified Assets
+              </span>
+            </div>
             <p className="text-sm text-ink-700 leading-relaxed mb-6">
               All tokenized equities on X Layer maintain verifiable proof of reserve and trade 24/7 without centralized market halts:
             </p>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 font-mono text-xs">
-              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                <span className="font-bold text-ink-900 block">NVDAx</span>
-                <span className="text-ink-600">NVIDIA Corp.</span>
-              </div>
-              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                <span className="font-bold text-ink-900 block">AAPLx</span>
-                <span className="text-ink-600">Apple Inc.</span>
-              </div>
-              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                <span className="font-bold text-ink-900 block">MSFTx</span>
-                <span className="text-ink-600">Microsoft Corp.</span>
-              </div>
-              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                <span className="font-bold text-ink-900 block">TSLAx</span>
-                <span className="text-ink-600">Tesla Inc.</span>
-              </div>
-              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                <span className="font-bold text-ink-900 block">GOOGLx</span>
-                <span className="text-ink-600">Alphabet Inc.</span>
-              </div>
-              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                <span className="font-bold text-ink-900 block">AMZNx</span>
-                <span className="text-ink-600">Amazon.com</span>
-              </div>
-              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                <span className="font-bold text-ink-900 block">METAx</span>
-                <span className="text-ink-600">Meta Platforms</span>
-              </div>
-              <div className="rounded-xl border border-ink-200 bg-surface-50 p-3">
-                <span className="font-bold text-ink-900 block">USDG</span>
-                <span className="text-ink-600">Global Dollar</span>
-              </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6 font-mono text-xs">
+              {ALLOWLIST.map((token) => (
+                <div key={token.symbol} className="rounded-xl border border-ink-200 bg-surface-50 p-3 hover:border-accent-400 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-ink-900 block">{token.symbol}</span>
+                    <span className="text-[10px] text-ink-400">{token.decimals}d</span>
+                  </div>
+                  <span className="text-ink-600 text-[11px] truncate block mt-0.5">{token.name}</span>
+                </div>
+              ))}
             </div>
 
             <div className="mt-6 flex items-center justify-between">

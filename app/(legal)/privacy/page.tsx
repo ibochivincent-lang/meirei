@@ -4,7 +4,7 @@ import { SITE } from "@/lib/data/site";
 export const metadata: Metadata = {
   title: "Privacy Policy · meirei",
   description:
-    "How meirei collects, uses, and protects your information when you send and receive money through WhatsApp.",
+    "How Meirei collects, uses, and protects your information when you manage tokenized equity investment mandates on OKX X Layer.",
 };
 
 const LAST_UPDATED = "September 17, 2026";
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
           This Privacy Policy explains how <strong>{SITE.legalName}</strong> (&ldquo;Meirei,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;) collects,
           uses, shares, and protects personal information when you use our
           AI-native investment mandate terminal and web service at{" "}
-          <a href="https://meirei.app" className="legal-link">https://meirei.app</a> (the &ldquo;Service&rdquo;).
+          <a href="https://meirei.tella.cash" className="legal-link">https://meirei.tella.cash</a> (the &ldquo;Service&rdquo;).
           It applies in addition to our{" "}
           <a href="/terms" className="legal-link">
             Terms of Service
@@ -55,10 +55,10 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Identity verification:</strong> where required for
-            compliance, your full legal name, date of birth, residential
-            address, BVN/NIN, government ID details and images, and a selfie
-            for liveness check. Collected through our identity-verification
-            partner.
+            regulatory compliance, your full legal name, date of birth, residential
+            address, government ID details and images, and a selfie
+            for liveness check. Collected through our regulated identity-verification
+            partners.
           </li>
           <li>
             <strong>Transaction instructions:</strong> the messages you send
@@ -67,8 +67,7 @@ export default function PrivacyPage() {
             week.&rdquo;
           </li>
           <li>
-            <strong>Payment details:</strong> bank-account details where you
-            cash out to NGN, and wallet addresses you send to or receive from.
+            <strong>Payment details:</strong> wallet addresses you interact with, sign from, or send mandates to on X Layer.
           </li>
           <li>
             <strong>PIN / authentication:</strong> a PIN or other factor you

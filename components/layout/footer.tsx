@@ -19,7 +19,7 @@ export function Footer() {
         <div className="space-y-6">
           <BrandMark />
           <p className="max-w-md text-base md:text-lg leading-relaxed text-surface-50/60">
-            Money, by message. Built for the way people already talk.
+            AI-Native Investment Mandates on OKX X Layer. Built for the way people already talk.
           </p>
           <p className="text-base text-surface-50/50">
             meirei is a service operated by {SITE.legalName}.
@@ -179,7 +179,7 @@ export function Footer() {
           <span>
             © {new Date().getFullYear()} {SITE.legalName}. All rights reserved.
           </span>
-          <span className="font-mono">v0.2</span>
+          <span className="font-mono">v2.4</span>
         </div>
       </div>
     </footer>

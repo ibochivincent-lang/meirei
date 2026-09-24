@@ -17,6 +17,8 @@ const TELEGRAM_BOT_USERNAME = (
 export const SITE = {
   brandName: "meirei",
   legalName: "meirei CORE LTD",
+  url: "https://meirei.tella.cash",
+  appUrl: "https://meirei.tella.cash/app",
   whatsappNumber: "2349043580863",
   whatsappLink: "/coming-soon",
   telegramLink: `https://t.me/${TELEGRAM_BOT_USERNAME || "MeireiXLayerBot"}`,

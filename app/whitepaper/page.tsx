@@ -191,8 +191,8 @@ export default function WhitepaperPage() {
                   <tr><td className="p-3 font-bold text-ink-900">IWMx</td><td className="p-3 font-sans text-ink-800">Russell 2000 ETF</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
                   <tr><td className="p-3 font-bold text-ink-900">DELLx</td><td className="p-3 font-sans text-ink-800">Dell Technologies</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
                   <tr><td className="p-3 font-bold text-ink-900">COINx</td><td className="p-3 font-sans text-ink-800">Coinbase Global</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
-                  <tr><td className="p-3 font-bold text-ink-900">PLTRx</td><td className="p-3 font-sans text-ink-800">Palantir Technologies</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
-                  <tr><td className="p-3 font-bold text-ink-900">UBERx</td><td className="p-3 font-sans text-ink-800">Uber Technologies</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">AMDx</td><td className="p-3 font-sans text-ink-800">Advanced Micro Devices</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
+                  <tr><td className="p-3 font-bold text-ink-900">CRWDx</td><td className="p-3 font-sans text-ink-800">CrowdStrike Holdings</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
                   <tr><td className="p-3 font-bold text-ink-900">SPYx</td><td className="p-3 font-sans text-ink-800">SPDR S&amp;P 500 ETF</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
                   <tr><td className="p-3 font-bold text-ink-900">QQQx</td><td className="p-3 font-sans text-ink-800">Invesco QQQ Trust</td><td className="p-3 text-ink-700">USDG / USDC</td><td className="p-3 text-emerald-700 font-semibold">Active · 196</td></tr>
                   <tr><td className="p-3 font-bold text-ink-900">USDG</td><td className="p-3 font-sans text-ink-800">Global Dollar (Settlement Cash)</td><td className="p-3 text-ink-700">USD 1:1</td><td className="p-3 text-emerald-700 font-semibold">Native Anchor</td></tr>
@@ -235,7 +235,7 @@ export default function WhitepaperPage() {
   journal={Meirei Core Research},
   year={2026},
   month={September},
-  url={https://meirei.app/whitepaper}
+  url={https://meirei.tella.cash/whitepaper}
 }`}
               </pre>
             </div>

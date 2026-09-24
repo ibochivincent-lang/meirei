@@ -102,7 +102,7 @@ export default function InternalsPage() {
                   </div>
                   <p className="font-bold text-ink-950 text-sm">OKX DEX Router</p>
                   <ul className="text-ink-600 space-y-1 text-[11px]">
-                    <li>• 12 Allowlisted xStocks &amp; ETFs</li>
+                    <li>• 20 Allowlisted xStocks &amp; ETFs</li>
                     <li>• Multi-Pool Aggregation</li>
                     <li>• Sponsored Paymaster Gas</li>
                     <li>• Real-Time Tx Explorer Link</li>

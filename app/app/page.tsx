@@ -1009,6 +1009,8 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
   // Advisory Agent parameters (Advanced Mode)
   const [advisoryHorizon, setAdvisoryHorizon] = useState<AdvisoryHorizon>("short_term");
+  const [advisoryDuration, setAdvisoryDuration] = useState<string>("1 Month");
+  const [selectedStrategyMandateIndex, setSelectedStrategyMandateIndex] = useState<number>(0);
   const [advisoryRisk, setAdvisoryRisk] = useState<RiskProfile>("balanced");
   const [advisoryCapital, setAdvisoryCapital] = useState<number>(2500);
   const [advisoryStablecoin, setAdvisoryStablecoin] = useState<"USDG" | "USDC" | "USDT">("USDG");
@@ -1017,16 +1019,130 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
   const [showAuditLogs, setShowAuditLogs] = useState<boolean>(false);
   const [lastTelemetryRefresh, setLastTelemetryRefresh] = useState<string>("Just now");
 
-  // Computed live advisory plan based on user-selected allocation capital
+  // Live execution clock
+  const [executionClock, setExecutionClock] = useState<string>("");
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setExecutionClock(now.toLocaleTimeString("en-US", { hour12: false, timeZone: "UTC" }) + " UTC");
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Computed target maturity date from duration
+  const advisoryMaturityDate = useMemo(() => {
+    const daysMap: Record<string, number> = {
+      "1 Week": 7,
+      "2 Weeks": 14,
+      "1 Month": 30,
+      "3 Months": 90,
+      "6 Months": 180,
+      "9 Months": 270,
+      "1 Year": 365,
+      "2 Years": 730,
+    };
+    const days = daysMap[advisoryDuration] || 30;
+    const d = new Date(Date.now() + days * 86400000);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }, [advisoryDuration]);
+
+  // Strategic mandate presets by horizon
+  const STRATEGY_MANDATES = useMemo(() => {
+    if (advisoryHorizon === "short_term") {
+      return [
+        {
+          id: 1,
+          title: "Dynamic High-Beta Momentum Rotation",
+          rule: "Rebalance into top-volume momentum leaders with 5% trailing stop protection",
+          tag: "Momentum",
+        },
+        {
+          id: 2,
+          title: "Breakout Alpha & Whale Inflow",
+          rule: "Accumulate when 24h whale net inflow > $500K; hedge into USDG on 3% downside",
+          tag: "Smart Money",
+        },
+        {
+          id: 3,
+          title: "Sentiment & Liquidity Momentum",
+          rule: "Allocate to equities with sentiment score > 75; dynamic 14-day rebalance cycle",
+          tag: "Sentiment",
+        },
+        {
+          id: 4,
+          title: "Dip Accumulator & Swing Guard",
+          rule: "Auto-buy 3% pullbacks, take 8% profit into USDG cash buffer",
+          tag: "Swing DCA",
+        },
+      ];
+    } else {
+      return [
+        {
+          id: 1,
+          title: "Systematic Blue Chip DCA",
+          rule: "Systematic DCA into core institutional technology leaders with 100% sponsored gas",
+          tag: "Blue Chip",
+        },
+        {
+          id: 2,
+          title: "Risk-Weighted Market Cap DCA",
+          rule: "Allocate proportional to institutional trading depth with 70/30 equity/USDG ratio",
+          tag: "Balanced",
+        },
+        {
+          id: 3,
+          title: "Capital Preservation & Value DCA",
+          rule: "Accumulate mega-cap earnings leaders with zero-drift safety buffer",
+          tag: "Defensive",
+        },
+        {
+          id: 4,
+          title: "All-Weather Multi-Asset Compounder",
+          rule: "Steady monthly dollar accumulation with strict 5% single-stock exposure cap",
+          tag: "Compounder",
+        },
+      ];
+    }
+  }, [advisoryHorizon]);
+
+  // Computed live advisory plan based on user-selected allocation capital, duration, target date, and chosen mandate
   const currentAdvisoryPlan: AdvisoryPlan = useMemo(() => {
-    return generateAdvisoryPlan({
+    const basePlan = generateAdvisoryPlan({
       horizon: advisoryHorizon,
       riskProfile: advisoryRisk,
       capitalUsd: advisoryCapital || 2500,
       customStocks: advisorySelectionMode === "custom" ? advisoryCustomStocks : undefined,
       stablecoin: advisoryStablecoin,
     });
-  }, [advisoryHorizon, advisoryRisk, advisoryCapital, advisorySelectionMode, advisoryCustomStocks, advisoryStablecoin]);
+    const chosenMandate = STRATEGY_MANDATES[selectedStrategyMandateIndex] || STRATEGY_MANDATES[0];
+    return {
+      ...basePlan,
+      strategyName: `${basePlan.strategyName} (${advisoryDuration} · Target ${advisoryMaturityDate})`,
+      mandateRule: chosenMandate.rule,
+    };
+  }, [
+    advisoryHorizon,
+    advisoryRisk,
+    advisoryCapital,
+    advisorySelectionMode,
+    advisoryCustomStocks,
+    advisoryStablecoin,
+    advisoryDuration,
+    advisoryMaturityDate,
+    selectedStrategyMandateIndex,
+    STRATEGY_MANDATES,
+  ]);
+
+  // Stocks sorted strictly by momentumRank (1, 2, 3, ... 20)
+  const rankedStocks = useMemo(() => {
+    return [...STOCKS].sort((a, b) => {
+      const rA = OKX_CEX_MARKET_DATA.assetMetrics[a.symbol]?.momentumRank ?? 99;
+      const rB = OKX_CEX_MARKET_DATA.assetMetrics[b.symbol]?.momentumRank ?? 99;
+      return rA - rB;
+    });
+  }, []);
 
   // Market News Catalyst Feed state (Advanced Mode)
   const [newsList, setNewsList] = useState<NewsCatalyst[]>([]);
@@ -2139,13 +2255,13 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
         {/* Terminal Subheader & DUAL-ENVIRONMENT MODE SWITCHER */}
         <div className="mb-6 flex flex-col justify-between gap-3.5 sm:gap-4 rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs sm:flex-row sm:items-center">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-display text-lg font-bold tracking-tight text-ink-900 sm:text-2xl">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-base font-bold tracking-tight text-ink-900 sm:text-2xl">
                 {mode === "basic" ? "Spot Trading & Unit Terminal" : "Autonomous Investment Mandate Terminal"}
               </h1>
               <span className={cn(
-                "rounded-full px-2.5 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold border",
+                "rounded-full px-2.5 py-0.5 font-mono text-[10px] sm:text-[11px] font-bold border shrink-0",
                 mode === "basic" ? "bg-accent-50 border-accent-200 text-accent-700" : "bg-ink-900 border-ink-800 text-white"
               )}>
                 {mode === "basic" ? "Basic Mode" : "Advanced Mode"}
@@ -2153,24 +2269,24 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
               <button
                 type="button"
                 onClick={() => setShowInitialModeModal(true)}
-                className="text-[10px] font-mono text-ink-500 hover:text-ink-900 underline ml-1 cursor-pointer"
+                className="text-[10px] font-mono text-ink-500 hover:text-ink-900 underline cursor-pointer shrink-0"
               >
                 Change Environment
               </button>
             </div>
-            <p className="mt-1 text-xs text-ink-600 sm:text-sm">
+            <p className="mt-1 text-xs text-ink-600 sm:text-sm leading-relaxed">
               {mode === "basic"
                 ? "Direct non-custodial spot execution across 20 allowlisted equities with interactive charts and USDG unit calculator."
                 : "Autonomous algorithmic mandate studio with 4 OKX AI skills, drift rebalancing, and downside risk guards."}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
             {mode === "basic" ? (
               <button
                 type="button"
                 onClick={handleSwitchToAdvanced}
-                className="inline-flex items-center gap-2 rounded-xl bg-ink-950 hover:bg-accent-600 text-white px-4 py-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer group"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-ink-950 hover:bg-accent-600 text-white px-4 py-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer group"
               >
                 <span>Move to Advanced Mode</span>
                 <span className="group-hover:translate-x-0.5 transition-transform">→</span>
@@ -2179,7 +2295,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
               <button
                 type="button"
                 onClick={() => setMode("basic")}
-                className="inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white hover:bg-surface-100 text-ink-900 px-4 py-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer group"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white hover:bg-surface-100 text-ink-900 px-4 py-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer group"
               >
                 <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
                 <span>Move to Basic Mode</span>
@@ -3367,16 +3483,27 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
                 {/* AI Trading Advisory Agent Studio */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
-                  <div className="border-b border-ink-100 pb-4">
-                    <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
-                      Institutional Advisory Studio
-                    </span>
-                    <h2 className="font-display text-lg font-bold text-ink-950 sm:text-xl">
-                      AI Trading Advisory Agent
-                    </h2>
-                    <p className="mt-0.5 text-xs text-ink-600">
-                      Synthesizes your time horizon, preferred stock selections, and stablecoin liquidity to formulate custom non-custodial mandates.
-                    </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink-100 pb-4">
+                    <div>
+                      <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
+                        Institutional Advisory Studio
+                      </span>
+                      <h2 className="font-display text-lg font-bold text-ink-950 sm:text-xl">
+                        AI Trading Advisory Agent
+                      </h2>
+                      <p className="mt-0.5 text-xs text-ink-600">
+                        Synthesizes your time horizon, preferred stock selections, and stablecoin liquidity to formulate custom non-custodial mandates.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 rounded-xl border border-ink-200 bg-surface-50 px-3 py-1.5 font-mono text-xs font-semibold text-ink-800 shadow-2xs">
+                        <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent-600 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        <span>Clock: {executionClock || "Live UTC Clock"}</span>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Stablecoin Liquidity & Strategy Formulation Selectors */}
@@ -3390,9 +3517,9 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                         Settlement and cash buffer asset for algorithmic rebalances.
                       </p>
                       <div className="mt-2">
-                        <div className="rounded-xl border border-accent-500 bg-accent-50/70 ring-1 ring-accent-500 p-2.5 text-center">
-                          <span className="font-mono text-xs font-bold text-ink-900 block">USDG</span>
-                          <span className="text-[9px] text-accent-700 font-semibold block mt-0.5">
+                        <div className="rounded-xl border border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950 p-2.5 text-center">
+                          <span className="font-mono text-xs font-bold text-white block">USDG</span>
+                          <span className="text-[9px] text-white/80 font-semibold block mt-0.5">
                             OKX X Layer (Gas Sponsored)
                           </span>
                         </div>
@@ -3407,19 +3534,21 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       <p className="text-[11px] text-ink-500 mt-0.5">
                         Choose curated institutional presets or select preferred equities.
                       </p>
-                      <div className="mt-2 grid grid-cols-2 gap-2">
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button
                           type="button"
                           onClick={() => setAdvisorySelectionMode("recommended")}
                           className={cn(
                             "rounded-xl border p-2.5 text-center transition-all cursor-pointer",
                             advisorySelectionMode === "recommended"
-                              ? "border-accent-500 bg-accent-50/70 ring-1 ring-accent-500"
-                              : "border-ink-200 bg-surface-50 hover:bg-white"
+                              ? "border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950"
+                              : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
                           )}
                         >
-                          <span className="font-display text-xs font-bold text-ink-900 block">Recommended Basket</span>
-                          <span className="text-[9px] text-ink-500 block mt-0.5">Current Hot in the Market</span>
+                          <span className="font-display text-xs font-bold block">Recommended Basket</span>
+                          <span className={cn("text-[9px] block mt-0.5", advisorySelectionMode === "recommended" ? "text-white/80" : "text-ink-500")}>
+                            Institutional Basket Presets · Facilitated by Us
+                          </span>
                         </button>
                         <button
                           type="button"
@@ -3427,12 +3556,14 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                           className={cn(
                             "rounded-xl border p-2.5 text-center transition-all cursor-pointer",
                             advisorySelectionMode === "custom"
-                              ? "border-accent-500 bg-accent-50/70 ring-1 ring-accent-500"
-                              : "border-ink-200 bg-surface-50 hover:bg-white"
+                              ? "border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950"
+                              : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
                           )}
                         >
-                          <span className="font-display text-xs font-bold text-ink-900 block">Custom Selection</span>
-                          <span className="text-[9px] text-ink-500 block mt-0.5">Pick Your Preferred Stocks</span>
+                          <span className="font-display text-xs font-bold block">Custom Selection</span>
+                          <span className={cn("text-[9px] block mt-0.5", advisorySelectionMode === "custom" ? "text-white/80" : "text-ink-500")}>
+                            Pick Your Preferred Equities
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -3524,7 +3655,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                             >
                               <div className="truncate">
                                 <span className="block font-mono text-[11px] font-bold">{stk.symbol}</span>
-                                <span className="block font-mono text-[9px] text-ink-400">$${livePrice.toFixed(2)}</span>
+                                <span className="block font-mono text-[9px] text-ink-400">${livePrice.toFixed(2)}</span>
                               </div>
                               <span className={cn(
                                 "h-4 w-4 rounded-full flex items-center justify-center text-[10px] font-bold",
@@ -3591,7 +3722,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                             className={cn(
                               "rounded-lg border px-2.5 py-1 text-[11px] font-mono font-semibold transition-all cursor-pointer shadow-2xs",
                               advisoryCapital === amt
-                                ? "border-accent-500 bg-accent-600 text-white font-bold"
+                                ? "border-ink-950 bg-ink-950 text-white font-bold"
                                 : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
                             )}
                           >
@@ -3610,34 +3741,141 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <button
                         type="button"
-                        onClick={() => setAdvisoryHorizon("short_term")}
+                        onClick={() => {
+                          setAdvisoryHorizon("short_term");
+                          setAdvisoryDuration("1 Month");
+                          setSelectedStrategyMandateIndex(0);
+                        }}
                         className={cn(
                           "rounded-xl border p-3 text-left transition-all cursor-pointer",
                           advisoryHorizon === "short_term"
-                            ? "border-accent-500 bg-accent-50/60 ring-1 ring-accent-500"
-                            : "border-ink-200 bg-surface-50 hover:bg-white"
+                            ? "border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950"
+                            : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
                         )}
                       >
-                        <p className="font-display text-xs font-bold text-ink-900">Short-Term Momentum</p>
-                        <p className="mt-0.5 text-[10px] text-ink-500">
+                        <p className="font-display text-xs font-bold">Defensive Short-Term Momentum</p>
+                        <p className={cn("mt-0.5 text-[10px]", advisoryHorizon === "short_term" ? "text-white/80" : "text-ink-500")}>
                           Tactical rotation into high-beta market leaders &amp; momentum swings
                         </p>
                       </button>
                       <button
                         type="button"
-                        onClick={() => setAdvisoryHorizon("long_term")}
+                        onClick={() => {
+                          setAdvisoryHorizon("long_term");
+                          setAdvisoryDuration("6 Months");
+                          setSelectedStrategyMandateIndex(0);
+                        }}
                         className={cn(
                           "rounded-xl border p-3 text-left transition-all cursor-pointer",
                           advisoryHorizon === "long_term"
-                            ? "border-accent-500 bg-accent-50/60 ring-1 ring-accent-500"
-                            : "border-ink-200 bg-surface-50 hover:bg-white"
+                            ? "border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950"
+                            : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
                         )}
                       >
-                        <p className="font-display text-xs font-bold text-ink-900">Long-Term Blue Chip DCA</p>
-                        <p className="mt-0.5 text-[10px] text-ink-500">
+                        <p className="font-display text-xs font-bold">Long-Term Blue Chip DCA</p>
+                        <p className={cn("mt-0.5 text-[10px]", advisoryHorizon === "long_term" ? "text-white/80" : "text-ink-500")}>
                           Automated systematic accumulation of core institutional equities
                         </p>
                       </button>
+                    </div>
+
+                    {/* Clock / Time Horizon Duration Selector */}
+                    <div className="mt-3 rounded-xl border border-ink-200 bg-surface-50/80 p-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <label className="text-xs font-bold uppercase tracking-wider text-ink-900 flex items-center gap-1.5">
+                          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-accent-600 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                          </svg>
+                          <span>Strategy Duration &amp; Target Horizon</span>
+                        </label>
+                        <div className="flex items-center gap-1.5 font-mono text-xs">
+                          <span className="text-ink-500 text-[10px]">Target Date:</span>
+                          <span className="font-bold text-ink-950 bg-white px-2 py-0.5 rounded-md border border-ink-200 shadow-2xs">
+                            {advisoryMaturityDate} ({advisoryDuration})
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 flex flex-wrap gap-2">
+                        {(advisoryHorizon === "short_term"
+                          ? ["1 Week", "2 Weeks", "1 Month", "3 Months"]
+                          : ["3 Months", "6 Months", "9 Months", "1 Year", "2 Years"]
+                        ).map((dur) => (
+                          <button
+                            key={dur}
+                            type="button"
+                            onClick={() => setAdvisoryDuration(dur)}
+                            className={cn(
+                              "rounded-lg px-3 py-1.5 text-xs font-mono font-semibold transition-all cursor-pointer shadow-2xs",
+                              advisoryDuration === dur
+                                ? "border-ink-950 bg-ink-950 text-white font-bold"
+                                : "border-ink-200 bg-white text-ink-700 hover:bg-surface-100"
+                            )}
+                          >
+                            {dur}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Mandate Directives Selection (1, 2, 3, 4) Under Strategy */}
+                    <div className="mt-3 rounded-xl border border-ink-200 bg-white p-3.5">
+                      <div className="flex items-center justify-between pb-2 border-b border-ink-100">
+                        <label className="text-xs font-bold uppercase tracking-wider text-ink-900">
+                          Select Strategic Mandate Directive
+                        </label>
+                        <span className="font-mono text-[10px] text-accent-700 font-bold bg-accent-50 px-2 py-0.5 rounded border border-accent-200">
+                          Mandate #{STRATEGY_MANDATES[selectedStrategyMandateIndex]?.id || 1} Active
+                        </span>
+                      </div>
+
+                      <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {STRATEGY_MANDATES.map((m, idx) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => setSelectedStrategyMandateIndex(idx)}
+                            className={cn(
+                              "rounded-xl border p-3 text-left transition-all cursor-pointer",
+                              selectedStrategyMandateIndex === idx
+                                ? "border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950"
+                                : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={cn(
+                                  "font-mono text-xs font-bold px-1.5 py-0.5 rounded",
+                                  selectedStrategyMandateIndex === idx
+                                    ? "bg-white text-ink-950 font-bold"
+                                    : "bg-surface-200 text-ink-700 font-bold"
+                                )}
+                              >
+                                #{m.id}
+                              </span>
+                              <span className={cn(
+                                "text-[10px] font-mono",
+                                selectedStrategyMandateIndex === idx ? "text-accent-300 font-bold" : "text-accent-700 font-semibold"
+                              )}>
+                                {m.tag}
+                              </span>
+                            </div>
+                            <p className={cn(
+                              "mt-1 font-display text-xs font-bold",
+                              selectedStrategyMandateIndex === idx ? "text-white" : "text-ink-900"
+                            )}>
+                              {m.title}
+                            </p>
+                            <p className={cn(
+                              "mt-0.5 text-[11px] line-clamp-2 leading-relaxed",
+                              selectedStrategyMandateIndex === idx ? "text-white/80" : "text-ink-600"
+                            )}>
+                              {m.rule}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -3646,7 +3884,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     <label className="text-xs font-bold uppercase tracking-wider text-ink-700">
                       Select Investment Risk Profile
                     </label>
-                    <div className="mt-2 grid grid-cols-3 gap-2.5">
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
                       {(["conservative", "balanced", "aggressive"] as RiskProfile[]).map((r) => (
                         <button
                           key={r}
@@ -3655,12 +3893,12 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                           className={cn(
                             "rounded-xl border p-3 text-left transition-all cursor-pointer",
                             advisoryRisk === r
-                              ? "border-accent-500 bg-accent-50/60 ring-1 ring-accent-500"
-                              : "border-ink-200 bg-surface-50 hover:bg-white"
+                              ? "border-ink-950 bg-ink-950 text-white shadow-md ring-2 ring-ink-950"
+                              : "border-ink-200 bg-white text-ink-700 hover:bg-surface-50"
                           )}
                         >
-                          <p className="font-display text-xs font-bold capitalize text-ink-900">{r}</p>
-                          <p className="mt-0.5 text-[10px] text-ink-500">
+                          <p className="font-display text-xs font-bold capitalize">{r}</p>
+                          <p className={cn("mt-0.5 text-[10px]", advisoryRisk === r ? "text-white/80" : "text-ink-500")}>
                             {r === "conservative" && "Capital Preservation"}
                             {r === "balanced" && "Strategic Growth"}
                             {r === "aggressive" && "Alpha Acceleration"}
@@ -3933,7 +4171,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     {/* Direct Execute >> Confirm Wallet Signature >> Confirmed */}
                     <div className="mt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-ink-950 p-4 text-white shadow-md">
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                           <span className="rounded bg-accent-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-accent-400">
                             Deploying ${advisoryCapital.toLocaleString()} {advisoryStablecoin}
                           </span>
@@ -3954,7 +4192,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                         onClick={() => {
                           setMandatePlanToSign(currentAdvisoryPlan);
                         }}
-                        className="shrink-0 rounded-xl bg-accent-500 hover:bg-accent-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto shrink-0 rounded-xl bg-accent-500 hover:bg-accent-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
                       >
                         <span>Execute &amp; Sign Mandate</span>
                         <span>↗</span>
@@ -4053,23 +4291,24 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     </div>
                   </div>
 
-                {/* 2. Institutional Market & Mandates Directory (Powered by OKX AI Skills) */}
+                {/* 2. Institutional Market & Mandates Directory (Powered by Meirei Telemetry) */}
                 <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
                   <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
-                          OKX AI Skills Telemetry Engine
+                          Meirei Telemetry Engine
                         </span>
-                        <span className="rounded bg-accent-100 px-2 py-0.5 font-mono text-[10px] font-bold text-accent-800">
-                          4 Skills Active
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 font-mono text-[10px] font-bold text-emerald-800">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          LIVE
                         </span>
                       </div>
                       <h2 className="mt-1 font-display text-lg font-bold text-ink-900 sm:text-xl">
-                        Institutional Market &amp; Mandates Directory
+                        Daily Institutional Market &amp; Mandate Directory
                       </h2>
                       <p className="mt-0.5 text-xs text-ink-500">
-                        Synthesizing okx-sentiment-tracker, okx-cex-smartmoney, okx-cex-market, and trading-plan-generator across all 20 tokenized equities on OKX X Layer.
+                        Synthesizing institutional sentiment, smart-money orderflow, and volatility metrics across all 20 tokenized equities on OKX X Layer.
                       </p>
                     </div>
 
@@ -4085,20 +4324,25 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   </div>
 
                   {/* Comprehensive Institutional Equities Table */}
-                  <div className="mt-5 overflow-x-auto rounded-xl border border-ink-200">
+                  <div className="flex items-center justify-between sm:hidden pb-1 px-1 text-[10px] font-mono text-ink-500">
+                    <span>Scroll table horizontally for full metrics</span>
+                    <span>→</span>
+                  </div>
+                  <div className="mt-2 sm:mt-5 overflow-x-auto rounded-xl border border-ink-200">
                     <table className="w-full min-w-[760px] text-left text-xs">
                       <thead className="border-b border-ink-200 bg-surface-100 font-semibold text-ink-900">
                         <tr>
+                          <th className="p-3 w-14 text-center">Rank</th>
                           <th className="p-3">Asset</th>
                           <th className="p-3">Spot Price</th>
                           <th className="p-3">Smart Money Flow</th>
                           <th className="p-3">Sentiment Score</th>
                           <th className="p-3">CEX Metrics</th>
-                          <th className="p-3 text-right">Autonomous Mandate</th>
+                          <th className="p-3 text-right">Quick Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-ink-200/60 bg-white text-ink-700">
-                        {STOCKS.map((stk) => {
+                        {rankedStocks.map((stk) => {
                           const priceNum = getNumericPrice(stk);
                           const sentiment = OKX_SENTIMENT_DATA.assetScores[stk.symbol] || { score: 75, verdict: "Bullish" };
                           const smartFlow = OKX_SMART_MONEY_DATA.assetSmartFlow[stk.symbol] || { netFlow: "+$500K", flowType: "Inflow", tier: "Accumulation" };
@@ -4106,6 +4350,17 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
                           return (
                             <tr key={stk.symbol} className="transition-colors hover:bg-surface-50">
+                              <td className="p-3 text-center">
+                                <span className={cn(
+                                  "inline-flex items-center justify-center h-6 w-6 rounded-full font-mono text-xs font-bold shadow-2xs",
+                                  metrics.momentumRank <= 3 
+                                    ? "bg-ink-950 text-white" 
+                                    : "bg-surface-200 text-ink-700"
+                                )}>
+                                  #{metrics.momentumRank}
+                                </span>
+                              </td>
+
                               <td className="p-3 font-semibold text-ink-900">
                                 <div className="flex items-center gap-2.5">
                                   <div
@@ -4212,28 +4467,18 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                               </td>
 
                               <td className="p-3 text-right">
-                                <div className="flex items-center justify-end gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      handleDeployStockMandate(stk.symbol);
-                                    }}
-                                    className="rounded-lg bg-ink-900 hover:bg-accent-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-xs transition-colors cursor-pointer"
-                                  >
-                                    Deploy Mandate
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedStock(stk);
-                                      openWeb3Signer(stk.symbol, 100, 100 / priceNum, priceNum);
-                                    }}
-                                    className="rounded-lg border border-ink-200 bg-white hover:bg-surface-100 px-2 py-1.5 text-[11px] font-semibold text-ink-700 transition-colors cursor-pointer"
-                                    title={`Instant swap on OKX X Layer`}
-                                  >
-                                    Swap
-                                  </button>
-                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedStock(stk);
+                                    openWeb3Signer(stk.symbol, 100, 100 / priceNum, priceNum);
+                                  }}
+                                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-ink-950 hover:bg-accent-600 px-3.5 py-1.5 text-[11px] font-bold text-white shadow-2xs transition-colors cursor-pointer"
+                                  title={`Instant swap ${stk.symbol} on OKX X Layer`}
+                                >
+                                  <span>Swap</span>
+                                  <span className="text-[10px]">↗</span>
+                                </button>
                               </td>
                             </tr>
                           );
@@ -4251,7 +4496,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
 
             {/* Live Portfolio Breakdown Card - Mode-Isolated Active Holdings */}
             <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-ink-100 pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
                     Active Portfolio
@@ -4288,7 +4533,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                     <p className="font-mono text-3xl font-bold tracking-tight text-ink-900">
                       ${currentTotalVal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                     </p>
-                    <div className="mt-1 flex items-center justify-between text-xs text-ink-600">
+                    <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-xs text-ink-600">
                       <span>Cash: <strong className="font-mono text-ink-900">${currentUsdgBalance.toFixed(2)} USDG</strong></span>
                       <span>Equities: <strong className="font-mono text-ink-900">${currentEquityVal.toFixed(2)} USDG</strong></span>
                     </div>
@@ -4438,7 +4683,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
             {mode === "advanced" && (
               <div className="rounded-2xl border border-ink-200/90 bg-white p-5 shadow-xs">
                 <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-3.5">
-                  <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-accent-600">
@@ -4960,6 +5205,28 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       </div>
                     )}
                   </div>
+
+                  {/* Phase 2 Expansion Roadmap Channels */}
+                  <div className="pt-2 border-t border-ink-100 grid grid-cols-1 sm:grid-cols-2 gap-2 text-center">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-left">
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[9px] font-bold text-amber-900 mb-1">
+                        <span>⏳</span>
+                        <span>WhatsApp Assistant — COMING SOON</span>
+                      </div>
+                      <p className="text-[10px] text-ink-600 leading-snug">
+                        WhatsApp conversational agent on OKX X Layer is currently in Phase 2 auditing. <Link href="/coming-soon" className="text-amber-800 underline font-semibold">Details</Link>
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-left">
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[9px] font-bold text-amber-900 mb-1">
+                        <span>⏳</span>
+                        <span>Instagram Direct Agent — COMING SOON</span>
+                      </div>
+                      <p className="text-[10px] text-ink-600 leading-snug">
+                        Instagram direct messaging tracking is launching soon. Use Telegram or Web console today. <Link href="/coming-soon" className="text-amber-800 underline font-semibold">Details</Link>
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Feedback messages */}
@@ -5096,7 +5363,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="w-full max-w-lg rounded-3xl border border-ink-200 bg-white p-6 shadow-2xl"
+              className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200 bg-white p-4 sm:p-6 shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-ink-100 pb-3">
                 <div className="flex items-center gap-2">
@@ -5129,7 +5396,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   <label className="block text-xs font-bold uppercase tracking-wider text-ink-600 mb-1.5">
                     Policy Type
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {[
                       { type: "drift_rebalance" as const, label: "Drift Rebalance" },
                       { type: "dca_recurring" as const, label: "DCA Accumulation" },
@@ -5289,7 +5556,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              className="relative w-full max-w-md rounded-3xl border border-ink-200 bg-white p-6 shadow-2xl text-ink-900"
+              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200 bg-white p-4 sm:p-6 shadow-2xl text-ink-900"
             >
               <div className="flex items-center justify-between pb-3.5 border-b border-ink-100">
                 <div>
@@ -5591,7 +5858,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
               initial={{ opacity: 0, scale: 0.95, y: 14 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 14 }}
-              className="relative w-full max-w-2xl rounded-3xl border border-ink-200/80 bg-white/95 backdrop-blur-xl p-6 sm:p-8 shadow-2xl text-ink-900"
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-ink-200/80 bg-white/95 backdrop-blur-xl p-4 sm:p-8 shadow-2xl text-ink-900"
             >
               {/* Header */}
               <div className="text-center space-y-2 pb-6 border-b border-ink-100">
@@ -5783,14 +6050,14 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                   </span>
                 </label>
 
-                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-ink-200">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-3 border-t border-ink-200">
                   <button
                     type="button"
                     onClick={() => {
                       setShowAdvancedTermsModal(false);
                       setMode("basic");
                     }}
-                    className="px-4 py-2.5 rounded-xl border border-ink-200 bg-white text-ink-700 text-xs font-semibold hover:bg-surface-100 transition-colors cursor-pointer"
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-ink-200 bg-white text-ink-700 text-xs font-semibold hover:bg-surface-100 transition-colors cursor-pointer text-center"
                   >
                     Decline &amp; Stay in Basic Mode
                   </button>
@@ -5802,7 +6069,7 @@ If any mandate seems confusing, tell me what's on your mind or pick a quick sugg
                       setShowAdvancedTermsModal(false);
                       setMode("advanced");
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-ink-900 hover:bg-accent-600 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-ink-900 hover:bg-accent-600 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs text-center"
                   >
                     Accept &amp; Enter Advanced Mode →
                   </button>
