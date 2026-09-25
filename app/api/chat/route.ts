@@ -22,8 +22,6 @@ import { transcribeAudioBuffer } from "@/lib/voice/transcribe";
 import { checkSanctions } from "@/lib/security/sanctions";
 import { getRedisClient } from "@/lib/redis/client";
 
-const DEFAULT_DEV_WALLET = process.env.NODE_ENV !== "production" ? process.env.MEIREI_WALLET : undefined;
-
 interface PendingExecution {
   type: "trade" | "mandate";
   side?: "buy" | "sell";
@@ -99,9 +97,16 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     let message = (body.message || body.mandate || "").trim();
-    const rawWallet = (body.walletAddress || DEFAULT_DEV_WALLET || "").trim();
+    const rawWallet = (body.walletAddress || "").trim();
     if (!rawWallet) {
-      return NextResponse.json({ error: "Missing required walletAddress." }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Missing required walletAddress.",
+          reply: "Please connect your Web3 wallet (OKX Wallet or MetaMask) first to trade or view balances on OKX X Layer (Chain 196).",
+          requiresWallet: true,
+        },
+        { status: 400 }
+      );
     }
     const walletAddress = rawWallet;
     const confirm = Boolean(body.confirm);

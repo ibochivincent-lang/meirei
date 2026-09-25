@@ -341,11 +341,18 @@ function ConnectWalletContent() {
         }),
       }).catch(() => {});
 
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("meirei_wallet_address");
+        localStorage.removeItem("meirei_wallet_name");
+        localStorage.removeItem("meirei_demo_sandbox");
+        localStorage.setItem("meirei_disconnected", "true");
+      }
+
       setConnectedAddress(null);
       setCurrentChainId(null);
       setActiveWalletName(null);
       setLinkSuccess(false);
-      setInfoMessage(`Wallet unlinked successfully from ${activeConfig.name}. Your channel has reverted to default sandbox address.`);
+      setInfoMessage(`Wallet disconnected and unlinked successfully from ${activeConfig.name}.`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setErrorMessage(`Failed to disconnect: ${msg}`);

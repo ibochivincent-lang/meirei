@@ -8,7 +8,7 @@ import {
   Web3ProviderState,
 } from "@/lib/wallet/xlayer_signer";
 import { signMandateDeployment, MandateSignatureResult } from "@/lib/wallet/eip2612_permit";
-import { formatShortAddress } from "@/lib/wallet/xlayer";
+import { formatShortAddress, isValidEvmAddress } from "@/lib/wallet/xlayer";
 
 export interface MandateSigningModalProps {
   isOpen: boolean;
@@ -94,7 +94,12 @@ export function MandateSigningModal({
     setSigningError(null);
     setStatusText("Requesting EIP-712 / EIP-2612 mandate signature in your Web3 wallet...");
 
-    const activeAddress = providerState.connectedAddress || userAddress || "0x1960000000000000000000000000000000000196";
+    const activeAddress = providerState.connectedAddress || userAddress;
+    if (!activeAddress || !isValidEvmAddress(activeAddress)) {
+      setSigningError("No Web3 wallet connected. Please connect your OKX Wallet or MetaMask to deploy mandates.");
+      setIsSigning(false);
+      return;
+    }
     const mandateId = `MAN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     try {

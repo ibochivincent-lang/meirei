@@ -66,10 +66,16 @@ export function Navbar() {
           </ul>
         </nav>
 
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden items-center gap-3 md:flex">
+          <Link
+            href="/app?action=connect"
+            className="inline-flex items-center gap-1.5 rounded-full border border-ink-300 bg-surface-0 px-4 py-2 text-sm font-semibold text-ink-900 transition-all hover:border-ink-900 hover:bg-surface-100 cursor-pointer min-h-[44px]"
+          >
+            <span>Connect Wallet</span>
+          </Link>
           <Link
             href="/app"
-            className="inline-flex items-center gap-1.5 rounded-full border border-ink-900 bg-surface-0 px-4 py-2 text-sm font-semibold text-ink-900 transition-all hover:bg-ink-900 hover:text-white cursor-pointer min-h-[44px]"
+            className="inline-flex items-center gap-1.5 rounded-full bg-ink-900 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-ink-800 cursor-pointer min-h-[44px]"
           >
             <span>Launch app</span>
             <span className="text-xs font-bold leading-none">↗</span>
@@ -133,7 +139,14 @@ export function Navbar() {
                     </a>
                   </li>
                 ))}
-                <li className="pt-3">
+                <li className="pt-3 flex flex-col gap-2">
+                  <MagneticCta
+                    href="/app?action=connect"
+                    onClick={() => setOpen(false)}
+                    className="min-h-[44px] flex items-center justify-center !bg-surface-0 !text-ink-900 border border-ink-900"
+                  >
+                    Connect Wallet
+                  </MagneticCta>
                   <MagneticCta
                     href="/app"
                     onClick={() => setOpen(false)}

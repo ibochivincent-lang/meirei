@@ -204,7 +204,6 @@ function SectionSeparator({ label }: { label: string }) {
 export default function AppDashboardPage() {
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isLoadingBalance, setIsLoadingBalance] = useState<boolean>(false);
-  const isLoggedIn = Boolean(profile.address && profile.address !== "0x0000000000000000000000000000000000000000");
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [mandatePlanToSign, setMandatePlanToSign] = useState<AdvisoryPlan | null>(null);
 
@@ -302,6 +301,8 @@ export default function AppDashboardPage() {
   const [connectHandle, setConnectHandle] = useState<string>(DEFAULT_PROFILE.handle);
   const [connectAddress, setConnectAddress] = useState<string | null>(null);
   const [connectWalletName, setConnectWalletName] = useState<string | null>(null);
+  const activeAddress = connectAddress || (profile.address && profile.address !== "0x0000000000000000000000000000000000000000" ? profile.address : null);
+  const isLoggedIn = Boolean(activeAddress);
   const [isWalletConnecting, setIsWalletConnecting] = useState<boolean>(false);
   const [isChannelLinking, setIsChannelLinking] = useState<boolean>(false);
   const [connectSuccess, setConnectSuccess] = useState<boolean>(false);
@@ -319,7 +320,7 @@ export default function AppDashboardPage() {
       if (isDemoSandbox || (profile.address && profile.address.toLowerCase() === DEMO_SANDBOX_ADDRESS.toLowerCase())) {
         return;
       }
-      const addr = profile.address?.trim();
+      const addr = activeAddress?.trim() || profile.address?.trim();
       if (!addr || !isValidEvmAddress(addr) || addr === "0x0000000000000000000000000000000000000000") {
         setProfile((prev) => ({
           ...prev,
@@ -370,33 +371,91 @@ export default function AppDashboardPage() {
       isMounted = false;
       clearInterval(timer);
     };
-  }, [profile.address, isDemoSandbox]);
+  }, [activeAddress, profile.address, isDemoSandbox]);
 
-  // Restore Demo Sandbox on client mount if saved in localStorage
+  // Restore saved wallet connection on client mount only if user previously connected and did not disconnect
   useEffect(() => {
-    if (typeof window !== "undefined" && localStorage.getItem("meirei_demo_sandbox") === "true") {
-      setIsDemoSandbox(true);
-      setProfile({
-        handle: "OKX_Judge (Demo Sandbox)",
-        platform: "web",
-        email: "evaluator@okx.com",
-        address: DEMO_SANDBOX_ADDRESS,
-        twoFactorMethod: "email",
-        botStatus: "Connected on Web",
-        portfolioValue: 3263.0,
-        usdgBalance: 1000.0,
-        holdings: [
-          { symbol: "USDG", amount: 1000.0, valueUsd: 1000.0, color: "#10B981" },
-          { symbol: "NVDAx", amount: 3.5, valueUsd: 602.0, color: "#76B900" },
-          { symbol: "AAPLx", amount: 5.0, valueUsd: 1165.0, color: "#A2AAAD" },
-          { symbol: "TSLAx", amount: 2.0, valueUsd: 496.0, color: "#E82127" },
-        ],
-        activeMandates: [
-          { id: "m1", rule: "60% NVDAx / 40% AAPLx", status: "Active", frequency: "continuous" },
-          { id: "m2", rule: "50 USDG TSLAx", status: "Active", frequency: "weekly" },
-          { id: "m3", rule: "7% Drawdown Guard", status: "Active", frequency: "24h" },
-        ],
-      });
+    if (typeof window === "undefined") return;
+
+    const isExplicitlyDisconnected = localStorage.getItem("meirei_disconnected") === "true";
+    if (isExplicitlyDisconnected) {
+      // User explicitly disconnected; keep clean disconnected state
+      return;
+    }
+
+    const savedAddr = localStorage.getItem("meirei_wallet_address");
+    if (!savedAddr || !isValidEvmAddress(savedAddr)) {
+      // No saved authorized wallet; stay in disconnected state
+      return;
+    }
+
+    const okxProvider = getSpecificProvider("okx");
+    const mmProvider = getSpecificProvider("metamask");
+    const activeProvider = okxProvider || mmProvider || getSpecificProvider("injected");
+
+    if (activeProvider) {
+      activeProvider
+        .request({ method: "eth_accounts" })
+        .then((accounts: string[]) => {
+          if (accounts && accounts.length > 0 && isValidEvmAddress(accounts[0])) {
+            const activeAddr = accounts[0].toLowerCase();
+            const name = okxProvider ? "OKX Wallet" : mmProvider ? "MetaMask" : "Web3 Wallet";
+            setConnectAddress(activeAddr);
+            setConnectWalletName(name);
+            localStorage.setItem("meirei_wallet_address", activeAddr);
+            localStorage.setItem("meirei_wallet_name", name);
+            setProfile((prev) => ({
+              ...prev,
+              address: activeAddr,
+              handle: formatShortAddress(activeAddr),
+              email: `${activeAddr.slice(2, 8)}@xlayer.wallet`,
+              botStatus: `Connected via ${name} on OKX X Layer`,
+            }));
+          } else {
+            // Extension is locked or disconnected for this dApp
+            localStorage.removeItem("meirei_wallet_address");
+            localStorage.removeItem("meirei_wallet_name");
+            setConnectAddress(null);
+            setConnectWalletName(null);
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem("meirei_wallet_address");
+          localStorage.removeItem("meirei_wallet_name");
+          setConnectAddress(null);
+          setConnectWalletName(null);
+        });
+    }
+  }, []);
+
+  // Listen to live wallet account changes in the browser
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const okx = getSpecificProvider("okx");
+    const eth = getSpecificProvider("injected");
+    const provider = (okx || eth) as any;
+    if (provider && typeof provider.on === "function") {
+      const handleAccounts = (accounts: string[]) => {
+        if (!accounts || accounts.length === 0) {
+          handleFullDisconnect();
+        } else if (isValidEvmAddress(accounts[0])) {
+          const newAddr = accounts[0].toLowerCase();
+          setConnectAddress(newAddr);
+          localStorage.setItem("meirei_wallet_address", newAddr);
+          setProfile((prev) => ({
+            ...prev,
+            address: newAddr,
+            handle: formatShortAddress(newAddr),
+            email: `${newAddr.slice(2, 8)}@xlayer.wallet`,
+          }));
+        }
+      };
+      provider.on("accountsChanged", handleAccounts);
+      return () => {
+        if (typeof provider.removeListener === "function") {
+          provider.removeListener("accountsChanged", handleAccounts);
+        }
+      };
     }
   }, []);
 
@@ -522,13 +581,17 @@ export default function AppDashboardPage() {
     setIsDemoSandbox(false);
     if (typeof window !== "undefined") {
       localStorage.removeItem("meirei_demo_sandbox");
+      localStorage.removeItem("meirei_wallet_address");
+      localStorage.removeItem("meirei_wallet_name");
+      localStorage.setItem("meirei_disconnected", "true");
     }
     setConnectAddress(null);
+    setConnectWalletName(null);
     setProfile({
       ...DEFAULT_PROFILE,
       handle: "Disconnected",
       email: "disconnected@meirei.app",
-      address: "0x0000000000000000000000000000000000000000",
+      address: "",
       holdings: [],
       portfolioValue: 0,
       usdgBalance: 0,
@@ -1332,7 +1395,9 @@ export default function AppDashboardPage() {
       const symbolParam = params.get("symbol");
       const amountParam = params.get("amount");
 
-      if (mandateParam && mandateParam.trim()) {
+      if (actionParam === "connect") {
+        setShowLoginModal(true);
+      } else if (mandateParam && mandateParam.trim()) {
         setPromptText(mandateParam.trim());
       } else if (actionParam === "buy" && symbolParam) {
         const amtStr = amountParam ? `$${amountParam} in ` : "";
@@ -1431,6 +1496,12 @@ export default function AppDashboardPage() {
       } catch {}
 
       setConnectInfoMsg(`Connected ${title} (${formatShortAddress(activeAddr)}) on OKX X Layer.`);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("meirei_wallet_address", activeAddr);
+        localStorage.setItem("meirei_wallet_name", title);
+        localStorage.removeItem("meirei_demo_sandbox");
+        localStorage.removeItem("meirei_disconnected");
+      }
       setProfile((prev) => ({
         ...prev,
         address: activeAddr,
@@ -1519,6 +1590,8 @@ export default function AppDashboardPage() {
       if (typeof window !== "undefined") {
         localStorage.removeItem("meirei_demo_sandbox");
         localStorage.removeItem("meirei_wallet_address");
+        localStorage.removeItem("meirei_wallet_name");
+        localStorage.setItem("meirei_disconnected", "true");
       }
 
       await fetch("/api/wallet/link", {
@@ -1538,7 +1611,7 @@ export default function AppDashboardPage() {
 
       setProfile({
         ...DEFAULT_PROFILE,
-        address: "0x0000000000000000000000000000000000000000",
+        address: "",
         handle: "Disconnected",
         email: "disconnected@meirei.app",
         botStatus: "Disconnected",
@@ -1989,13 +2062,27 @@ export default function AppDashboardPage() {
       return;
     }
 
+    const isTradeAction = lowerQ.includes("buy") || lowerQ.includes("sell") || lowerQ.includes("confirm") || lowerQ.includes("execute") || lowerQ.includes("rebalance");
+    if (isTradeAction && !activeAddress) {
+      const promptMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        sender: "bot",
+        text: "Please connect your Web3 wallet (OKX Wallet or MetaMask) first to execute orders on OKX X Layer (Chain 196). Click 'Connect Wallet' in the top bar to get started.",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatMessages((prev) => [...prev, promptMsg]);
+      setIsChatSending(false);
+      setShowLoginModal(true);
+      return;
+    }
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: query,
-          walletAddress: connectAddress || profile.address || DEMO_SANDBOX_ADDRESS,
+          walletAddress: activeAddress || undefined,
           platform: profile.platform,
           chatHandle: profile.handle,
           email: profile.email,
@@ -2149,6 +2236,15 @@ export default function AppDashboardPage() {
   };
 
   const executeTradeWithToken = async (query: string, token: string | null) => {
+    if (!activeAddress) {
+      setMandateResult({
+        reply: "Please connect your Web3 wallet (OKX Wallet or MetaMask) first to trade or deploy mandates on OKX X Layer.",
+        type: "error",
+      });
+      setShowLoginModal(true);
+      return;
+    }
+
     setIsSubmitting(true);
     setMandateResult(null);
 
@@ -2158,7 +2254,7 @@ export default function AppDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: query,
-          walletAddress: connectAddress || profile.address || DEMO_SANDBOX_ADDRESS,
+          walletAddress: activeAddress,
           platform: profile.platform,
           chatHandle: profile.handle,
           email: profile.email,
@@ -2509,54 +2605,47 @@ export default function AppDashboardPage() {
               </button>
             </div>
 
-            {/* Account Status & Identity Badge (Optimized for mobile) */}
+            {/* Account Status & Identity Badge with Prominent Connect / Disconnect */}
             {isLoggedIn ? (
-              <div className="flex items-center gap-1.5 sm:gap-2.5 rounded-full border border-ink-200 bg-white p-1 sm:p-1.5 sm:pr-3.5 shadow-xs">
-                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-accent-500 text-[10px] sm:text-xs font-bold text-white shadow-xs uppercase shrink-0">
-                  {profile.platform === "telegram" && "TG"}
-                  {profile.platform === "web" && "WEB"}
-                  {profile.platform === "okx_wallet" && "OKX"}
-                </div>
-                <div className="text-left max-w-[65px] sm:max-w-none">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-semibold text-ink-900 truncate">{profile.handle}</span>
-                    <span className="hidden sm:inline-block rounded bg-emerald-100 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800">
-                      Non-Custodial
-                    </span>
-                  </div>
-                  <p className="font-mono text-[10px] text-ink-500 hidden sm:block">
-                    {profile.email} · {profile.address.slice(0, 6)}...{profile.address.slice(-4)}
-                  </p>
-                </div>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setShowLoginModal(true)}
-                  className="rounded p-1 text-xs text-ink-400 hover:text-accent-600 cursor-pointer"
-                  title="Switch identity or channel"
+                  className="flex items-center gap-1.5 sm:gap-2.5 rounded-full border border-emerald-300 bg-emerald-50/80 hover:bg-emerald-100/80 p-1 sm:p-1.5 sm:pr-3 shadow-2xs cursor-pointer transition-colors"
+                  title="Manage connected wallet"
                 >
-                  <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-current">
-                    <path d="M12 10v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v2h1V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2h-1z" />
-                    <path d="M10.146 5.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L12.293 9H6.5a.5.5 0 0 1 0-1h5.793l-2.147-2.146a.5.5 0 0 1 0-.708z" />
-                  </svg>
+                  <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-emerald-600 text-[10px] sm:text-xs font-bold text-white shadow-xs uppercase shrink-0">
+                    {connectWalletName ? connectWalletName.slice(0, 3) : "OKX"}
+                  </div>
+                  <div className="text-left max-w-[85px] sm:max-w-none">
+                    <div className="flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs font-semibold text-emerald-950 font-mono">
+                        {formatShortAddress(activeAddress || profile.address)}
+                      </span>
+                    </div>
+                    <p className="font-mono text-[9px] text-emerald-700 hidden sm:block">
+                      OKX X Layer (196)
+                    </p>
+                  </div>
                 </button>
                 <button
                   type="button"
                   onClick={handleFullDisconnect}
-                  className="rounded p-1 text-xs text-ink-400 hover:text-red-500 cursor-pointer"
+                  className="rounded-full border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-1.5 text-xs font-semibold cursor-pointer transition-colors shadow-2xs shrink-0"
                   title="Disconnect wallet"
                 >
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 stroke-current stroke-2 fill-none">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
-                  </svg>
+                  Disconnect
                 </button>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => setShowLoginModal(true)}
-                className="rounded-full bg-accent-500 px-3 py-1 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-semibold text-white shadow-sm transition-all hover:bg-accent-600 cursor-pointer shrink-0"
+                className="rounded-full bg-accent-500 hover:bg-accent-600 px-3.5 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-semibold text-white shadow-xs transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
               >
-                Connect
+                <span className="h-2 w-2 rounded-full bg-white/70" />
+                <span>Connect Wallet</span>
               </button>
             )}
 
@@ -6276,6 +6365,12 @@ export default function AppDashboardPage() {
         onConnect={(address, walletName) => {
           setConnectAddress(address);
           setConnectWalletName(walletName);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("meirei_wallet_address", address);
+            localStorage.setItem("meirei_wallet_name", walletName);
+            localStorage.removeItem("meirei_demo_sandbox");
+            localStorage.removeItem("meirei_disconnected");
+          }
           setProfile((prev) => ({
             ...prev,
             address,
@@ -6300,7 +6395,7 @@ export default function AppDashboardPage() {
           mandateRule={mandatePlanToSign.mandateRule}
           rebalanceInterval={mandatePlanToSign.rebalanceInterval}
           downsideProtection={mandatePlanToSign.downsideProtection}
-          userAddress={connectAddress || profile.address || "0x98fE3a1c2B90c4273E1f3D79cFa83D39B4cE7B21"}
+          userAddress={connectAddress || (profile.address && profile.address !== "0x0000000000000000000000000000000000000000" ? profile.address : "")}
           onSuccess={(receipt) => {
             handleDeployAdvisoryMandate(mandatePlanToSign, receipt);
             setMandatePlanToSign(null);
