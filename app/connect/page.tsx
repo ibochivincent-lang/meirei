@@ -182,9 +182,22 @@ function ConnectWalletContent() {
   useEffect(() => {
     setAvailableWallets(getAvailableWallets());
 
+    const savedName = typeof window !== "undefined" ? localStorage.getItem("meirei_wallet_name") : null;
     const okxProvider = getSpecificProvider("okx");
     const mmProvider = getSpecificProvider("metamask");
-    const activeProvider = okxProvider || mmProvider || getSpecificProvider("injected");
+    let activeProvider = null;
+    let detectedName = "Web3 Wallet";
+
+    if (savedName?.toLowerCase().includes("metamask") && mmProvider) {
+      activeProvider = mmProvider;
+      detectedName = "MetaMask";
+    } else if (savedName?.toLowerCase().includes("okx") && okxProvider) {
+      activeProvider = okxProvider;
+      detectedName = "OKX Wallet";
+    } else {
+      activeProvider = okxProvider || mmProvider || getSpecificProvider("injected");
+      detectedName = activeProvider === okxProvider ? "OKX Wallet" : activeProvider === mmProvider ? "MetaMask" : "Web3 Wallet";
+    }
 
     if (activeProvider) {
       activeProvider
@@ -192,8 +205,7 @@ function ConnectWalletContent() {
         .then((accounts: string[]) => {
           if (accounts && accounts.length > 0) {
             setConnectedAddress(accounts[0].toLowerCase());
-            const name = okxProvider ? "OKX Wallet" : mmProvider ? "MetaMask" : "Web3 Wallet";
-            setActiveWalletName(name);
+            setActiveWalletName(detectedName);
           }
         })
         .catch(() => {});
@@ -268,13 +280,54 @@ function ConnectWalletContent() {
         }
       }
 
-      // 1. Request accounts
+      // 1. Force account selection popup (EIP-2255)
+      try {
+        if (typeof provider.request === "function") {
+          await provider.request({
+            method: "wallet_requestPermissions",
+            params: [{ eth_accounts: {} }],
+          });
+        }
+      } catch (permErr: any) {
+        const pMsg = permErr?.message?.toLowerCase() || "";
+        if (permErr?.code === 4001 || pMsg.includes("rejected") || pMsg.includes("denied") || pMsg.includes("cancel")) {
+          throw new Error("Wallet account selection was cancelled by user.");
+        }
+      }
+
+      // 2. Request accounts
       const accounts: string[] = await provider.request({ method: "eth_requestAccounts" });
       if (!accounts || accounts.length === 0) {
         throw new Error("No account authorized by wallet.");
       }
 
       const activeAddr = accounts[0].toLowerCase();
+
+      // 3. Sign-in authentication verification (costs zero gas)
+      const signTimestamp = new Date().toISOString();
+      const authChallenge = [
+        "Meirei Non-Custodial Terminal Authentication",
+        "Network: OKX X Layer (Chain ID 196)",
+        `Wallet: ${activeAddr}`,
+        `Session Nonce: ${Date.now().toString(16)}`,
+        `Timestamp: ${signTimestamp}`,
+        "",
+        "Sign this verification message to authenticate non-custodial ownership of your wallet. Zero gas fee required."
+      ].join("\n");
+
+      setInfoMessage("Please sign the verification message in your wallet window to confirm sign-in (0 gas fee)...");
+      try {
+        await provider.request({
+          method: "personal_sign",
+          params: [authChallenge, activeAddr],
+        });
+      } catch (signErr: any) {
+        const sMsg = signErr?.message?.toLowerCase() || "";
+        if (signErr?.code === 4001 || sMsg.includes("rejected") || sMsg.includes("denied") || sMsg.includes("cancel")) {
+          throw new Error("Sign-in verification was rejected in wallet.");
+        }
+      }
+
       setConnectedAddress(activeAddr);
 
       const walletTitle =

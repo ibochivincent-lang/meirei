@@ -61,6 +61,32 @@ export interface WalletOption {
   icon: string;
 }
 
+export interface EIP6963ProviderInfo {
+  uuid: string;
+  name: string;
+  icon: string;
+  rdns: string;
+}
+
+export interface EIP6963ProviderDetail {
+  info: EIP6963ProviderInfo;
+  provider: any;
+}
+
+// In-memory registry of EIP-6963 announced providers
+const eip6963Providers = new Map<string, EIP6963ProviderDetail>();
+
+if (typeof window !== "undefined") {
+  window.addEventListener("eip6963:announceProvider", (event: any) => {
+    if (event?.detail?.info?.rdns && event?.detail?.provider) {
+      eip6963Providers.set(event.detail.info.rdns, event.detail);
+    }
+  });
+  try {
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+  } catch {}
+}
+
 /**
  * Returns a specific Web3 provider by wallet type, preventing provider conflicts.
  */
@@ -68,55 +94,86 @@ export function getSpecificProvider(type: WalletType = "injected"): any {
   if (typeof window === "undefined") return null;
   const win = window as any;
 
+  if (typeof win.dispatchEvent === "function") {
+    try {
+      win.dispatchEvent(new Event("eip6963:requestProvider"));
+    } catch {}
+  }
+
   if (type === "okx") {
+    // 1. EIP-6963 registration
+    const okxEip = eip6963Providers.get("com.okex.wallet");
+    if (okxEip?.provider) return okxEip.provider;
+
+    // 2. Direct OKX wallet namespace
     if (win.okxwallet) return win.okxwallet;
-    if (win.ethereum?.isOkxWallet) return win.ethereum;
+
+    // 3. Multi-provider array under window.ethereum
     if (win.ethereum?.providers?.length) {
       const okx = win.ethereum.providers.find((p: any) => p.isOkxWallet);
       if (okx) return okx;
     }
+
+    // 4. Injected ethereum with isOkxWallet flag
+    if (win.ethereum?.isOkxWallet) return win.ethereum;
     return null;
   }
 
   if (type === "metamask") {
-    // 1. Check EIP-6963 / multi-provider array
-    if (win.ethereum?.providers?.length) {
-      const mm = win.ethereum.providers.find((p: any) => p.isMetaMask && !p.isOkxWallet);
-      if (mm) return mm;
-      const anyMm = win.ethereum.providers.find((p: any) => p.isMetaMask);
-      if (anyMm) return anyMm;
-    }
-    // 2. Direct MetaMask provider
-    if (win.ethereum?.isMetaMask && !win.ethereum?.isOkxWallet) return win.ethereum;
-    if (win.ethereum?.isMetaMask) return win.ethereum;
-    if (win.ethereum) return win.ethereum;
-    return null;
-  }
+    // 1. Check EIP-6963 for MetaMask RDNS
+    const mmEip = eip6963Providers.get("io.metamask") || eip6963Providers.get("io.metamask.flask");
+    if (mmEip?.provider) return mmEip.provider;
 
-  if (type === "walletconnect") {
-    // If running inside a wallet's in-app Web3 browser (e.g. OKX Mobile, MetaMask Mobile)
-    if (win.okxwallet) return win.okxwallet;
-    if (win.ethereum) return win.ethereum;
+    // 2. Check multi-provider array under window.ethereum
+    // Strictly ensure provider is MetaMask AND NOT OKX / Coinbase / Trust
+    if (win.ethereum?.providers?.length) {
+      const mm = win.ethereum.providers.find(
+        (p: any) => p.isMetaMask && !p.isOkxWallet && !p.isCoinbaseWallet && !p.isTrust
+      );
+      if (mm) return mm;
+    }
+
+    // 3. Direct window.ethereum ONLY IF it is pure MetaMask and NOT OKX Wallet
+    if (
+      win.ethereum?.isMetaMask &&
+      !win.ethereum?.isOkxWallet &&
+      !win.ethereum?.isCoinbaseWallet &&
+      !win.ethereum?.isTrust
+    ) {
+      return win.ethereum;
+    }
+
+    // Do NOT return win.ethereum if it is OKX Wallet or unknown!
     return null;
   }
 
   if (type === "coinbase") {
+    const cbEip = eip6963Providers.get("com.coinbase.wallet");
+    if (cbEip?.provider) return cbEip.provider;
+
     if (win.coinbaseWalletExtension) return win.coinbaseWalletExtension;
-    if (win.ethereum?.isCoinbaseWallet) return win.ethereum;
     if (win.ethereum?.providers?.length) {
       const cb = win.ethereum.providers.find((p: any) => p.isCoinbaseWallet);
       if (cb) return cb;
     }
+    if (win.ethereum?.isCoinbaseWallet) return win.ethereum;
     return null;
   }
 
   if (type === "trust") {
+    const twEip = eip6963Providers.get("com.trustwallet.app");
+    if (twEip?.provider) return twEip.provider;
+
     if (win.trustwallet) return win.trustwallet;
-    if (win.ethereum?.isTrust) return win.ethereum;
     if (win.ethereum?.providers?.length) {
       const tw = win.ethereum.providers.find((p: any) => p.isTrust);
       if (tw) return tw;
     }
+    if (win.ethereum?.isTrust) return win.ethereum;
+    return null;
+  }
+
+  if (type === "walletconnect") {
     return null;
   }
 
@@ -130,10 +187,39 @@ export function getAvailableWallets(): WalletOption[] {
   if (typeof window === "undefined") return [];
   const win = window as any;
 
-  const hasOkx = !!(win.okxwallet || win.ethereum?.isOkxWallet || win.ethereum?.providers?.some((p: any) => p.isOkxWallet));
-  const hasMetaMask = !!(win.ethereum?.isMetaMask) || !!win.ethereum?.providers?.some((p: any) => p.isMetaMask) || !!win.ethereum;
-  const hasCoinbase = !!(win.coinbaseWalletExtension || win.ethereum?.isCoinbaseWallet || win.ethereum?.providers?.some((p: any) => p.isCoinbaseWallet));
-  const hasTrust = !!(win.trustwallet || win.ethereum?.isTrust || win.ethereum?.providers?.some((p: any) => p.isTrust));
+  if (typeof win.dispatchEvent === "function") {
+    try {
+      win.dispatchEvent(new Event("eip6963:requestProvider"));
+    } catch {}
+  }
+
+  const hasOkx = !!(
+    eip6963Providers.has("com.okex.wallet") ||
+    win.okxwallet ||
+    win.ethereum?.isOkxWallet ||
+    win.ethereum?.providers?.some((p: any) => p.isOkxWallet)
+  );
+
+  const hasMetaMask = !!(
+    eip6963Providers.has("io.metamask") ||
+    eip6963Providers.has("io.metamask.flask") ||
+    (win.ethereum?.isMetaMask && !win.ethereum?.isOkxWallet && !win.ethereum?.isCoinbaseWallet && !win.ethereum?.isTrust) ||
+    win.ethereum?.providers?.some((p: any) => p.isMetaMask && !p.isOkxWallet && !p.isCoinbaseWallet && !p.isTrust)
+  );
+
+  const hasCoinbase = !!(
+    eip6963Providers.has("com.coinbase.wallet") ||
+    win.coinbaseWalletExtension ||
+    win.ethereum?.isCoinbaseWallet ||
+    win.ethereum?.providers?.some((p: any) => p.isCoinbaseWallet)
+  );
+
+  const hasTrust = !!(
+    eip6963Providers.has("com.trustwallet.app") ||
+    win.trustwallet ||
+    win.ethereum?.isTrust ||
+    win.ethereum?.providers?.some((p: any) => p.isTrust)
+  );
 
   return [
     {
@@ -182,7 +268,7 @@ export function getAvailableWallets(): WalletOption[] {
       id: "injected",
       name: "Browser Web3 Wallet",
       description: "Auto-detect any active EIP-1193 wallet provider",
-      isInstalled: !!(win.ethereum || win.okxwallet),
+      isInstalled: !!(win.ethereum || win.okxwallet || eip6963Providers.size > 0),
       installUrl: "https://www.okx.com/web3",
       icon: "W3",
     },
@@ -196,6 +282,9 @@ export function getInjectedProvider(): any {
   if (typeof window === "undefined") return null;
   const win = window as any;
 
+  const okxEip = eip6963Providers.get("com.okex.wallet");
+  if (okxEip?.provider) return okxEip.provider;
+
   if (win.okxwallet) {
     return win.okxwallet;
   }
@@ -204,6 +293,7 @@ export function getInjectedProvider(): any {
     if (win.ethereum.providers?.length) {
       const okx = win.ethereum.providers.find((p: any) => p.isOkxWallet);
       if (okx) return okx;
+      return win.ethereum.providers[0];
     }
     return win.ethereum;
   }

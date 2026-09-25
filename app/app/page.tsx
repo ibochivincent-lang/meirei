@@ -389,9 +389,22 @@ export default function AppDashboardPage() {
       return;
     }
 
+    const savedName = localStorage.getItem("meirei_wallet_name");
     const okxProvider = getSpecificProvider("okx");
     const mmProvider = getSpecificProvider("metamask");
-    const activeProvider = okxProvider || mmProvider || getSpecificProvider("injected");
+    let activeProvider = null;
+    let detectedName = "Web3 Wallet";
+
+    if (savedName?.toLowerCase().includes("metamask") && mmProvider) {
+      activeProvider = mmProvider;
+      detectedName = "MetaMask";
+    } else if (savedName?.toLowerCase().includes("okx") && okxProvider) {
+      activeProvider = okxProvider;
+      detectedName = "OKX Wallet";
+    } else {
+      activeProvider = okxProvider || mmProvider || getSpecificProvider("injected");
+      detectedName = activeProvider === okxProvider ? "OKX Wallet" : activeProvider === mmProvider ? "MetaMask" : "Web3 Wallet";
+    }
 
     if (activeProvider) {
       activeProvider
@@ -399,7 +412,7 @@ export default function AppDashboardPage() {
         .then((accounts: string[]) => {
           if (accounts && accounts.length > 0 && isValidEvmAddress(accounts[0])) {
             const activeAddr = accounts[0].toLowerCase();
-            const name = okxProvider ? "OKX Wallet" : mmProvider ? "MetaMask" : "Web3 Wallet";
+            const name = detectedName;
             setConnectAddress(activeAddr);
             setConnectWalletName(name);
             localStorage.setItem("meirei_wallet_address", activeAddr);
@@ -1464,7 +1477,7 @@ export default function AppDashboardPage() {
       if (!provider) {
         if (type === "metamask") {
           setShowWalletConnectModal(true);
-          setConnectInfoMsg("Launching WalletConnect bridge for MetaMask. You can scan the QR code with your MetaMask mobile app or open directly.");
+          setConnectInfoMsg("MetaMask browser extension not detected. You can scan the QR code with your MetaMask mobile app or install it from metamask.io.");
           setIsWalletConnecting(false);
           return;
         }
@@ -1475,12 +1488,54 @@ export default function AppDashboardPage() {
         );
       }
 
+      // Step 1: Force wallet account selection / permissions popup (EIP-2255)
+      try {
+        if (typeof provider.request === "function") {
+          await provider.request({
+            method: "wallet_requestPermissions",
+            params: [{ eth_accounts: {} }],
+          });
+        }
+      } catch (permErr: any) {
+        const pMsg = permErr?.message?.toLowerCase() || "";
+        if (permErr?.code === 4001 || pMsg.includes("rejected") || pMsg.includes("denied") || pMsg.includes("cancel")) {
+          throw new Error("Wallet account selection was cancelled by user.");
+        }
+      }
+
+      // Step 2: Request active accounts
       const accounts: string[] = await provider.request({ method: "eth_requestAccounts" });
       if (!accounts || accounts.length === 0) {
         throw new Error("No account authorized by wallet.");
       }
 
       const activeAddr = accounts[0].toLowerCase();
+
+      // Step 3: Sign-in authentication verification (costs zero gas)
+      const signTimestamp = new Date().toISOString();
+      const authChallenge = [
+        "Meirei Non-Custodial Terminal Authentication",
+        "Network: OKX X Layer (Chain ID 196)",
+        `Wallet: ${activeAddr}`,
+        `Session Nonce: ${Date.now().toString(16)}`,
+        `Timestamp: ${signTimestamp}`,
+        "",
+        "Sign this verification message to authenticate non-custodial ownership of your wallet. Zero gas fee required."
+      ].join("\n");
+
+      setConnectInfoMsg("Please sign the verification message in your wallet window to confirm sign-in (0 gas fee)...");
+      try {
+        await provider.request({
+          method: "personal_sign",
+          params: [authChallenge, activeAddr],
+        });
+      } catch (signErr: any) {
+        const sMsg = signErr?.message?.toLowerCase() || "";
+        if (signErr?.code === 4001 || sMsg.includes("rejected") || sMsg.includes("denied") || sMsg.includes("cancel")) {
+          throw new Error("Sign-in verification was rejected in wallet.");
+        }
+      }
+
       setConnectAddress(activeAddr);
 
       const title =
@@ -1532,7 +1587,7 @@ export default function AppDashboardPage() {
       }));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (type === "metamask") {
+      if (type === "metamask" && msg.includes("not detected")) {
         setShowWalletConnectModal(true);
         setConnectInfoMsg("Opening WalletConnect bridge for MetaMask. You can scan the QR code with MetaMask mobile or select your browser provider.");
       } else {
@@ -2815,6 +2870,16 @@ export default function AppDashboardPage() {
                     <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-800 border border-emerald-200">
                       Gas 100% Sponsored by OKX Paymaster
                     </span>
+                    {isLoggedIn && (
+                      <button
+                        type="button"
+                        onClick={handleFullDisconnect}
+                        className="rounded-full border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 px-2.5 py-1 text-[11px] font-bold cursor-pointer transition-colors shadow-2xs"
+                        title="Disconnect current wallet"
+                      >
+                        Disconnect
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -5489,25 +5554,87 @@ export default function AppDashboardPage() {
                   </div>
 
                   {connectAddress ? (
-                    <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5">
-                      <div>
-                        <div className="flex items-center gap-1.5 font-mono text-emerald-900 font-semibold text-xs">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                          <span>{formatShortAddress(connectAddress)}</span>
-                          <span className="text-ink-500 font-normal text-[10px]">({connectWalletName || "Web3 Wallet"})</span>
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/80 p-2.5">
+                        <div>
+                          <div className="flex items-center gap-1.5 font-mono text-emerald-900 font-semibold text-xs">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                            <span>{formatShortAddress(connectAddress)}</span>
+                            <span className="text-ink-500 font-normal text-[10px]">({connectWalletName || "Web3 Wallet"})</span>
+                          </div>
+                          <p className="text-[10px] font-mono text-emerald-700 mt-0.5">
+                            OKX X Layer · 100% Sponsored Gas
+                          </p>
                         </div>
-                        <p className="text-[10px] font-mono text-emerald-700 mt-0.5">
-                          OKX X Layer · 100% Sponsored Gas
-                        </p>
+                        <button
+                          type="button"
+                          onClick={handleFullDisconnect}
+                          disabled={isWalletConnecting}
+                          className="py-1 px-3 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-700 text-xs font-bold cursor-pointer transition-colors shadow-2xs"
+                        >
+                          Disconnect
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleFullDisconnect}
-                        disabled={isWalletConnecting}
-                        className="py-1 px-2.5 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-700 text-[11px] font-semibold cursor-pointer transition-colors shadow-2xs"
-                      >
-                        Disconnect
-                      </button>
+
+                      <div className="pt-1">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-600">
+                            Switch Active Wallet
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleFullDisconnect}
+                            className="text-[10px] text-red-600 hover:text-red-700 font-semibold underline cursor-pointer"
+                          >
+                            Disconnect Current
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleConnectWalletType("okx")}
+                            disabled={isWalletConnecting}
+                            className={cn(
+                              "p-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-2xs",
+                              connectWalletName?.toLowerCase().includes("okx")
+                                ? "border-accent-500 bg-accent-100/90 text-accent-950 font-bold ring-1 ring-accent-400"
+                                : "border-accent-200 bg-accent-50/70 hover:bg-accent-100 text-ink-950"
+                            )}
+                          >
+                            <span>OKX Wallet</span>
+                            <span className="text-[8px] bg-accent-200 text-accent-800 font-bold px-1 rounded">TOP</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleConnectWalletType("metamask")}
+                            disabled={isWalletConnecting}
+                            className={cn(
+                              "p-2 rounded-xl border text-xs font-semibold flex items-center justify-center cursor-pointer transition-colors shadow-2xs",
+                              connectWalletName?.toLowerCase().includes("metamask")
+                                ? "border-accent-500 bg-accent-100/90 text-accent-950 font-bold ring-1 ring-accent-400"
+                                : "border-ink-200 bg-white hover:bg-surface-50 text-ink-900"
+                            )}
+                          >
+                            MetaMask
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowWalletConnectModal(true)}
+                            className="p-2 rounded-xl border border-sky-200 bg-sky-50/70 hover:bg-sky-100 text-sky-800 font-semibold text-xs flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                          >
+                            <WalletConnectIcon className="w-3.5 h-3.5 text-sky-600" />
+                            <span>WalletConnect</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleConnectWalletType("injected")}
+                            disabled={isWalletConnecting}
+                            className="p-2 rounded-xl border border-ink-200 bg-surface-50 hover:bg-white text-ink-800 text-xs font-semibold flex items-center justify-center cursor-pointer transition-colors shadow-2xs"
+                          >
+                            Browser Injected
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
@@ -5722,15 +5849,26 @@ export default function AppDashboardPage() {
 
                 {/* Footer Controls */}
                 <div className="border-t border-ink-100 pt-2.5 flex items-center justify-between text-[11px] text-ink-500">
-                  <a
-                    href="https://t.me/MeireiXLayerBot"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-sky-600 flex items-center gap-1 transition-colors"
-                  >
-                    <SimpleTelegramLogo className="w-3.5 h-3.5 text-sky-600" />
-                    <span>@MeireiXLayerBot</span>
-                  </a>
+                  {connectAddress ? (
+                    <button
+                      type="button"
+                      onClick={handleFullDisconnect}
+                      disabled={isWalletConnecting}
+                      className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
+                    >
+                      Disconnect Wallet
+                    </button>
+                  ) : (
+                    <a
+                      href="https://t.me/MeireiXLayerBot"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-sky-600 flex items-center gap-1 transition-colors"
+                    >
+                      <SimpleTelegramLogo className="w-3.5 h-3.5 text-sky-600" />
+                      <span>@MeireiXLayerBot</span>
+                    </a>
+                  )}
                   <button
                     type="button"
                     onClick={() => setShowLoginModal(false)}
