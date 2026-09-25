@@ -16,6 +16,7 @@ import {
   XLAYER_NETWORK_PARAMS,
   formatShortAddress,
   isValidEvmAddress,
+  DEMO_SANDBOX_ADDRESS,
 } from "@/lib/wallet/xlayer";
 import {
   getSpecificProvider,
@@ -37,6 +38,26 @@ import {
 
 type Platform = "telegram" | "web" | "okx_wallet";
 type Mode = "basic" | "advanced";
+
+function formatLogTime(d = new Date()): string {
+  return d.toISOString().slice(11, 19);
+}
+
+const INITIAL_CHAT_MESSAGE: ChatMessage = {
+  id: "welcome-1",
+  sender: "bot",
+  text: `Hello! I am Meirei, your AI Investment Mandate Assistant on OKX X Layer (Chain 196).
+
+I help you simulate, solve, and execute intelligent spot trades and auto-investment mandates:
+1. Spot Trading & Unit Calculations: Instant quotes and fractional share computation with 100% sponsored gas.
+2. Portfolio Drift Rebalance: Keeps your allocations balanced automatically when prices drift.
+3. Weekly DCA Accumulation: Automatically accumulates stock units on autopilot.
+4. Volatility Circuit Breaker: Halts or rotates to USDG if markets dip sharply (>8%).
+5. Dip Buyer & Take-Profit: Buys dips (e.g. -5%) and locks in profit at target gains (e.g. +15%).
+
+Use the categorized keywords below or type any question to receive an immediate solution and step-by-step resolution.`,
+  timestamp: "Just now",
+};
 
 // Simple Vector SVG Logos for Supported Platforms
 function SimpleTelegramLogo({ className = "w-5 h-5" }: { className?: string }) {
@@ -295,7 +316,7 @@ export default function AppDashboardPage() {
     let isMounted = true;
 
     async function loadRealBalances() {
-      if (isDemoSandbox || profile.address === "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d") {
+      if (isDemoSandbox || (profile.address && profile.address.toLowerCase() === DEMO_SANDBOX_ADDRESS.toLowerCase())) {
         return;
       }
       const addr = profile.address?.trim();
@@ -359,7 +380,7 @@ export default function AppDashboardPage() {
         handle: "OKX_Judge (Demo Sandbox)",
         platform: "web",
         email: "evaluator@okx.com",
-        address: "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d",
+        address: DEMO_SANDBOX_ADDRESS,
         twoFactorMethod: "email",
         botStatus: "Connected on Web",
         portfolioValue: 3263.0,
@@ -382,8 +403,7 @@ export default function AppDashboardPage() {
   // Periodic heartbeat audit log showing the agent continuously monitoring in the background
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = new Date();
-      const timeStr = now.toTimeString().slice(0, 8);
+      const timeStr = formatLogTime();
       const events: Array<{ source: string; message: string; type: "info" | "success" | "warn" }> = [
         {
           source: "Drift Guard",
@@ -424,19 +444,23 @@ export default function AppDashboardPage() {
 
   // 1-Click Demo Sandbox Handlers for Judges
   const handleLoadDemoSandbox = () => {
+    const nvdaP = stockPrices["NVDAx"] || 213.9;
+    const aaplP = stockPrices["AAPLx"] || 332.41;
+    const tslaP = stockPrices["TSLAx"] || 248.0;
+
     const demoHoldings = [
       { symbol: "USDG", amount: 1000.0, valueUsd: 1000.0, color: "#10B981" },
-      { symbol: "NVDAx", amount: 3.5, valueUsd: 602.0, color: "#76B900" },
-      { symbol: "AAPLx", amount: 5.0, valueUsd: 1165.0, color: "#A2AAAD" },
-      { symbol: "TSLAx", amount: 2.0, valueUsd: 496.0, color: "#E82127" },
+      { symbol: "NVDAx", amount: 3.5, valueUsd: Number((3.5 * nvdaP).toFixed(2)), color: "#76B900" },
+      { symbol: "AAPLx", amount: 5.0, valueUsd: Number((5.0 * aaplP).toFixed(2)), color: "#A2AAAD" },
+      { symbol: "TSLAx", amount: 2.0, valueUsd: Number((2.0 * tslaP).toFixed(2)), color: "#E82127" },
     ];
-    const totalVal = 1000.0 + 602.0 + 1165.0 + 496.0;
+    const totalVal = demoHoldings.reduce((acc, h) => acc + h.valueUsd, 0);
 
     setProfile({
       handle: "OKX_Judge (Demo Sandbox)",
       platform: "web",
       email: "evaluator@okx.com",
-      address: "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d",
+      address: DEMO_SANDBOX_ADDRESS,
       twoFactorMethod: "email",
       botStatus: "Connected on Web",
       portfolioValue: totalVal,
@@ -455,7 +479,7 @@ export default function AppDashboardPage() {
     }
 
     const now = new Date();
-    const timeStr = now.toTimeString().slice(0, 8);
+    const timeStr = formatLogTime(now);
     setExecutionLogs((prev) => [
       {
         id: `log-${Date.now()}`,
@@ -481,7 +505,7 @@ export default function AppDashboardPage() {
     }));
 
     const now = new Date();
-    const timeStr = now.toTimeString().slice(0, 8);
+    const timeStr = formatLogTime(now);
     setExecutionLogs((prev) => [
       {
         id: `log-${Date.now()}`,
@@ -499,6 +523,7 @@ export default function AppDashboardPage() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("meirei_demo_sandbox");
     }
+    setConnectAddress(null);
     setProfile({
       ...DEFAULT_PROFILE,
       handle: "Disconnected",
@@ -509,7 +534,7 @@ export default function AppDashboardPage() {
       usdgBalance: 0,
     });
     const now = new Date();
-    const timeStr = now.toTimeString().slice(0, 8);
+    const timeStr = formatLogTime(now);
     setExecutionLogs((prev) => [
       {
         id: `log-${Date.now()}`,
@@ -523,32 +548,31 @@ export default function AppDashboardPage() {
   };
 
   const toggleMandatePolicy = (id: string) => {
+    const targetPolicy = mandatePolicies.find((m) => m.id === id);
+    if (!targetPolicy) return;
+    const nextStatus = targetPolicy.status === "active" ? "paused" : "active";
+
     setMandatePolicies((prev) =>
-      prev.map((m) => {
-        if (m.id === id) {
-          const nextStatus = m.status === "active" ? "paused" : "active";
-          const now = new Date();
-          const timeStr = now.toTimeString().slice(0, 8);
-          setExecutionLogs((logs) => [
-            {
-              id: `log-${Date.now()}`,
-              timestamp: timeStr,
-              source: "Policy Manager",
-              message: `Mandate [${m.title}] status changed to ${nextStatus.toUpperCase()} on OKX X Layer.`,
-              type: nextStatus === "active" ? "success" : "warn",
-            },
-            ...logs,
-          ]);
-          return { ...m, status: nextStatus };
-        }
-        return m;
-      })
+      prev.map((m) => (m.id === id ? { ...m, status: nextStatus } : m))
     );
+
+    const now = new Date();
+    const timeStr = formatLogTime(now);
+    setExecutionLogs((logs) => [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: timeStr,
+        source: "Policy Manager",
+        message: `Mandate [${targetPolicy.title}] status changed to ${nextStatus.toUpperCase()} on OKX X Layer.`,
+        type: nextStatus === "active" ? "success" : "warn",
+      },
+      ...logs,
+    ]);
   };
 
   const handleEvaluateDriftNow = () => {
     const now = new Date();
-    const timeStr = now.toTimeString().slice(0, 8);
+    const timeStr = formatLogTime(now);
     setExecutionLogs((prev) => [
       {
         id: `log-${Date.now()}`,
@@ -563,7 +587,7 @@ export default function AppDashboardPage() {
 
   const handleTriggerSimulatedRebalance = () => {
     const now = new Date();
-    const timeStr = now.toTimeString().slice(0, 8);
+    const timeStr = formatLogTime(now);
     setExecutionLogs((prev) => [
       {
         id: `log-${Date.now()}-1`,
@@ -586,7 +610,7 @@ export default function AppDashboardPage() {
   const handleCreateMandate = () => {
     if (!newMandateTitle.trim() || !newMandateTarget.trim()) return;
     const now = new Date();
-    const timeStr = now.toTimeString().slice(0, 8);
+    const timeStr = formatLogTime(now);
     const newPolicy: MandatePolicy = {
       id: `mandate_${Date.now()}`,
       title: newMandateTitle.trim(),
@@ -643,38 +667,27 @@ export default function AppDashboardPage() {
   };
 
   // Conversational Chat Console State (Web & Telegram)
-  const INITIAL_CHAT_MESSAGE: ChatMessage = {
-    id: "welcome-1",
-    sender: "bot",
-    text: `Hello! I am Meirei, your AI Investment Mandate Assistant on OKX X Layer (Chain 196).
-
-I help you simulate, solve, and execute intelligent spot trades and auto-investment mandates:
-1. Spot Trading & Unit Calculations: Instant quotes and fractional share computation with 100% sponsored gas.
-2. Portfolio Drift Rebalance: Keeps your allocations balanced automatically when prices drift.
-3. Weekly DCA Accumulation: Automatically accumulates stock units on autopilot.
-4. Volatility Circuit Breaker: Halts or rotates to USDG if markets dip sharply (>8%).
-5. Dip Buyer & Take-Profit: Buys dips (e.g. -5%) and locks in profit at target gains (e.g. +15%).
-
-Use the categorized keywords below or type any question to receive an immediate solution and step-by-step resolution.`,
-    timestamp: "Just now",
-  };
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([INITIAL_CHAT_MESSAGE]);
   const [chatInput, setChatInput] = useState<string>("");
   const [isChatSending, setIsChatSending] = useState<boolean>(false);
   const [chatKeywordCategory, setChatKeywordCategory] = useState<string>("all");
 
-
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Theme state: locked to crisp institutional light mode
-  const isDarkMode = false;
+  // Theme state: initialized from system preference
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (typeof document !== "undefined") {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("meirei_theme", "light");
+      document.documentElement.classList.toggle("dark", isDarkMode);
+      localStorage.setItem("meirei_theme", isDarkMode ? "dark" : "light");
     }
-  }, []);
+  }, [isDarkMode]);
 
   // Trading mode state: strictly TWO MODES: "basic" | "advanced"
   const [mode, setMode] = useState<Mode>("basic");
@@ -716,7 +729,7 @@ Use the categorized keywords below or type any question to receive an immediate 
       setSimulatedAdvancedUsdgBalance((prev) => prev + amount);
     }
     const now = new Date();
-    const timeStr = now.toTimeString().slice(0, 8);
+    const timeStr = formatLogTime(now);
     setExecutionLogs((prev) => [
       {
         id: `log-${Date.now()}`,
@@ -744,28 +757,52 @@ Use the categorized keywords below or type any question to receive an immediate 
   // Record a Quick Buy or Unit Calculator trade
   const recordBasicBuy = (symbol: string, amountUsdg: number, units: number, price: number) => {
     if (!isLive) {
-      setSimulatedBasicUsdgBalance((prev) => Math.max(0, prev - amountUsdg));
-      setSimulatedBasicHoldings((prev) => {
-        const existing = prev.find((h) => h.symbol === symbol);
-        if (existing) {
-          return prev.map((h) =>
-            h.symbol === symbol
-              ? { ...h, amount: h.amount + units, valueUsd: (h.amount + units) * price }
-              : h
-          );
-        }
-        return [
-          ...prev,
-          {
-            symbol,
-            amount: units,
-            valueUsd: amountUsdg,
-            color: "#06b6d4",
-          },
-        ];
-      });
+      if (mode === "basic") {
+        setSimulatedBasicUsdgBalance((prev) => Math.max(0, prev - amountUsdg));
+        setSimulatedBasicHoldings((prev) => {
+          const existing = prev.find((h) => h.symbol === symbol);
+          if (existing) {
+            return prev.map((h) =>
+              h.symbol === symbol
+                ? { ...h, amount: h.amount + units, valueUsd: (h.amount + units) * price }
+                : h
+            );
+          }
+          return [
+            ...prev,
+            {
+              symbol,
+              amount: units,
+              valueUsd: amountUsdg,
+              color: "#06b6d4",
+            },
+          ];
+        });
+      } else {
+        setSimulatedAdvancedUsdgBalance((prev) => Math.max(0, prev - amountUsdg));
+        setSimulatedAdvancedHoldings((prev) => {
+          const existing = prev.find((h) => h.symbol === symbol);
+          if (existing) {
+            return prev.map((h) =>
+              h.symbol === symbol
+                ? { ...h, amount: h.amount + units, valueUsd: (h.amount + units) * price }
+                : h
+            );
+          }
+          return [
+            ...prev,
+            {
+              symbol,
+              amount: units,
+              valueUsd: amountUsdg,
+              color: "#6366f1",
+            },
+          ];
+        });
+      }
+
       const now = new Date();
-      const timeStr = now.toTimeString().slice(0, 8);
+      const timeStr = formatLogTime(now);
       setExecutionLogs((prev) => [
         {
           id: `log-${Date.now()}`,
@@ -864,7 +901,7 @@ Use the categorized keywords below or type any question to receive an immediate 
     setExecutionLogs((prev) => [
       {
         id: `log-${Date.now()}`,
-        timestamp: new Date().toLocaleTimeString(),
+        timestamp: formatLogTime(),
         source: "Policy Manager",
         message: `Policy "${editingMandate.title}" updated. Target: ${computedTarget}, Threshold: ${computedThreshold}, Status: ${editStatus.toUpperCase()}.`,
         type: "success",
@@ -961,7 +998,6 @@ Use the categorized keywords below or type any question to receive an immediate 
 
   // Basic Mode: Price Comparison & Units Calculator State
   const [calcInvestmentUsdg, setCalcInvestmentUsdg] = useState<number>(250);
-  const [promptAssistantCategory, setPromptAssistantCategory] = useState<"trades" | "questions" | "rules">("trades");
   const [web3ModalState, setWeb3ModalState] = useState<{
     isOpen: boolean;
     targetSymbol: string;
@@ -988,11 +1024,7 @@ Use the categorized keywords below or type any question to receive an immediate 
 
     async function fetchLivePrices() {
       try {
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: "stocks" }),
-        });
+        const res = await fetch("/api/stocks");
         const data = await res.json();
         if (isMounted && Array.isArray(data.stocks)) {
           const updatedPrices: Record<string, number> = {};
@@ -1533,8 +1565,10 @@ Use the categorized keywords below or type any question to receive an immediate 
       txHash: string;
       signature: string;
       status: string;
-    }
+    },
+    capitalOverride?: number
   ) => {
+    const capital = capitalOverride ?? advisoryCapital;
     const mandateId = receiptOverride?.mandateId || `MAN-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     const txHash = receiptOverride?.txHash || `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
     const now = receiptOverride?.timestamp || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -1555,12 +1589,14 @@ Use the categorized keywords below or type any question to receive an immediate 
     setMandatePolicies((prev) => [newPolicy, ...prev]);
 
     // Allocate capital to Advanced Mode portfolio without touching Basic Mode portfolio
-    setSimulatedAdvancedUsdgBalance((prev) => Math.max(0, prev - advisoryCapital));
+    setSimulatedAdvancedUsdgBalance((prev) => Math.max(0, prev - capital));
     setSimulatedAdvancedHoldings((prev) => {
       const updated = [...prev];
       for (const alloc of plan.allocations) {
-        const allocUsd = (advisoryCapital * alloc.weightPercent) / 100;
-        const price = stockPrices[alloc.symbol] || 150;
+        const allocUsd = (capital * alloc.weightPercent) / 100;
+        const stockDef = STOCKS.find((s) => s.symbol === alloc.symbol);
+        const defaultPrice = stockDef ? parseFloat(stockDef.price.replace(/[^0-9.]/g, "")) : 100;
+        const price = stockPrices[alloc.symbol] || defaultPrice;
         const units = allocUsd / price;
         const existingIdx = updated.findIndex((h) => h.symbol === alloc.symbol);
         if (existingIdx >= 0) {
@@ -1585,7 +1621,7 @@ Use the categorized keywords below or type any question to receive an immediate 
       mandateId,
       timestamp: now,
       strategy: plan.strategyName,
-      capital: advisoryCapital,
+      capital,
       stablecoin: advisoryStablecoin,
       rule: plan.mandateRule,
       txHash,
@@ -1632,7 +1668,9 @@ Use the categorized keywords below or type any question to receive an immediate 
 
   // Deploy Stock Momentum / Dip Guard Mandate from Table
   const handleDeployStockMandate = (symbol: string) => {
-    const stockPrice = stockPrices[symbol] || 100;
+    const stockDef = STOCKS.find((s) => s.symbol === symbol);
+    const defaultPrice = stockDef ? parseFloat(stockDef.price.replace(/[^0-9.]/g, "")) : 100;
+    const stockPrice = stockPrices[symbol] || defaultPrice;
     const rule = `Accumulate ${symbol} on dips >3.0%, maintain 40% target weight with 5% stop protection`;
     const newPolicy: MandatePolicy = {
       id: `mandate_${Date.now()}`,
@@ -1957,7 +1995,7 @@ Use the categorized keywords below or type any question to receive an immediate 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: query,
-          walletAddress: profile.address,
+          walletAddress: connectAddress || profile.address || DEMO_SANDBOX_ADDRESS,
           platform: profile.platform,
           chatHandle: profile.handle,
           email: profile.email,
@@ -2120,7 +2158,7 @@ Use the categorized keywords below or type any question to receive an immediate 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: query,
-          walletAddress: profile.address,
+          walletAddress: connectAddress || profile.address || DEMO_SANDBOX_ADDRESS,
           platform: profile.platform,
           chatHandle: profile.handle,
           email: profile.email,
@@ -2195,6 +2233,10 @@ Use the categorized keywords below or type any question to receive an immediate 
   }
 
   const candleBars: CandleBar[] = useMemo(() => {
+    if (mode === "basic") {
+      return [];
+    }
+
     const rawPoints =
       selectedStock.chartPoints && selectedStock.chartPoints.length >= 4
         ? selectedStock.chartPoints
@@ -2312,12 +2354,14 @@ Use the categorized keywords below or type any question to receive an immediate 
       const isLast = i === totalBars - 1;
       const progress = i / (totalBars - 1 || 1);
 
-      // Deterministic noise seeded by stock symbol, bar index, and timeframe
-      const seed = Math.sin(
-        (i + 1) * 17 +
-          selectedStock.symbol.charCodeAt(0) * 11 +
-          timeframe.charCodeAt(0) * 5
-      );
+      // Deterministic noise seeded by full stock symbol, bar index, and timeframe
+      const symHash = selectedStock.symbol
+        .split("")
+        .reduce((acc, c, idx) => acc + c.charCodeAt(0) * (idx + 7), 0);
+      const tfHash = timeframe
+        .split("")
+        .reduce((acc, c, idx) => acc + c.charCodeAt(0) * (idx + 3), 0);
+      const seed = Math.sin((i + 1) * 17 + symHash * 11 + tfHash * 5);
       const randomNoise = seed * volatility * livePrice;
 
       const open = Number(currentOpen.toFixed(2));
@@ -2354,7 +2398,7 @@ Use the categorized keywords below or type any question to receive an immediate 
     }
 
     return bars;
-  }, [selectedStock, stockPrices, timeframe]);
+  }, [selectedStock, stockPrices, timeframe, mode]);
 
   // Chart Dimensions and Coordinates (Clean Card View)
   const width = 640;
@@ -2366,8 +2410,8 @@ Use the categorized keywords below or type any question to receive an immediate 
     return candleBars.map((b) => b.close);
   }, [candleBars]);
 
-  const minVal = Math.min(...points);
-  const maxVal = Math.max(...points);
+  const minVal = points.length > 0 ? Math.min(...points) : 0;
+  const maxVal = points.length > 0 ? Math.max(...points) : 100;
   const range = maxVal - minVal || 1;
 
   const coords = points.map((p, idx) => {
@@ -2391,8 +2435,8 @@ Use the categorized keywords below or type any question to receive an immediate 
   }
   const areaD = `${pathD} L ${width} ${height} L 0 ${height} Z`;
 
-  const candleMin = Math.min(...candleBars.map((b) => b.low));
-  const candleMax = Math.max(...candleBars.map((b) => b.high));
+  const candleMin = candleBars.length > 0 ? Math.min(...candleBars.map((b) => b.low)) : 0;
+  const candleMax = candleBars.length > 0 ? Math.max(...candleBars.map((b) => b.high)) : 100;
   const candleRange = candleMax - candleMin || 1;
 
   const currentDisplayPrice =
@@ -2728,7 +2772,8 @@ Use the categorized keywords below or type any question to receive an immediate 
                           <button
                             type="button"
                             onClick={() => {
-                              setSimulatedAdvancedUsdgBalance(20000);
+                              setSimulatedBasicUsdgBalance(10000);
+                              setSimulatedBasicHoldings([]);
                             }}
                             className="rounded-lg border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 font-mono text-[10px] font-semibold px-2.5 py-1.5 transition-colors cursor-pointer ml-auto"
                           >
@@ -4923,11 +4968,12 @@ Use the categorized keywords below or type any question to receive an immediate 
                     <button
                       type="button"
                       onClick={() => {
-                        setLastTelemetryRefresh(new Date().toLocaleTimeString());
+                        const nowTime = formatLogTime();
+                        setLastTelemetryRefresh(nowTime);
                         setExecutionLogs((prev) => [
                           {
                             id: `log-${Date.now()}`,
-                            timestamp: new Date().toLocaleTimeString(),
+                            timestamp: nowTime,
                             source: "OKX Skills Engine",
                             message: "Refreshed OKX AI telemetry across trading-plan-generator, sentiment, smart money, and market depth.",
                             type: "info",

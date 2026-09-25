@@ -1,7 +1,8 @@
 import { Holding } from "../types";
 import { fetchBalances as fetchBalancesOS } from "../onchainos";
+import { DEMO_SANDBOX_ADDRESS } from "@/lib/wallet/xlayer";
 
-export const DEMO_SANDBOX_ADDRESS = "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d";
+export { DEMO_SANDBOX_ADDRESS };
 
 export const DEMO_SANDBOX_HOLDINGS: Holding[] = [
   { symbol: "USDG", amount: 1000.0, valueUsd: 1000.0 },

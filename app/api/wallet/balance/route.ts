@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { fetchLiveXLayerBalances, isValidEvmAddress } from "@/lib/wallet/xlayer";
+import { DEMO_SANDBOX_ADDRESS } from "@/src/portfolio/balances";
 
 export const dynamic = "force-dynamic";
 
@@ -28,18 +29,23 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    if (address.toLowerCase() === "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d") {
+    if (address.toLowerCase() === DEMO_SANDBOX_ADDRESS.toLowerCase()) {
+      const nvdaVal = Number((3.5 * 213.9).toFixed(2));
+      const aaplVal = Number((5.0 * 332.41).toFixed(2));
+      const tslaVal = Number((2.0 * 248.0).toFixed(2));
+      const totalVal = Number((1000.0 + nvdaVal + aaplVal + tslaVal).toFixed(2));
+
       return NextResponse.json({
         ok: true,
         walletAddress: address,
-        totalValueUsd: 3263.0,
+        totalValueUsd: totalVal,
         usdgBalance: 1000.0,
         usdcBalance: 0,
         okbBalance: 0.25,
         holdings: [
-          { symbol: "NVDAx", amount: 3.5, valueUsd: 602.0 },
-          { symbol: "AAPLx", amount: 5.0, valueUsd: 1165.0 },
-          { symbol: "TSLAx", amount: 2.0, valueUsd: 496.0 },
+          { symbol: "NVDAx", amount: 3.5, valueUsd: nvdaVal },
+          { symbol: "AAPLx", amount: 5.0, valueUsd: aaplVal },
+          { symbol: "TSLAx", amount: 2.0, valueUsd: tslaVal },
         ],
         timestamp: Date.now(),
         isDemoSandbox: true,

@@ -7,6 +7,7 @@ export const XLAYER_CHAIN_ID_DECIMAL = 196;
 export const XLAYER_CHAIN_ID_HEX = "0xc4";
 export const XLAYER_RPC_URL = "https://rpc.xlayer.tech";
 export const XLAYER_EXPLORER_URL = "https://www.oklink.com/xlayer";
+export const DEMO_SANDBOX_ADDRESS = "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d";
 
 export const XLAYER_NETWORK_PARAMS = {
   chainId: XLAYER_CHAIN_ID_HEX,

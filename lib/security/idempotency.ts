@@ -50,7 +50,7 @@ export async function checkIdempotencyAtomic(key: string): Promise<IdempotencyCh
   const redis = getRedisClient();
   if (redis) {
     try {
-      const res = await redis.set(`idem:${key}`, "1", {
+      const res = await redis.set(`idem:${key}`, JSON.stringify({ status: "pending", result: null, timestamp: Date.now() }), {
         nx: true,
         ex: REDIS_IDEMPOTENCY_TTL_SEC,
       });
@@ -62,10 +62,19 @@ export async function checkIdempotencyAtomic(key: string): Promise<IdempotencyCh
       }
 
       // Key already existed -> duplicate or concurrent request
-      const cached = idempotencyStore.get(key);
+      let cached = idempotencyStore.get(key);
+      if (!cached) {
+        try {
+          const raw = await redis.get<string | CachedIdempotencyRecord>(`idem:${key}`);
+          if (raw) {
+            cached = typeof raw === "string" ? JSON.parse(raw) : raw;
+          }
+        } catch {}
+      }
+
       return {
         isDuplicate: true,
-        isProcessing: cached?.status === "pending",
+        isProcessing: !cached || cached.status === "pending",
         cachedResult: cached?.result,
       };
     } catch (err) {
@@ -106,9 +115,17 @@ export function checkIdempotency(key: string): IdempotencyCheckResult {
  * Records the completed execution result for an idempotency key.
  */
 export function completeIdempotency(key: string, result: unknown, success = true): void {
-  idempotencyStore.set(key, {
+  const record: CachedIdempotencyRecord = {
     result,
     status: success ? "completed" : "failed",
     timestamp: Date.now(),
-  });
+  };
+  idempotencyStore.set(key, record);
+
+  const redis = getRedisClient();
+  if (redis) {
+    redis.set(`idem:${key}`, JSON.stringify(record), { ex: REDIS_IDEMPOTENCY_TTL_SEC }).catch((err) => {
+      console.warn("[idempotency] Failed to sync completeIdempotency to Redis:", err);
+    });
+  }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleMandate } from "@/src/agent/handler";
+import type { Leg } from "@/src/types";
 import {
   initOnchainOS,
   fetchPrice,
@@ -9,19 +10,19 @@ import {
   getSwapQuote,
 } from "@/src/onchainos";
 import { resolveSymbol, ALLOWLIST } from "@/src/allowlist";
-import { Leg } from "@/src/types";
 import { validateOtpToken, generateOtpChallenge, verifyOtpChallenge } from "@/lib/auth/otp";
-import { checkRateLimit, getClientIp } from "@/lib/security/rate_limiter";
+import { checkRateLimitRedis, getClientIp } from "@/lib/security/rate_limiter";
 import { validateSpendingLimit, recordExecutedSpend } from "@/lib/security/spending_limits";
-import { checkIdempotency, completeIdempotency, deriveOperationKey } from "@/lib/security/idempotency";
+import { checkIdempotencyAtomic, completeIdempotency, deriveOperationKey } from "@/lib/security/idempotency";
 import { validatePayloadSize, withTimeout } from "@/lib/security/payload_guard";
 import { logger } from "@/lib/observability/logger";
 import { resolveUserIdentity } from "@/lib/auth/user_identity";
-import { freezeAccount, unfreezeAccount, isAccountFrozenInMemory } from "@/lib/users/freeze";
+import { freezeAccount, unfreezeAccount, isAccountFrozen } from "@/lib/users/freeze";
 import { transcribeAudioBuffer } from "@/lib/voice/transcribe";
 import { checkSanctions } from "@/lib/security/sanctions";
+import { getRedisClient } from "@/lib/redis/client";
 
-const DEFAULT_WALLET = process.env.MEIREI_WALLET || "0x7f17d6224e7d48606598732c3f511412b5c1e922";
+const DEFAULT_DEV_WALLET = process.env.NODE_ENV !== "production" ? process.env.MEIREI_WALLET : undefined;
 
 interface PendingExecution {
   type: "trade" | "mandate";
@@ -35,6 +36,60 @@ interface PendingExecution {
 
 const recentPendingQuotes = new Map<string, PendingExecution>();
 
+// Evict expired pending quotes from in-memory fallback
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of recentPendingQuotes.entries()) {
+    if (now - record.timestamp > 10 * 60 * 1000) {
+      recentPendingQuotes.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
+async function getPendingQuote(walletAddress: string): Promise<PendingExecution | undefined> {
+  const addr = walletAddress.toLowerCase();
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const raw = await redis.get<string | PendingExecution>(`pending_quote:${addr}`);
+      if (raw) return typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch (err) {
+      console.warn("[pending_quote] Redis read notice:", err);
+    }
+  }
+  const mem = recentPendingQuotes.get(addr);
+  if (mem && Date.now() - mem.timestamp < 10 * 60 * 1000) {
+    return mem;
+  }
+  return undefined;
+}
+
+async function setPendingQuote(walletAddress: string, pending: PendingExecution): Promise<void> {
+  const addr = walletAddress.toLowerCase();
+  recentPendingQuotes.set(addr, pending);
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      await redis.set(`pending_quote:${addr}`, JSON.stringify(pending), { ex: 600 });
+    } catch (err) {
+      console.warn("[pending_quote] Redis write notice:", err);
+    }
+  }
+}
+
+async function deletePendingQuote(walletAddress: string): Promise<void> {
+  const addr = walletAddress.toLowerCase();
+  recentPendingQuotes.delete(addr);
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      await redis.del(`pending_quote:${addr}`);
+    } catch (err) {
+      console.warn("[pending_quote] Redis del notice:", err);
+    }
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const payloadCheck = validatePayloadSize(req);
@@ -44,11 +99,18 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     let message = (body.message || body.mandate || "").trim();
-    const walletAddress = (body.walletAddress || DEFAULT_WALLET).trim();
+    const rawWallet = (body.walletAddress || DEFAULT_DEV_WALLET || "").trim();
+    if (!rawWallet) {
+      return NextResponse.json({ error: "Missing required walletAddress." }, { status: 400 });
+    }
+    const walletAddress = rawWallet;
     const confirm = Boolean(body.confirm);
 
     // Sanctions screening prior to quote generation or trade execution
     const sanctionsCheck = await checkSanctions(walletAddress);
+    if (sanctionsCheck.invalidAddress) {
+      return NextResponse.json({ error: "Invalid wallet address format." }, { status: 400 });
+    }
     if (sanctionsCheck.isSanctioned) {
       return NextResponse.json(
         {
@@ -80,7 +142,7 @@ export async function POST(req: NextRequest) {
     const clientIp = getClientIp(req);
     const isTradeIntent = confirm || lower.includes("buy") || lower.includes("sell") || lower.includes("confirm");
     const rateTier = isTradeIntent ? "trade" : "read";
-    const rateCheck = checkRateLimit(`${clientIp}:${walletAddress}`, rateTier);
+    const rateCheck = await checkRateLimitRedis(`${clientIp}:${walletAddress}`, rateTier);
 
     if (!rateCheck.allowed) {
       logger.warn("ChatAPI", "Rate limit exceeded", { clientIp, walletAddress, tier: rateTier });
@@ -128,8 +190,8 @@ export async function POST(req: NextRequest) {
         const challengeId = body.challengeId || `otp_${walletAddress}`;
         const verifyRes = await verifyOtpChallenge(challengeId, inputCode);
 
-        // Accept verified challenge or standard dev code
-        if (verifyRes.valid || inputCode === "123456" || inputCode.length === 6) {
+        // Accept only verified challenge
+        if (verifyRes.valid) {
           const freezeSource = (body.platform === "whatsapp" ? "whatsapp" : body.platform === "telegram" ? "telegram" : "web");
           await unfreezeAccount({ userId: walletAddress, source: freezeSource });
           return NextResponse.json({
@@ -177,12 +239,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if account is frozen
-    if (isAccountFrozenInMemory(walletAddress)) {
-      return NextResponse.json({
-        reply: `SECURITY HOLD: Your account is currently frozen. All trading and rebalancing actions on X Layer are locked. Send "/unfreeze" to begin verification and unlock your account.`,
-        type: "frozen",
-        isFrozen: true,
-      });
+    try {
+      const frozen = await isAccountFrozen(walletAddress);
+      if (frozen) {
+        return NextResponse.json({
+          reply: `SECURITY HOLD: Your account is currently frozen. All trading and rebalancing actions on X Layer are locked. Send "/unfreeze" to begin verification and unlock your account.`,
+          type: "frozen",
+          isFrozen: true,
+        });
+      }
+    } catch (freezeErr) {
+      console.error("[Chat API] Freeze check verification notice:", freezeErr);
+      return NextResponse.json(
+        { error: "Security check temporarily unavailable. Please retry in a few moments." },
+        { status: 503 }
+      );
     }
 
     // 0c. Command Directory & Welcome (/start, /help, "help", "menu", "commands", greetings)
@@ -292,13 +363,21 @@ export async function POST(req: NextRequest) {
       let report = `PROJECT MEIREI | WEEKLY PROGRESS & MANDATE REPORT\n\n`;
       report += `Period: Last 7 Days · OKX X Layer (Chain ID 196)\n`;
       report += `Wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}\n`;
-      report += `Total Portfolio Value: $${totalVal.toFixed(2)} USDG\n\n`;
+      const redis = getRedisClient();
+      let driftCount = "0";
+      if (redis) {
+        try {
+          const val = await redis.get<string | number>(`execlog:${walletAddress.toLowerCase()}:count`);
+          if (val !== null && val !== undefined) driftCount = String(val);
+        } catch {}
+      }
+
       report += `Autonomous Mandate Telemetry:\n`;
       report += `• Execution Engine: OKX Onchain OS / Account Abstraction\n`;
-      report += `• Drift Checks Executed: 3 autonomous evaluations\n`;
-      report += `• Gas Subsidized by Paymaster: $0.00 Gas Paid (100% Sponsored)\n`;
+      report += `• Drift Checks Executed: ${driftCount} autonomous evaluations\n`;
+      report += `• Gas Subsidized by Paymaster: 100% Sponsored via OKX Account Abstraction\n`;
       report += `• Slippage Ceiling: 1.00% Max Drift Guard\n`;
-      report += `• Monitored Equities: 20 Allowlisted Assets on OKX X Layer\n\n`;
+      report += `• Monitored Equities: ${ALLOWLIST.length} Allowlisted Assets on OKX X Layer\n\n`;
       report += `You Are Always In Control: Issue plain language directives anytime (e.g. "Put $50 into NVDAx and AAPLx monthly" or "Rebalance to 50% NVDAx and 50% USDG").`;
 
       return NextResponse.json({
@@ -435,11 +514,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    let tradeHandled = false;
+
     // 4. Direct confirmation of pending quote or mandate
     const isConfirmOnly = lower === "confirm" || lower === "yes" || (confirm && !lower.match(/(buy|purchase|acquire|swap|sell|exit|dump|liquidate|trim)/i));
-    if (isConfirmOnly) {
-      const pending = recentPendingQuotes.get(walletAddress.toLowerCase());
-      if (pending && Date.now() - pending.timestamp < 10 * 60 * 1000) {
+    if (isConfirmOnly && !tradeHandled) {
+      const pending = await getPendingQuote(walletAddress);
+      if (pending) {
+        tradeHandled = true;
         if (pending.type === "trade" && pending.symbol && pending.side && pending.notionalUsd && pending.stockAmount) {
           const otpToken = body.otpToken;
           const isOtpValid = validateOtpToken(otpToken, walletAddress);
@@ -459,7 +541,7 @@ export async function POST(req: NextRequest) {
           }
 
           // Check spending limit cap
-          const spendCheck = validateSpendingLimit(walletAddress, pending.notionalUsd);
+          const spendCheck = await validateSpendingLimit(walletAddress, pending.notionalUsd);
           if (!spendCheck.allowed) {
             return NextResponse.json({
               reply: `Spending Cap Enforced: ${spendCheck.error}`,
@@ -474,7 +556,7 @@ export async function POST(req: NextRequest) {
             symbol: pending.symbol,
             notionalUsd: pending.notionalUsd,
           });
-          const idemCheck = checkIdempotency(idemKey);
+          const idemCheck = await checkIdempotencyAtomic(idemKey);
           if (idemCheck.isDuplicate) {
             if (idemCheck.isProcessing) {
               return NextResponse.json({
@@ -497,15 +579,20 @@ export async function POST(req: NextRequest) {
 
           try {
             const txResult = await withTimeout(executeSwap(leg), 10000, "X Layer Swap Execution");
-            recordExecutedSpend(walletAddress, pending.notionalUsd);
-            recentPendingQuotes.delete(walletAddress.toLowerCase());
+            await recordExecutedSpend(walletAddress, pending.notionalUsd);
+            await deletePendingQuote(walletAddress);
+
+            const redis = getRedisClient();
+            if (redis) {
+              redis.incr(`execlog:${walletAddress.toLowerCase()}:count`).catch(() => {});
+            }
 
             const successResult = {
               reply: `Order confirmed and executed on X Layer (chain 196). ${
                 pending.side === "buy"
                   ? `Swapped $${pending.notionalUsd.toFixed(2)} USDG for +${pending.stockAmount.toFixed(3)} ${pending.symbol}`
                   : `Swapped ${pending.stockAmount.toFixed(3)} ${pending.symbol} for ~$${pending.notionalUsd.toFixed(2)} USDG`
-              } via OKX DEX Aggregator. Transaction Hash: ${txResult.hash}.`,
+              } via OKX DEX Aggregator. Platform fee: $0.10 USDG settled. Transaction Hash: ${txResult.hash}.`,
               type: "mandate",
               status: "confirmed",
               receipt: {
@@ -515,7 +602,7 @@ export async function POST(req: NextRequest) {
                 detail: pending.side === "buy" ? `Swapped $${pending.notionalUsd.toFixed(2)} USDG` : `Received ~$${pending.notionalUsd.toFixed(2)} USDG`,
                 reference: txResult.hash,
                 explorerUrl: txResult.explorerUrl,
-                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                time: new Date().toISOString().slice(11, 19),
               },
             };
 
@@ -531,6 +618,11 @@ export async function POST(req: NextRequest) {
             });
           }
         }
+      } else {
+        return NextResponse.json({
+          reply: "No active pending trade found or your quote has expired. Please state a new trade instruction (e.g. \"Buy $250 in NVDAx\").",
+          type: "info",
+        });
       }
     }
 
@@ -539,7 +631,7 @@ export async function POST(req: NextRequest) {
       /(buy|purchase|acquire|swap\s+(?:into|for)?|order|sell|exit|dump|liquidate|trim)\s+([\d,.]+)?\s*(usdg|usdc|\$)?\s*(?:of|into|for|from)?\s*([a-z0-9]+)/i
     );
 
-    if (tradeMatch) {
+    if (tradeMatch && !tradeHandled) {
       const actionRaw = tradeMatch[1].toLowerCase();
       const isSell =
         actionRaw.includes("sell") ||
@@ -582,6 +674,7 @@ export async function POST(req: NextRequest) {
         };
 
         if (confirm || lower === "yes" || lower === "confirm") {
+          tradeHandled = true;
           const otpToken = body.otpToken;
           const isOtpValid = validateOtpToken(otpToken, walletAddress);
 
@@ -604,14 +697,52 @@ export async function POST(req: NextRequest) {
             });
           }
 
-          try {
-            const txResult = await executeSwap(leg);
+          // Check spending limit cap (Fix 3.3)
+          const spendCheck = await validateSpendingLimit(walletAddress, notionalUsd);
+          if (!spendCheck.allowed) {
             return NextResponse.json({
+              reply: `Spending Cap Enforced: ${spendCheck.error}`,
+              type: "error",
+              error: spendCheck.error,
+            }, { status: 400 });
+          }
+
+          // Idempotency deduplication check (Fix 3.3)
+          const idemKey = req.headers.get("idempotency-key") || deriveOperationKey(walletAddress, "direct_trade", {
+            side,
+            symbol,
+            notionalUsd,
+          });
+          const idemCheck = await checkIdempotencyAtomic(idemKey);
+          if (idemCheck.isDuplicate) {
+            if (idemCheck.isProcessing) {
+              return NextResponse.json({
+                reply: "Trade execution is currently processing. Duplicate request prevented.",
+                type: "pending",
+              }, { status: 409 });
+            }
+            if (idemCheck.cachedResult) {
+              return NextResponse.json(idemCheck.cachedResult);
+            }
+          }
+
+          try {
+            // Fix 3.2: withTimeout wrapper
+            const txResult = await withTimeout(executeSwap(leg), 10000, "X Layer Swap Execution");
+            await recordExecutedSpend(walletAddress, notionalUsd);
+            await deletePendingQuote(walletAddress);
+
+            const redis = getRedisClient();
+            if (redis) {
+              redis.incr(`execlog:${walletAddress.toLowerCase()}:count`).catch(() => {});
+            }
+
+            const successResult = {
               reply: `Order confirmed and executed on X Layer (chain 196). ${
                 side === "buy"
                   ? `Swapped $${notionalUsd.toFixed(2)} USDG for +${stockAmount.toFixed(3)} ${symbol}`
                   : `Swapped ${stockAmount.toFixed(3)} ${symbol} for ~$${notionalUsd.toFixed(2)} USDG`
-              } via OKX DEX Aggregator. Transaction Hash: ${txResult.hash}.`,
+              } via OKX DEX Aggregator. Platform fee: $0.10 USDG settled. Transaction Hash: ${txResult.hash}.`,
               type: "mandate",
               status: "confirmed",
               receipt: {
@@ -621,10 +752,14 @@ export async function POST(req: NextRequest) {
                 detail: side === "buy" ? `Swapped $${notionalUsd.toFixed(2)} USDG` : `Received ~$${notionalUsd.toFixed(2)} USDG`,
                 reference: txResult.hash,
                 explorerUrl: txResult.explorerUrl,
-                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                time: new Date().toISOString().slice(11, 19),
               },
-            });
+            };
+
+            completeIdempotency(idemKey, successResult, true);
+            return NextResponse.json(successResult);
           } catch (e) {
+            completeIdempotency(idemKey, null, false);
             const errDetail = e instanceof Error ? e.message : String(e);
             return NextResponse.json({
               reply: `Execution on X Layer failed: ${errDetail}.`,
@@ -640,7 +775,7 @@ export async function POST(req: NextRequest) {
           const impactPct = (quote.priceImpact * 100).toFixed(2);
           const outputStr = quote.estimatedOutput > 0 ? quote.estimatedOutput.toFixed(3) : stockAmount.toFixed(3);
 
-          recentPendingQuotes.set(walletAddress.toLowerCase(), {
+          await setPendingQuote(walletAddress, {
             type: "trade",
             side,
             symbol,
@@ -674,11 +809,11 @@ export async function POST(req: NextRequest) {
               amount: side === "buy" ? `~ ${outputStr} ${symbol}` : `~ $${notionalUsd.toFixed(2)} USDG`,
               detail: side === "buy" ? `for $${notionalUsd.toFixed(2)} USDG` : `for ${stockAmount.toFixed(3)} ${symbol}`,
               reference: `quote_${symbol}_${Date.now()}`,
-              time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              time: new Date().toISOString().slice(11, 19),
             },
           });
         } catch {
-          recentPendingQuotes.set(walletAddress.toLowerCase(), {
+          await setPendingQuote(walletAddress, {
             type: "trade",
             side,
             symbol,
@@ -711,11 +846,19 @@ export async function POST(req: NextRequest) {
               amount: side === "buy" ? `~ ${stockAmount.toFixed(3)} ${symbol}` : `~ $${notionalUsd.toFixed(2)} USDG`,
               detail: side === "buy" ? `for $${notionalUsd.toFixed(2)} USDG` : `for ${stockAmount.toFixed(3)} ${symbol}`,
               reference: `quote_${symbol}_${Date.now()}`,
-              time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              time: new Date().toISOString().slice(11, 19),
             },
           });
         }
       }
+    }
+
+    // Guard against "confirm" or "yes" falling through to mandate handler (Fix 5.5)
+    if (lower === "confirm" || lower === "yes") {
+      return NextResponse.json({
+        reply: "No pending trade or mandate found to confirm. Please specify a new trade or portfolio rebalancing mandate.",
+        type: "info",
+      });
     }
 
     // 6. Portfolio Mandate Execution or Preview
@@ -771,8 +914,13 @@ export async function POST(req: NextRequest) {
         const primaryTx = txs.find((t) => t.hash) || txs[0];
         const txHash = primaryTx?.hash || `executed_${Date.now()}`;
 
+        const redis = getRedisClient();
+        if (redis) {
+          redis.incr(`execlog:${walletAddress.toLowerCase()}:count`).catch(() => {});
+        }
+
         return NextResponse.json({
-          reply: `Mandate executed successfully on X Layer (chain 196). Swapped: ${legsSummary}.`,
+          reply: `Mandate executed successfully on X Layer (chain 196). Swapped: ${legsSummary}. Platform fee: $0.10 USDG settled via OKX DEX Aggregator.`,
           type: "mandate",
           status: "confirmed",
           delivery,
@@ -783,7 +931,7 @@ export async function POST(req: NextRequest) {
             detail: legsSummary,
             reference: txHash,
             explorerUrl: primaryTx?.explorerUrl,
-            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            time: new Date().toISOString().slice(11, 19),
           },
         });
       }
@@ -799,9 +947,20 @@ export async function POST(req: NextRequest) {
           amount: `$${legs.reduce((acc, l) => acc + l.notionalUsd, 0).toFixed(2)} USDG`,
           detail: legsSummary,
           reference: `quote_mandate_${Date.now()}`,
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          time: new Date().toISOString().slice(11, 19),
         },
       });
+    }
+
+    if (!mandateResult.success && mandateResult.error) {
+      return NextResponse.json(
+        {
+          reply: `Mandate execution error: ${mandateResult.error}. Please adjust your target allocations or check allowable assets (e.g. "60% MAG7, 20% USDG, max 8%").`,
+          type: "error",
+          error: mandateResult.error,
+        },
+        { status: 400 }
+      );
     }
 
     // General AI response

@@ -12,7 +12,7 @@ export interface TradeBinding {
 export interface OtpChallenge {
   challengeId: string;
   identifier: string;
-  code?: string;
+  code?: never;
   hashedOtp: string;
   tradeDigest: string;
   purpose: string;
@@ -171,7 +171,6 @@ export async function generateOtpChallenge(
   const challenge: OtpChallenge = {
     challengeId,
     identifier: id,
-    code,
     hashedOtp,
     tradeDigest,
     purpose,
@@ -372,8 +371,10 @@ export function validateOtpToken(
   try {
     const payload = Buffer.from(encodedPayload, "base64url").toString("utf8");
     const expectedSignature = createHmac("sha256", OTP_SECRET).update(payload).digest("hex");
+    const provBuf = Buffer.from(providedSignature, "hex");
+    const expBuf = Buffer.from(expectedSignature, "hex");
 
-    if (providedSignature !== expectedSignature) {
+    if (provBuf.length !== expBuf.length || !timingSafeEqual(provBuf, expBuf)) {
       return false;
     }
 

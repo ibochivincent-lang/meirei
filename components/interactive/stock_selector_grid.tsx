@@ -41,7 +41,7 @@ export const STOCKS: StockItem[] = [
     name: "Apple",
     price: "$332.41",
     isLive: true,
-    color: "#000000",
+    color: "#A2AAAD",
     change24h: "+1.82%",
     high24h: "$335.10",
     low24h: "$329.80",
@@ -172,7 +172,7 @@ export const STOCKS: StockItem[] = [
     high24h: "$574.80",
     low24h: "$569.20",
     volume24h: "$4.12M USDG",
-    chartPoints: [569.2, 570.1, 571.4, 570.8, 572.0, 571.5, 573.1, 574.8, 573.6, 572.5],
+    chartPoints: [569.2, 569.8, 570.1, 571.4, 570.8, 572.0, 571.5, 572.8, 573.1, 574.8, 573.6, 572.5],
     logo: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
         <path d="M4 18h16v2H4v-2zm0-5h16v2H4v-2zm0-5h16v2H4V8zm0-5h16v2H4V3z" />
@@ -189,7 +189,7 @@ export const STOCKS: StockItem[] = [
     high24h: "$498.40",
     low24h: "$491.10",
     volume24h: "$3.85M USDG",
-    chartPoints: [491.1, 492.5, 494.0, 493.2, 495.8, 497.1, 496.5, 498.4, 496.9, 495.2],
+    chartPoints: [491.1, 491.8, 492.5, 494.0, 493.2, 495.8, 497.1, 496.5, 497.6, 498.4, 496.9, 495.2],
     logo: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#FFFFFF">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
@@ -389,10 +389,24 @@ export function StockSelectorGrid({ onSelectStock, selectedSymbol = "NVDAx" }: S
     onSelectStock?.(stock);
   };
 
-  // Generate SVG path from points
-  const points = activeStock.chartPoints || [100, 102, 101, 103, 104, 103.5, 105];
-  const minVal = Math.min(...points);
-  const maxVal = Math.max(...points);
+  // Generate SVG path from points scaled proportionally to match active stock price and timeframe
+  const TIMEFRAME_CURVES: Record<string, number[]> = {
+    "1D": [1.0, 1.002, 1.001, 1.004, 1.003, 1.005, 1.006, 1.004, 1.007, 1.008, 1.006, 1.0],
+    "1W": [0.97, 0.975, 0.98, 0.985, 0.98, 0.99, 0.995, 1.01, 1.005, 1.02, 1.01, 1.0],
+    "1M": [0.93, 0.94, 0.935, 0.95, 0.96, 0.955, 0.97, 0.98, 0.975, 0.99, 0.995, 1.0],
+    "1Y": [0.75, 0.78, 0.81, 0.80, 0.84, 0.87, 0.89, 0.92, 0.95, 0.94, 0.98, 1.0],
+    "ALL": [0.55, 0.60, 0.63, 0.68, 0.72, 0.76, 0.81, 0.85, 0.89, 0.94, 0.97, 1.0],
+  };
+
+  const rawPoints = activeStock.chartPoints || [100, 102, 101, 103, 104, 103.5, 105];
+  const targetPrice = parseFloat(activeStock.price.replace(/[^0-9.]/g, "")) || 100;
+  const curve = TIMEFRAME_CURVES[timeframe] || TIMEFRAME_CURVES["1D"];
+  const shapedPoints = rawPoints.map((p, idx) => p * (curve[idx % curve.length] || 1.0));
+  const lastPoint = shapedPoints[shapedPoints.length - 1] || targetPrice;
+  const scaleFactor = lastPoint > 0 ? targetPrice / lastPoint : 1.0;
+  const points = shapedPoints.map((p) => Math.round(p * scaleFactor * 100) / 100);
+  const minVal = points.length > 0 ? Math.min(...points) : 0;
+  const maxVal = points.length > 0 ? Math.max(...points) : 100;
   const range = maxVal - minVal || 1;
 
   const width = 500;

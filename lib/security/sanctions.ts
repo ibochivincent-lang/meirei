@@ -24,6 +24,7 @@ export interface SanctionsCheckResult {
   address: string;
   provider: "chainalysis_oracle" | "local_ofac_cache";
   reason?: string;
+  invalidAddress?: boolean;
 }
 
 /**
@@ -38,6 +39,8 @@ export async function checkSanctions(address: string): Promise<SanctionsCheckRes
       isSanctioned: false,
       address: cleanAddr,
       provider: "local_ofac_cache",
+      invalidAddress: true,
+      reason: "Address format is not a valid EVM address.",
     };
   }
 

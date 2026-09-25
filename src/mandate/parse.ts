@@ -125,9 +125,10 @@ export function parseMandate(input: string): Mandate {
 }
 
 /** Caps single names and lets the cash sleeve absorb the difference, so weights always total 1.0. */
-export function applyCap(targets: Target[], cashSymbol: CashSymbol, maxSingle: number): void {
-  const equities = targets.filter((t) => !isCashSymbol(t.symbol));
-  const cashTargets = targets.filter((t) => isCashSymbol(t.symbol));
+export function applyCap(targets: Target[], cashSymbol: CashSymbol, maxSingle: number): Target[] {
+  const cloned = targets.map((t) => ({ ...t }));
+  const equities = cloned.filter((t) => !isCashSymbol(t.symbol));
+  const cashTargets = cloned.filter((t) => isCashSymbol(t.symbol));
 
   let invested = 0;
   for (const t of equities) {
@@ -139,13 +140,20 @@ export function applyCap(targets: Target[], cashSymbol: CashSymbol, maxSingle: n
   const cashTotal = sum(cashTargets);
 
   if (!cashTargets.length) {
-    targets.push({ symbol: cashSymbol, weight: targetCash });
+    cloned.push({ symbol: cashSymbol, weight: targetCash });
   } else if (cashTotal > 1e-9) {
     const k = targetCash / cashTotal;
     for (const t of cashTargets) t.weight *= k;
   } else {
     cashTargets[0].weight = targetCash;
   }
+
+  // Update target array elements in place with cloned objects to support array-mutating callers without mutating original object refs
+  targets.length = 0;
+  for (const item of cloned) {
+    targets.push(item);
+  }
+  return cloned;
 }
 
 function validate(mandate: Mandate): void {

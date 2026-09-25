@@ -14,6 +14,7 @@ Repository: https://github.com/ibochivincent-lang/meirei
 | :--- | :--- | :--- |
 | GitHub Repository | Active & Public | https://github.com/ibochivincent-lang/meirei |
 | Production Web App | Deployed & Live | https://meirei.tella.cash/app |
+| MandateRegistry Contract | Verified on X Layer | `0x5E7095cC40303b12A1047E0BF2D39CF797379012` |
 | Health Endpoint | Verified Live | `GET /api/health` |
 | OKX AI ASP Listing | Validated & Staged | `npm run asp:validate` |
 | Demo Video Runbook | Complete | `demos/demo-script.md` |

@@ -2,6 +2,7 @@ import { FeeOptions, FeeReceipt, Delivery, CashSymbol, Leg } from "../types";
 import { getOnchainOSConfig, sendToken, createEscrowCharge } from "../onchainos";
 import { feeAddress, defaultFeeAmountUsd, defaultFeeBps } from "../config";
 import { getAllowlistEntry, CASH_SYMBOLS } from "../allowlist";
+import { DEMO_SANDBOX_ADDRESS } from "../portfolio/balances";
 
 export const DEFAULT_FEE_BPS = 50; // 0.5% of executed notional
 export const DEFAULT_FIXED_FEE_USD = 5;
@@ -56,8 +57,8 @@ export async function chargeFee(delivery: Delivery, options: FeeOptions): Promis
   const recipient = feeAddress();
 
   if (
-    (cfg.walletAddress && cfg.walletAddress.toLowerCase() === "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d") ||
-    (process.env.MEIREI_WALLET && process.env.MEIREI_WALLET.toLowerCase() === "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d")
+    (cfg.walletAddress && cfg.walletAddress.toLowerCase() === DEMO_SANDBOX_ADDRESS.toLowerCase()) ||
+    (process.env.MEIREI_WALLET && process.env.MEIREI_WALLET.toLowerCase() === DEMO_SANDBOX_ADDRESS.toLowerCase())
   ) {
     return {
       amount,

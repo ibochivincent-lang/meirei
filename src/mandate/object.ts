@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Mandate, Target, CashSymbol, Holding, RebalancePlan } from "../types";
 import { parseMandate } from "./parse";
 import { planRebalance } from "../portfolio/diff";
+import { getRedisClient } from "@/lib/redis/client";
 
 export const MandateStatusSchema = z.enum(["active", "paused", "revoked"]);
 export type MandateStatus = z.infer<typeof MandateStatusSchema>;
@@ -19,6 +20,7 @@ export const ManagedMandateSchema = z.object({
   walletAddress: z.string().min(42),
   name: z.string().min(1),
   targets: z.array(z.object({ symbol: z.string().min(1), weight: z.number().min(0).max(1) })),
+  rawTargets: z.array(z.object({ symbol: z.string().min(1), weight: z.number().min(0) })).optional(),
   cashSymbol: z.enum(["USDG", "USDC"]),
   maxSingle: z.number().min(0).max(1),
   rebalanceBand: z.number().min(0).max(1),
@@ -55,6 +57,17 @@ export interface DryRunResult {
 // In-memory mandate store with wallet indexing
 const mandateStore = new Map<string, ManagedMandate>();
 
+async function syncMandateToRedis(mandate: ManagedMandate): Promise<void> {
+  const redis = getRedisClient();
+  if (!redis) return;
+  try {
+    await redis.set(`mandate:${mandate.id}`, JSON.stringify(mandate), { ex: 90 * 86400 });
+    await redis.sadd(`mandates:wallet:${mandate.walletAddress.toLowerCase()}`, mandate.id);
+  } catch (err) {
+    console.warn("[mandate] Redis sync notice:", err);
+  }
+}
+
 export function createManagedMandate(params: {
   walletAddress: string;
   name?: string;
@@ -76,6 +89,7 @@ export function createManagedMandate(params: {
     walletAddress: params.walletAddress.toLowerCase(),
     name: params.name || `Mandate ${new Date(now).toLocaleDateString()}`,
     targets: parsed.targets,
+    rawTargets: parsed.targets.map((t) => ({ ...t })),
     cashSymbol: parsed.cashSymbol,
     maxSingle: parsed.maxSingle,
     rebalanceBand: parsed.rebalanceBand,
@@ -87,6 +101,7 @@ export function createManagedMandate(params: {
 
   ManagedMandateSchema.parse(record);
   mandateStore.set(id, record);
+  syncMandateToRedis(record).catch(() => {});
   return record;
 }
 
@@ -95,8 +110,49 @@ export function listMandates(walletAddress: string): ManagedMandate[] {
   return Array.from(mandateStore.values()).filter((m) => m.walletAddress === addr);
 }
 
+export async function listMandatesAsync(walletAddress: string): Promise<ManagedMandate[]> {
+  const addr = walletAddress.toLowerCase();
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const ids = await redis.smembers(`mandates:wallet:${addr}`);
+      if (Array.isArray(ids) && ids.length > 0) {
+        for (const id of ids) {
+          if (!mandateStore.has(id)) {
+            const raw = await redis.get<string | ManagedMandate>(`mandate:${id}`);
+            if (raw) {
+              const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+              mandateStore.set(id, parsed);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[mandate] Redis list query notice:", err);
+    }
+  }
+  return listMandates(addr);
+}
+
 export function getMandate(id: string): ManagedMandate | undefined {
   return mandateStore.get(id);
+}
+
+export async function getMandateAsync(id: string): Promise<ManagedMandate | undefined> {
+  const local = mandateStore.get(id);
+  if (local) return local;
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const raw = await redis.get<string | ManagedMandate>(`mandate:${id}`);
+      if (raw) {
+        const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+        mandateStore.set(id, parsed);
+        return parsed;
+      }
+    } catch {}
+  }
+  return undefined;
 }
 
 export function pauseMandate(id: string): ManagedMandate {
@@ -105,6 +161,7 @@ export function pauseMandate(id: string): ManagedMandate {
   if (m.status === "revoked") throw new Error("Cannot pause a revoked mandate.");
   m.status = "paused";
   m.updatedAt = Date.now();
+  syncMandateToRedis(m).catch(() => {});
   return m;
 }
 
@@ -114,6 +171,7 @@ export function resumeMandate(id: string): ManagedMandate {
   if (m.status === "revoked") throw new Error("Cannot resume a revoked mandate.");
   m.status = "active";
   m.updatedAt = Date.now();
+  syncMandateToRedis(m).catch(() => {});
   return m;
 }
 
@@ -122,6 +180,7 @@ export function revokeMandate(id: string): ManagedMandate {
   if (!m) throw new Error(`Mandate "${id}" not found.`);
   m.status = "revoked";
   m.updatedAt = Date.now();
+  syncMandateToRedis(m).catch(() => {});
   return m;
 }
 
@@ -199,6 +258,7 @@ export function editMandate(
 
   current.version += 1;
   current.targets = newMandate.targets;
+  current.rawTargets = newMandate.targets.map((t) => ({ ...t }));
   current.cashSymbol = newMandate.cashSymbol;
   current.maxSingle = newMandate.maxSingle;
   current.rebalanceBand = newMandate.rebalanceBand;
@@ -206,6 +266,7 @@ export function editMandate(
   current.updatedAt = Date.now();
 
   ManagedMandateSchema.parse(current);
+  syncMandateToRedis(current).catch(() => {});
   return { mandate: current, riskDiff };
 }
 

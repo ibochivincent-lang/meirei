@@ -74,26 +74,56 @@ export function resolveOnchainOsBinary(): string {
   return "onchainos";
 }
 
+class Semaphore {
+  private queue: (() => void)[] = [];
+  private active = 0;
+  constructor(private readonly max: number) {}
+
+  async acquire(): Promise<void> {
+    if (this.active < this.max) {
+      this.active++;
+      return;
+    }
+    await new Promise<void>((resolve) => this.queue.push(resolve));
+    this.active++;
+  }
+
+  release(): void {
+    this.active--;
+    if (this.queue.length > 0) {
+      const next = this.queue.shift();
+      if (next) next();
+    }
+  }
+}
+
+export const cliSemaphore = new Semaphore(4);
+
 /** Runs `onchainos <args>` and returns raw stdout. Throws — it never invents output. */
 export async function runCliRaw(args: string[]): Promise<string> {
-  const binary = resolveOnchainOsBinary();
-  return new Promise<string>((resolve, reject) => {
-    execFile(
-      binary,
-      args,
-      { timeout: CLI_TIMEOUT_MS, windowsHide: true, maxBuffer: 8 * 1024 * 1024 },
-      (error, stdout, stderr) => {
-        if (error) {
-          const detail = (stderr || stdout || error.message || "").trim();
-          reject(
-            new OnchainOSError(`onchainos ${args.slice(0, 2).join(" ")} failed: ${truncate(detail, 500)}`, args, detail)
-          );
-          return;
+  await cliSemaphore.acquire();
+  try {
+    const binary = resolveOnchainOsBinary();
+    return await new Promise<string>((resolve, reject) => {
+      execFile(
+        binary,
+        args,
+        { timeout: CLI_TIMEOUT_MS, windowsHide: true, maxBuffer: 8 * 1024 * 1024 },
+        (error, stdout, stderr) => {
+          if (error) {
+            const detail = (stderr || stdout || error.message || "").trim();
+            reject(
+              new OnchainOSError(`onchainos ${args.slice(0, 2).join(" ")} failed: ${truncate(detail, 500)}`, args, detail)
+            );
+            return;
+          }
+          resolve((stdout ?? "").trim());
         }
-        resolve((stdout ?? "").trim());
-      }
-    );
-  });
+      );
+    });
+  } finally {
+    cliSemaphore.release();
+  }
 }
 
 /** Runs `onchainos <args>` and parses the JSON envelope ({ ok, data } | { ok:false, reason }). */
@@ -204,18 +234,23 @@ export function parseBalancesResponse(json: unknown): Holding[] {
         if (item && typeof item === "object" && Array.isArray((item as { tokenAssets?: unknown }).tokenAssets)) {
           assets.push(...(((item as { tokenAssets?: TokenAsset[] }).tokenAssets) ?? []));
         } else if (item && typeof item === "object") {
+          if (!("balance" in item) && !("rawBalance" in item) && !("tokenAssets" in item)) continue;
           assets.push(item as TokenAsset);
         }
       }
     } else if (value && typeof value === "object") {
       const nested = (value as { tokenAssets?: unknown }).tokenAssets;
       if (Array.isArray(nested)) assets.push(...(nested as TokenAsset[]));
-      else assets.push(value as TokenAsset);
+      else if ("balance" in value || "rawBalance" in value) assets.push(value as TokenAsset);
     }
   };
 
   if (Array.isArray(json)) push(json);
   else if (json && typeof json === "object") push((json as { data?: unknown }).data ?? json);
+
+  if (assets.length === 0 && json && typeof json === "object" && Object.keys(json as object).length > 0) {
+    console.warn("[onchainos] parseBalancesResponse: non-empty json response yielded zero assets");
+  }
 
   const bySymbol = new Map<string, Holding>();
   for (const a of assets) {
@@ -247,7 +282,24 @@ export async function fetchBalances(walletAddress: string): Promise<Holding[]> {
   const cfg = getOnchainOSConfig();
   const wallet = assertWalletAddress(walletAddress);
   if (cfg.mock) return mockBalances();
-  if (cfg.useSkills) return parseSkillBalances(await runSkillPrompt(balancePrompt(wallet)));
+  if (cfg.useSkills) {
+    const rawHoldings = parseSkillBalances(await runSkillPrompt(balancePrompt(wallet)));
+    for (const h of rawHoldings) {
+      if (h.symbol === "USDG" || h.symbol === "USDC") {
+        h.valueUsd = h.amount;
+        continue;
+      }
+      try {
+        const livePrice = await fetchPrice(h.symbol);
+        if (livePrice > 0) {
+          h.valueUsd = h.amount * livePrice;
+        }
+      } catch (priceErr) {
+        console.warn(`[onchainos] Live price query notice for ${h.symbol}:`, priceErr);
+      }
+    }
+    return rawHoldings;
+  }
 
   try {
     const data = await runCliJson(["portfolio", "all-balances", "--address", wallet, "--chains", cfg.chain.alias]);
@@ -361,6 +413,9 @@ export function parseQuoteResponse(json: unknown, legIndex: number, from: Allowl
   const impactPercent = toNumber(q.priceImpactPercent) ?? toNumber(q.priceImpact) ?? 0;
   const outDecimals = toNumber(q.toToken?.decimal) ?? to.decimals;
   const estimatedOutput = divDecimal(String(q.toTokenAmount ?? "0"), outDecimals);
+  if (estimatedOutput <= 0 && q.toTokenAmount && String(q.toTokenAmount) !== "0") {
+    console.warn(`[onchainos] Suspicious non-positive estimated output for ${to.symbol}: ${estimatedOutput}`);
+  }
 
   return {
     legIndex,
@@ -526,24 +581,20 @@ export async function sendToken(params: {
   if (cfg.mock) throw new OnchainOSError("[MOCK] Fee transfers are disabled in mock mode.");
   if (!cfg.allowBroadcast) throw new OnchainOSError("Broadcast is disabled for this run (allowBroadcast: false).");
 
-  const base = [
+  const args = [
     "wallet", "send",
     "--recipient", assertWalletAddress(params.to, "fee recipient"),
     "--readable-amount", params.amount,
     "--contract-token", params.tokenAddress,
     "--chain", params.chain.alias,
     "--from", assertWalletAddress(params.from ?? requireWalletAddress(cfg), "wallet address"),
+    "--force",
   ];
 
-  const first = await runCliRaw(base);
-  const hash = tryExtractHash(first);
+  const output = await runCliRaw(args);
+  const hash = tryExtractHash(output);
   if (hash) return hash;
-
-  // The CLI asks for an explicit confirmation before it will move funds.
-  const forced = await runCliRaw([...base, "--force"]);
-  const forcedHash = tryExtractHash(forced);
-  if (forcedHash) return forcedHash;
-  throw new OnchainOSError(`Fee transfer was not broadcast: ${truncate(first, 300)}`);
+  throw new OnchainOSError(`Fee transfer was not broadcast: ${truncate(output, 300)}`);
 }
 
 function tryExtractHash(text: string): string | undefined {

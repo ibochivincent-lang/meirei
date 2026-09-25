@@ -1,3 +1,5 @@
+import { getRedisClient } from "@/lib/redis/client";
+
 export interface SpendingLimitConfig {
   maxPerTransactionUsd: number;
   maxDailyVolumeUsd: number;
@@ -27,16 +29,59 @@ export interface SpendingLimitResult {
   maxPerTransaction: number;
 }
 
+export async function readDailySpend(walletAddress: string): Promise<number> {
+  const addr = walletAddress.trim().toLowerCase();
+  const today = getTodayString();
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const val = await redis.get<string | number>(`spend:daily:${addr}:${today}`);
+      if (val !== null && val !== undefined) {
+        return typeof val === "number" ? val : parseFloat(String(val)) || 0;
+      }
+    } catch (err) {
+      console.warn("[spending_limits] Redis read failed:", err);
+    }
+  }
+  const record = walletDailySpendingStore.get(addr);
+  return record && record.date === today ? record.totalUsd : 0;
+}
+
+export async function addDailySpend(walletAddress: string, amountUsd: number): Promise<void> {
+  const addr = walletAddress.trim().toLowerCase();
+  const today = getTodayString();
+
+  // Update in-memory fallback
+  let record = walletDailySpendingStore.get(addr);
+  if (!record || record.date !== today) {
+    record = { date: today, totalUsd: 0 };
+    walletDailySpendingStore.set(addr, record);
+  }
+  record.totalUsd += amountUsd;
+
+  // Update Upstash Redis
+  const redis = getRedisClient();
+  if (redis) {
+    try {
+      const key = `spend:daily:${addr}:${today}`;
+      await redis.incrbyfloat(key, amountUsd);
+      await redis.expire(key, 90000); // 25-hour TTL
+    } catch (err) {
+      console.warn("[spending_limits] Redis incrbyfloat failed:", err);
+    }
+  }
+}
+
 /**
  * Validates whether a proposed transaction complies with per-transaction and daily spending caps.
+ * Checks Upstash Redis primary store with in-memory fallback.
  */
-export function validateSpendingLimit(
+export async function validateSpendingLimit(
   walletAddress: string,
   amountUsd: number,
   config: SpendingLimitConfig = DEFAULT_SPENDING_LIMITS
-): SpendingLimitResult {
+): Promise<SpendingLimitResult> {
   const addr = walletAddress.trim().toLowerCase();
-  const today = getTodayString();
 
   if (amountUsd > config.maxPerTransactionUsd) {
     return {
@@ -48,19 +93,14 @@ export function validateSpendingLimit(
     };
   }
 
-  let record = walletDailySpendingStore.get(addr);
-  if (!record || record.date !== today) {
-    record = { date: today, totalUsd: 0 };
-    walletDailySpendingStore.set(addr, record);
-  }
-
-  const projectedDailyTotal = record.totalUsd + amountUsd;
+  const currentDailySpend = await readDailySpend(addr);
+  const projectedDailyTotal = currentDailySpend + amountUsd;
 
   if (projectedDailyTotal > config.maxDailyVolumeUsd) {
     return {
       allowed: false,
-      error: `Transaction exceeds 24-hour daily cumulative volume cap of $${config.maxDailyVolumeUsd.toLocaleString()} USDG. Current daily volume: $${record.totalUsd.toFixed(2)} USDG. Proposed addition: $${amountUsd.toFixed(2)} USDG.`,
-      currentDailySpend: record.totalUsd,
+      error: `Transaction exceeds 24-hour daily cumulative volume cap of $${config.maxDailyVolumeUsd.toLocaleString()} USDG. Current daily volume: $${currentDailySpend.toFixed(2)} USDG. Proposed addition: $${amountUsd.toFixed(2)} USDG.`,
+      currentDailySpend,
       maxDailyVolume: config.maxDailyVolumeUsd,
       maxPerTransaction: config.maxPerTransactionUsd,
     };
@@ -68,24 +108,15 @@ export function validateSpendingLimit(
 
   return {
     allowed: true,
-    currentDailySpend: record.totalUsd,
+    currentDailySpend,
     maxDailyVolume: config.maxDailyVolumeUsd,
     maxPerTransaction: config.maxPerTransactionUsd,
   };
 }
 
 /**
- * Records an executed transaction against the wallet's daily spending quota.
+ * Records an executed transaction against the wallet's daily spending quota in Redis and memory.
  */
-export function recordExecutedSpend(walletAddress: string, amountUsd: number): void {
-  const addr = walletAddress.trim().toLowerCase();
-  const today = getTodayString();
-
-  let record = walletDailySpendingStore.get(addr);
-  if (!record || record.date !== today) {
-    record = { date: today, totalUsd: 0 };
-    walletDailySpendingStore.set(addr, record);
-  }
-
-  record.totalUsd += amountUsd;
+export async function recordExecutedSpend(walletAddress: string, amountUsd: number): Promise<void> {
+  await addDailySpend(walletAddress, amountUsd);
 }

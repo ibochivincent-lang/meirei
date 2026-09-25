@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { Leg, Quote, TxResult, SwapOptions, SwapResult } from "../types";
 import { getSwapQuote, executeSwap } from "../onchainos";
 
@@ -43,12 +44,8 @@ export async function executeSwaps(legs: Leg[], options: SwapOptions): Promise<S
     Boolean(process.env.MEIREI_WALLET && process.env.MEIREI_WALLET.toLowerCase() === DEMO_SANDBOX_ADDRESS.toLowerCase());
 
   if (isDemo) {
-    const txs: TxResult[] = legs.map((leg, idx) => {
-      const hash =
-        "0x" +
-        Array.from({ length: 64 }, (_, i) =>
-          ((i * 13 + leg.symbol.charCodeAt(0) * 7 + Math.floor(leg.notionalUsd * 100) + idx) % 16).toString(16)
-        ).join("");
+    const txs: TxResult[] = legs.map((leg) => {
+      const hash = "0x" + randomBytes(32).toString("hex");
       return {
         symbol: leg.symbol,
         hash,
