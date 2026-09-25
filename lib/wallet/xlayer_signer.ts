@@ -16,6 +16,7 @@ import {
   XLAYER_NETWORK_PARAMS,
   XLAYER_EXPLORER_URL,
 } from "./xlayer";
+import { keccak256, stringToBytes } from "viem";
 
 export interface Web3ProviderState {
   hasProvider: boolean;
@@ -35,6 +36,8 @@ export interface SwapExecutionRequest {
   routerAddress?: string;
   calldata?: string;
   value?: string;
+  mandateText?: string;
+  mandateId?: number;
 }
 
 export interface SigningResult {
@@ -319,10 +322,15 @@ export async function ensureXLayerNetwork(providerArg?: any): Promise<void> {
   }
 }
 
-export const OKX_XLAYER_DEX_ROUTER = "0x4ae4E9B8D0d5248A31A980998F4aA3F631167BA4";
+export const OKX_XLAYER_DEX_ROUTER = "0x7c5bee2a8091c3ef39072f64f18fac913060aeaf";
+export const QUICKSWAP_XLAYER_ROUTER = "0x4B9f4d2435Ef65559567e5DbFC1BbB37abC43B57";
+export const MANDATE_REGISTRY_ADDRESS = "0x5E7095cC40303b12A1047E0BF2D39CF797379012";
+export const USDG_TOKEN_ADDRESS = "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8";
 
 /**
- * Executes non-custodial swap transaction by prompting client-side signature.
+ * Executes non-custodial swap or mandate registration transaction on OKX X Layer (Chain 196).
+ * Pre-checks gas and token balances, requests ERC-20 approval when needed,
+ * commits mandates on-chain to MandateRegistry, and strictly verifies transaction receipt.
  * Private keys NEVER leave the user device or hardware enclave.
  */
 export async function signAndExecuteSwap(req: SwapExecutionRequest): Promise<SigningResult> {
@@ -337,16 +345,139 @@ export async function signAndExecuteSwap(req: SwapExecutionRequest): Promise<Sig
   try {
     await ensureXLayerNetwork(provider);
 
-    // Target the verified OKX DEX Aggregator router on OKX X Layer (Chain 196)
-    const targetRouter = req.routerAddress || OKX_XLAYER_DEX_ROUTER;
+    const userAddr = req.userAddress.toLowerCase();
+    const paddedUser = userAddr.replace(/^0x/i, "").padStart(64, "0");
+
+    // 1. Pre-flight Check: Native OKB Gas Balance
+    try {
+      const rawGasBal: string = await provider.request({
+        method: "eth_getBalance",
+        params: [userAddr, "latest"],
+      });
+      const okbBal = Number(BigInt(rawGasBal || "0x0")) / 1e18;
+      if (okbBal < 0.0001) {
+        return {
+          ok: false,
+          error: `Insufficient OKB for transaction gas fees on X Layer (balance: ${okbBal.toFixed(4)} OKB). Please fund your wallet with at least 0.001 OKB.`,
+        };
+      }
+    } catch (gasErr: unknown) {
+      console.warn("[XLayer] Gas balance check notice:", gasErr);
+    }
+
+    // 2. Pre-flight Check: USDG Capital Balance
+    try {
+      const rawUsdgBal: string = await provider.request({
+        method: "eth_call",
+        params: [
+          {
+            to: USDG_TOKEN_ADDRESS,
+            data: `0x70a08231${paddedUser}`,
+          },
+          "latest",
+        ],
+      });
+      const usdgBal = Number(BigInt(rawUsdgBal || "0x0")) / 1e6;
+      if (usdgBal < req.fromAmount) {
+        return {
+          ok: false,
+          error: `Insufficient USDG balance on X Layer. Your wallet has $${usdgBal.toFixed(2)} USDG, but this swap requires $${req.fromAmount.toFixed(2)} USDG.`,
+        };
+      }
+    } catch (balErr: unknown) {
+      console.warn("[XLayer] USDG balance check notice:", balErr);
+    }
+
+    // 3. Determine Target Contract & Encode Calldata
+    let targetContract = req.routerAddress;
+    let txData = req.calldata;
+
+    if (targetContract && targetContract.toLowerCase() !== MANDATE_REGISTRY_ADDRESS.toLowerCase()) {
+      // Swapping via DEX Router (e.g. OKX DEX or QuickSwap)
+      // Check and prompt ERC-20 approval if allowance is insufficient
+      try {
+        const paddedSpender = targetContract.replace(/^0x/i, "").padStart(64, "0").toLowerCase();
+        const rawAllowance: string = await provider.request({
+          method: "eth_call",
+          params: [
+            {
+              to: USDG_TOKEN_ADDRESS,
+              data: `0xdd62ed3e${paddedUser}${paddedSpender}`,
+            },
+            "latest",
+          ],
+        });
+        const currentAllowance = BigInt(rawAllowance || "0x0");
+        const requiredUnits = BigInt(Math.floor(req.fromAmount * 1e6));
+
+        if (currentAllowance < requiredUnits) {
+          const approveTxHash: string = await provider.request({
+            method: "eth_sendTransaction",
+            params: [
+              {
+                from: userAddr,
+                to: USDG_TOKEN_ADDRESS,
+                data: `0x095ea7b3${paddedSpender}ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff`,
+              },
+            ],
+          });
+
+          if (!approveTxHash) {
+            return {
+              ok: false,
+              error: "USDG approval transaction was rejected in wallet.",
+            };
+          }
+
+          // Await approval confirmation
+          let approved = false;
+          for (let i = 0; i < 8; i++) {
+            await new Promise((r) => setTimeout(r, 2000));
+            const receipt = await provider.request({
+              method: "eth_getTransactionReceipt",
+              params: [approveTxHash],
+            });
+            if (receipt && (receipt.status === "0x1" || receipt.status === 1)) {
+              approved = true;
+              break;
+            }
+          }
+
+          if (!approved) {
+            return {
+              ok: false,
+              error: "USDG token approval was not confirmed on X Layer. Cannot proceed with swap.",
+            };
+          }
+        }
+      } catch (appErr: unknown) {
+        const msg = appErr instanceof Error ? appErr.message : String(appErr);
+        return {
+          ok: false,
+          error: `Token approval failed: ${msg}`,
+        };
+      }
+    } else {
+      // Default Non-Custodial Path: Commit mandate on-chain to MandateRegistry (0x5E7095cC40303b12A1047E0BF2D39CF797379012)
+      targetContract = MANDATE_REGISTRY_ADDRESS;
+      if (!txData || txData === "0x") {
+        const directive =
+          req.mandateText ||
+          `Meirei Mandate #${req.mandateId || 1}: Deploy ${req.toSymbol} with $${req.fromAmount} USDG capital on X Layer`;
+        const commitmentHash = keccak256(stringToBytes(directive));
+        // Selector 0x69c519c4 for setMandate(bytes32)
+        txData = `0x69c519c4${commitmentHash.slice(2)}`;
+      }
+    }
+
+    // 4. Request Client-Side Transaction Signature and Broadcast
     const txParams = {
-      from: req.userAddress,
-      to: targetRouter,
-      value: "0x0",
-      data: req.calldata || "0x",
+      from: userAddr,
+      to: targetContract,
+      value: req.value || "0x0",
+      data: txData,
     };
 
-    // Request client-side transaction signature and broadcast via EIP-1193
     let txHash: string;
     try {
       txHash = await provider.request({
@@ -370,10 +501,9 @@ export async function signAndExecuteSwap(req: SwapExecutionRequest): Promise<Sig
 
     const explorerUrl = `${XLAYER_EXPLORER_URL}/tx/${txHash}`;
 
-    // Poll for on-chain transaction receipt on OKX X Layer
+    // 5. Poll for On-Chain Transaction Receipt on OKX X Layer
     let confirmed = false;
-    let receiptStatus: "success" | "pending" | "reverted" = "pending";
-    const maxPollAttempts = 8;
+    const maxPollAttempts = 10;
     const pollIntervalMs = 2000;
 
     for (let attempt = 0; attempt < maxPollAttempts; attempt++) {
@@ -392,24 +522,36 @@ export async function signAndExecuteSwap(req: SwapExecutionRequest): Promise<Sig
               explorerUrl,
               confirmed: false,
               status: "reverted",
-              error: "Transaction reverted on OKX X Layer. Please verify token allowance or slippage.",
+              error: "Transaction reverted on OKX X Layer. Please verify token allowance or gas.",
             };
           }
-          confirmed = true;
-          receiptStatus = "success";
-          break;
+          if (receipt.status === "0x1" || receipt.status === 1) {
+            confirmed = true;
+            break;
+          }
         }
       } catch (pollErr) {
         console.warn("[XLayer] Receipt poll notice:", pollErr);
       }
     }
 
+    if (!confirmed) {
+      return {
+        ok: false,
+        txHash,
+        explorerUrl,
+        confirmed: false,
+        status: "pending",
+        error: `Transaction was broadcast (${txHash.slice(0, 10)}...), but confirmation timed out on X Layer. View status on explorer: ${explorerUrl}`,
+      };
+    }
+
     return {
       ok: true,
       txHash,
       explorerUrl,
-      confirmed,
-      status: receiptStatus,
+      confirmed: true,
+      status: "success",
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -247,7 +247,7 @@ export async function GET() {
         name: "OKX X Layer",
         id: 196,
         settlementAsset: "USDG",
-        rpc: "https://rpc.xlayer.tech",
+        rpc: "https://xlayerrpc.okx.com",
       },
       tools: MCP_TOOLS,
     },

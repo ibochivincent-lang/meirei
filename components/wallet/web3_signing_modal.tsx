@@ -9,7 +9,7 @@ import {
   Web3ProviderState,
   SigningResult,
 } from "@/lib/wallet/xlayer_signer";
-import { formatShortAddress } from "@/lib/wallet/xlayer";
+import { formatShortAddress, fetchLiveXLayerBalances } from "@/lib/wallet/xlayer";
 
 export interface Web3SigningModalProps {
   isOpen: boolean;
@@ -39,6 +39,8 @@ export function Web3SigningModal({
     isXLayer: false,
   });
 
+  const [walletBalances, setWalletBalances] = useState<{ okb: number; usdg: number } | null>(null);
+  const [isLoadingBalances, setIsLoadingBalances] = useState<boolean>(false);
   const [inputAmount, setInputAmount] = useState<number>(fromAmountUsdg || 100);
   const [selectedMandate, setSelectedMandate] = useState<number>(1);
   const [mandateText, setMandateText] = useState<string>(`Deploy ${targetSymbol} with dynamic momentum trailing stop.`);
@@ -64,6 +66,19 @@ export function Web3SigningModal({
     }
   }, [selectedMandate, targetSymbol]);
 
+  const refreshBalances = async (addr: string | null) => {
+    if (!addr) return;
+    try {
+      setIsLoadingBalances(true);
+      const snap = await fetchLiveXLayerBalances(addr);
+      setWalletBalances({ okb: snap.okbBalance, usdg: snap.usdgBalance });
+    } catch {
+      // Non-fatal balance fetch notice
+    } finally {
+      setIsLoadingBalances(false);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       setSigningError(null);
@@ -71,9 +86,11 @@ export function Web3SigningModal({
       setInputAmount(fromAmountUsdg > 0 ? fromAmountUsdg : 100);
       checkWalletConnection().then((state) => {
         setProviderState(state);
+        const active = state.connectedAddress || userAddress;
+        if (active) refreshBalances(active);
       });
     }
-  }, [isOpen, fromAmountUsdg]);
+  }, [isOpen, fromAmountUsdg, userAddress]);
 
   const handleConnectWallet = async () => {
     setIsSigning(true);
@@ -82,6 +99,7 @@ export function Web3SigningModal({
       await connectInjectedWallet();
       const updated = await checkWalletConnection();
       setProviderState(updated);
+      if (updated.connectedAddress) refreshBalances(updated.connectedAddress);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setSigningError(msg);
@@ -105,9 +123,12 @@ export function Web3SigningModal({
       if (!providerState.connectedAddress) {
         try {
           const res = await connectInjectedWallet();
-          if (res && res.address) activeAddr = res.address;
+          if (res && res.address) {
+            activeAddr = res.address;
+            refreshBalances(activeAddr);
+          }
         } catch {
-          // Proceed with current active address or non-custodial simulation
+          // Proceed with current active address
         }
       }
 
@@ -119,9 +140,11 @@ export function Web3SigningModal({
         expectedOutput: currentUnits,
         slippagePercent: 0.05,
         userAddress: activeAddr,
+        mandateText: mandateText,
+        mandateId: selectedMandate,
       });
 
-      if (result.ok && result.txHash) {
+      if (result.ok && result.confirmed && result.txHash) {
         setSigningResult(result);
         if (onSuccess) {
           onSuccess({
@@ -130,8 +153,9 @@ export function Web3SigningModal({
             executedUnits: currentUnits,
           });
         }
+        refreshBalances(activeAddr);
       } else {
-        setSigningError(result.error || "Transaction signature was cancelled or rejected in wallet.");
+        setSigningError(result.error || "Transaction signature was cancelled, unconfirmed, or reverted on X Layer.");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -339,6 +363,42 @@ export function Web3SigningModal({
                 </div>
               </div>
 
+              {/* Wallet Balances & Pre-flight Status */}
+              <div className="p-2.5 rounded-xl bg-surface-50 border border-ink-200 text-[11px] font-mono space-y-1">
+                <div className="flex justify-between items-center text-ink-600">
+                  <span>Wallet USDG Balance:</span>
+                  <span className="font-bold text-ink-950">
+                    {isLoadingBalances
+                      ? "Loading..."
+                      : walletBalances !== null
+                      ? `$${walletBalances.usdg.toFixed(2)} USDG`
+                      : "Connect wallet to inspect"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-ink-600">
+                  <span>OKB Gas Reserve:</span>
+                  <span className={`font-bold ${walletBalances && walletBalances.okb < 0.0001 ? "text-amber-700" : "text-ink-950"}`}>
+                    {isLoadingBalances
+                      ? "..."
+                      : walletBalances !== null
+                      ? `${walletBalances.okb.toFixed(4)} OKB`
+                      : "Unknown"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Warning banners if insufficient funds */}
+              {walletBalances && walletBalances.okb < 0.0001 && (
+                <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-[10px] text-amber-800 font-sans">
+                  Notice: Your wallet has 0 OKB for gas. You need a small amount of OKB on OKX X Layer to broadcast transactions.
+                </div>
+              )}
+              {walletBalances && walletBalances.usdg < inputAmount && (
+                <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-[10px] text-amber-800 font-sans">
+                  Notice: Your USDG balance (${walletBalances.usdg.toFixed(2)}) is less than the requested trade (${inputAmount.toFixed(2)} USDG).
+                </div>
+              )}
+
               {/* Transaction Breakdown Card */}
               <div className="p-3 rounded-xl bg-surface-50 border border-ink-200 space-y-1.5 text-[11px]">
                 <div className="flex justify-between items-center text-ink-600">
@@ -348,10 +408,10 @@ export function Web3SigningModal({
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-ink-600">
-                  <span>Slippage / Gas:</span>
-                  <span className="font-mono text-emerald-700 font-bold flex items-center gap-1">
+                  <span>Network Gas:</span>
+                  <span className="font-mono text-ink-800 font-bold flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    &lt;0.05% · Sponsored (Free)
+                    ~0.0001 OKB · Non-Custodial
                   </span>
                 </div>
               </div>

@@ -209,7 +209,7 @@ describe("/api/mcp JSON-RPC Protocol Endpoint", () => {
     expect(result.status).toBe("intent_calldata_ready");
     expect(result.trades_count).toBe(1);
     expect(result.total_notional_usd).toBe(25);
-    expect(result.router_address).toBe("0x4ae4E9B8D0d5248A31A980998F4aA3F631167BA4");
+    expect(result.router_address).toBe("0x7c5bee2a8091c3ef39072f64f18fac913060aeaf");
     expect(result.approval_signing_url).toContain("/app?action=sign");
   });
 

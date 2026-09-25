@@ -263,7 +263,7 @@ export default function AppDashboardPage() {
       id: "log-1",
       timestamp: "18:00:00",
       source: "OKX X Layer (Chain 196)",
-      message: "Mandate Orchestrator v2.4 initialized. Connected to RPC https://rpc.xlayer.tech.",
+      message: "Mandate Orchestrator v2.4 initialized. Connected to RPC https://xlayerrpc.okx.com.",
       type: "info",
     },
     {

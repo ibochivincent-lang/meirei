@@ -5,7 +5,7 @@
 
 export const XLAYER_CHAIN_ID_DECIMAL = 196;
 export const XLAYER_CHAIN_ID_HEX = "0xc4";
-export const XLAYER_RPC_URL = "https://rpc.xlayer.tech";
+export const XLAYER_RPC_URL = process.env.NEXT_PUBLIC_XLAYER_RPC || "https://xlayerrpc.okx.com";
 export const XLAYER_EXPLORER_URL = "https://www.oklink.com/xlayer";
 export const DEMO_SANDBOX_ADDRESS = "0x1960de01896a2f4c3d8e5b6a7c9d0e1f2a3b4c5d";
 
@@ -17,7 +17,7 @@ export const XLAYER_NETWORK_PARAMS = {
     symbol: "OKB",
     decimals: 18,
   },
-  rpcUrls: [XLAYER_RPC_URL],
+  rpcUrls: [XLAYER_RPC_URL, "https://rpc.xlayer.tech", "https://xlayer.drpc.org"],
   blockExplorerUrls: [XLAYER_EXPLORER_URL],
 };
 
@@ -195,27 +195,36 @@ export async function fetchLiveXLayerBalances(
       })),
     ];
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const rpcList = [XLAYER_RPC_URL, "https://xlayerrpc.okx.com", "https://xlayer.drpc.org", "https://rpc.xlayer.tech"];
+    const uniqueRpcs = Array.from(new Set(rpcList));
+    let results: Array<{ id: number; result?: string; error?: { message: string } }> | null = null;
 
-    const response = await fetch(XLAYER_RPC_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(batchRequest),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      return defaultSnapshot;
+    for (const rpc of uniqueRpcs) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const response = await fetch(rpc, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(batchRequest),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        if (response.ok) {
+          const json = await response.json();
+          if (Array.isArray(json)) {
+            results = json;
+            break;
+          }
+        }
+      } catch {
+        continue;
+      }
     }
 
-    const results = (await response.json()) as Array<{
-      id: number;
-      result?: string;
-      error?: { message: string };
-    }>;
+    if (!results || !Array.isArray(results)) {
+      return defaultSnapshot;
+    }
 
     if (!Array.isArray(results)) {
       return defaultSnapshot;
