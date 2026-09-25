@@ -327,6 +327,85 @@ export const QUICKSWAP_XLAYER_ROUTER = "0x4B9f4d2435Ef65559567e5DbFC1BbB37abC43B
 export const MANDATE_REGISTRY_ADDRESS = "0x5E7095cC40303b12A1047E0BF2D39CF797379012";
 export const USDG_TOKEN_ADDRESS = "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8";
 
+/** On-chain token addresses for every tradable xStock on X Layer (chain 196). */
+export const XSTOCK_ADDRESSES: Record<string, string> = {
+  AAPLx: "0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a",
+  MSFTx: "0x5621737f42dae558b81269fcb9e9e70c19aa6b35",
+  NVDAx: "0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+  GOOGLx: "0xe92f673ca36c5e2efd2de7628f815f84807e803f",
+  AMZNx: "0x3557ba345b01efa20a1bddc61f573bfd87195081",
+  METAx: "0x96702be57cd9777f835117a809c7124fe4ec989a",
+  TSLAx: "0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0",
+  COINx: "0x1d5338302f3dd78f7aa9580bc53c4d445ec6ba25",
+  SPYx: "0x42f7461c360980ff62c3e1db6aa5229c15d48721",
+  QQQx: "0x71c50b69107cc6ea56795f54070a7f1a8c9e5033",
+  AMDx: "0x89e13b8602b9ff9b867cfae4f8d55d71fa8430e2",
+  CRWDx: "0x3a4b69c5819772bf258b3506c74ad64a787965df",
+  MSTRx: "0x7b58c9320b92f72bc97e79391ab1a457492c13fa",
+  TSMx: "0x2a946b5d92e8c614efabcf6e1598da4c4e7926b1",
+  AVGOx: "0x6f31b87a912852643a6d71ec9103cba7e48df528",
+  INTCx: "0x18c4b726ae0d4f5b2f67ea9a36729a571c8901eb",
+  MUx: "0x91d3e74a812b704c356da7fe63098514ef1a52fc",
+  MRVLx: "0x48e1c67d301ba593fa88d5e4905cf71286b24a35",
+  IWMx: "0x3c71a54b9d0263f1ec78b4a8e0380c5984cf7632",
+  DELLx: "0x83e5fa62d908e234bc5719ab4c5770df594e9b7a",
+  USDC: "0xb6ceceab302e2e4948951ee7843fc24e92933061",
+};
+
+export interface DexSwapQuote {
+  routerAddress: string;
+  calldata: string;
+  value: string;
+  toAmount: string;
+  minToAmount: string;
+  priceImpact: string;
+}
+
+/**
+ * Fetches a live DEX swap quote from the OKX DEX Aggregator via the internal
+ * /api/dex/swap proxy route. Returns the router address and calldata needed
+ * for the user to sign a real on-chain swap — no server custody of funds.
+ *
+ * @param fromTokenAddress - ERC-20 address of the token being sold (e.g. USDG)
+ * @param toTokenAddress   - ERC-20 address of the token being bought (e.g. METAx)
+ * @param amountInSmallestUnit - Amount in smallest denomination (e.g. 100 USDG = "100000000" for 6 decimals)
+ * @param userWalletAddress - The wallet that will sign and send the transaction
+ */
+export async function fetchDexSwapCalldata(
+  fromTokenAddress: string,
+  toTokenAddress: string,
+  amountInSmallestUnit: string,
+  userWalletAddress: string
+): Promise<DexSwapQuote> {
+  const params = new URLSearchParams({
+    fromToken: fromTokenAddress,
+    toToken: toTokenAddress,
+    amount: amountInSmallestUnit,
+    userWallet: userWalletAddress,
+    slippage: "0.05",
+  });
+
+  const res = await fetch(`/api/dex/swap?${params.toString()}`, {
+    method: "GET",
+    next: { revalidate: 0 },
+  });
+
+  const json = await res.json();
+
+  if (!res.ok || !json.ok) {
+    throw new Error(json.error || `DEX quote failed with status ${res.status}`);
+  }
+
+  return {
+    routerAddress: json.routerAddress,
+    calldata: json.calldata,
+    value: json.value || "0x0",
+    toAmount: json.toAmount || "0",
+    minToAmount: json.minToAmount || "0",
+    priceImpact: json.priceImpact || "0",
+  };
+}
+
 /**
  * Executes non-custodial swap or mandate registration transaction on OKX X Layer (Chain 196).
  * Pre-checks gas and token balances, requests ERC-20 approval when needed,

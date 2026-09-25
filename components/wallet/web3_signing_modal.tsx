@@ -6,6 +6,9 @@ import {
   checkWalletConnection,
   connectInjectedWallet,
   signAndExecuteSwap,
+  fetchDexSwapCalldata,
+  XSTOCK_ADDRESSES,
+  USDG_TOKEN_ADDRESS,
   Web3ProviderState,
   SigningResult,
 } from "@/lib/wallet/xlayer_signer";
@@ -116,7 +119,7 @@ export function Web3SigningModal({
 
     setIsSigning(true);
     setSigningError(null);
-    setSigningStatusText("Requesting transaction confirmation in your Web3 wallet...");
+    setSigningStatusText("Connecting to wallet...");
 
     try {
       let activeAddr = providerState.connectedAddress || userAddress;
@@ -132,7 +135,43 @@ export function Web3SigningModal({
         }
       }
 
-      setSigningStatusText("Awaiting signature confirmation on OKX X Layer...");
+      // Step 1: Resolve the on-chain address of the target xStock token
+      const toTokenAddress = XSTOCK_ADDRESSES[targetSymbol];
+      if (!toTokenAddress) {
+        setSigningError(`Token ${targetSymbol} is not on the tradable allowlist for X Layer.`);
+        return;
+      }
+
+      // Step 2: Fetch real swap calldata from the OKX DEX Aggregator
+      // USDG has 6 decimals — convert the USDG amount to the smallest unit
+      setSigningStatusText("Fetching live swap route from OKX DEX...");
+      let routerAddress: string | undefined;
+      let calldata: string | undefined;
+      let swapValue = "0x0";
+
+      try {
+        const amountInSmallestUnit = String(Math.floor(inputAmount * 1e6));
+        const quote = await fetchDexSwapCalldata(
+          USDG_TOKEN_ADDRESS,
+          toTokenAddress,
+          amountInSmallestUnit,
+          activeAddr
+        );
+        routerAddress = quote.routerAddress;
+        calldata = quote.calldata;
+        swapValue = quote.value;
+      } catch (quoteErr: unknown) {
+        // If the DEX has no route, surface the error — do not silently fall back
+        const msg = quoteErr instanceof Error ? quoteErr.message : String(quoteErr);
+        setSigningError(
+          `Could not get a live swap route for USDG → ${targetSymbol}: ${msg}. ` +
+          `Please check that the OKX DEX has liquidity for this pair on X Layer.`
+        );
+        return;
+      }
+
+      // Step 3: Sign and broadcast the real swap transaction
+      setSigningStatusText("Awaiting signature in your wallet...");
       const result = await signAndExecuteSwap({
         fromSymbol: "USDG",
         toSymbol: targetSymbol,
@@ -140,6 +179,9 @@ export function Web3SigningModal({
         expectedOutput: currentUnits,
         slippagePercent: 0.05,
         userAddress: activeAddr,
+        routerAddress,
+        calldata,
+        value: swapValue,
         mandateText: mandateText,
         mandateId: selectedMandate,
       });
