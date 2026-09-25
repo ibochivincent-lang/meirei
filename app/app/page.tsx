@@ -1135,6 +1135,27 @@ export default function AppDashboardPage() {
     estimatedUnits: number,
     spotPrice: number
   ) => {
+    if (executionEnvironment === "simulation" || isDemoSandbox) {
+      recordBasicBuy(targetSymbol, fromAmountUsdg, estimatedUnits, spotPrice);
+      setMandateResult({
+        reply: `Simulated paper trade executed: Bought ${estimatedUnits.toFixed(4)} ${targetSymbol} for $${fromAmountUsdg.toFixed(2)} USDG in Simulation Sandbox (no wallet required).`,
+        type: "mandate",
+        statusTone: "confirmed",
+      });
+      const nowTime = formatLogTime();
+      setExecutionLogs((prev) => [
+        {
+          id: `log-${Date.now()}`,
+          timestamp: nowTime,
+          source: "Simulation Sandbox",
+          message: `Simulated buy of ${estimatedUnits.toFixed(4)} ${targetSymbol} ($${fromAmountUsdg.toFixed(2)} USDG) executed with zero gas.`,
+          type: "success",
+        },
+        ...prev.slice(0, 24),
+      ]);
+      return;
+    }
+
     setWeb3ModalState({
       isOpen: true,
       targetSymbol,
@@ -2095,11 +2116,11 @@ export default function AppDashboardPage() {
     }
 
     const isTradeAction = lowerQ.includes("buy") || lowerQ.includes("sell") || lowerQ.includes("confirm") || lowerQ.includes("execute") || lowerQ.includes("rebalance");
-    if (isTradeAction && !activeAddress) {
+    if (isTradeAction && !activeAddress && executionEnvironment !== "simulation" && !isDemoSandbox) {
       const promptMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: "Please connect your Web3 wallet (OKX Wallet or MetaMask) first to execute orders on OKX X Layer (Chain 196). Click 'Connect Wallet' in the top bar to get started.",
+        text: "Please connect your Web3 wallet (OKX Wallet or MetaMask) first to execute orders on OKX X Layer (Chain 196). Click 'Connect Wallet' in the top bar to get started, or switch to Simulation Mode in the top bar to paper trade without a wallet.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setChatMessages((prev) => [...prev, promptMsg]);
@@ -2114,7 +2135,7 @@ export default function AppDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: query,
-          walletAddress: activeAddress || undefined,
+          walletAddress: activeAddress || (executionEnvironment === "simulation" || isDemoSandbox ? DEMO_SANDBOX_ADDRESS : undefined),
           platform: profile.platform,
           chatHandle: profile.handle,
           email: profile.email,
@@ -2268,9 +2289,9 @@ export default function AppDashboardPage() {
   };
 
   const executeTradeWithToken = async (query: string, token: string | null) => {
-    if (!activeAddress) {
+    if (!activeAddress && executionEnvironment !== "simulation" && !isDemoSandbox) {
       setMandateResult({
-        reply: "Please connect your Web3 wallet (OKX Wallet or MetaMask) first to trade or deploy mandates on OKX X Layer.",
+        reply: "Please connect your Web3 wallet (OKX Wallet or MetaMask) first to trade or deploy mandates on OKX X Layer, or switch to Simulation Mode in the top bar to test without a wallet.",
         type: "error",
       });
       setShowLoginModal(true);
@@ -2286,7 +2307,7 @@ export default function AppDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: query,
-          walletAddress: activeAddress,
+          walletAddress: activeAddress || DEMO_SANDBOX_ADDRESS,
           platform: profile.platform,
           chatHandle: profile.handle,
           email: profile.email,
@@ -2668,6 +2689,26 @@ export default function AppDashboardPage() {
                   title="Disconnect wallet"
                 >
                   Disconnect
+                </button>
+              </div>
+            ) : executionEnvironment === "simulation" || isDemoSandbox ? (
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50/90 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs shadow-2xs font-mono">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                  <span className="font-bold text-amber-900 hidden sm:inline">
+                    Simulation Mode (No Wallet Needed)
+                  </span>
+                  <span className="font-bold text-amber-900 sm:hidden text-[10px]">
+                    Simulation (No Wallet)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLoginModal(true)}
+                  className="rounded-full border border-ink-200 bg-white hover:bg-surface-50 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-semibold text-ink-700 transition-colors cursor-pointer shrink-0"
+                  title="Optionally connect Web3 wallet to switch to live on-chain trading"
+                >
+                  Connect Wallet
                 </button>
               </div>
             ) : (
@@ -3733,9 +3774,9 @@ export default function AppDashboardPage() {
                 </div>
           </div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-12">
+          <div className="grid gap-6 lg:grid-cols-12 w-full max-w-full">
             {/* Main Interactive Stage (Cols 1 to 8) */}
-            <div className="space-y-6 lg:col-span-8">
+            <div className="space-y-6 lg:col-span-8 min-w-0 max-w-full">
               {/* ========================================================================= */}
               {/* MODE 2: ADVANCED MODE (Unified AI Mandate Advisory & Market Catalysts)     */}
               {/* ========================================================================= */}
@@ -3743,7 +3784,7 @@ export default function AppDashboardPage() {
                 {/* 1. Institutional AI Mandate Advisory Studio */}
 
                 {/* AI Trading Advisory Agent Studio */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-6 shadow-xs">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink-100 pb-4">
                     <div>
                       <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-accent-600">
@@ -3757,12 +3798,12 @@ export default function AppDashboardPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1.5 rounded-xl border border-ink-200 bg-surface-50 px-3 py-1.5 font-mono text-xs font-semibold text-ink-800 shadow-2xs">
+                      <div className="flex items-center gap-1.5 rounded-xl border border-ink-200 bg-surface-50 px-2.5 sm:px-3 py-1 sm:py-1.5 font-mono text-[11px] sm:text-xs font-semibold text-ink-800 shadow-2xs max-w-full truncate">
                         <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent-600 shrink-0" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="12" cy="12" r="10" />
                           <polyline points="12 6 12 12 16 14" />
                         </svg>
-                        <span>Clock: {executionClock || "Live UTC Clock"}</span>
+                        <span className="truncate">Clock: {executionClock || "Live UTC Clock"}</span>
                       </div>
                     </div>
                   </div>
@@ -3850,10 +3891,10 @@ export default function AppDashboardPage() {
                               setAdvisoryCustomStocks(preset.stocks);
                               setAdvisorySelectionMode("custom");
                             }}
-                            className="rounded-lg border border-ink-200 bg-white hover:border-accent-500 hover:text-accent-600 px-3 py-1.5 text-xs font-medium text-ink-700 transition-all cursor-pointer"
+                            className="rounded-lg border border-ink-200 bg-white hover:border-accent-500 hover:text-accent-600 px-3 py-1.5 text-xs font-medium text-ink-700 transition-all cursor-pointer max-w-full text-left"
                           >
-                            <span>{preset.name}</span>
-                            <span className="ml-1 text-[10px] text-ink-400 font-mono">({preset.stocks.join(", ")})</span>
+                            <span className="font-semibold">{preset.name}</span>
+                            <span className="ml-1 text-[10px] text-ink-400 font-mono hidden sm:inline">({preset.stocks.join(", ")})</span>
                           </button>
                         ))}
                       </div>
@@ -4323,7 +4364,7 @@ export default function AppDashboardPage() {
                         </div>
 
                         {/* Top Terminal Valuation Summary */}
-                        <div className="flex flex-wrap items-center gap-2 rounded-xl bg-surface-50 border border-ink-200 p-2 text-right">
+                        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 rounded-xl bg-surface-50 border border-ink-200 p-2 text-left sm:text-right w-full sm:w-auto">
                           <div>
                             <span className="block text-[9px] font-mono text-ink-400 uppercase font-semibold">
                               Terminal Target ({mandateTrajectories[mandateTrajectories.length - 1]?.milestone || advisoryDuration})
@@ -4353,9 +4394,9 @@ export default function AppDashboardPage() {
                                 key={traj.milestone}
                                 className="group rounded-xl border border-ink-100 bg-surface-50/50 p-2.5 sm:p-3 transition-all hover:border-accent-300 hover:bg-white"
                               >
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs">
                                   <div className="flex items-center gap-2">
-                                    <span className="rounded bg-ink-900 px-2 py-0.5 font-mono text-[11px] font-bold text-white shadow-2xs">
+                                    <span className="rounded bg-ink-900 px-2 py-0.5 font-mono text-[11px] font-bold text-white shadow-2xs shrink-0">
                                       {traj.milestone}
                                     </span>
                                     <span className="font-semibold text-ink-800 text-[11px]">
@@ -4363,7 +4404,7 @@ export default function AppDashboardPage() {
                                     </span>
                                   </div>
 
-                                  <div className="flex items-center gap-2 font-mono">
+                                  <div className="flex flex-wrap items-center gap-1.5 font-mono">
                                     <span className="text-[11px] text-ink-500">Figurative Value:</span>
                                     <span className="font-bold text-ink-950">
                                       ${estVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {advisoryStablecoin}
@@ -4502,11 +4543,19 @@ export default function AppDashboardPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          setMandatePlanToSign(currentAdvisoryPlan);
+                          if (executionEnvironment === "simulation" || isDemoSandbox) {
+                            handleDeployAdvisoryMandate(currentAdvisoryPlan);
+                          } else {
+                            setMandatePlanToSign(currentAdvisoryPlan);
+                          }
                         }}
                         className="w-full sm:w-auto shrink-0 rounded-xl bg-accent-500 hover:bg-accent-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
                       >
-                        <span>Execute &amp; Sign Mandate</span>
+                        <span>
+                          {executionEnvironment === "simulation" || isDemoSandbox
+                            ? "Deploy Simulation Mandate (No Wallet)"
+                            : "Execute & Sign Mandate"}
+                        </span>
                         <span>↗</span>
                       </button>
                     </div>
@@ -4604,7 +4653,7 @@ export default function AppDashboardPage() {
                   </div>
 
                 {/* 2. Institutional Market & Mandates Directory (Powered by Meirei Telemetry) */}
-                <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs sm:p-6">
+                <div className="rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-6 shadow-xs">
                   <div className="flex flex-col justify-between gap-3 border-b border-ink-100 pb-4 sm:flex-row sm:items-center">
                     <div>
                       <div className="flex items-center gap-2">
@@ -4635,12 +4684,114 @@ export default function AppDashboardPage() {
                     </div>
                   </div>
 
-                  {/* Comprehensive Institutional Equities Table */}
-                  <div className="flex items-center justify-between sm:hidden pb-1 px-1 text-[10px] font-mono text-ink-500">
-                    <span>Scroll table horizontally for full metrics</span>
-                    <span>→</span>
+                  {/* Mobile Cards View (Visible on < sm screens) */}
+                  <div className="space-y-2.5 sm:hidden mt-3">
+                    {rankedStocks.map((stk) => {
+                      const priceNum = getNumericPrice(stk);
+                      const sentiment = OKX_SENTIMENT_DATA.assetScores[stk.symbol] || { score: 75, verdict: "Bullish" };
+                      const smartFlow = OKX_SMART_MONEY_DATA.assetSmartFlow[stk.symbol] || { netFlow: "+$500K", flowType: "Inflow", tier: "Accumulation" };
+                      const metrics = OKX_CEX_MARKET_DATA.assetMetrics[stk.symbol] || { volume24h: "$1.5M", beta: 1.2, spread: "0.02%", momentumRank: 5 };
+
+                      return (
+                        <div key={stk.symbol} className="rounded-xl border border-ink-200 bg-white p-3 space-y-2.5 shadow-2xs">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={cn(
+                                "inline-flex items-center justify-center h-5 w-5 rounded-full font-mono text-[10px] font-bold shadow-2xs shrink-0",
+                                metrics.momentumRank <= 3 ? "bg-ink-950 text-white" : "bg-surface-200 text-ink-700"
+                              )}>
+                                #{metrics.momentumRank}
+                              </span>
+                              <div
+                                className="flex h-7 w-7 items-center justify-center rounded-lg shadow-xs shrink-0 text-white font-bold text-xs"
+                                style={{ backgroundColor: stk.color }}
+                              >
+                                {stk.logo}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1 truncate">
+                                  <span className="font-mono font-bold text-ink-950 text-xs">{stk.symbol}</span>
+                                  <span className="text-[10px] text-ink-400 truncate">({stk.name})</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              <div
+                                className={cn(
+                                  "font-mono font-bold text-xs",
+                                  priceFlashes[stk.symbol] === "up" && "text-emerald-600",
+                                  priceFlashes[stk.symbol] === "down" && "text-rose-600",
+                                  !priceFlashes[stk.symbol] && "text-ink-950"
+                                )}
+                              >
+                                {getFormattedPrice(stk)}
+                              </div>
+                              <span className="text-[9px] font-mono text-ink-400 block">Spread: {metrics.spread}</span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-ink-100">
+                            <div className="rounded-lg bg-surface-50 p-2 font-mono">
+                              <span className="text-[9px] text-ink-400 block uppercase font-semibold">Smart Flow</span>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <span className={cn(
+                                  "font-bold text-xs",
+                                  smartFlow.flowType === "Inflow" ? "text-emerald-700" : "text-rose-600"
+                                )}>
+                                  {smartFlow.netFlow}
+                                </span>
+                                <span className={cn(
+                                  "rounded px-1 py-0.2 text-[8px] font-bold uppercase",
+                                  smartFlow.flowType === "Inflow" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
+                                )}>
+                                  {smartFlow.flowType}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="rounded-lg bg-surface-50 p-2 font-mono">
+                              <span className="text-[9px] text-ink-400 block uppercase font-semibold">Sentiment</span>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <span className={cn(
+                                  "font-bold text-xs",
+                                  sentiment.score >= 80 ? "text-emerald-700" : sentiment.score >= 70 ? "text-accent-700" : "text-amber-700"
+                                )}>
+                                  {sentiment.score}/100
+                                </span>
+                                <span className={cn(
+                                  "rounded px-1 py-0.2 text-[8px] font-bold",
+                                  sentiment.verdict === "Bullish" ? "bg-emerald-100 text-emerald-800" : sentiment.verdict === "Neutral" ? "bg-surface-200 text-ink-700" : "bg-amber-100 text-amber-800"
+                                )}>
+                                  {sentiment.verdict}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-[10px] font-mono text-ink-500">
+                              Vol: {metrics.volume24h} · Beta: {metrics.beta.toFixed(2)}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedStock(stk);
+                                openWeb3Signer(stk.symbol, 100, 100 / priceNum, priceNum);
+                              }}
+                              className="inline-flex items-center justify-center gap-1 rounded-lg bg-ink-950 hover:bg-accent-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-2xs transition-colors cursor-pointer"
+                            >
+                              <span>Swap</span>
+                              <span className="text-[10px]">↗</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="mt-2 sm:mt-5 overflow-x-auto rounded-xl border border-ink-200">
+
+                  {/* Comprehensive Institutional Equities Table (Tablet & Desktop) */}
+                  <div className="hidden sm:block mt-5 overflow-x-auto rounded-xl border border-ink-200">
                     <table className="w-full min-w-[760px] text-left text-xs">
                       <thead className="border-b border-ink-200 bg-surface-100 font-semibold text-ink-900">
                         <tr>
@@ -4803,10 +4954,10 @@ export default function AppDashboardPage() {
           </div>
 
           {/* Right Sidebar: Portfolio Summary (Cols 9 to 12) */}
-          <div className="space-y-6 lg:col-span-4">
+          <div className="space-y-6 lg:col-span-4 min-w-0 max-w-full">
 
             {/* Live Portfolio Breakdown Card - Mode-Isolated Active Holdings */}
-            <div className="rounded-2xl border border-ink-200/80 bg-white p-5 shadow-xs">
+            <div className="rounded-2xl border border-ink-200/80 bg-white p-3.5 sm:p-5 shadow-xs">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-100 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="font-display text-xs font-bold uppercase tracking-wider text-ink-500">
@@ -4882,7 +5033,7 @@ export default function AppDashboardPage() {
                             onClick={() => {
                               setSimulatedAdvancedUsdgBalance(20000);
                             }}
-                            className="rounded-lg border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 font-mono text-[10px] font-semibold px-2 py-1 transition-colors cursor-pointer ml-auto"
+                            className="rounded-lg border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 font-mono text-[10px] font-semibold px-2 py-1 transition-colors cursor-pointer sm:ml-auto"
                           >
                             Reset Demo
                           </button>
@@ -4952,7 +5103,7 @@ export default function AppDashboardPage() {
                             return (
                               <div
                                 key={h.symbol}
-                                className="flex items-center justify-between rounded-lg border border-ink-100 bg-surface-50 px-3 py-2"
+                                className="flex flex-wrap items-center justify-between gap-1.5 rounded-lg border border-ink-100 bg-surface-50 px-3 py-2"
                               >
                                 <div className="flex items-center gap-2">
                                   <span
@@ -5395,6 +5546,28 @@ export default function AppDashboardPage() {
                       </button>
                     </div>
                   )}
+
+                  {/* Option: Continue in Simulation Mode without a wallet */}
+                  <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-3 flex items-center justify-between gap-2.5">
+                    <div>
+                      <span className="font-bold text-amber-950 text-xs block">
+                        No Wallet? Try Simulation Mode
+                      </span>
+                      <p className="text-[10px] text-amber-800 mt-0.5">
+                        Paper trade 20 allowlisted equities with simulated USDG cash—no wallet required.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExecutionEnvironment("simulation");
+                        setShowLoginModal(false);
+                      }}
+                      className="rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-1.5 shrink-0 transition-colors cursor-pointer shadow-2xs"
+                    >
+                      Use Simulation
+                    </button>
+                  </div>
                 </div>
 
                 {/* STEP 2: Choose Interface Platform */}
