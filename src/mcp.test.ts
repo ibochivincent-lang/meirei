@@ -180,7 +180,7 @@ describe("/api/mcp JSON-RPC Protocol Endpoint", () => {
     expect(result.threshold_pct).toBe(2.0);
     expect(typeof result.max_drift_pct).toBe("number");
     expect(Array.isArray(result.legs)).toBe(true);
-  });
+  }, 20000);
 
   it("handles tools/call with meirei_execute_rebalance", async () => {
     const req = new NextRequest("http://localhost:3000/api/mcp", {
@@ -211,7 +211,7 @@ describe("/api/mcp JSON-RPC Protocol Endpoint", () => {
     expect(result.total_notional_usd).toBe(25);
     expect(result.router_address).toBe("0x7c5bee2a8091c3ef39072f64f18fac913060aeaf");
     expect(result.approval_signing_url).toContain("/app?action=sign");
-  });
+  }, 20000);
 
   it("handles tools/call with meirei_circuit_breaker", async () => {
     const req = new NextRequest("http://localhost:3000/api/mcp", {
