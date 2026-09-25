@@ -9,7 +9,7 @@
 [![MandateRegistry](https://img.shields.io/badge/Contract-0x5E7095cC40303b12A1047E0BF2D39CF797379012-8B5CF6?style=flat-square)](https://www.oklink.com/xlayer/address/0x5E7095cC40303b12A1047E0BF2D39CF797379012)
 [![Assets](https://img.shields.io/badge/Equities-22%20Allowlisted%20xStocks-10B981?style=flat-square)](https://www.okx.com/web3/explorer/xlayer)
 [![Settlement](https://img.shields.io/badge/Settlement-USDG%20%7C%20USDC-F59E0B?style=flat-square)](https://www.okx.com/web3/explorer/xlayer)
-[![Tests](https://img.shields.io/badge/Tests-85%2F85%20Passing-emerald?style=flat-square)](./src)
+[![Tests](https://img.shields.io/badge/Tests-90%2F90%20Passing-emerald?style=flat-square)](./src)
 [![Gas](https://img.shields.io/badge/Gas-100%25%20Sponsored%20(Paymaster)-FF5B3E?style=flat-square)](https://www.okx.com/web3)
 
 ---
@@ -27,7 +27,14 @@ Meirei parses the directive, queries authentic on-chain balances and live OKX DE
 
 ---
 
-## 2. Core Architecture
+## 2. Execution Model
+
+* **Client-Signed Web3 Execution (Web App `/app`)**: Fully non-custodial. The web terminal formulates unsigned swap and mandate calldata for the OKX X Layer DEX aggregator router (`0x4ae4E9B8D0d5248A31A980998F4aA3F631167BA4`); transactions are reviewed, signed, and broadcast directly in the user's Web3 wallet (OKX Wallet, MetaMask) with post-broadcast on-chain confirmation verification.
+* **Delegated Agent & Bot Execution (WhatsApp, Telegram, Cron)**: Bot channels generate swap calldata with one-tap client signing deep links (`https://meirei.tella.cash/app?action=sign&...`), alongside delegated execution via an authenticated Onchain OS agent wallet secured by SIWE wallet ownership verification, HMAC-SHA256 Two-Factor Authentication (OTP), and strict daily spend limits.
+
+---
+
+## 3. Core Architecture
 
 ```
 +-----------------------------------------------------------------------------------+
@@ -63,7 +70,7 @@ Meirei parses the directive, queries authentic on-chain balances and live OKX DE
 
 ---
 
-## 3. Key OKX Dev Day Integrations
+## 4. Key OKX Dev Day Integrations
 
 1. **OKX X Layer (Chain ID 196)**:
    All operations execute natively on X Layer mainnet. Zero cross-chain bridge friction for tokenized equity swaps.
@@ -79,7 +86,7 @@ Meirei parses the directive, queries authentic on-chain balances and live OKX DE
 
 ---
 
-## 4. Allowlisted Equities on OKX X Layer
+## 5. Allowlisted Equities on OKX X Layer
 
 All 22 tokenized equities and stablecoins are live on OKX X Layer (Chain ID 196):
 
@@ -110,7 +117,7 @@ All 22 tokenized equities and stablecoins are live on OKX X Layer (Chain ID 196)
 
 ---
 
-## 5. Security & Risk Engineering
+## 6. Security & Risk Engineering
 
 - **Timing-Safe Cryptography**: Token and signature verifications use constant-time comparisons (`crypto.timingSafeEqual`) to prevent timing side channels.
 - **Fail-Closed Account Freezing**: If security checks or state stores encounter anomalies, accounts default to fail-closed state.
@@ -121,12 +128,12 @@ All 22 tokenized equities and stablecoins are live on OKX X Layer (Chain ID 196)
 
 ---
 
-## 6. Verification & Test Suite
+## 7. Verification & Test Suite
 
 Meirei includes automated testing across unit logic, mandate parsing, security bounds, and X Layer asset configurations:
 
 ```bash
-# Run all vitest unit tests (85 passing)
+# Run all vitest unit tests (90 passing)
 npm test
 
 # Verify all 22 X Layer equity contracts and decimals
@@ -138,7 +145,7 @@ npm run asp:validate
 
 ---
 
-## 7. Local Development & Demo Setup
+## 8. Local Development & Demo Setup
 
 ### Prerequisites
 - Node.js 20+
@@ -174,7 +181,7 @@ npm run dev
 
 ---
 
-## 8. Authorship & License
+## 9. Authorship & License
 
 - **Sole Author**: IboTV
 - **License**: MIT License (c) 2026 IboTV

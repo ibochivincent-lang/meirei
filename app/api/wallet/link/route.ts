@@ -52,6 +52,50 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const { signature, message, nonce } = body;
+
+    // Cryptographic Ownership Verification (SIWE / EIP-4361)
+    if (signature && message) {
+      try {
+        const { verifyMessage } = await import("viem");
+        const isValid = await verifyMessage({
+          address: walletAddress.trim() as `0x${string}`,
+          message,
+          signature: signature.trim() as `0x${string}`,
+        });
+
+        if (!isValid) {
+          return NextResponse.json(
+            {
+              error: "Cryptographic signature verification failed. The recovered signer does not match the provided wallet address.",
+            },
+            { status: 401 }
+          );
+        }
+
+        // Invalidate nonce in Redis to prevent replay
+        if (nonce) {
+          const redis = (await import("@/lib/redis/client")).getRedisClient();
+          if (redis) {
+            await redis.del(`link_nonce:${nonce}`).catch(() => {});
+          }
+        }
+      } catch (verifyErr: unknown) {
+        const msg = verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
+        return NextResponse.json(
+          { error: `Cryptographic verification error: ${msg}` },
+          { status: 401 }
+        );
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        {
+          error: "Signature and challenge message are required to verify non-custodial wallet ownership.",
+        },
+        { status: 401 }
+      );
+    }
+
     const user = await linkChannelWallet({
       channel: targetChannel,
       handle: handle.trim(),
@@ -63,7 +107,7 @@ export async function POST(req: NextRequest) {
       channel: targetChannel,
       handle: handle.trim(),
       walletAddress: user.wallet_address,
-      message: `Successfully linked ${user.wallet_address} to ${targetChannel}.`,
+      message: `Successfully verified and linked ${user.wallet_address} to ${targetChannel}.`,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

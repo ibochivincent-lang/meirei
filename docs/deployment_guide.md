@@ -30,7 +30,10 @@ In the Vercel project configuration, expand **"Environment Variables"** and add 
 | `OTP_SIGNING_SECRET` | *(64 hex characters / random secret)* | Signs and verifies 2FA OTP HMAC tokens |
 | `MEIREI_CHAIN` | `xlayer` | Enforces X Layer Mainnet routing |
 | `MEIREI_MOCK_ONCHAINOS` | `0` | Live Onchain OS mode |
-| `MEIREI_WALLET` | `0x7f17d6224e7d48606598732c3f511412b5c1e922` | Default execution wallet |
+| `MEIREI_WALLET` | `0x7f17d6224e7d48606598732c3f511412b5c1e922` | Designated agent execution wallet |
+| `OKX_API_KEY` | *(OKX Developer API Key)* | Required for Onchain OS DEX and market endpoints |
+| `OKX_SECRET_KEY` | *(OKX Developer Secret)* | API secret for signing Web3 requests |
+| `OKX_PASSPHRASE` | *(OKX API Passphrase)* | Passphrase configured during API key creation |
 | `META_WHATSAPP_ACCESS_TOKEN` | *(Meta Cloud API System User Token)* | Inbound & outbound WhatsApp messages |
 | `META_WHATSAPP_PHONE_NUMBER_ID` | *(Meta Phone Number ID)* | Sender ID for WhatsApp notifications |
 | `META_WHATSAPP_VERIFY_TOKEN` | *(your custom verification secret)* | Webhook verification handshake |
@@ -44,7 +47,39 @@ Click **"Deploy"**. Once deployment completes:
 
 ---
 
-## 2. Meta WhatsApp Cloud API Webhook Configuration
+## 2. Onchain OS Agent Wallet & API Authentication (Bot Execution Rail)
+
+Meirei's automated bot channels (WhatsApp, Telegram) and autonomous rebalancing cron tasks interact with the OKX X Layer DEX aggregator via Onchain OS.
+
+### Signing Authority Architecture:
+* **Client-Signed Path (Web App)**: 100% non-custodial. The user connects OKX Wallet or MetaMask in the browser, reviews the route and parameters, and signs transactions directly with their private key on their own device.
+* **Delegated Agent Path (Bot / Cron)**: The server orchestrates trades on behalf of the user using an Onchain OS agent wallet or authenticated OKX Web3 API session:
+  - The agent wallet is funded with operational gas and settlement liquidity.
+  - Every trade on this rail is gated by HMAC-SHA256 Two-Factor Authentication (OTP), strict daily notional spend limits, and automatic circuit breakers.
+  - Alternatively, bot responses supply a one-tap deep link (`https://meirei.tella.cash/app?action=sign&...`) allowing users to sign on their own mobile wallet.
+
+### Setting Up Onchain OS for Production:
+
+1. **Option A: Onchain OS TEE Wallet Login**
+   On the host or build server running Onchain OS:
+   ```bash
+   onchainos wallet login <your_email@example.com>
+   ```
+   Follow the interactive prompt to authenticate your session. The private key remains encrypted in the TEE environment.
+
+2. **Option B: OKX Web3 API Credentials**
+   In headless or containerized environments (such as Vercel or Docker), provide API keys in your environment:
+   ```bash
+   OKX_API_KEY="your_api_key"
+   OKX_SECRET_KEY="your_secret_key"
+   OKX_PASSPHRASE="your_passphrase"
+   MEIREI_WALLET="0x7f17d6224e7d48606598732c3f511412b5c1e922"
+   ```
+   These credentials authorize Onchain OS to generate unsigned swap calldata and quote prices via the OKX DEX aggregator.
+
+---
+
+## 3. Meta WhatsApp Cloud API Webhook Configuration
 
 1. Log in to the [Meta for Developers Console](https://developers.facebook.com).
 2. Open your WhatsApp App and navigate to **WhatsApp** -> **Configuration** in the left sidebar.
@@ -57,7 +92,7 @@ Click **"Deploy"**. Once deployment completes:
 
 ---
 
-## 3. Telegram Bot API Webhook Configuration
+## 4. Telegram Bot API Webhook Configuration
 
 To connect your Telegram bot to the live Meirei webhook endpoint:
 
@@ -65,11 +100,11 @@ To connect your Telegram bot to the live Meirei webhook endpoint:
 
 ```bash
 curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "url": "https://<your-deployment-url>/api/webhooks/telegram",
-    "allowed_updates": ["message"]
-  }'
+   -H "Content-Type: application/json" \
+   -d '{
+     "url": "https://<your-deployment-url>/api/webhooks/telegram",
+     "allowed_updates": ["message"]
+   }'
 ```
 
 2. Expected Response:
@@ -88,7 +123,7 @@ curl "https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo"
 
 ---
 
-## 4. Custom Domain Configuration (Production)
+## 5. Custom Domain Configuration (Production)
 
 To bind the live domain (`meirei.tella.cash`):
 1. In your Vercel Project Settings, navigate to **Domains**.
@@ -99,7 +134,7 @@ To bind the live domain (`meirei.tella.cash`):
 
 ---
 
-## 5. Live Production Smoke Testing
+## 6. Live Production Smoke Testing
 
 Once deployed:
 1. **WhatsApp Test**: Send `"price of NVDAx"` or `"60% mag7, 20% USDG, max 8%"` to your WhatsApp Business number. Confirm you receive a structured response without emojis.

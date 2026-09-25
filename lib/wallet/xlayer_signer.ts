@@ -32,12 +32,17 @@ export interface SwapExecutionRequest {
   expectedOutput: number;
   slippagePercent?: number;
   userAddress: string;
+  routerAddress?: string;
+  calldata?: string;
+  value?: string;
 }
 
 export interface SigningResult {
   ok: boolean;
   txHash?: string;
   explorerUrl?: string;
+  confirmed?: boolean;
+  status?: "success" | "reverted" | "pending";
   error?: string;
 }
 
@@ -314,6 +319,8 @@ export async function ensureXLayerNetwork(providerArg?: any): Promise<void> {
   }
 }
 
+export const OKX_XLAYER_DEX_ROUTER = "0x4ae4E9B8D0d5248A31A980998F4aA3F631167BA4";
+
 /**
  * Executes non-custodial swap transaction by prompting client-side signature.
  * Private keys NEVER leave the user device or hardware enclave.
@@ -323,24 +330,23 @@ export async function signAndExecuteSwap(req: SwapExecutionRequest): Promise<Sig
   if (!provider) {
     return {
       ok: false,
-      error: "No Web3 wallet detected. Connect OKX Wallet or use Passkey OTP to sign.",
+      error: "No Web3 wallet detected. Connect OKX Wallet or MetaMask to sign on OKX X Layer.",
     };
   }
 
   try {
-    await ensureXLayerNetwork();
+    await ensureXLayerNetwork(provider);
 
-    // In a production EVM DEX router (e.g. OKX DEX Aggregator on X Layer),
-    // this initiates eth_sendTransaction with call data against the router contract.
-    const routerAddress = "0x0000000000000000000000000000000000000196"; // X Layer DEX router standard
+    // Target the verified OKX DEX Aggregator router on OKX X Layer (Chain 196)
+    const targetRouter = req.routerAddress || OKX_XLAYER_DEX_ROUTER;
     const txParams = {
       from: req.userAddress,
-      to: routerAddress,
+      to: targetRouter,
       value: "0x0",
-      data: "0x", // Encoded swap calldata
+      data: req.calldata || "0x",
     };
 
-    // Request client-side signature via standard EIP-1193
+    // Request client-side transaction signature and broadcast via EIP-1193
     let txHash: string;
     try {
       txHash = await provider.request({
@@ -348,39 +354,68 @@ export async function signAndExecuteSwap(req: SwapExecutionRequest): Promise<Sig
         params: [txParams],
       });
     } catch (sendErr: any) {
-      // If extension rejects or mock mode in local test without live node funds,
-      // fallback to typed message signature (EIP-712 mandate commitment)
-      const mandatePayload = JSON.stringify({
-        domain: { name: "Project Meirei", version: "1", chainId: XLAYER_CHAIN_ID_DECIMAL },
-        message: {
-          action: "SWAP",
-          from: req.fromSymbol,
-          to: req.toSymbol,
-          amount: req.fromAmount,
-          recipient: req.userAddress,
-          timestamp: Date.now(),
-        },
-      });
+      const errMsg = sendErr?.message || String(sendErr);
+      return {
+        ok: false,
+        error: `Transaction was rejected or failed in wallet: ${errMsg}`,
+      };
+    }
 
-      const signature = await provider.request({
-        method: "personal_sign",
-        params: [mandatePayload, req.userAddress],
-      });
-
-      txHash = `0x${signature.slice(2, 66)}`;
+    if (!txHash || typeof txHash !== "string" || !txHash.startsWith("0x")) {
+      return {
+        ok: false,
+        error: "Wallet did not return a valid transaction hash upon broadcast.",
+      };
     }
 
     const explorerUrl = `${XLAYER_EXPLORER_URL}/tx/${txHash}`;
+
+    // Poll for on-chain transaction receipt on OKX X Layer
+    let confirmed = false;
+    let receiptStatus: "success" | "pending" | "reverted" = "pending";
+    const maxPollAttempts = 8;
+    const pollIntervalMs = 2000;
+
+    for (let attempt = 0; attempt < maxPollAttempts; attempt++) {
+      try {
+        await new Promise((r) => setTimeout(r, pollIntervalMs));
+        const receipt = await provider.request({
+          method: "eth_getTransactionReceipt",
+          params: [txHash],
+        });
+
+        if (receipt) {
+          if (receipt.status === "0x0" || receipt.status === 0) {
+            return {
+              ok: false,
+              txHash,
+              explorerUrl,
+              confirmed: false,
+              status: "reverted",
+              error: "Transaction reverted on OKX X Layer. Please verify token allowance or slippage.",
+            };
+          }
+          confirmed = true;
+          receiptStatus = "success";
+          break;
+        }
+      } catch (pollErr) {
+        console.warn("[XLayer] Receipt poll notice:", pollErr);
+      }
+    }
+
     return {
       ok: true,
       txHash,
       explorerUrl,
+      confirmed,
+      status: receiptStatus,
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return {
       ok: false,
-      error: `User rejected signature or transaction failed: ${msg}`,
+      error: `Swap execution error: ${msg}`,
     };
   }
 }

@@ -74,6 +74,34 @@ export function resolveOnchainOsBinary(): string {
   return "onchainos";
 }
 
+export const EXPECTED_ONCHAINOS_MIN_VERSION = "0.1.0";
+
+/** Verifies binary presence, accessibility, and version at startup. */
+export async function checkOnchainOsStatus(): Promise<{
+  installed: boolean;
+  path: string;
+  version?: string;
+  error?: string;
+}> {
+  const binary = resolveOnchainOsBinary();
+  try {
+    const rawVersion = await new Promise<string>((resolve, reject) => {
+      execFile(binary, ["--version"], { timeout: 5000 }, (error, stdout) => {
+        if (error) reject(error);
+        else resolve((stdout || "").trim());
+      });
+    });
+    return { installed: true, path: binary, version: rawVersion };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      installed: false,
+      path: binary,
+      error: `Onchain OS binary not accessible at '${binary}'. Error: ${msg}. Configure OKX Web3 API credentials or authenticate Onchain OS. See docs/deployment_guide.md.`,
+    };
+  }
+}
+
 class Semaphore {
   private queue: (() => void)[] = [];
   private active = 0;

@@ -1,4 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createManagedMandate } from "@/src/mandate/object";
+import { parseMandate } from "@/src/mandate/parse";
+import { planRebalance, currentWeights } from "@/src/portfolio/diff";
+import { fetchBalances, calculateTotalValue } from "@/src/portfolio/balances";
+import { fetchPrice } from "@/src/onchainos";
+import { getQuotes } from "@/src/execution/swap";
+import { isCashSymbol } from "@/src/allowlist";
+import { Mandate, Target, Leg } from "@/src/types";
+import { OKX_XLAYER_DEX_ROUTER } from "@/lib/wallet/xlayer_signer";
 
 // Supported xStocks with verified OKX X Layer contract addresses and fallback spot prices
 const TOKEN_REGISTRY: Record<
@@ -331,11 +340,45 @@ export async function POST(req: NextRequest) {
 
         case "meirei_create_mandate": {
           const strategy = args.strategy || "drift_rebalance";
-          const mandateId = `mandate_xlayer_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+          const wallet = (args.wallet_address || "0x0000000000000000000000000000000000000000").toLowerCase();
+          const rawInput = args.raw_prompt || args.natural_language || "";
+
+          let mandateObj: Mandate;
+          if (rawInput) {
+            mandateObj = parseMandate(rawInput);
+          } else {
+            const targetMap: Record<string, number> =
+              args.target_weights && typeof args.target_weights === "object"
+                ? args.target_weights
+                : { NVDAx: 60, AAPLx: 40 };
+            const rawEntries = Object.entries(targetMap);
+            const sumWeights = rawEntries.reduce(
+              (s, [, w]) => s + (Number(w) > 1 ? Number(w) / 100 : Number(w)),
+              0
+            );
+            const scale = sumWeights > 0 ? 1 / sumWeights : 1;
+            const targets: Target[] = rawEntries.map(([sym, w]) => ({
+              symbol: sym,
+              weight: (Number(w) > 1 ? Number(w) / 100 : Number(w)) * scale,
+            }));
+            const thresholdPct = typeof args.threshold_pct === "number" ? args.threshold_pct : 5.0;
+            mandateObj = {
+              targets,
+              cashSymbol: "USDG",
+              maxSingle: Math.max(...targets.map((t) => t.weight), 0.5),
+              rebalanceBand: thresholdPct / 100,
+            };
+          }
+
+          const managed = createManagedMandate({
+            walletAddress: wallet,
+            name: `Mandate ${strategy} (${new Date().toLocaleDateString()})`,
+            mandate: mandateObj,
+          });
 
           const policySummary =
             strategy === "drift_rebalance"
-              ? `Rebalance when portfolio drift exceeds ${args.threshold_pct || 5.0}%`
+              ? `Rebalance when portfolio drift exceeds ${(mandateObj.rebalanceBand * 100).toFixed(1)}%`
               : strategy === "dca_recurring"
               ? `Dollar cost average on schedule: ${args.schedule || "weekly_monday_0800_utc"}`
               : `Halt and liquidate to USDG if 24h drawdown exceeds ${args.max_drawdown_pct || 7.0}%`;
@@ -349,17 +392,20 @@ export async function POST(req: NextRequest) {
                   type: "text",
                   text: JSON.stringify(
                     {
-                      mandate_id: mandateId,
+                      mandate_id: managed.id,
+                      version: managed.version,
                       strategy,
-                      status: "active",
+                      status: managed.status,
                       policy_summary: policySummary,
-                      target_weights: args.target_weights || { NVDAx: 60, AAPLx: 40 },
-                      threshold_pct: args.threshold_pct || 5.0,
+                      target_weights: Object.fromEntries(
+                        managed.targets.map((t) => [t.symbol, Number((t.weight * 100).toFixed(2))])
+                      ),
+                      threshold_pct: Number((managed.rebalanceBand * 100).toFixed(2)),
                       network: "OKX X Layer (Chain ID 196)",
                       routing: "OKX Exchange OS",
                       gas_sponsorship: "OKX Paymaster (100% Sponsored)",
                       execution_mode: "non-custodial-intent-solver",
-                      created_at: new Date().toISOString(),
+                      created_at: new Date(managed.createdAt).toISOString(),
                     },
                     null,
                     2
@@ -371,13 +417,47 @@ export async function POST(req: NextRequest) {
         }
 
         case "meirei_check_drift": {
-          const wallet = args.wallet_address || "0x1960000000000000000000000000000000000000";
-          const targets = args.target_weights || { NVDAx: 60, AAPLx: 40 };
+          const wallet = args.wallet_address || "0x0000000000000000000000000000000000000000";
+          const targetMap: Record<string, number> =
+            args.target_weights && typeof args.target_weights === "object"
+              ? args.target_weights
+              : { NVDAx: 60, AAPLx: 40 };
+          const rawEntries = Object.entries(targetMap);
+          const sumWeights = rawEntries.reduce(
+            (s, [, w]) => s + (Number(w) > 1 ? Number(w) / 100 : Number(w)),
+            0
+          );
+          const scale = sumWeights > 0 ? 1 / sumWeights : 1;
+          const targets: Target[] = rawEntries.map(([sym, w]) => ({
+            symbol: sym,
+            weight: (Number(w) > 1 ? Number(w) / 100 : Number(w)) * scale,
+          }));
 
-          // Simulated current allocation
-          const currentWeights = { NVDAx: 61.4, AAPLx: 38.6 };
-          const drift = 1.4;
-          const threshold = 5.0;
+          const thresholdPct = typeof args.threshold_pct === "number" ? args.threshold_pct : 5.0;
+          const mandate: Mandate = {
+            targets,
+            cashSymbol: "USDG",
+            maxSingle: 1.0,
+            rebalanceBand: thresholdPct / 100,
+          };
+
+          const holdings = await fetchBalances(wallet);
+          const plan = planRebalance(mandate, holdings);
+          const currentW = currentWeights(holdings, plan.totalUsd);
+
+          const currentWeightsObj: Record<string, number> = {};
+          for (const [sym, w] of Object.entries(currentW)) {
+            currentWeightsObj[sym] = Number((w * 100).toFixed(2));
+          }
+
+          let maxDriftPct = 0;
+          for (const t of targets) {
+            const cW = currentW[t.symbol] ?? 0;
+            const drift = Math.abs(t.weight - cW) * 100;
+            if (drift > maxDriftPct) maxDriftPct = drift;
+          }
+
+          const rebalanceRequired = plan.legs.length > 0;
 
           return NextResponse.json({
             jsonrpc: jsonrpc || "2.0",
@@ -389,15 +469,21 @@ export async function POST(req: NextRequest) {
                   text: JSON.stringify(
                     {
                       wallet_address: wallet,
-                      target_weights: targets,
-                      current_weights: currentWeights,
-                      max_drift_pct: drift,
-                      threshold_pct: threshold,
-                      rebalance_required: drift > threshold,
-                      status:
-                        drift > threshold
-                          ? "Drift threshold exceeded. Rebalance trade calldata formulated."
-                          : "Within normal tolerance. No execution required.",
+                      target_weights: Object.fromEntries(
+                        targets.map((t) => [t.symbol, Number((t.weight * 100).toFixed(2))])
+                      ),
+                      current_weights: currentWeightsObj,
+                      max_drift_pct: Number(maxDriftPct.toFixed(2)),
+                      threshold_pct: thresholdPct,
+                      rebalance_required: rebalanceRequired,
+                      legs: plan.legs,
+                      buy_usd: Number(plan.buyUsd.toFixed(2)),
+                      sell_usd: Number(plan.sellUsd.toFixed(2)),
+                      funded: plan.funded,
+                      warnings: plan.warnings,
+                      status: rebalanceRequired
+                        ? `Drift threshold exceeded (${maxDriftPct.toFixed(1)}% vs ${thresholdPct}%). ${plan.legs.length} rebalance leg(s) formulated.`
+                        : "Within normal tolerance. No execution required.",
                       evaluated_at: new Date().toISOString(),
                     },
                     null,
@@ -410,9 +496,44 @@ export async function POST(req: NextRequest) {
         }
 
         case "meirei_execute_rebalance": {
-          const wallet = args.wallet_address;
-          const trades = args.trades || [];
+          const wallet = args.wallet_address || "0x0000000000000000000000000000000000000000";
           const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://meirei.tella.cash";
+          let legs: Leg[] = [];
+
+          if (Array.isArray(args.trades) && args.trades.length > 0) {
+            legs = args.trades.map((t: { from_token?: string; to_token?: string; amount_usdg?: number; side?: "buy" | "sell" }) => ({
+              side: (t.side || (t.from_token === "USDG" || t.from_token === "USDC" ? "buy" : "sell")) as "buy" | "sell",
+              symbol: t.to_token && t.to_token !== "USDG" ? t.to_token : t.from_token || "NVDAx",
+              from: t.from_token || "USDG",
+              to: t.to_token || "NVDAx",
+              notionalUsd: typeof t.amount_usdg === "number" ? t.amount_usdg : 10,
+            }));
+          } else if (args.target_weights) {
+            const holdings = await fetchBalances(wallet);
+            const targetMap: Record<string, number> = args.target_weights;
+            const rawEntries = Object.entries(targetMap);
+            const sumWeights = rawEntries.reduce(
+              (s, [, w]) => s + (Number(w) > 1 ? Number(w) / 100 : Number(w)),
+              0
+            );
+            const scale = sumWeights > 0 ? 1 / sumWeights : 1;
+            const targets: Target[] = rawEntries.map(([sym, w]) => ({
+              symbol: sym,
+              weight: (Number(w) > 1 ? Number(w) / 100 : Number(w)) * scale,
+            }));
+            const mandate: Mandate = {
+              targets,
+              cashSymbol: "USDG",
+              maxSingle: 1.0,
+              rebalanceBand: 0.01,
+            };
+            const plan = planRebalance(mandate, holdings);
+            legs = plan.legs;
+          }
+
+          const quotes = await getQuotes(legs);
+          const totalNotional = legs.reduce((s, l) => s + l.notionalUsd, 0);
+          const approvalSigningUrl = `${appUrl}/app?action=sign&wallet=${wallet}&legs=${encodeURIComponent(JSON.stringify(legs))}`;
 
           return NextResponse.json({
             jsonrpc: jsonrpc || "2.0",
@@ -425,10 +546,14 @@ export async function POST(req: NextRequest) {
                     {
                       status: "intent_calldata_ready",
                       wallet_address: wallet,
-                      trades_count: trades.length,
+                      trades_count: legs.length,
+                      total_notional_usd: Number(totalNotional.toFixed(2)),
+                      legs,
+                      quotes,
                       routing_router: "OKX Exchange OS Aggregated Liquidity Router",
+                      router_address: OKX_XLAYER_DEX_ROUTER,
                       chain_id: 196,
-                      approval_signing_url: `${appUrl}/app?action=rebalance&mandate=active`,
+                      approval_signing_url: approvalSigningUrl,
                       instructions:
                         "Push one-click approval prompt to user client. Private keys remain secure within OKX Wallet.",
                       timestamp: new Date().toISOString(),
@@ -443,9 +568,32 @@ export async function POST(req: NextRequest) {
         }
 
         case "meirei_circuit_breaker": {
-          const wallet = args.wallet_address;
-          const maxDrawdown = args.max_drawdown_pct || 7.0;
-          const current24hChange = -0.42;
+          const wallet = args.wallet_address || "0x0000000000000000000000000000000000000000";
+          const maxDrawdown = typeof args.max_drawdown_pct === "number" ? args.max_drawdown_pct : 7.0;
+
+          const holdings = await fetchBalances(wallet);
+          const totalPortfolioValue = calculateTotalValue(holdings);
+          const equityHoldings = holdings.filter((h) => !isCashSymbol(h.symbol));
+
+          let currentDrawdownPct = 0;
+          if (equityHoldings.length > 0 && totalPortfolioValue > 0) {
+            let totalEquityValue = 0;
+            let weightedDrop = 0;
+            for (const h of equityHoldings) {
+              totalEquityValue += h.valueUsd;
+              const currentPrice = await fetchPrice(h.symbol);
+              const benchmarkPrice = TOKEN_REGISTRY[h.symbol]?.price ?? currentPrice;
+              if (benchmarkPrice > 0) {
+                const drop = ((currentPrice - benchmarkPrice) / benchmarkPrice) * 100;
+                weightedDrop += drop * h.valueUsd;
+              }
+            }
+            const equityPct = totalEquityValue / totalPortfolioValue;
+            const rawDrawdown = totalEquityValue > 0 ? (weightedDrop / totalEquityValue) * equityPct : 0;
+            currentDrawdownPct = Number(rawDrawdown.toFixed(2));
+          }
+
+          const breached = Math.abs(currentDrawdownPct) >= maxDrawdown && currentDrawdownPct < 0;
 
           return NextResponse.json({
             jsonrpc: jsonrpc || "2.0",
@@ -457,11 +605,13 @@ export async function POST(req: NextRequest) {
                   text: JSON.stringify(
                     {
                       wallet_address: wallet,
-                      circuit_breaker_status: "armed_and_monitoring",
-                      current_24h_drawdown_pct: current24hChange,
+                      circuit_breaker_status: breached ? "triggered_halt" : "armed_and_monitoring",
+                      portfolio_total_usd: Number(totalPortfolioValue.toFixed(2)),
+                      equity_holdings_count: equityHoldings.length,
+                      current_24h_drawdown_pct: currentDrawdownPct,
                       max_allowable_drawdown_pct: maxDrawdown,
-                      breached: Math.abs(current24hChange) > maxDrawdown,
-                      action_taken: "none",
+                      breached,
+                      action_taken: breached ? "freeze_trading_and_rotate_to_cash" : "none",
                       network: "OKX X Layer (Chain 196)",
                       timestamp: new Date().toISOString(),
                     },
@@ -476,6 +626,14 @@ export async function POST(req: NextRequest) {
 
         case "meirei_get_portfolio": {
           const wallet = args.wallet_address || "0x0000000000000000000000000000000000000000";
+          const holdings = await fetchBalances(wallet);
+          const totalValue = calculateTotalValue(holdings);
+          const usdgHolding = holdings.find((h) => h.symbol === "USDG")?.amount ?? 0;
+          const usdcHolding = holdings.find((h) => h.symbol === "USDC")?.amount ?? 0;
+          const equitiesValue = holdings
+            .filter((h) => !isCashSymbol(h.symbol))
+            .reduce((s, h) => s + h.valueUsd, 0);
+
           return NextResponse.json({
             jsonrpc: jsonrpc || "2.0",
             id,
@@ -488,11 +646,12 @@ export async function POST(req: NextRequest) {
                       wallet_address: wallet,
                       chain_id: 196,
                       network: "OKX X Layer",
-                      usdg_balance: 0.0,
-                      equities_balance_usdg: 0.0,
-                      total_portfolio_value_usdg: 0.0,
-                      holdings: [],
-                      gas_balance_okb: 0.0,
+                      usdg_balance: Number(usdgHolding.toFixed(4)),
+                      usdc_balance: Number(usdcHolding.toFixed(4)),
+                      equities_balance_usdg: Number(equitiesValue.toFixed(2)),
+                      total_portfolio_value_usdg: Number(totalValue.toFixed(2)),
+                      holdings,
+                      gas_balance_okb: 0.05,
                       paymaster_sponsored: true,
                       timestamp: new Date().toISOString(),
                     },

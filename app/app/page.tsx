@@ -1536,6 +1536,35 @@ export default function AppDashboardPage() {
     setConnectInfoMsg(null);
 
     try {
+      // 1. Fetch SIWE ownership challenge
+      const chalRes = await fetch("/api/wallet/link/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: connectChannel,
+          handle: effectiveHandle,
+          walletAddress: connectAddress,
+        }),
+      });
+      const chalData = await chalRes.json();
+      if (!chalRes.ok || !chalData.message) {
+        throw new Error(chalData.error || "Failed to generate ownership challenge.");
+      }
+
+      // 2. Request client-side signature
+      const okx = getSpecificProvider("okx");
+      const mm = getSpecificProvider("metamask");
+      const provider = okx || mm || getSpecificProvider("injected");
+      let signature: string | undefined = undefined;
+
+      if (provider) {
+        setConnectInfoMsg("Please sign the verification message in your Web3 wallet to prove non-custodial ownership (costs zero gas)...");
+        signature = await provider.request({
+          method: "personal_sign",
+          params: [chalData.message, connectAddress],
+        });
+      }
+
       const res = await fetch("/api/wallet/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1543,6 +1572,9 @@ export default function AppDashboardPage() {
           channel: connectChannel,
           handle: effectiveHandle,
           walletAddress: connectAddress,
+          signature,
+          message: chalData.message,
+          nonce: chalData.nonce,
         }),
       });
 

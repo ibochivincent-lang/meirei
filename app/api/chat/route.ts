@@ -293,8 +293,7 @@ export async function POST(req: NextRequest) {
       welcome += `2. Portfolio Balances: /balance or "portfolio" (View live cash & tokenized holdings)\n`;
       welcome += `3. Unit Calculations: "Calculate $250 in NVDAx" (Get exact fractional share units)\n`;
       welcome += `4. Autonomous Mandates: "Drift rebalance 5%", "Weekly accumulation 50 USDG", "Dip buyer -5% / TP +15%", "Circuit breaker 8%"\n`;
-      welcome += `5. Emergency Protection: /freeze or "panic" to immediately halt automated execution\n\n`;
-      welcome += `Non-custodial architecture: 100% client-side signing. Zero private keys stored.`;
+      welcome += `Execution Model: Web terminal uses 100% client-side Web3 signing (non-custodial). Bot and automated channels provide one-tap client signing deep links alongside delegated agent execution secured by 2FA OTP and daily spend limits.`;
 
       return NextResponse.json({
         reply: welcome,
@@ -319,7 +318,7 @@ export async function POST(req: NextRequest) {
       about += `Key Capabilities:\n`;
       about += `• Conversational Mandates & Simulation: Converts natural language into automated mandate policies (Drift Rebalance, Weekly Accumulation, Dip Buyer, Circuit Breakers, or Direct Spot Swaps).\n`;
       about += `• Allowlisted Equities (20 Assets): TSLAx, NVDAx, AAPLx, MSFTx, AMZNx, GOOGLx, METAx, COINx, SPYx, QQQx, AMDx, CRWDx, MSTRx, TSMx, AVGOx, INTCx, MUx, MRVLx, IWMx, DELLx.\n`;
-      about += `• Non-Custodial Architecture: Private keys never touch our servers. Transactions are authorized solely client-side via Web3 wallet (OKX Wallet, MetaMask, WalletConnect) or 2FA circuit breakers.\n`;
+      about += `• Dual Execution Architecture: Web Quick-Buy and Mandate approvals execute non-custodially via client-side Web3 wallet signatures (OKX Wallet, MetaMask). Bot and scheduled channels generate swap calldata with one-tap client signing deep links or execute via delegated Onchain OS agents secured by HMAC 2FA OTP and SIWE verified ownership.\n`;
       about += `• Multi-Channel Access: Identical features across Web Platform (/app), Telegram (@MeireiXLayerBot), and WhatsApp.`;
 
       return NextResponse.json({
