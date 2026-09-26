@@ -159,7 +159,7 @@ export function applyCap(targets: Target[], cashSymbol: CashSymbol, maxSingle: n
 function validate(mandate: Mandate): void {
   const shape = MandateSchema.safeParse(mandate);
   if (!shape.success) {
-    throw new Error(`Invalid mandate: ${shape.error.errors.map((e) => e.message).join(", ")}`);
+    throw new Error(`Invalid mandate: ${shape.error.issues.map((e) => e.message).join(", ")}`);
   }
 
   const { invalid } = validateSymbols(mandate.targets.map((t) => t.symbol));
