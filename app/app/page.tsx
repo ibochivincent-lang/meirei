@@ -3453,7 +3453,7 @@ export default function AppDashboardPage() {
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-                    {[...STOCKS].sort((a, b) => parseFloat(a.change24h) - parseFloat(b.change24h)).map((stock) => {
+                    {[...STOCKS].sort((a, b) => parseFloat(a.change24h || "0") - parseFloat(b.change24h || "0")).map((stock) => {
                       const isSelected = stock.symbol === selectedStock.symbol;
                       const numericPrice = getNumericPrice(stock);
 
