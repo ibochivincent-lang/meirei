@@ -437,7 +437,7 @@ export async function ensureXLayerNetwork(providerArg?: any): Promise<void> {
 
 export const OKX_XLAYER_DEX_ROUTER = "0x7c5bee2a8091c3ef39072f64f18fac913060aeaf";
 export const QUICKSWAP_XLAYER_ROUTER = "0x4B9f4d2435Ef65559567e5DbFC1BbB37abC43B57";
-export const MANDATE_REGISTRY_ADDRESS = "0x5E7095cC40303b12A1047E0BF2D39CF797379012";
+export const MANDATE_REGISTRY_ADDRESS = process.env.NEXT_PUBLIC_MANDATE_REGISTRY_ADDRESS || "0x5E7095cC40303b12A1047E0BF2D39CF797379012";
 export const USDG_TOKEN_ADDRESS = "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8";
 
 /** On-chain token addresses for every tradable xStock on X Layer (chain 196). */

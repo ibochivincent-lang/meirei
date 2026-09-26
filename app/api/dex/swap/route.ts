@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   const apiKey = process.env.OKX_API_KEY || "";
   const apiSecret = process.env.OKX_API_SECRET || process.env.OKX_SECRET_KEY || "";
   const passphrase = process.env.OKX_API_PASSPHRASE || process.env.OKX_PASSPHRASE || "";
-  const projectId = process.env.OKX_PROJECT_ID || "";
+  const projectId = process.env.OKX_PROJECT_ID || process.env.MEIREI_PROJECT_ID || "";
 
   if (!apiKey || !apiSecret || !passphrase) {
     return NextResponse.json(
