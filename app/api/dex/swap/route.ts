@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
   if (!apiKey || !apiSecret || !passphrase) {
     return NextResponse.json(
-      { error: "OKX API credentials not configured in environment" },
+      { error: `OKX API credentials not configured in environment (Key: ${!!apiKey}, Secret: ${!!apiSecret}, Pass: ${!!passphrase})` },
       { status: 500 }
     );
   }
