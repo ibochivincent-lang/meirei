@@ -294,60 +294,7 @@ export default function AppDashboardPage() {
   // Active Autonomous Mandates state
   const [selectedLearnMoreMandate, setSelectedLearnMoreMandate] = useState<MandatePolicy | null>(null);
 
-  const [mandatePolicies, setMandatePolicies] = useState<MandatePolicy[]>([
-    {
-      id: "mandate_drift_1",
-      title: "Portfolio Drift Rebalance",
-      policyType: "drift_rebalance",
-      target: "60% NVDAx / 40% AAPLx",
-      rule: "Autonomous atomic rebalance when asset drift > 5.0% via OKX Exchange OS",
-      metricLabel: "Current Drift",
-      metricValue: "1.4%",
-      threshold: "5.0%",
-      status: "active",
-      lastEvaluated: "Just now",
-      description: "Monitors target portfolio weights continuously. When market movements cause an equity asset to drift beyond 5%, the engine automatically trims overperforming assets and buys underperforming assets on OKX DEX to restore target allocation.",
-    },
-    {
-      id: "mandate_dca_1",
-      title: "Weekly DCA Accumulation",
-      policyType: "dca_recurring",
-      target: "50 USDG into TSLAx",
-      rule: "Automated recurring accumulation every Monday at 08:00 UTC",
-      metricLabel: "Next Execution",
-      metricValue: "Mon 08:00 UTC",
-      threshold: "50 USDG",
-      status: "active",
-      lastEvaluated: "Scheduled",
-      description: "Dollar-cost averages a fixed amount of USDG into your chosen tokenized stocks every week automatically. Smooths out volatility and compounds fractional shares over time without requiring manual logins.",
-    },
-    {
-      id: "mandate_breaker_1",
-      title: "Volatility Circuit Breaker",
-      policyType: "circuit_breaker",
-      target: "Portfolio Drawdown Guard",
-      rule: "Auto-rotate equity positions to USDG if 24h drawdown exceeds 7.0%",
-      metricLabel: "24h Drawdown",
-      metricValue: "-0.42%",
-      threshold: "-7.00%",
-      status: "active",
-      lastEvaluated: "Armed & Monitoring",
-      description: "Protects your equity capital during severe market crashes. If 24-hour portfolio drawdown exceeds your chosen percentage (e.g. 7-8%), the smart contract safely halts equity trading and rotates capital into USDG stablecoin.",
-    },
-    {
-      id: "mandate_dip_1",
-      title: "Dip Buyer & Take-Profit",
-      policyType: "circuit_breaker",
-      target: "Buy -5% Dips / TP +15%",
-      rule: "Automated dip purchase when stock drops 5% and profit lock at +15%",
-      metricLabel: "Dip Target",
-      metricValue: "-5.00%",
-      threshold: "+15.00%",
-      status: "active",
-      lastEvaluated: "Monitoring",
-      description: "Capitalizes on market swings around the clock. Automatically buys dips when tokenized stock prices drop by 5%, and automatically locks in gains when your target profit (+15%) is reached.",
-    },
-  ]);
+  const [mandatePolicies, setMandatePolicies] = useState<MandatePolicy[]>([]);
 
   // Agent Autonomous Execution Audit Trail Log
   const [executionLogs, setExecutionLogs] = useState<ExecutionLogItem[]>([
@@ -883,6 +830,19 @@ export default function AppDashboardPage() {
     ]);
 
     setShowCreateMandateModal(false);
+
+    // Prompt non-custodial Web3 signing modal immediately for the deployed mandate
+    let targetSymbol = "NVDAx";
+    const combinedStr = (newMandateTarget + " " + newMandateTitle).toUpperCase();
+    for (const sym of ["NVDAx", "AAPLx", "TSLAx", "MSFTx", "GOOGLx", "AMZNx", "METAx", "COINx", "MSTRx", "SPYx", "QQQx"]) {
+      if (combinedStr.includes(sym.toUpperCase()) || combinedStr.includes(sym.replace("x", "").toUpperCase())) {
+        targetSymbol = sym;
+        break;
+      }
+    }
+    const spot = stockPrices[targetSymbol] || 150;
+    const initialAmount = 50;
+    openWeb3Signer(targetSymbol, initialAmount, initialAmount / spot, spot);
   };
 
   // Conversational Chat Console State (Web & Telegram)
@@ -1291,33 +1251,16 @@ export default function AppDashboardPage() {
     estimatedUnits: number,
     spotPrice: number
   ) => {
-    if (executionEnvironment === "simulation" || isDemoSandbox) {
-      recordBasicBuy(targetSymbol, fromAmountUsdg, estimatedUnits, spotPrice);
-      setMandateResult({
-        reply: `Simulated paper trade executed: Bought ${estimatedUnits.toFixed(4)} ${targetSymbol} for $${fromAmountUsdg.toFixed(2)} USDG in Simulation Sandbox (no wallet required).`,
-        type: "mandate",
-        statusTone: "confirmed",
-      });
-      const nowTime = formatLogTime();
-      setExecutionLogs((prev) => [
-        {
-          id: `log-${Date.now()}`,
-          timestamp: nowTime,
-          source: "Simulation Sandbox",
-          message: `Simulated buy of ${estimatedUnits.toFixed(4)} ${targetSymbol} ($${fromAmountUsdg.toFixed(2)} USDG) executed with zero gas.`,
-          type: "success",
-        },
-        ...prev.slice(0, 24),
-      ]);
-      return;
-    }
+    const validAmount = fromAmountUsdg > 0 ? fromAmountUsdg : 50;
+    const validPrice = spotPrice > 0 ? spotPrice : (stockPrices[targetSymbol] || 150);
+    const validUnits = estimatedUnits > 0 ? estimatedUnits : validAmount / validPrice;
 
     setWeb3ModalState({
       isOpen: true,
       targetSymbol,
-      fromAmountUsdg,
-      estimatedUnits,
-      spotPrice,
+      fromAmountUsdg: validAmount,
+      estimatedUnits: validUnits,
+      spotPrice: validPrice,
     });
   };
 
@@ -2058,6 +2001,9 @@ export default function AppDashboardPage() {
       type: "mandate",
       statusTone: "confirmed",
     });
+
+    const initialAmount = 50;
+    openWeb3Signer(symbol, initialAmount, initialAmount / stockPrice, stockPrice);
   };
 
   // Conversational Chat message sender (Web & Telegram) with Mandate Simulation & Educational Guidance
@@ -4039,57 +3985,80 @@ export default function AppDashboardPage() {
 
                   {/* Mandates Grid */}
                   <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    {mandatePolicies.map((mandate) => (
-                      <div
-                        key={mandate.id}
-                        className={cn(
-                          "rounded-xl border p-3.5 flex flex-col justify-between transition-colors",
-                          mandate.status === "active"
-                            ? "border-ink-200 bg-surface-50/60"
-                            : "border-ink-200/50 opacity-60 bg-surface-100/40"
-                        )}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-[10px] uppercase font-bold text-accent-600">
-                              {mandate.policyType === "drift_rebalance" && "Portfolio Rebalance"}
-                              {mandate.policyType === "dca_recurring" && "DCA Policy"}
-                              {mandate.policyType === "circuit_breaker" && "Circuit Breaker"}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => setSelectedLearnMoreMandate(mandate)}
-                                className="rounded px-2 py-0.5 font-mono text-[9px] font-bold text-accent-700 hover:text-accent-950 bg-accent-50 hover:bg-accent-100 border border-accent-200/80 cursor-pointer shadow-2xs transition-colors"
-                                title="Learn more about this mandate"
-                              >
-                                Learn More
-                              </button>
-                            </div>
-                          </div>
-
-                          <h4 className="mt-2 font-display text-sm font-bold text-ink-900">
-                            {mandate.title}
-                          </h4>
-                          <p className="mt-1 font-mono text-xs font-semibold text-accent-700">
-                            {mandate.target}
-                          </p>
-                          <p className="mt-1.5 text-[11px] text-ink-600 leading-relaxed">
-                            {mandate.rule}
-                          </p>
+                    {mandatePolicies.length === 0 ? (
+                      <div className="col-span-full rounded-2xl border border-dashed border-ink-200 bg-surface-50/60 p-7 text-center">
+                        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-accent-50 text-accent-600 font-mono font-bold text-sm mb-2.5">
+                          M
                         </div>
-
-                        <div className="mt-3 pt-2.5 border-t border-ink-200/50 flex items-center justify-between text-[11px]">
-                          <span className="text-ink-500">{mandate.metricLabel}:</span>
-                          <span className="font-mono font-bold text-ink-900">
-                            {mandate.metricValue}{" "}
-                            <span className="text-ink-400 font-normal text-[10px]">
-                              (Limit: {mandate.threshold})
-                            </span>
-                          </span>
+                        <h4 className="font-display text-sm font-bold text-ink-900">
+                          No Active Investment Mandates Deployed
+                        </h4>
+                        <p className="mt-1 text-xs text-ink-500 max-w-md mx-auto leading-relaxed">
+                          You currently have no active investment mandates. Use the Conversational Chat Console above (e.g. &quot;Invest $100 weekly in AAPLx&quot;) or click &quot;New Mandate&quot; to configure and deploy non-custodial policies on OKX X Layer.
+                        </p>
+                        <div className="mt-3.5 flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowCreateMandateModal(true)}
+                            className="rounded-xl bg-accent-500 hover:bg-accent-600 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs cursor-pointer transition-colors"
+                          >
+                            + Create First Mandate
+                          </button>
                         </div>
                       </div>
-                    ))}
+                    ) : (
+                      mandatePolicies.map((mandate) => (
+                        <div
+                          key={mandate.id}
+                          className={cn(
+                            "rounded-xl border p-3.5 flex flex-col justify-between transition-colors",
+                            mandate.status === "active"
+                              ? "border-ink-200 bg-surface-50/60"
+                              : "border-ink-200/50 opacity-60 bg-surface-100/40"
+                          )}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-[10px] uppercase font-bold text-accent-600">
+                                {mandate.policyType === "drift_rebalance" && "Portfolio Rebalance"}
+                                {mandate.policyType === "dca_recurring" && "DCA Policy"}
+                                {mandate.policyType === "circuit_breaker" && "Circuit Breaker"}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedLearnMoreMandate(mandate)}
+                                  className="rounded px-2 py-0.5 font-mono text-[9px] font-bold text-accent-700 hover:text-accent-950 bg-accent-50 hover:bg-accent-100 border border-accent-200/80 cursor-pointer shadow-2xs transition-colors"
+                                  title="Learn more about this mandate"
+                                >
+                                  Learn More
+                                </button>
+                              </div>
+                            </div>
+
+                            <h4 className="mt-2 font-display text-sm font-bold text-ink-900">
+                              {mandate.title}
+                            </h4>
+                            <p className="mt-1 font-mono text-xs font-semibold text-accent-700">
+                              {mandate.target}
+                            </p>
+                            <p className="mt-1.5 text-[11px] text-ink-600 leading-relaxed">
+                              {mandate.rule}
+                            </p>
+                          </div>
+
+                          <div className="mt-3 pt-2.5 border-t border-ink-200/50 flex items-center justify-between text-[11px]">
+                            <span className="text-ink-500">{mandate.metricLabel}:</span>
+                            <span className="font-mono font-bold text-ink-900">
+                              {mandate.metricValue}{" "}
+                              <span className="text-ink-400 font-normal text-[10px]">
+                                (Limit: {mandate.threshold})
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
 
                   {/* Learn More Mandate Details Modal */}
