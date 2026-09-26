@@ -5844,27 +5844,6 @@ export default function AppDashboardPage() {
                     )}
                   </div>
 
-                  {/* Phase 2 Expansion Roadmap Channels */}
-                  <div className="pt-2 border-t border-ink-100 grid grid-cols-1 sm:grid-cols-2 gap-2 text-center">
-                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-left">
-                      <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[9px] font-bold text-amber-900 mb-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        <span>WhatsApp Assistant — COMING SOON</span>
-                      </div>
-                      <p className="text-[10px] text-ink-600 leading-snug">
-                        WhatsApp conversational agent on OKX X Layer is currently in Phase 2 auditing. <Link href="/coming-soon" className="text-amber-800 underline font-semibold">Details</Link>
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-left">
-                      <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[9px] font-bold text-amber-900 mb-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        <span>Instagram Direct Agent — COMING SOON</span>
-                      </div>
-                      <p className="text-[10px] text-ink-600 leading-snug">
-                        Instagram direct messaging tracking is launching soon. Use Telegram or Web console today. <Link href="/coming-soon" className="text-amber-800 underline font-semibold">Details</Link>
-                      </p>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Feedback messages */}

@@ -85,10 +85,7 @@ function verifyTerminalInvariants() {
     throw new Error("Active Meirei AI Assistant Intelligence Engine header missing");
   }
 
-  // Invariant 6: WhatsApp and Instagram Coming Soon
-  if (!content.includes("WhatsApp Assistant — COMING SOON") || !content.includes("Instagram Direct Agent — COMING SOON")) {
-    throw new Error("WhatsApp and Instagram Coming Soon indicators missing");
-  }
+
 
   console.log("[G4_TERMINAL_INVARIANTS_PASSED] all terminal requirements verified");
 }
