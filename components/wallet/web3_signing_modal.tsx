@@ -73,8 +73,25 @@ export function Web3SigningModal({
     if (!addr) return;
     try {
       setIsLoadingBalances(true);
-      const snap = await fetchLiveXLayerBalances(addr);
-      setWalletBalances({ okb: snap.okbBalance, usdg: snap.usdgBalance });
+      const clean = addr.toLowerCase().replace("0x", "").padStart(64, "0");
+      const rpcRes = await fetch("https://xlayerrpc.okx.com", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify([
+          { jsonrpc: "2.0", id: 0, method: "eth_getBalance", params: [addr, "latest"] },
+          { jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8", data: `0x70a08231${clean}` }, "latest"] }
+        ]),
+      });
+      if (rpcRes.ok) {
+        const rpcJson = await rpcRes.json();
+        if (Array.isArray(rpcJson)) {
+          const okbRaw = rpcJson.find((x: any) => x.id === 0)?.result;
+          const okbBal = okbRaw && okbRaw !== "0x" ? Number(BigInt(okbRaw)) / 1e18 : 0;
+          const usdgRaw = rpcJson.find((x: any) => x.id === 1)?.result;
+          const usdgBal = usdgRaw && usdgRaw !== "0x" ? Number(BigInt(usdgRaw)) / 1e6 : 0;
+          setWalletBalances({ okb: okbBal, usdg: usdgBal });
+        }
+      }
     } catch {
       // Non-fatal balance fetch notice
     } finally {
