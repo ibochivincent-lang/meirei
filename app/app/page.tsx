@@ -138,6 +138,8 @@ interface UserProfile {
   botStatus: string;
   portfolioValue: number;
   usdgBalance: number;
+  okbBalance?: number;
+  okbValueUsd?: number;
   holdings: {
     symbol: string;
     amount: number;
@@ -161,6 +163,8 @@ const DEFAULT_PROFILE: UserProfile = {
   botStatus: "Connected on Web",
   portfolioValue: 0.0,
   usdgBalance: 0.0,
+  okbBalance: 0.0,
+  okbValueUsd: 0.0,
   holdings: [],
   activeMandates: [],
 };
@@ -343,17 +347,21 @@ export default function AppDashboardPage() {
               symbol: h.symbol,
               amount: Number(h.amount) || 0,
               valueUsd: Number(h.valueUsd) || 0,
-              color: stockDef?.color || (h.symbol === "NVDAx" ? "#76B900" : h.symbol === "AAPLx" ? "#111111" : "#3B82F6"),
+              color: stockDef?.color || (h.symbol === "NVDAx" ? "#76B900" : h.symbol === "AAPLx" ? "#111111" : h.symbol === "OKB" ? "#000000" : "#3B82F6"),
             };
           });
 
           const usdg = Number(data.usdgBalance) || 0;
+          const okb = Number(data.okbBalance) || 0;
+          const okbVal = okb * 122.0;
           const equitiesTotal = mappedHoldings.reduce((sum: number, h: { valueUsd: number }) => sum + h.valueUsd, 0);
-          const total = Number(data.totalValueUsd) || (usdg + equitiesTotal);
+          const total = Number(data.totalValueUsd) || (usdg + okbVal + equitiesTotal);
 
           setProfile((prev) => ({
             ...prev,
             usdgBalance: usdg,
+            okbBalance: okb,
+            okbValueUsd: okbVal,
             portfolioValue: total,
             holdings: mappedHoldings,
           }));
@@ -371,12 +379,27 @@ export default function AppDashboardPage() {
             });
             const rpcJson = await rpcRes.json();
             if (Array.isArray(rpcJson)) {
+              const okbRaw = rpcJson.find((x) => x.id === 0)?.result;
+              const okbBal = okbRaw && okbRaw !== "0x" ? Number(BigInt(okbRaw)) / 1e18 : 0;
+              const okbVal = okbBal * 122.0;
               const usdgRaw = rpcJson.find((x) => x.id === 1)?.result;
               const usdgBal = usdgRaw && usdgRaw !== "0x" ? Number(BigInt(usdgRaw)) / 1e6 : 0;
+              const fallbackHoldings: Array<{ symbol: string; amount: number; valueUsd: number; color: string }> = [];
+              if (okbBal > 0) {
+                fallbackHoldings.push({
+                  symbol: "OKB",
+                  amount: okbBal,
+                  valueUsd: okbVal,
+                  color: "#000000",
+                });
+              }
               setProfile((prev) => ({
                 ...prev,
                 usdgBalance: usdgBal,
-                portfolioValue: usdgBal,
+                okbBalance: okbBal,
+                okbValueUsd: okbVal,
+                portfolioValue: usdgBal + okbVal,
+                holdings: fallbackHoldings,
               }));
             }
           } catch {}
@@ -1534,6 +1557,29 @@ export default function AppDashboardPage() {
 
       const activeAddr = accounts[0].toLowerCase();
 
+      // Step 2.5: Ensure wallet is on OKX X Layer (Chain ID 196) BEFORE requesting authentication signature
+      try {
+        const rawChainId: string = await provider.request({ method: "eth_chainId" });
+        const chainId = parseInt(rawChainId, 16);
+        if (chainId !== XLAYER_CHAIN_ID_DECIMAL) {
+          try {
+            await provider.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: XLAYER_CHAIN_ID_HEX }],
+            });
+          } catch (switchErr: any) {
+            if (switchErr?.code === 4902) {
+              await provider.request({
+                method: "wallet_addEthereumChain",
+                params: [XLAYER_NETWORK_PARAMS],
+              });
+            }
+          }
+        }
+      } catch (switchErr) {
+        console.warn("[Network Switch] Notice checking/switching chain:", switchErr);
+      }
+
       // Step 3: Sign-in authentication verification (costs zero gas)
       const signTimestamp = new Date().toISOString();
       const authChallenge = [
@@ -1578,27 +1624,6 @@ export default function AppDashboardPage() {
           ? "Trust Wallet"
           : "Web3 Injected";
       setConnectWalletName(title);
-
-      // Switch to X Layer (Chain ID 196)
-      try {
-        const rawChainId: string = await provider.request({ method: "eth_chainId" });
-        const chainId = parseInt(rawChainId, 16);
-        if (chainId !== XLAYER_CHAIN_ID_DECIMAL) {
-          try {
-            await provider.request({
-              method: "wallet_switchEthereumChain",
-              params: [{ chainId: XLAYER_CHAIN_ID_HEX }],
-            });
-          } catch (switchErr: any) {
-            if (switchErr?.code === 4902) {
-              await provider.request({
-                method: "wallet_addEthereumChain",
-                params: [XLAYER_NETWORK_PARAMS],
-              });
-            }
-          }
-        }
-      } catch {}
 
       setConnectInfoMsg(`Connected ${title} (${formatShortAddress(activeAddr)}) on OKX X Layer.`);
       if (typeof window !== "undefined") {
@@ -1664,6 +1689,26 @@ export default function AppDashboardPage() {
       let signature: string | undefined = undefined;
 
       if (provider) {
+        try {
+          const rawChainId: string = await provider.request({ method: "eth_chainId" });
+          const chainId = parseInt(rawChainId, 16);
+          if (chainId !== XLAYER_CHAIN_ID_DECIMAL) {
+            try {
+              await provider.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: XLAYER_CHAIN_ID_HEX }],
+              });
+            } catch (switchErr: any) {
+              if (switchErr?.code === 4902) {
+                await provider.request({
+                  method: "wallet_addEthereumChain",
+                  params: [XLAYER_NETWORK_PARAMS],
+                });
+              }
+            }
+          }
+        } catch {}
+
         setConnectInfoMsg("Please sign the verification message in your Web3 wallet to prove non-custodial ownership (costs zero gas)...");
         signature = await provider.request({
           method: "personal_sign",
@@ -2954,10 +2999,13 @@ export default function AppDashboardPage() {
 
               {(() => {
                 const currentEquityVal = currentHoldings.reduce((sum, h) => {
+                  if (h.symbol === "OKB") return sum;
                   const p = stockPrices[h.symbol] || (h.amount > 0 ? h.valueUsd / h.amount : 0);
                   return sum + (h.amount * p);
                 }, 0);
-                const currentTotalVal = currentEquityVal + currentUsdgBalance;
+                const currentOkb = currentHoldings.find((h) => h.symbol === "OKB");
+                const currentOkbVal = currentOkb ? currentOkb.valueUsd : (profile.okbValueUsd || 0);
+                const currentTotalVal = currentEquityVal + currentUsdgBalance + currentOkbVal;
 
                 return (
                   <div className="mt-4">
@@ -2977,13 +3025,13 @@ export default function AppDashboardPage() {
 
                       <div className="rounded-xl border border-ink-200/80 bg-surface-50/70 p-3.5">
                         <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-ink-500 block">
-                          Available Cash (USDG)
+                          Settlement &amp; Gas Reserves
                         </span>
                         <p className="font-mono text-2xl font-bold tracking-tight text-accent-700 mt-1">
-                          ${currentUsdgBalance.toFixed(2)}
+                          ${(currentUsdgBalance + currentOkbVal).toFixed(2)}
                         </p>
                         <span className="text-[10px] font-mono text-ink-500 font-medium block mt-0.5">
-                          Ready for instant spot trades
+                          ${currentUsdgBalance.toFixed(2)} USDG · {(currentOkb?.amount || profile.okbBalance || 0).toFixed(4)} OKB
                         </span>
                       </div>
 
@@ -2995,7 +3043,7 @@ export default function AppDashboardPage() {
                           ${currentEquityVal.toFixed(2)}
                         </p>
                         <span className="text-[10px] font-mono text-ink-500 font-medium block mt-0.5">
-                          Across {currentHoldings.length} tokenized {currentHoldings.length === 1 ? "stock" : "stocks"}
+                          Across {currentHoldings.filter(h => h.symbol !== "OKB").length} tokenized {currentHoldings.filter(h => h.symbol !== "OKB").length === 1 ? "stock" : "stocks"}
                         </span>
                       </div>
                     </div>
@@ -3113,7 +3161,7 @@ export default function AppDashboardPage() {
                                   <div>
                                     <span className="font-bold text-ink-900 block">{h.symbol}</span>
                                     <span className="text-[10px] text-ink-500 font-mono">
-                                      {h.amount.toFixed(2)} units {livePrice ? `@ $${livePrice.toFixed(2)}` : ""}
+                                      {h.amount < 1 ? h.amount.toFixed(4) : h.amount.toFixed(2)} units {livePrice ? `@ $${livePrice.toFixed(2)}` : ""}
                                     </span>
                                   </div>
                                 </div>
@@ -5082,18 +5130,24 @@ export default function AppDashboardPage() {
 
               {(() => {
                 const currentEquityVal = currentHoldings.reduce((sum, h) => {
+                  if (h.symbol === "OKB") return sum;
                   const p = stockPrices[h.symbol] || (h.amount > 0 ? h.valueUsd / h.amount : 0);
                   return sum + (h.amount * p);
                 }, 0);
-                const currentTotalVal = currentEquityVal + currentUsdgBalance;
+                const currentOkb = currentHoldings.find((h) => h.symbol === "OKB");
+                const currentOkbVal = currentOkb ? currentOkb.valueUsd : (profile.okbValueUsd || 0);
+                const currentTotalVal = currentEquityVal + currentUsdgBalance + currentOkbVal;
 
                 return (
                   <div className="mt-3">
                     <p className="font-mono text-3xl font-bold tracking-tight text-ink-900">
                       ${currentTotalVal.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                     </p>
-                    <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-xs text-ink-600">
+                    <div className="mt-1 flex flex-wrap items-center justify-between gap-1.5 text-xs text-ink-600">
                       <span>Cash: <strong className="font-mono text-ink-900">${currentUsdgBalance.toFixed(2)} USDG</strong></span>
+                      {currentOkbVal > 0 && (
+                        <span>Gas: <strong className="font-mono text-ink-900">{(currentOkb?.amount || profile.okbBalance || 0).toFixed(4)} OKB (${currentOkbVal.toFixed(2)})</strong></span>
+                      )}
                       <span>Equities: <strong className="font-mono text-ink-900">${currentEquityVal.toFixed(2)} USDG</strong></span>
                     </div>
 
@@ -5208,8 +5262,8 @@ export default function AppDashboardPage() {
                                     style={{ backgroundColor: h.color || "#10b981" }}
                                   />
                                   <span className="font-bold text-ink-900">{h.symbol}</span>
-                                  <span className="text-[10px] text-ink-500">
-                                    {h.amount.toFixed(2)} units
+                                  <span className="text-[10px] text-ink-500 font-mono">
+                                    {h.amount < 1 ? h.amount.toFixed(4) : h.amount.toFixed(2)} units
                                   </span>
                                   {livePrice && (
                                     <span className="text-[9px] font-mono text-ink-400">

@@ -315,6 +315,27 @@ function ConnectWalletContent() {
         "Sign this verification message to authenticate non-custodial ownership of your wallet. Zero gas fee required."
       ].join("\n");
 
+      // Switch to OKX X Layer (Chain ID 196) before signing
+      try {
+        const rawChainId: string = await provider.request({ method: "eth_chainId" });
+        const chainId = parseInt(rawChainId, 16);
+        if (chainId !== XLAYER_CHAIN_ID_DECIMAL) {
+          try {
+            await provider.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: XLAYER_CHAIN_ID_HEX }],
+            });
+          } catch (switchErr: any) {
+            if (switchErr?.code === 4902) {
+              await provider.request({
+                method: "wallet_addEthereumChain",
+                params: [XLAYER_NETWORK_PARAMS],
+              });
+            }
+          }
+        }
+      } catch {}
+
       setInfoMessage("Please sign the verification message in your wallet window to confirm sign-in (0 gas fee)...");
       let signature: string | null = null;
       try {
@@ -357,31 +378,7 @@ function ConnectWalletContent() {
         localStorage.removeItem("meirei_disconnected");
       }
 
-      // 2. Switch to OKX X Layer (Chain ID 196)
-      const rawChainId: string = await provider.request({ method: "eth_chainId" });
-      let chainId = parseInt(rawChainId, 16);
-
-      if (chainId !== XLAYER_CHAIN_ID_DECIMAL) {
-        try {
-          await provider.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: XLAYER_CHAIN_ID_HEX }],
-          });
-          chainId = XLAYER_CHAIN_ID_DECIMAL;
-        } catch (switchErr: any) {
-          if (switchErr.code === 4902) {
-            await provider.request({
-              method: "wallet_addEthereumChain",
-              params: [XLAYER_NETWORK_PARAMS],
-            });
-            chainId = XLAYER_CHAIN_ID_DECIMAL;
-          } else {
-            console.warn("[Wallet Connect] Switch warning:", switchErr?.message);
-          }
-        }
-      }
-
-      setCurrentChainId(chainId);
+      setCurrentChainId(XLAYER_CHAIN_ID_DECIMAL);
       setInfoMessage(`Connected ${walletTitle} (${formatShortAddress(activeAddr)}) on OKX X Layer.`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);

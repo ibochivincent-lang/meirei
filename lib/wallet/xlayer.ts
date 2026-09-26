@@ -96,6 +96,7 @@ export const XLAYER_MONITORED_TOKENS = [
 
 /** Standard fallback spot reference prices for USD valuation */
 export const REFERENCE_PRICES: Record<string, number> = {
+  OKB: 122.0,
   USDG: 1.0,
   USDC: 1.0,
   NVDAx: 178.4,
@@ -271,10 +272,26 @@ export async function fetchLiveXLayerBalances(
       }
     }
 
+    const okbPriceUsd = prices["OKB"] || 122.0;
+    const okbValueUsd = okb * okbPriceUsd;
+
+    if (okb > 0) {
+      activeHoldings.unshift({
+        symbol: "OKB",
+        name: "OKB Native Gas",
+        address: "0x0000000000000000000000000000000000000000",
+        decimals: 18,
+        amount: okb,
+        valueUsd: okbValueUsd,
+        priceUsd: okbPriceUsd,
+        isCash: true,
+      });
+    }
+
     const totalEquitiesValue = activeHoldings
       .filter((h) => !h.isCash)
       .reduce((sum, h) => sum + h.valueUsd, 0);
-    const totalValueUsd = usdg + usdc + totalEquitiesValue;
+    const totalValueUsd = usdg + usdc + okbValueUsd + totalEquitiesValue;
 
     return {
       walletAddress: cleanAddr,
