@@ -2077,7 +2077,55 @@ export default function AppDashboardPage() {
     setChatInput("");
     setIsChatSending(true);
 
+    // Automatically parse & register mandate instruction into Active Investment Mandates state
     const lowerQ = query.toLowerCase();
+    if (
+      (lowerQ.includes("put") || lowerQ.includes("buy") || lowerQ.includes("dca") || lowerQ.includes("into") || lowerQ.includes("weekly") || lowerQ.includes("rebalance")) &&
+      !lowerQ.includes("hello") &&
+      !lowerQ.includes("balance")
+    ) {
+      const foundSymbols: string[] = [];
+      for (const s of STOCKS) {
+        if (lowerQ.includes(s.symbol.toLowerCase()) || lowerQ.includes(s.name.toLowerCase())) {
+          if (!foundSymbols.includes(s.symbol)) {
+            foundSymbols.push(s.symbol);
+          }
+        }
+      }
+
+      let totalAmt = 50;
+      const matchAmt = query.match(/\$(\d+(?:\.\d+)?)/) || query.match(/(\d+(?:\.\d+)?)\s*(?:usdg|usd|dollars)/i);
+      if (matchAmt) {
+        totalAmt = parseFloat(matchAmt[1]);
+      }
+
+      if (foundSymbols.length === 0) {
+        foundSymbols.push(selectedStock.symbol || "NVDAx");
+      }
+
+      const perStockAmt = totalAmt / foundSymbols.length;
+      const pctSplit = Math.round(100 / foundSymbols.length);
+      const targetsStr = foundSymbols.map((sym) => `${pctSplit}% ${sym} ($${perStockAmt.toFixed(2)})`).join(" / ");
+      const isWeekly = lowerQ.includes("weekly") || lowerQ.includes("monday");
+
+      const autoCreatedPolicy: MandatePolicy = {
+        id: `mandate_${Date.now()}`,
+        title: isWeekly ? `Weekly Multi-Stock DCA` : `Auto-Investment Mandate`,
+        policyType: isWeekly ? "dca_recurring" : "drift_rebalance",
+        target: targetsStr,
+        rule: isWeekly
+          ? `Automated weekly accumulation of $${totalAmt.toFixed(2)} USDG (${foundSymbols.map((s) => `$${perStockAmt.toFixed(2)} into ${s}`).join(", ")}) every Monday at 08:00 UTC`
+          : `Rebalance $${totalAmt.toFixed(2)} USDG target weights across ${foundSymbols.join(", ")} on OKX X Layer`,
+        metricLabel: isWeekly ? "Next Execution" : "Current Drift",
+        metricValue: isWeekly ? "Mon 08:00 UTC" : "0.0%",
+        threshold: `$${totalAmt.toFixed(0)} USDG`,
+        status: "active",
+        lastEvaluated: "Just registered via Chat",
+        description: `Automated mandate allocating $${totalAmt.toFixed(2)} USDG across ${foundSymbols.join(" and ")} ($${perStockAmt.toFixed(2)} each) on OKX X Layer with 100% sponsored gas.`,
+      };
+
+      setMandatePolicies((prev) => [autoCreatedPolicy, ...prev]);
+    }
 
     // 0a. Greetings & Onboarding Intent ("hello", "hi", "good evening", "what is meirei", etc.)
     const isGreeting =
@@ -3827,7 +3875,7 @@ export default function AppDashboardPage() {
                                       }}
                                       className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                                     >
-                                      <span>Deploy Mandate to X Layer</span>
+                                      <span>Confirm &amp; Deploy Mandate</span>
                                       <span>✓</span>
                                     </button>
                                     <button
