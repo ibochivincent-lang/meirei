@@ -357,6 +357,11 @@ export default function AppDashboardPage() {
           const equitiesTotal = mappedHoldings.reduce((sum: number, h: { valueUsd: number }) => sum + h.valueUsd, 0);
           const total = Number(data.totalValueUsd) || (usdg + okbVal + equitiesTotal);
 
+          // If backend couldn't reach RPC (Vercel IP block), it returns 0. Force fallback.
+          if (total === 0 && isMounted) {
+            throw new Error("Backend returned zero, try direct browser RPC fallback");
+          }
+
           setProfile((prev) => ({
             ...prev,
             usdgBalance: usdg,
@@ -366,7 +371,11 @@ export default function AppDashboardPage() {
             holdings: mappedHoldings,
           }));
         } else if (isMounted) {
-          // Direct fallback browser query to OKX X Layer RPC if server query fails
+          throw new Error("Backend ok=false");
+        }
+      } catch (err) {
+        // Direct fallback browser query to OKX X Layer RPC if server query fails
+        if (isMounted) {
           try {
             const clean = addr.toLowerCase().replace("0x", "").padStart(64, "0");
             const rpcRes = await fetch("https://xlayerrpc.okx.com", {
@@ -402,10 +411,10 @@ export default function AppDashboardPage() {
                 holdings: fallbackHoldings,
               }));
             }
-          } catch {}
+          } catch (rpcErr) {
+            console.warn("[Balances] Notice checking real on-chain balance:", rpcErr);
+          }
         }
-      } catch (err) {
-        console.warn("[Balances] Notice checking real on-chain balance:", err);
       } finally {
         if (isMounted) setIsLoadingBalance(false);
       }
