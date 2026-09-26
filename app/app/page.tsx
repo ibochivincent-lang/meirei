@@ -2301,7 +2301,7 @@ export default function AppDashboardPage() {
       const simMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: `[Dip Buyer & Take-Profit Mandate Simulation]\n\n• Direct Solution: Automatically accumulates units when ${sym} dips below a set percentage (-5%), then automatically locks in gains when price reaches your target profit (+15%). You never have to stare at charts.\n\n• Target Asset: ${sym} (Current Spot: $${spot.toFixed(2)})\n• Accumulation Dip Trigger: -5.0% ($${dipPrice} USDG)\n• Take-Profit Trigger: +15.0% ($${tpPrice} USDG)\n• Gas Sponsorship: 100% sponsored by Meirei on OKX X Layer (Chain 196).\n\nHow to Solve It:\n1. Click 'Deploy Mandate to X Layer' below to activate autonomous execution.\n2. Alternatively, click 'Ignore Mandate & Buy Directly on Spot' to purchase ${sym} immediately without waiting for a dip.`,
+        text: `[Dip Buyer & Take-Profit Mandate]\n\n• Direct Solution: Automatically accumulates units when ${sym} dips below a set percentage (-5%), then automatically locks in gains when price reaches your target profit (+15%). You never have to stare at charts.\n\n• Target Asset: ${sym} (Current Spot: $${spot.toFixed(2)})\n• Accumulation Dip Trigger: -5.0% ($${dipPrice} USDG)\n• Take-Profit Trigger: +15.0% ($${tpPrice} USDG)\n• Gas Sponsorship: 100% sponsored by Meirei on OKX X Layer (Chain 196).\n\nHow to Solve It:\n1. Click 'Deploy Mandate to X Layer' below to activate autonomous execution.\n2. Alternatively, click 'Ignore Mandate & Buy Directly on Spot' to purchase ${sym} immediately without waiting for a dip.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mandateAction: {
           title: `Dip Buyer: ${sym} (-5% / +15%)`,
@@ -2321,7 +2321,7 @@ export default function AppDashboardPage() {
       const simMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: `[Portfolio Drift Rebalance Mandate Simulation]\n\n• Direct Solution: Monitors your portfolio allocations continuously. If stock prices move and cause any equity to drift more than 5% from your target weight, Meirei executes an atomic rebalancing swap on OKX DEX to restore target weights.\n\n• Target Portfolio: 60% NVDAx / 20% AAPLx / 20% USDG\n• Threshold Band: ±5.0% Drift\n• Gas: Zero gas cost to you (100% sponsored via Paymaster on X Layer).\n\nHow to Solve It:\n1. Click 'Deploy Mandate to X Layer' below to activate autonomous drift tracking.\n2. Or execute spot trades directly to manually balance your holdings.`,
+        text: `[Portfolio Drift Rebalance Mandate]\n\n• Direct Solution: Monitors your portfolio allocations continuously. If stock prices move and cause any equity to drift more than 5% from your target weight, Meirei executes an atomic rebalancing swap on OKX DEX to restore target weights.\n\n• Target Portfolio: 60% NVDAx / 20% AAPLx / 20% USDG\n• Threshold Band: ±5.0% Drift\n• Gas: Zero gas cost to you (100% sponsored via Paymaster on X Layer).\n\nHow to Solve It:\n1. Click 'Deploy Mandate to X Layer' below to activate autonomous drift tracking.\n2. Or execute spot trades directly to manually balance your holdings.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mandateAction: {
           title: "Portfolio Drift Rebalance (5% Band)",
@@ -2336,21 +2336,53 @@ export default function AppDashboardPage() {
       return;
     }
 
-    if (lowerQ.includes("weekly") || lowerQ.includes("dca") || lowerQ.includes("accumulation")) {
-      const sym = selectedStock?.symbol || "TSLAx";
-      const spot = getNumericPrice(selectedStock) || 418.5;
-      const rule = `Automated recurring accumulation of 50.00 USDG into ${sym} every Monday at 08:00 UTC`;
+    if (lowerQ.includes("weekly") || lowerQ.includes("dca") || lowerQ.includes("accumulation") || (lowerQ.includes("put") && lowerQ.includes("into"))) {
+      const targetSymbols: string[] = [];
+      for (const s of STOCKS) {
+        if (
+          lowerQ.includes(s.symbol.toLowerCase()) ||
+          lowerQ.includes(s.name.toLowerCase()) ||
+          (s.symbol === "AAPLx" && (lowerQ.includes("aapl") || lowerQ.includes("apple") || lowerQ.includes("app") || lowerQ.includes("appxlay"))) ||
+          (s.symbol === "NVDAx" && (lowerQ.includes("nvda") || lowerQ.includes("nvidia") || lowerQ.includes("nivida") || lowerQ.includes("nevida")))
+        ) {
+          if (!targetSymbols.includes(s.symbol)) {
+            targetSymbols.push(s.symbol);
+          }
+        }
+      }
+
+      if (targetSymbols.length === 0) {
+        targetSymbols.push(selectedStock?.symbol || "NVDAx");
+      }
+
+      let totalAmt = 50.0;
+      const matchAmt = query.match(/\$(\d+(?:\.\d+)?)/) || query.match(/(\d+(?:\.\d+)?)\s*(?:usdg|usd|dollars)/i);
+      if (matchAmt) {
+        totalAmt = parseFloat(matchAmt[1]);
+      }
+
+      const perStockAmt = totalAmt / targetSymbols.length;
+      const pctSplit = Math.round(100 / targetSymbols.length);
+
+      const targetDesc = targetSymbols.map((s) => `${pctSplit}% ${s} (${perStockAmt.toFixed(2)} USDG)`).join(" · ");
+      const unitsBreakdown = targetSymbols.map((s) => {
+        const p = stockPrices[s] || (s === "NVDAx" ? 213.9 : s === "AAPLx" ? 332.41 : s === "TSLAx" ? 248.0 : 100);
+        const u = perStockAmt / p;
+        return `• ${s} (${p.toFixed(2)}/share): ~${u.toFixed(4)} fractional units (${perStockAmt.toFixed(2)} USDG)`;
+      }).join("\n");
+
+      const rule = `Automated recurring accumulation of ${totalAmt.toFixed(2)} USDG (${targetSymbols.map(s => `${perStockAmt.toFixed(2)} into ${s}`).join(", ")}) every Monday at 08:00 UTC`;
 
       const simMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: `[Weekly DCA Accumulation Mandate Simulation]\n\n• Direct Solution: Automatically purchases a fixed 50.00 USDG dollar amount of ${sym} every week on autopilot. This averages out price volatility across market cycles without needing to time the market.\n\n• Target Asset: ${sym} (Spot: $${spot.toFixed(2)})\n• Frequency: Every Monday at 08:00 UTC (50.00 USDG)\n• Gas: 100% Sponsored on OKX X Layer.\n\nHow to Solve It:\n1. Click 'Deploy Mandate to X Layer' below to schedule weekly buys.\n2. Or click 'Ignore Mandate & Buy Directly on Spot' to buy $50 worth today.`,
+        text: `[Weekly Accumulation Mandate]\n\n• Direct Solution: Automatically accumulates tokenized stocks on autopilot every week without needing to time market fluctuations.\n\n• Target Portfolio: ${targetDesc}\n• Recurring Budget: ${totalAmt.toFixed(2)} USDG / week (Every Monday at 08:00 UTC)\n• Estimated Allocation per Cycle:\n${unitsBreakdown}\n• Execution Route: OKX DEX Aggregator on OKX X Layer (Chain ID 196)\n• Gas Sponsorship: 100% Sponsored via OKX Paymaster ($0.00 Gas)\n\nHow to Solve It:\n1. Click 'Deploy Mandate to X Layer' below to activate autonomous execution.\n2. Or click 'Edit Mandate Parameters' to customize your target weights or weekly schedule.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mandateAction: {
-          title: `Weekly DCA: ${sym} (50 USDG)`,
+          title: `Weekly DCA: ${targetSymbols.join(" + ")} (${totalAmt.toFixed(2)} USDG)`,
           rule,
-          symbol: sym,
-          price: spot,
+          symbol: targetSymbols[0],
+          price: stockPrices[targetSymbols[0]] || 100,
         },
       };
 
@@ -2364,7 +2396,7 @@ export default function AppDashboardPage() {
       const simMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: "bot",
-        text: `[Volatility Circuit Breaker Mandate Simulation]\n\n• Direct Solution: Downside risk preservation guardrail. If severe market volatility causes your portfolio to experience a drawdown greater than 8.0% within 24 hours, Meirei pauses all buying and rotates equity exposure into USDG stablecoin.\n\n• Protection Threshold: 8.0% 24h Drawdown\n• Execution Route: OKX DEX Aggregator on OKX X Layer\n• Gas: 100% Sponsored.\n\nHow to Solve It:\n1. Deploy this safety mandate below to guard your open positions against flash crashes.\n2. All rotations execute atomically on OKX DEX.`,
+        text: `[Volatility Circuit Breaker Mandate]\n\n• Direct Solution: Downside risk preservation guardrail. If severe market volatility causes your portfolio to experience a drawdown greater than 8.0% within 24 hours, Meirei pauses all buying and rotates equity exposure into USDG stablecoin.\n\n• Protection Threshold: 8.0% 24h Drawdown\n• Execution Route: OKX DEX Aggregator on OKX X Layer\n• Gas: 100% Sponsored.\n\nHow to Solve It:\n1. Deploy this safety mandate below to guard your open positions against flash crashes.\n2. All rotations execute atomically on OKX DEX.`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         mandateAction: {
           title: "Volatility Circuit Breaker (8%)",
@@ -3838,60 +3870,73 @@ export default function AppDashboardPage() {
                                   </button>
                                 )}
 
-                                {msg.mandateAction && (
-                                  <div className="mt-2.5 pt-2 border-t border-ink-200/60 flex flex-wrap items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const newPolicy: MandatePolicy = {
-                                          id: `mandate_${Date.now()}`,
-                                          title: msg.mandateAction!.title,
-                                          policyType: "drift_rebalance",
-                                          target: msg.mandateAction!.rule,
-                                          rule: msg.mandateAction!.rule,
-                                          metricLabel: "Status",
-                                          metricValue: "Active",
-                                          threshold: "5.0%",
-                                          status: "active",
-                                          lastEvaluated: "Just deployed",
-                                        };
-                                        setMandatePolicies((prev) => [newPolicy, ...prev]);
-                                        setMandateResult({
-                                          reply: `Mandate "${msg.mandateAction!.title}" successfully deployed to OKX X Layer.`,
-                                          type: "mandate",
-                                          statusTone: "confirmed",
-                                        });
-                                        const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                                        setChatMessages((prev) => [
-                                          ...prev,
-                                          {
-                                            id: `msg-${Date.now()}`,
-                                            sender: "bot",
-                                            text: `[Confirmed] Mandate [${msg.mandateAction!.title}] is now deployed on OKX X Layer (Chain 196) and active under Session Key Guard with 100% sponsored gas.`,
-                                            timestamp: now,
-                                            status: "confirmed",
-                                          },
-                                        ]);
-                                      }}
-                                      className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-                                    >
-                                      <span>Confirm &amp; Deploy Mandate</span>
-                                      <span>✓</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const sym = msg.mandateAction!.symbol;
-                                        const price = msg.mandateAction!.price || 100;
-                                        openWeb3Signer(sym, 100, 100 / price, price);
-                                      }}
-                                      className="rounded-lg border border-ink-300 bg-white hover:bg-surface-100 text-ink-800 px-3 py-1.5 text-xs font-semibold shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
-                                    >
-                                      <span>Ignore Mandate &amp; Buy Directly on Spot</span>
-                                      <span>→</span>
-                                    </button>
-                                  </div>
-                                )}
+                                                                 {msg.mandateAction && (
+                                   <div className="mt-2.5 pt-2 border-t border-ink-200/60 flex flex-wrap items-center gap-2">
+                                     <button
+                                       type="button"
+                                       onClick={() => {
+                                         const newPolicy: MandatePolicy = {
+                                           id: `mandate_${Date.now()}`,
+                                           title: msg.mandateAction!.title,
+                                           policyType: "dca_recurring",
+                                           target: msg.mandateAction!.rule,
+                                           rule: msg.mandateAction!.rule,
+                                           metricLabel: "Status",
+                                           metricValue: "Active",
+                                           threshold: "50 USDG",
+                                           status: "active",
+                                           lastEvaluated: "Just deployed",
+                                           description: `Automated mandate for ${msg.mandateAction!.title} on OKX X Layer.`,
+                                         };
+                                         setMandatePolicies((prev) => [newPolicy, ...prev]);
+                                         const sym = msg.mandateAction!.symbol;
+                                         const price = msg.mandateAction!.price || 100;
+                                         openWeb3Signer(sym, 50, 50 / price, price);
+                                       }}
+                                       className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                                     >
+                                       <span>Deploy Mandate to X Layer</span>
+                                       <span>✓</span>
+                                     </button>
+
+                                     <button
+                                       type="button"
+                                       onClick={() => {
+                                         const policyToEdit: MandatePolicy = {
+                                           id: `mandate_edit_${Date.now()}`,
+                                           title: msg.mandateAction!.title,
+                                           policyType: "dca_recurring",
+                                           target: msg.mandateAction!.rule,
+                                           rule: msg.mandateAction!.rule,
+                                           metricLabel: "Status",
+                                           metricValue: "Draft",
+                                           threshold: "50 USDG",
+                                           status: "active",
+                                           lastEvaluated: "Drafting",
+                                           description: `Draft mandate parameters for ${msg.mandateAction!.title}.`,
+                                         };
+                                         handleOpenEditMandate(policyToEdit);
+                                       }}
+                                       className="rounded-lg border border-accent-300 bg-accent-50 hover:bg-accent-100 text-accent-700 px-3 py-1.5 text-xs font-bold shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                                     >
+                                       <span>Edit Mandate Parameters</span>
+                                       <span>✎</span>
+                                     </button>
+
+                                     <button
+                                       type="button"
+                                       onClick={() => {
+                                         const sym = msg.mandateAction!.symbol;
+                                         const price = msg.mandateAction!.price || 100;
+                                         openWeb3Signer(sym, 100, 100 / price, price);
+                                       }}
+                                       className="rounded-lg border border-ink-300 bg-white hover:bg-surface-100 text-ink-800 px-3 py-1.5 text-xs font-semibold shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                                     >
+                                       <span>Buy Directly on Spot</span>
+                                       <span>→</span>
+                                     </button>
+                                   </div>
+                                 )}
                               </div>
                             )}
                           </div>
