@@ -5,7 +5,7 @@ This directory contains standalone operational, deployment, and testing utilitie
 ## Scripts Overview
 
 ### 1. `smoke-live.ts`
-- **Purpose**: Performs real-time on-chain smoke tests against the OKX X Layer Mainnet RPC (`https://rpc.xlayer.tech`).
+- **Purpose**: Performs real-time on-chain smoke tests against the OKX X Layer Mainnet RPC (`https://xlayerrpc.okx.com`).
 - **Usage**: `npx tsx scripts/smoke-live.ts`
 - **Actions**: Checks chain connectivity, queries block number, fetches live OKB gas balance, and queries allowlisted token contracts.
 

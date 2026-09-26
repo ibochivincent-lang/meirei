@@ -49,8 +49,8 @@ export const NETWORK_CONFIG = {
   mainnet: {
     name: "OKX X Layer Mainnet",
     chainId: 196,
-    rpc: process.env.NEXT_PUBLIC_XLAYER_RPC || "https://rpc.xlayer.tech",
-    explorer: "https://www.okx.com/web3/explorer/xlayer",
+    rpc: process.env.NEXT_PUBLIC_XLAYER_RPC || "https://xlayerrpc.okx.com",
+    explorer: "https://www.oklink.com/xlayer",
   },
 };
 

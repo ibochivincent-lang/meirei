@@ -5,7 +5,6 @@
 const RPC_ENDPOINTS = [
   process.env.XLAYER_RPC_URL,
   "https://xlayerrpc.okx.com",
-  "https://rpc.xlayer.tech",
   "https://xlayer.drpc.org",
 ].filter(Boolean);
 

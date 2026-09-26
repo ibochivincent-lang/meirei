@@ -495,12 +495,12 @@ export async function fetchDexSwapCalldata(
     toToken: toTokenAddress,
     amount: amountInSmallestUnit,
     userWallet: userWalletAddress,
-    slippage: "0.05",
+    slippage: "1",
   });
 
   const res = await fetch(`/api/dex/swap?${params.toString()}`, {
     method: "GET",
-    next: { revalidate: 0 },
+    cache: "no-store",
   });
 
   const json = await res.json();

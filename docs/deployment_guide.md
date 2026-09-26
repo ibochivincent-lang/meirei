@@ -25,7 +25,7 @@ In the Vercel project configuration, expand **"Environment Variables"** and add 
 | :--- | :--- | :--- |
 | `NEXT_PUBLIC_APP_URL` | `https://meirei.tella.cash` | Production domain (`https://meirei.tella.cash` / web app at `/app`) |
 | `NEXT_PUBLIC_CHAIN_ID` | `196` | OKX X Layer Mainnet |
-| `NEXT_PUBLIC_XLAYER_RPC` | `https://rpc.xlayer.tech` | Official X Layer Mainnet RPC |
+| `NEXT_PUBLIC_XLAYER_RPC` | `https://xlayerrpc.okx.com` | Official X Layer Mainnet RPC |
 | `NEXT_PUBLIC_EXPLORER_URL` | `https://www.oklink.com/xlayer` | Official X Layer Block Explorer |
 | `OTP_SIGNING_SECRET` | *(64 hex characters / random secret)* | Signs and verifies 2FA OTP HMAC tokens |
 | `MEIREI_CHAIN` | `xlayer` | Enforces X Layer Mainnet routing |
