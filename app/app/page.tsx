@@ -180,6 +180,7 @@ interface MandatePolicy {
   threshold: string;
   status: "active" | "paused";
   lastEvaluated: string;
+  description?: string;
 }
 
 interface ExecutionLogItem {
@@ -291,6 +292,8 @@ export default function AppDashboardPage() {
   const [newMandateThreshold, setNewMandateThreshold] = useState<string>("5.0%");
 
   // Active Autonomous Mandates state
+  const [selectedLearnMoreMandate, setSelectedLearnMoreMandate] = useState<MandatePolicy | null>(null);
+
   const [mandatePolicies, setMandatePolicies] = useState<MandatePolicy[]>([
     {
       id: "mandate_drift_1",
@@ -303,6 +306,7 @@ export default function AppDashboardPage() {
       threshold: "5.0%",
       status: "active",
       lastEvaluated: "Just now",
+      description: "Monitors target portfolio weights continuously. When market movements cause an equity asset to drift beyond 5%, the engine automatically trims overperforming assets and buys underperforming assets on OKX DEX to restore target allocation.",
     },
     {
       id: "mandate_dca_1",
@@ -315,18 +319,33 @@ export default function AppDashboardPage() {
       threshold: "50 USDG",
       status: "active",
       lastEvaluated: "Scheduled",
+      description: "Dollar-cost averages a fixed amount of USDG into your chosen tokenized stocks every week automatically. Smooths out volatility and compounds fractional shares over time without requiring manual logins.",
     },
     {
       id: "mandate_breaker_1",
       title: "Volatility Circuit Breaker",
       policyType: "circuit_breaker",
       target: "Portfolio Drawdown Guard",
-      rule: "Auto-liquidate equity positions to USDG if 24h drawdown exceeds 7.0%",
+      rule: "Auto-rotate equity positions to USDG if 24h drawdown exceeds 7.0%",
       metricLabel: "24h Drawdown",
       metricValue: "-0.42%",
       threshold: "-7.00%",
       status: "active",
       lastEvaluated: "Armed & Monitoring",
+      description: "Protects your equity capital during severe market crashes. If 24-hour portfolio drawdown exceeds your chosen percentage (e.g. 7-8%), the smart contract safely halts equity trading and rotates capital into USDG stablecoin.",
+    },
+    {
+      id: "mandate_dip_1",
+      title: "Dip Buyer & Take-Profit",
+      policyType: "circuit_breaker",
+      target: "Buy -5% Dips / TP +15%",
+      rule: "Automated dip purchase when stock drops 5% and profit lock at +15%",
+      metricLabel: "Dip Target",
+      metricValue: "-5.00%",
+      threshold: "+15.00%",
+      status: "active",
+      lastEvaluated: "Monitoring",
+      description: "Capitalizes on market swings around the clock. Automatically buys dips when tokenized stock prices drop by 5%, and automatically locks in gains when your target profit (+15%) is reached.",
     },
   ]);
 
@@ -2544,6 +2563,16 @@ export default function AppDashboardPage() {
           hash: returnedHash,
           statusTone: data.receipt?.statusTone || (data.status === "confirmed" ? "confirmed" : undefined),
         });
+
+        const lowerQuery = query.toLowerCase();
+        const isConfirmTrigger = lowerQuery.includes("confirm") || lowerQuery.includes("buy") || lowerQuery.includes("execute") || lowerQuery.includes("deploy");
+        if (isConfirmTrigger || data.status === "preview" || data.type === "quote" || data.pendingTrade) {
+          const sym = data.pendingTrade?.symbol || data.delivery?.mandate?.targets?.[0]?.symbol || selectedStock.symbol || "NVDAx";
+          const amount = data.pendingTrade?.notionalUsd || 100;
+          const spotP = getNumericPrice(selectedStock) || 213.9;
+          const units = amount / spotP;
+          openWeb3Signer(sym, amount, units, spotP);
+        }
       } else {
         setMandateResult({
           reply: data.error || data.detail || "Failed to process mandate.",
@@ -3916,7 +3945,7 @@ export default function AppDashboardPage() {
                   </div>
 
                   {/* Mandates Grid */}
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {mandatePolicies.map((mandate) => (
                       <div
                         key={mandate.id}
@@ -3937,23 +3966,11 @@ export default function AppDashboardPage() {
                             <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
-                                onClick={() => handleOpenEditMandate(mandate)}
-                                className="rounded px-2 py-0.5 font-mono text-[9px] font-bold text-ink-700 hover:text-ink-950 bg-white hover:bg-surface-100 border border-ink-200 cursor-pointer shadow-2xs transition-colors"
-                                title="Edit mandate parameters"
+                                onClick={() => setSelectedLearnMoreMandate(mandate)}
+                                className="rounded px-2 py-0.5 font-mono text-[9px] font-bold text-accent-700 hover:text-accent-950 bg-accent-50 hover:bg-accent-100 border border-accent-200/80 cursor-pointer shadow-2xs transition-colors"
+                                title="Learn more about this mandate"
                               >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => toggleMandatePolicy(mandate.id)}
-                                className={cn(
-                                  "rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase cursor-pointer border",
-                                  mandate.status === "active"
-                                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700"
-                                    : "bg-zinc-500/15 border-zinc-500/30 text-zinc-500"
-                                )}
-                              >
-                                {mandate.status === "active" ? "Active" : "Paused"}
+                                Learn More
                               </button>
                             </div>
                           </div>
@@ -3981,6 +3998,84 @@ export default function AppDashboardPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Learn More Mandate Details Modal */}
+                  <AnimatePresence>
+                    {selectedLearnMoreMandate && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                          className="w-full max-w-md rounded-3xl border border-ink-200 bg-white p-5 sm:p-6 shadow-2xl"
+                        >
+                          <div className="flex items-center justify-between border-b border-ink-100 pb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-[10px] uppercase font-bold text-accent-600 bg-accent-50 border border-accent-200 px-2 py-0.5 rounded-full">
+                                Mandate Specification
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedLearnMoreMandate(null)}
+                              className="rounded-full p-1 text-ink-400 hover:bg-surface-100 transition-colors cursor-pointer text-sm font-bold"
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <div className="mt-4 space-y-3">
+                            <h3 className="font-display text-base font-bold text-ink-900">
+                              {selectedLearnMoreMandate.title}
+                            </h3>
+                            <p className="text-xs text-ink-600 leading-relaxed">
+                              {selectedLearnMoreMandate.description}
+                            </p>
+
+                            <div className="rounded-2xl bg-surface-50 p-3.5 border border-ink-200/80 space-y-2 font-mono text-[11px]">
+                              <div className="flex justify-between border-b border-ink-100 pb-1.5">
+                                <span className="text-ink-500 font-sans">Target Rule:</span>
+                                <span className="font-bold text-ink-900 text-right">{selectedLearnMoreMandate.rule}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-ink-100 pb-1.5">
+                                <span className="text-ink-500 font-sans">Threshold / Limit:</span>
+                                <span className="font-bold text-accent-700">{selectedLearnMoreMandate.threshold}</span>
+                              </div>
+                              <div className="flex justify-between border-b border-ink-100 pb-1.5">
+                                <span className="text-ink-500 font-sans">Execution Network:</span>
+                                <span className="font-bold text-ink-900">OKX X Layer (Chain 196)</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-ink-500 font-sans">Gas Subsidy:</span>
+                                <span className="font-bold text-emerald-600">100% Sponsored (OKX Paymaster)</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-5 flex items-center justify-between gap-2 pt-3 border-t border-ink-100">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const m = selectedLearnMoreMandate;
+                                setSelectedLearnMoreMandate(null);
+                                handleOpenEditMandate(m);
+                              }}
+                              className="rounded-xl border border-ink-200 bg-surface-50 px-3.5 py-2 text-xs font-bold text-ink-700 hover:bg-surface-100 transition-colors cursor-pointer"
+                            >
+                              Edit Parameters
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedLearnMoreMandate(null)}
+                              className="rounded-xl bg-ink-900 hover:bg-black px-4 py-2 text-xs font-bold text-white transition-colors cursor-pointer"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
                 </div>
           </div>
         ) : (
