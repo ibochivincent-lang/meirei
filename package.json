@@ -28,7 +28,7 @@
     "verify:stocks": "node scripts/verify-xlayer-stocks.mjs"
   },
   "dependencies": {
-    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/browser": "^14.0.0",
     "@simplewebauthn/server": "^13.3.3",
     "@supabase/supabase-js": "^2.105.1",
     "@upstash/redis": "^1.39.0",
