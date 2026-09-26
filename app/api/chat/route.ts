@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleMandate } from "@/src/agent/handler";
 import type { Leg } from "@/src/types";
+import { findBestTemplate } from "@/lib/data/conversation_templates";
 import {
   initOnchainOS,
   fetchPrice,
@@ -1002,9 +1003,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // General AI response
+    // General AI response & Conversation Templates fallback
+    const bestTemplate = findBestTemplate(lower);
+    let replyMsg = `I am Meirei (命令), your AI Native Investment Mandate Agent executing on X Layer (chain 196).\n\n`;
+    
+    if (lower.includes("template") || lower.includes("example") || lower.includes("discussion") || lower.includes("roleplay") || lower.includes("sales") || lower.includes("how to talk")) {
+      replyMsg = `Here is a conversation template to help guide your discussion:\n\n**${bestTemplate.title}**\n\n${bestTemplate.dialogue}\n\nAsk me for your balance, query real time stock prices, or enter an investment mandate.`;
+    } else {
+      replyMsg += `If you're not sure what to say, here is a suggested conversation example:\n`;
+      replyMsg += `**${bestTemplate.title}**\n${bestTemplate.dialogue}\n\n`;
+      replyMsg += `Ask me for your balance, query real time stock prices (e.g. "Price of AAPLx"), trade directly (e.g. "Buy 1 AAPLx"), or enter an investment mandate (e.g. "60% mag7, 20% USDG, max 8%").`;
+    }
+
     return NextResponse.json({
-      reply: `I am Meirei (命令), your AI Native Investment Mandate Agent executing on X Layer (chain 196). Ask me for your balance, query real time stock prices (e.g. "Price of AAPLx"), trade directly (e.g. "Buy 1 AAPLx" or "Sell 1 AAPLx"), or enter an investment mandate (e.g. "60% mag7, 20% USDG, max 8%").`,
+      reply: replyMsg,
       type: "info",
     });
   } catch (error) {
