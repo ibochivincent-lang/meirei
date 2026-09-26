@@ -357,6 +357,29 @@ export default function AppDashboardPage() {
             portfolioValue: total,
             holdings: mappedHoldings,
           }));
+        } else if (isMounted) {
+          // Direct fallback browser query to OKX X Layer RPC if server query fails
+          try {
+            const clean = addr.toLowerCase().replace("0x", "").padStart(64, "0");
+            const rpcRes = await fetch("https://xlayerrpc.okx.com", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify([
+                { jsonrpc: "2.0", id: 0, method: "eth_getBalance", params: [addr, "latest"] },
+                { jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: "0x4ae46a509f6b1d9056937ba4500cb143933d2dc8", data: `0x70a08231${clean}` }, "latest"] }
+              ]),
+            });
+            const rpcJson = await rpcRes.json();
+            if (Array.isArray(rpcJson)) {
+              const usdgRaw = rpcJson.find((x) => x.id === 1)?.result;
+              const usdgBal = usdgRaw && usdgRaw !== "0x" ? Number(BigInt(usdgRaw)) / 1e6 : 0;
+              setProfile((prev) => ({
+                ...prev,
+                usdgBalance: usdgBal,
+                portfolioValue: usdgBal,
+              }));
+            }
+          } catch {}
         }
       } catch (err) {
         console.warn("[Balances] Notice checking real on-chain balance:", err);
@@ -366,7 +389,7 @@ export default function AppDashboardPage() {
     }
 
     loadRealBalances();
-    const timer = setInterval(loadRealBalances, 25000);
+    const timer = setInterval(loadRealBalances, 10000);
     return () => {
       isMounted = false;
       clearInterval(timer);
@@ -1524,16 +1547,22 @@ export default function AppDashboardPage() {
       ].join("\n");
 
       setConnectInfoMsg("Please sign the verification message in your wallet window to confirm sign-in (0 gas fee)...");
+      let signature: string | null = null;
       try {
-        await provider.request({
+        signature = await provider.request({
           method: "personal_sign",
           params: [authChallenge, activeAddr],
         });
       } catch (signErr: any) {
         const sMsg = signErr?.message?.toLowerCase() || "";
-        if (signErr?.code === 4001 || sMsg.includes("rejected") || sMsg.includes("denied") || sMsg.includes("cancel")) {
+        if (signErr?.code === 4001 || sMsg.includes("rejected") || sMsg.includes("denied") || sMsg.includes("cancel") || sMsg.includes("user rejected")) {
           throw new Error("Sign-in verification was rejected in wallet.");
         }
+        throw new Error(`Authentication signature failed: ${signErr?.message || "User did not sign message."}`);
+      }
+
+      if (!signature || typeof signature !== "string" || signature.length < 10) {
+        throw new Error("A valid cryptographic signature is required to sign in.");
       }
 
       setConnectAddress(activeAddr);
@@ -1575,6 +1604,7 @@ export default function AppDashboardPage() {
       if (typeof window !== "undefined") {
         localStorage.setItem("meirei_wallet_address", activeAddr);
         localStorage.setItem("meirei_wallet_name", title);
+        localStorage.setItem("meirei_wallet_type", type);
         localStorage.removeItem("meirei_demo_sandbox");
         localStorage.removeItem("meirei_disconnected");
       }
@@ -1699,7 +1729,9 @@ export default function AppDashboardPage() {
         localStorage.removeItem("meirei_demo_sandbox");
         localStorage.removeItem("meirei_wallet_address");
         localStorage.removeItem("meirei_wallet_name");
+        localStorage.removeItem("meirei_wallet_type");
         localStorage.setItem("meirei_disconnected", "true");
+        sessionStorage.clear();
       }
 
       await fetch("/api/wallet/link", {
@@ -6149,7 +6181,7 @@ export default function AppDashboardPage() {
         fromAmountUsdg={web3ModalState.fromAmountUsdg}
         estimatedUnits={web3ModalState.estimatedUnits}
         spotPrice={web3ModalState.spotPrice}
-        userAddress={profile.address}
+        userAddress={activeAddress || profile.address}
         onSuccess={(res) => {
           if (res.txHash) {
             const executedAmount = res.executedAmountUsdg || web3ModalState.fromAmountUsdg;

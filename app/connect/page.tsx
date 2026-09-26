@@ -316,16 +316,22 @@ function ConnectWalletContent() {
       ].join("\n");
 
       setInfoMessage("Please sign the verification message in your wallet window to confirm sign-in (0 gas fee)...");
+      let signature: string | null = null;
       try {
-        await provider.request({
+        signature = await provider.request({
           method: "personal_sign",
           params: [authChallenge, activeAddr],
         });
       } catch (signErr: any) {
         const sMsg = signErr?.message?.toLowerCase() || "";
-        if (signErr?.code === 4001 || sMsg.includes("rejected") || sMsg.includes("denied") || sMsg.includes("cancel")) {
+        if (signErr?.code === 4001 || sMsg.includes("rejected") || sMsg.includes("denied") || sMsg.includes("cancel") || sMsg.includes("user rejected")) {
           throw new Error("Sign-in verification was rejected in wallet.");
         }
+        throw new Error(`Authentication signature failed: ${signErr?.message || "User did not sign message."}`);
+      }
+
+      if (!signature || typeof signature !== "string" || signature.length < 10) {
+        throw new Error("A valid cryptographic signature is required to sign in.");
       }
 
       setConnectedAddress(activeAddr);
@@ -342,6 +348,14 @@ function ConnectWalletContent() {
           : "Web3 Injected";
       setActiveWalletName(walletTitle);
       setShowWalletModal(false);
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("meirei_wallet_address", activeAddr);
+        localStorage.setItem("meirei_wallet_name", walletTitle);
+        localStorage.setItem("meirei_wallet_type", type);
+        localStorage.removeItem("meirei_demo_sandbox");
+        localStorage.removeItem("meirei_disconnected");
+      }
 
       // 2. Switch to OKX X Layer (Chain ID 196)
       const rawChainId: string = await provider.request({ method: "eth_chainId" });
@@ -397,8 +411,10 @@ function ConnectWalletContent() {
       if (typeof window !== "undefined") {
         localStorage.removeItem("meirei_wallet_address");
         localStorage.removeItem("meirei_wallet_name");
+        localStorage.removeItem("meirei_wallet_type");
         localStorage.removeItem("meirei_demo_sandbox");
         localStorage.setItem("meirei_disconnected", "true");
+        sessionStorage.clear();
       }
 
       setConnectedAddress(null);

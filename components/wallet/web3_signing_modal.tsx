@@ -87,7 +87,8 @@ export function Web3SigningModal({
       setSigningError(null);
       setSigningResult(null);
       setInputAmount(fromAmountUsdg > 0 ? fromAmountUsdg : 100);
-      checkWalletConnection().then((state) => {
+      const savedType = (typeof window !== "undefined" ? localStorage.getItem("meirei_wallet_type") : null) as any;
+      checkWalletConnection(savedType).then((state) => {
         setProviderState(state);
         const active = state.connectedAddress || userAddress;
         if (active) refreshBalances(active);
@@ -99,8 +100,9 @@ export function Web3SigningModal({
     setIsSigning(true);
     setSigningError(null);
     try {
-      await connectInjectedWallet();
-      const updated = await checkWalletConnection();
+      const savedType = (typeof window !== "undefined" ? localStorage.getItem("meirei_wallet_type") : null) as any;
+      await connectInjectedWallet(savedType);
+      const updated = await checkWalletConnection(savedType);
       setProviderState(updated);
       if (updated.connectedAddress) refreshBalances(updated.connectedAddress);
     } catch (err: unknown) {
@@ -172,6 +174,7 @@ export function Web3SigningModal({
 
       // Step 3: Sign and broadcast the real swap transaction
       setSigningStatusText("Awaiting signature in your wallet...");
+      const savedType = (typeof window !== "undefined" ? localStorage.getItem("meirei_wallet_type") : null) as any;
       const result = await signAndExecuteSwap({
         fromSymbol: "USDG",
         toSymbol: targetSymbol,
@@ -184,6 +187,7 @@ export function Web3SigningModal({
         value: swapValue,
         mandateText: mandateText,
         mandateId: selectedMandate,
+        walletType: savedType,
       });
 
       if (result.ok && result.confirmed && result.txHash) {

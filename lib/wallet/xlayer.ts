@@ -17,7 +17,7 @@ export const XLAYER_NETWORK_PARAMS = {
     symbol: "OKB",
     decimals: 18,
   },
-  rpcUrls: [XLAYER_RPC_URL, "https://rpc.xlayer.tech", "https://xlayer.drpc.org"],
+  rpcUrls: [XLAYER_RPC_URL, "https://xlayerrpc.okx.com", "https://xlayer.drpc.org"],
   blockExplorerUrls: [XLAYER_EXPLORER_URL],
 };
 
@@ -195,8 +195,8 @@ export async function fetchLiveXLayerBalances(
       })),
     ];
 
-    const rpcList = [XLAYER_RPC_URL, "https://xlayerrpc.okx.com", "https://xlayer.drpc.org", "https://rpc.xlayer.tech"];
-    const uniqueRpcs = Array.from(new Set(rpcList));
+    const rpcList = [XLAYER_RPC_URL, "https://xlayerrpc.okx.com", "https://xlayer.drpc.org"];
+    const uniqueRpcs = Array.from(new Set(rpcList.filter(Boolean)));
     let results: Array<{ id: number; result?: string; error?: { message: string } }> | null = null;
 
     for (const rpc of uniqueRpcs) {

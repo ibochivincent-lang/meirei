@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 
-const XLAYER_CHAIN_ID = "196";
-const OKX_DEX_API_BASE = "https://www.okx.com/api/v5/dex/aggregator";
+const XLAYER_CHAIN_INDEX = "196";
+const OKX_DEX_V6_BASE = "https://web3.okx.com";
 
 /**
- * GET /api/dex/swap?fromToken=<addr>&toToken=<addr>&amount=<wei>&userWallet=<addr>
+ * GET /api/dex/swap?fromToken=<addr>&toToken=<addr>&amount=<wei>&userWallet=<addr>&slippage=<num>
  *
- * Proxies the OKX DEX Aggregator swap quote on X Layer (chain 196).
- * Returns routerAddress and calldata so the client can sign and broadcast
- * the transaction directly from the user's wallet — no server custody.
- *
- * OKX DEX Aggregator docs:
- * https://www.okx.com/web3/build/docs/waas/dex-get-swap-data
+ * Proxies the OKX DEX Aggregator v6 swap quote on X Layer (chainIndex 196)
+ * with HMAC-SHA256 authentication.
+ * Returns routerAddress and calldata so the client signs and broadcasts
+ * the transaction directly from the user's connected wallet — non-custodial.
+ * Author: IboTV
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
   const fromTokenAddress = searchParams.get("fromToken");
   const toTokenAddress = searchParams.get("toToken");
-  const amount = searchParams.get("amount"); // in smallest unit (e.g. USDG in 6-decimal units)
+  const amount = searchParams.get("amount"); // smallest unit (e.g. USDG 6 decimals)
   const userWalletAddress = searchParams.get("userWallet");
-  const slippage = searchParams.get("slippage") || "0.05"; // 5% default
+  const rawSlippage = searchParams.get("slippage") || "1";
 
   if (!fromTokenAddress || !toTokenAddress || !amount || !userWalletAddress) {
     return NextResponse.json(
@@ -29,25 +29,63 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  // Convert decimal slippage (e.g. 0.05 or 0.01) to whole percentage for OKX v6 (e.g. 1 or 5)
+  let slippagePercent = rawSlippage;
+  const numSlippage = parseFloat(rawSlippage);
+  if (!isNaN(numSlippage)) {
+    if (numSlippage < 1 && numSlippage > 0) {
+      slippagePercent = String(Math.round(numSlippage * 100));
+    } else {
+      slippagePercent = String(Math.round(numSlippage));
+    }
+  }
+
+  const apiKey = process.env.OKX_API_KEY || "";
+  const apiSecret = process.env.OKX_API_SECRET || process.env.OKX_SECRET_KEY || "";
+  const passphrase = process.env.OKX_API_PASSPHRASE || process.env.OKX_PASSPHRASE || "";
+  const projectId = process.env.OKX_PROJECT_ID || "";
+
+  if (!apiKey || !apiSecret || !passphrase) {
+    return NextResponse.json(
+      { error: "OKX API credentials not configured in environment" },
+      { status: 500 }
+    );
+  }
+
   try {
-    // 1. Get a swap quote from the OKX DEX Aggregator (no API key required for quotes)
-    const quoteParams = new URLSearchParams({
-      chainId: XLAYER_CHAIN_ID,
+    const queryParams = new URLSearchParams({
+      chainIndex: XLAYER_CHAIN_INDEX,
       fromTokenAddress,
       toTokenAddress,
       amount,
       userWalletAddress,
-      slippage,
+      slippagePercent,
     });
 
-    const quoteUrl = `${OKX_DEX_API_BASE}/swap?${quoteParams.toString()}`;
+    const path = `/api/v6/dex/aggregator/swap?${queryParams.toString()}`;
+    const method = "GET";
+    const timestamp = new Date().toISOString();
 
-    const quoteRes = await fetch(quoteUrl, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      // Do not cache swap quotes — they expire quickly
+    const sign = crypto
+      .createHmac("sha256", apiSecret)
+      .update(timestamp + method + path)
+      .digest("base64");
+
+    const headers: Record<string, string> = {
+      "OK-ACCESS-KEY": apiKey,
+      "OK-ACCESS-SIGN": sign,
+      "OK-ACCESS-TIMESTAMP": timestamp,
+      "OK-ACCESS-PASSPHRASE": passphrase,
+      "Content-Type": "application/json",
+    };
+
+    if (projectId) {
+      headers["OK-ACCESS-PROJECT"] = projectId;
+    }
+
+    const quoteRes = await fetch(`${OKX_DEX_V6_BASE}${path}`, {
+      method,
+      headers,
       next: { revalidate: 0 },
     });
 
@@ -61,11 +99,11 @@ export async function GET(req: NextRequest) {
 
     const quoteJson = await quoteRes.json();
 
-    // OKX DEX API returns: { code: "0", data: [{ tx: { to, data, value, gas }, routerResult: {...} }] }
     if (quoteJson.code !== "0" || !quoteJson.data?.[0]) {
       return NextResponse.json(
         {
           error: `OKX DEX Aggregator returned error: ${quoteJson.msg || "Unknown error"}`,
+          code: quoteJson.code,
           raw: quoteJson,
         },
         { status: 422 }
@@ -83,16 +121,23 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const dexList = Array.isArray(routerResult?.dexRouterList)
+      ? routerResult.dexRouterList
+          .map((r: { dexProtocol?: { dexName?: string } }) => r.dexProtocol?.dexName)
+          .filter(Boolean)
+          .join(" -> ")
+      : "";
+
     return NextResponse.json({
       ok: true,
       routerAddress: tx.to as string,
       calldata: tx.data as string,
       value: tx.value || "0x0",
       gasEstimate: tx.gas,
-      toAmount: routerResult?.toTokenAmount,
-      minToAmount: routerResult?.minimumReceived,
-      priceImpact: routerResult?.priceImpactPercentage,
-      dexName: routerResult?.dexRouterList?.[0]?.router,
+      toAmount: routerResult?.toTokenAmount || tx.minReceiveAmount,
+      minToAmount: tx.minReceiveAmount || routerResult?.toTokenAmount,
+      priceImpact: routerResult?.priceImpactPercent || "0",
+      dexName: dexList || "OKX DEX Aggregator",
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

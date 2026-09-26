@@ -38,6 +38,7 @@ export interface SwapExecutionRequest {
   value?: string;
   mandateText?: string;
   mandateId?: number;
+  walletType?: WalletType;
 }
 
 export interface SigningResult {
@@ -278,21 +279,37 @@ export function getAvailableWallets(): WalletOption[] {
 /**
  * Detects injected Web3 provider, prioritizing OKX Wallet.
  */
-export function getInjectedProvider(): any {
+export function getInjectedProvider(preferredType?: WalletType): any {
   if (typeof window === "undefined") return null;
   const win = window as any;
 
+  // 1. If an explicit wallet type was provided, use that specific provider
+  if (preferredType && preferredType !== "injected" && preferredType !== "walletconnect") {
+    const specific = getSpecificProvider(preferredType);
+    if (specific) return specific;
+  }
+
+  // 2. Check saved wallet type from current authenticated session
+  try {
+    const savedType = localStorage.getItem("meirei_wallet_type") as WalletType | null;
+    if (savedType && savedType !== "injected" && savedType !== "walletconnect") {
+      const specific = getSpecificProvider(savedType);
+      if (specific) return specific;
+    }
+  } catch {}
+
+  // 3. Fallback: check EIP-6963 announced providers
   const okxEip = eip6963Providers.get("com.okex.wallet");
   if (okxEip?.provider) return okxEip.provider;
 
-  if (win.okxwallet) {
-    return win.okxwallet;
-  }
+  const mmEip = eip6963Providers.get("io.metamask") || eip6963Providers.get("io.metamask.flask");
+  if (mmEip?.provider) return mmEip.provider;
+
+  if (win.okxwallet) return win.okxwallet;
+
   if (win.ethereum) {
-    // If multiple providers, prefer OKX
+    // If multiple providers, prefer provider matching saved session
     if (win.ethereum.providers?.length) {
-      const okx = win.ethereum.providers.find((p: any) => p.isOkxWallet);
-      if (okx) return okx;
       return win.ethereum.providers[0];
     }
     return win.ethereum;
@@ -303,8 +320,8 @@ export function getInjectedProvider(): any {
 /**
  * Inspects current wallet connection status.
  */
-export async function checkWalletConnection(): Promise<Web3ProviderState> {
-  const provider = getInjectedProvider();
+export async function checkWalletConnection(preferredType?: WalletType): Promise<Web3ProviderState> {
+  const provider = getInjectedProvider(preferredType);
   if (!provider) {
     return {
       hasProvider: false,
@@ -316,7 +333,7 @@ export async function checkWalletConnection(): Promise<Web3ProviderState> {
   }
 
   const win = window as any;
-  const providerName = win.okxwallet || provider.isOkxWallet ? "okx" : provider.isMetaMask ? "metamask" : "generic";
+  const providerName = provider === win.okxwallet || provider.isOkxWallet ? "okx" : provider.isMetaMask ? "metamask" : "generic";
 
   try {
     const accounts: string[] = await provider.request({ method: "eth_accounts" });
@@ -344,13 +361,19 @@ export async function checkWalletConnection(): Promise<Web3ProviderState> {
 /**
  * Requests wallet account connection.
  */
-export async function connectInjectedWallet(): Promise<{
+export async function connectInjectedWallet(type?: WalletType): Promise<{
   address: string;
   isXLayer: boolean;
 }> {
-  const provider = getInjectedProvider();
+  const provider = getInjectedProvider(type);
   if (!provider) {
-    throw new Error("No Web3 wallet detected. Please install OKX Wallet or MetaMask to sign non-custodially.");
+    throw new Error(
+      type === "metamask"
+        ? "MetaMask extension not detected. Please install MetaMask from metamask.io or use WalletConnect."
+        : type === "okx"
+        ? "OKX Wallet extension not detected. Please install OKX Wallet from okx.com/web3."
+        : "No Web3 wallet detected. Please install OKX Wallet or MetaMask to sign non-custodially."
+    );
   }
 
   const accounts: string[] = await provider.request({
@@ -361,7 +384,7 @@ export async function connectInjectedWallet(): Promise<{
     throw new Error("Wallet connection was denied by user.");
   }
 
-  await ensureXLayerNetwork();
+  await ensureXLayerNetwork(provider);
   return {
     address: accounts[0].toLowerCase(),
     isXLayer: true,
@@ -503,7 +526,7 @@ export async function fetchDexSwapCalldata(
  * Private keys NEVER leave the user device or hardware enclave.
  */
 export async function signAndExecuteSwap(req: SwapExecutionRequest): Promise<SigningResult> {
-  const provider = getInjectedProvider();
+  const provider = getInjectedProvider(req.walletType);
   if (!provider) {
     return {
       ok: false,
