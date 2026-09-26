@@ -205,6 +205,75 @@ function SectionSeparator({ label }: { label: string }) {
   );
 }
 
+function autoBalanceWeights(
+  stocks: string[],
+  weights: Record<string, number>,
+  changedSymbol?: string,
+  changedValue?: number
+): Record<string, number> {
+  const newWeights = { ...weights };
+  if (stocks.length === 0) return newWeights;
+
+  if (changedSymbol && changedValue !== undefined) {
+    newWeights[changedSymbol] = changedValue;
+    const others = stocks.filter((s) => s !== changedSymbol);
+    if (others.length === 0) return newWeights;
+
+    const currentOthersSum = others.reduce((acc, s) => acc + (weights[s] || 0), 0);
+    const targetOthersSum = Math.max(0, 100 - changedValue);
+
+    if (currentOthersSum === 0) {
+      const split = Math.floor(targetOthersSum / others.length);
+      let rem = targetOthersSum - split * others.length;
+      others.forEach((s) => {
+        newWeights[s] = split + (rem-- > 0 ? 1 : 0);
+      });
+    } else {
+      let newSum = 0;
+      const exactOthers = others.map((s) => {
+        const exact = ((weights[s] || 0) / currentOthersSum) * targetOthersSum;
+        const rounded = Math.round(exact);
+        newSum += rounded;
+        return { s, rounded, exact };
+      });
+      let diff = targetOthersSum - newSum;
+      exactOthers.sort((a, b) => b.exact - b.rounded - (a.exact - a.rounded));
+      for (let i = 0; i < Math.abs(diff); i++) {
+        exactOthers[i % exactOthers.length].rounded += Math.sign(diff);
+      }
+      exactOthers.forEach((obj) => {
+        newWeights[obj.s] = obj.rounded;
+      });
+    }
+  } else {
+    const currentSum = stocks.reduce((acc, s) => acc + (weights[s] || 0), 0);
+    if (currentSum === 0) {
+      const split = Math.floor(100 / stocks.length);
+      let rem = 100 - split * stocks.length;
+      stocks.forEach((s) => {
+        newWeights[s] = split + (rem-- > 0 ? 1 : 0);
+      });
+    } else {
+      let newSum = 0;
+      const exactAll = stocks.map((s) => {
+        const exact = ((weights[s] || 0) / currentSum) * 100;
+        const rounded = Math.round(exact);
+        newSum += rounded;
+        return { s, rounded, exact };
+      });
+      let diff = 100 - newSum;
+      exactAll.sort((a, b) => b.exact - b.rounded - (a.exact - a.rounded));
+      for (let i = 0; i < Math.abs(diff); i++) {
+        exactAll[i % exactAll.length].rounded += Math.sign(diff);
+      }
+      exactAll.forEach((obj) => {
+        newWeights[obj.s] = obj.rounded;
+      });
+    }
+  }
+  return newWeights;
+}
+
 export default function AppDashboardPage() {
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [isLoadingBalance, setIsLoadingBalance] = useState<boolean>(false);
@@ -3379,12 +3448,12 @@ export default function AppDashboardPage() {
                       </span>
                     </div>
                     <span className="text-xs text-ink-500">
-                      Tap card to select equity · Tap Quick Buy for instant execution
+                      Tap card to select equity
                     </span>
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-                    {STOCKS.map((stock) => {
+                    {[...STOCKS].sort((a, b) => parseFloat(a.change24h) - parseFloat(b.change24h)).map((stock) => {
                       const isSelected = stock.symbol === selectedStock.symbol;
                       const numericPrice = getNumericPrice(stock);
 
@@ -3433,19 +3502,6 @@ export default function AppDashboardPage() {
                                 {getFormattedPrice(stock)}
                               </span>
                             </div>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedStock(stock);
-                                openWeb3Signer(stock.symbol, 100, 100 / numericPrice, numericPrice);
-                              }}
-                              className="rounded-md bg-ink-900 hover:bg-accent-500 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-xs transition-colors cursor-pointer shrink-0"
-                              title={`Instant buy $100 in ${stock.symbol}`}
-                            >
-                              Quick Buy
-                            </button>
                           </div>
                         </div>
                       );
@@ -6313,15 +6369,16 @@ export default function AppDashboardPage() {
                               type="button"
                               onClick={() => {
                                 let newStocks = [...editSelectedStocks];
-                                const newWeights = { ...editStockWeights };
+                                let newWeights = { ...editStockWeights };
                                 if (isSel) {
                                   if (newStocks.length > 1) {
                                     newStocks = newStocks.filter((x) => x !== s.symbol);
                                     delete newWeights[s.symbol];
+                                    newWeights = autoBalanceWeights(newStocks, newWeights);
                                   }
                                 } else {
                                   newStocks.push(s.symbol);
-                                  newWeights[s.symbol] = Math.round(100 / newStocks.length);
+                                  newWeights = autoBalanceWeights(newStocks, newWeights, s.symbol, Math.floor(100 / newStocks.length));
                                 }
                                 setEditSelectedStocks(newStocks);
                                 setEditStockWeights(newWeights);
@@ -6353,7 +6410,7 @@ export default function AppDashboardPage() {
                                 value={editStockWeights[sym] ?? 50}
                                 onChange={(e) => {
                                   const val = Math.max(1, Math.min(100, Number(e.target.value) || 0));
-                                  const newWeights = { ...editStockWeights, [sym]: val };
+                                  const newWeights = autoBalanceWeights(editSelectedStocks, editStockWeights, sym, val);
                                   setEditStockWeights(newWeights);
                                   setEditTarget(editSelectedStocks.map((s) => `${newWeights[s] || 0}% ${s}`).join(" / "));
                                 }}

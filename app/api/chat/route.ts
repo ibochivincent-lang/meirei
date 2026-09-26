@@ -282,18 +282,9 @@ export async function POST(req: NextRequest) {
       lower.includes("greetings");
 
     if (isGreeting) {
-      const shortAddr = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
-      let welcome = `PROJECT MEIREI | OKX X LAYER TERMINAL\n\n`;
-      welcome += `Hello! I am Meirei, your AI-Native Investment Mandate Agent on OKX X Layer (Chain ID 196).\n\n`;
-      welcome += `Direct Solution:\n`;
-      welcome += `Connected Wallet: ${shortAddr}\n`;
-      welcome += `Network: OKX X Layer Mainnet (Chain ID 196) · 100% Sponsored Gas\n\n`;
-      welcome += `How to Solve Your Portfolio Goals Today:\n`;
-      welcome += `1. Spot Trades: "Price of NVDAx" or "Buy $250 in NVDAx" (Instant zero-gas execution)\n`;
-      welcome += `2. Portfolio Balances: /balance or "portfolio" (View live cash & tokenized holdings)\n`;
-      welcome += `3. Unit Calculations: "Calculate $250 in NVDAx" (Get exact fractional share units)\n`;
-      welcome += `4. Autonomous Mandates: "Drift rebalance 5%", "Weekly accumulation 50 USDG", "Dip buyer -5% / TP +15%", "Circuit breaker 8%"\n`;
-      welcome += `Execution Model: Web terminal uses 100% client-side Web3 signing (non-custodial). Bot and automated channels provide one-tap client signing deep links alongside delegated agent execution secured by 2FA OTP and daily spend limits.`;
+      let welcome = `Hi, I am your AI Investment Mandate Assistant on X Layer.\n`;
+      welcome += `I help you execute your mandate and execute spot trading auto investment.\n\n`;
+      welcome += `Do you want to get started?`;
 
       return NextResponse.json({
         reply: welcome,
@@ -504,7 +495,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Stock list query
+    // 3. Stock list query and "how can I buy stocks"
+    if (lower.includes("how can i buy stocks") || lower.includes("how to buy stocks")) {
+      let msg = `You can buy stocks in a few ways:\n`;
+      msg += `1. You can do a quick swap.\n`;
+      msg += `2. You can use our mandate which helps you gain exposure through automated strategies.\n\n`;
+      msg += `Available mandates include:\n`;
+      msg += `• Spot trading and unique calculation\n`;
+      msg += `• Portfolio rebalance\n`;
+      msg += `• Weekly DCA accumulator\n`;
+      msg += `• Volatility circuit breaker\n`;
+      msg += `• Dip and take profits automatically`;
+
+      return NextResponse.json({
+        reply: msg,
+        type: "list",
+      });
+    }
+
     if (lower.includes("list stock") || lower.includes("what stocks") || lower.includes("tradable") || lower === "stocks" || lower === "/stocks" || lower.includes("all stocks")) {
       const stocks = await fetchAllStockPrices();
       const stockList = stocks
@@ -515,6 +523,33 @@ export async function POST(req: NextRequest) {
         reply: `Allowlisted xStocks on X Layer (chain 196): ${stockList}. All settle in USDG and USDC via OKX DEX Aggregator.`,
         type: "list",
         stocks,
+      });
+    }
+
+    // Suggestions / Specific Amount Purchases
+    if (lower.includes("suggestion") || (lower.includes("i have") && lower.match(/\$\d+/))) {
+      const stocks = await fetchAllStockPrices();
+      // Sort by some mock metric (change24h could be parsed, but let's just pick top 3)
+      const topStocks = stocks.filter((s) => !s.isCash).slice(0, 3).map(s => s.symbol).join(", ");
+      
+      let msg = `Top stocks with high liquidity and return are currently: ${topStocks}.\n\n`;
+      msg += `Do you intend to hold it long term or short term? (Short term probability has high volatility, long term probability is generally more stable).\n\n`;
+      msg += `Disclaimer: This is not a financial advice.`;
+      
+      return NextResponse.json({
+        reply: msg,
+        type: "suggestion",
+      });
+    }
+
+    // Volatility Circuit Breaker Explanation
+    if (lower.includes("circuit breaker")) {
+      let msg = `The Volatility Circuit Breaker triggers a halt when stock prices or the market dips at a particular level you set.\n`;
+      msg += `We will notify you through Telegram, WhatsApp (coming soon), or Instagram (coming soon).`;
+      
+      return NextResponse.json({
+        reply: msg,
+        type: "circuit_breaker_info",
       });
     }
 
